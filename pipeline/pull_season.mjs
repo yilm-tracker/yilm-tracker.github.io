@@ -35,6 +35,16 @@ const keep = {};
 const F = ['full_name', 'first_name', 'last_name', 'position', 'fantasy_positions', 'team', 'injury_status', 'birth_date', 'years_exp'];
 for (const [id, p] of Object.entries(pl)) if (p && (POSOF[id] || !/^\d+$/.test(id))) keep[id] = { ...Object.fromEntries(F.map(k => [k, p[k] ?? null])), position: POSOF[id] || p.position };
 out.players[`${A}/players/nfl`] = keep;
+// manager avatars (team avatar if set, else the user's Sleeper avatar), as data URIs by roster id
+const users = out.core[`${L}/users`], AV = {};
+for (const r of out.core[`${L}/rosters`]) {
+  const u = users.find(x => x.user_id === r.owner_id); if (!u) continue;
+  const url = (u.metadata && u.metadata.avatar) || (u.avatar ? `https://sleepercdn.com/avatars/${u.avatar}` : null); if (!url) continue;
+  try { const res = await fetch(url); if (!res.ok) throw new Error(res.status); const ct = res.headers.get('content-type') || 'image/png';
+        AV[r.roster_id] = `data:${ct.split(';')[0]};base64,` + Buffer.from(await res.arrayBuffer()).toString('base64'); }
+  catch (e) { console.log('avatar failed', r.roster_id, e.message); }
+}
+out.avatars = AV;
 const dst = path.join(DIR, 'history', 'raw', Y); fs.mkdirSync(dst, { recursive: true });
 for (const [k, v] of Object.entries(out)) fs.writeFileSync(path.join(dst, k + '.json.gz'), zlib.gzipSync(JSON.stringify(v), { level: 9 }));
 console.log('saved', Object.fromEntries(Object.keys(out).map(k => [k, fs.statSync(path.join(dst, k + '.json.gz')).size])));

@@ -31,13 +31,8 @@ def team_of(pid):
     if pid in A:return A[pid][1]
     return META.get(pid,[None,None,''])[2] if META.get(pid) else ''
 hw={};wact={};wmx={};pairs={}
-def optimal(pool):
-    by={}
-    for q in pool:by.setdefault(q['pos'],[]).append(q)
-    for k in by:by[k].sort(key=lambda q:-q['pts'])
-    g=lambda p_,n:by.get(p_,[])[:n]
-    fl=sorted(by.get('RB',[])[2:]+by.get('WR',[])[2:]+by.get('TE',[])[1:],key=lambda q:-q['pts'])[:1]
-    return g('QB',1)+g('RB',2)+g('WR',2)+g('TE',1)+fl+g('K',1)+g('DEF',1)
+import sys as _sy;_sy.path.insert(0,P);import lg
+def optimal(pool):return [q for q in lg.optimal(pool) if q is not None]
 for m in M7['M7']:
     rid=m['rid'];st=m['st'];pp=m['pp']
     def ent(pid):
@@ -63,7 +58,7 @@ import season;importlib.reload(season)
 D=season.build(DONE)
 s=open(P+'data_block.js',encoding='utf-8').read()
 FUT=json.loads(re.search(r'const FUT=(\{.*?\});\n',s).group(1))
-SH={1:"Convicts",2:"Homer's",3:"Ram Rod",4:"RIPMFL",5:"Apache",6:"Canton",7:"Nuts",8:"Bill's",9:"Mandingoes",10:"Cheating"}
+SH=dict(lg.RN)  # FUT opponents use full team names
 m8={r[0]:(r[1],r[2]) for r in X8a['m8']}
 def projtot(rid):return round(sum(PJ.get(p,[0])[0] for p in m8[rid][1]),2)
 NF={}
@@ -91,7 +86,7 @@ out=(f'const G={DONE};\n// [w,l,top5W,pf,pfRk,pfAvg,pa,paRk,paAvg,oppRk,apW,apL,
 open(P+'data_block.js','w',encoding='utf-8').write(out)
 json.dump(D['EFF'],open(P+'eff.json','w'),indent=0)
 # ---------- 3. position totals (pos.csv) and skill efficiency from hist
-rows=list(csv.DictReader(open(P+'pos/pos.csv',encoding='utf-8')));PO=['QB','RB','WR','TE','K','DEF']
+rows=list(csv.DictReader(open(P+'pos/pos.csv',encoding='utf-8')));PO=list(lg.POS)
 agg={};stc={};sk={}
 ngs={};_DET=json.load(open(P+'stats_detail.json')) if _dt_os.path.exists(P+'stats_detail.json') else {}  # per-start averages leave out starts with no game
 for w in range(1,DONE+1):
@@ -107,12 +102,11 @@ for w in range(1,DONE+1):
             a=agg.setdefault(rid,{});a[q['pos']]=a.get(q['pos'],0)+q['pts'];c=stc.setdefault(rid,{});c[q['pos']]=c.get(q['pos'],0)+1
             if not q['opp'] or (q['pts']==0 and not _DET.get(str(w),{}).get(q['pid'],{}).get('gp',1)):  # no game: bye week (or inactive)
                 n_=ngs.setdefault(rid,{});n_[q['pos']]=n_.get(q['pos'],0)+1
-        F={'RB','WR','TE'};pool=[q for q in st_+bn_ if q['pos'] in F]
-        by={}
-        for q in pool:by.setdefault(q['pos'],[]).append(q['pts'])
-        for k in by:by[k].sort(reverse=True)
-        best=sum(by.get('RB',[])[:2])+sum(by.get('WR',[])[:2])+sum(by.get('TE',[])[:1])+max(by.get('RB',[])[2:3]+by.get('WR',[])[2:3]+by.get('TE',[])[1:2]+[0])
-        actv=sum(q['pts'] for q in st_ if q['pos'] in F)
+        F=set(lg.SKILL);pool=[q for q in st_+bn_ if q['pos'] in F]
+        best=lg.optsum(pool,slots=lg.SKILL_SLOTS)
+        # skill starters actually used: RB/WR/TE in the lineup, less one that sits in a SUPER_FLEX spot while a QB doesn't
+        sk_st=sorted([q['pts'] for q in st_ if q['pos'] in F],reverse=True)[:len(lg.SKILL_SLOTS)]
+        actv=sum(sk_st)
         e=sk.setdefault(rid,{'act':0,'opt':0,'hits':0,'wk':[]});e['act']+=actv;e['opt']+=best;e['wk'].append(round(best-actv,2));e['hits']+=abs(best-actv)<0.005
 T=D['T']
 for r in rows:
@@ -125,7 +119,7 @@ for key in ['total']+PO+['avg_'+p for p in PO]:
     for r in rows:r[(key if key=='total' else key)+'_rank']=1+sum(float(o[key])>float(r[key])+1e-9 for o in rows)
 with open(P+'pos/pos.csv','w',encoding='utf-8',newline='') as f:
     w_=csv.DictWriter(f,fieldnames=list(rows[0].keys()));w_.writeheader();w_.writerows(rows)
-SK={'_note':f'Weeks 1-{DONE}, Sleeper matchups. act = points from the 6 RB/WR/TE/FLEX starters; opt = best legal 2 RB + 2 WR + 1 TE + 1 FLEX from the roster; lost = opt - act; hits = weeks with nothing lost; wk = per-week lost'}
+SK={'_note':f'Weeks 1-{DONE}, Sleeper matchups. act = points from the RB/WR/TE/FLEX starters; opt = best legal RB/WR/TE/FLEX group from the roster; lost = opt - act; hits = weeks with nothing lost; wk = per-week lost'}
 for rid,e in sk.items():SK[season.RN[int(rid)]]={'act':round(e['act'],2),'opt':round(e['opt'],2),'hits':e['hits'],'wk':e['wk']}
 json.dump(SK,open(P+'skill_opt.json','w'))
 # ---------- 4. rosters, ranks, per-game ranks (weeks 1..DONE, league scoring)
