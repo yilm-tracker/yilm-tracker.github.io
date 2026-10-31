@@ -1,0 +1,535 @@
+/* ---- readability pass (Oct 28): supporting text up ~1-2px; headline sizes unchanged ---- */
+/* 1. weekly points strip: bigger totals and week numbers; unit lives in the legend */
+.wkc .wv small{display:none}
+.wkc .wv{font-size:11px!important;height:13px;margin-bottom:1px}
+.wkc>span:last-child{font-size:11px}
+@media (min-width:500px){.wkc .wv{font-size:12px!important;height:14px}.wkc>span:last-child{font-size:12px}}
+@media (max-width:419px){.wkc .wv{font-size:10px!important}}
+@media (max-width:374px){.wkc .wv{font-size:9.5px!important}.wkc>span:last-child{font-size:10.5px}}
+/* 2. team card stat lines */
+.sb .stx:not(.spl){height:18px!important}
+.sb .stx .lb,.st .lb{font-size:13.5px!important}
+.sb .stx .v,.sb .stx .pf,.st .v{font-size:13px!important}
+.sb .stx .pw{font-size:12.5px!important}
+.sb .ch,.st .ch,.hl .ch{font-size:11.5px!important}
+/* 3. dropped points: larger, grouped columns */
+.stx.spl .dpl{font-size:13.5px!important}
+.stx.spl .pu{font-size:12.5px!important}
+.dpg{grid-template-columns:repeat(6,minmax(0,46px))!important;column-gap:6px!important;justify-content:start}
+.dpc b{font-size:12px!important}
+.dpc span{font-size:15.5px!important}
+/* 5. small extras in the card */
+.hl{font-size:12px!important}.hl .lb{font-size:12px!important}
+.side .chl{font-size:12px!important}.side .cw{font-size:12.5px!important}
+/* 6. player rows (Rosters, Matchups, Compare, Playoffs) */
+.pq,.cn,.rr2>.pq{--sq:33.3px!important}.cn{--sqt:3.2px!important}
+.pqi>span{font-size:12.5px!important}.pqi>b{font-size:16.5px!important}
+.pq.l3 .pqi>span{font-size:11px!important}.pq.l3 .pqi>b{font-size:14.5px!important}
+.nfl{width:33px!important;height:17px!important;font-size:12px!important}
+.rn>b{font-size:15px!important}
+.rn small{font-size:13px!important}
+.cnm b{font-size:14.5px!important}
+.cnm b .pag{font-size:12.5px!important}
+.cnm small{font-size:12.5px!important}
+/* injury and bench tags: larger, higher contrast */
+.inj{font-size:12px!important;padding:1.5px 3.5px 3.5px!important;min-width:19px;box-sizing:border-box;text-align:center;border-radius:4px!important;letter-spacing:.03em}
+.inj.i-Q{background:rgba(244,196,81,.24)!important;color:#f4c451!important;box-shadow:inset 0 0 0 1px rgba(244,196,81,.55)}
+.inj.i-D,.inj.i-O,.inj.i-IR{background:rgba(255,93,115,.22)!important;color:#ff8a98!important;box-shadow:inset 0 0 0 1px rgba(255,93,115,.55)}
+.cn.swp .cnm b::after{font-size:11.5px!important;padding:1px 4px!important;border-radius:4px!important}
+.cnm b .inj,.rn>b .inj{margin-top:-2px;margin-bottom:-2px;transform:translateY(-1.5px)}
+@media (max-width:419px){.cnm b{font-size:14px!important}.cnm b .inj{transform:translateY(-.7px)}}
+@media (max-width:370px){.cnm b{font-size:13.5px!important}.cnm small{font-size:12px!important}.cnm b .inj{transform:translateY(-1.4px)}}
+@media (max-width:380px){.r{--stw:162px!important}}
+/* Compare pickers: full team name where it fits, short name on phones */
+.sv .svs{display:none}
+@media (max-width:440px){.sv .svf{display:none}.sv .svs{display:inline}}
+/* matchup rows: team mark beside the name, "vs OPP · kickoff" underneath */
+.cnm b .nfl.tm{flex:none;align-self:center;margin-top:-2px;margin-bottom:-2px;transform:translateY(-1.5px)}
+.cnm .gp .gsep{font-style:normal;margin:0 4px;color:var(--dim)}
+.cnm .gp .gwhen{color:var(--steel)}
+@media (max-width:419px){.cnm b .nfl.tm{transform:translateY(-.7px)}}
+@media (max-width:370px){.cnm b .nfl.tm{transform:translateY(-1.4px)}}
+.cnm b .nfl.tm{width:27px!important;height:16px!important;font-size:10.5px!important;letter-spacing:.02em}
+.cnm small{min-width:0;max-width:100%}
+.cnm small .gp{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:419px){.cnm small{font-size:12px!important}.cnm .gp .gsep{margin:0 3px}}
+.lu .cnm small{margin-top:6px}
+.cn,.cn .pq{--sq:33.6px!important}.cn .pq{align-self:center!important;margin-top:0!important;transform:translateY(-1.35px)}
+@media (max-width:419px){.cn,.cn .pq{--sq:31.8px!important}.cn .pq{transform:translateY(-1.05px)}}
+@media (max-width:370px){.cn,.cn .pq{--sq:32px!important}.cn .pq{transform:translateY(-1.45px)}}
+@media (max-width:370px){.cnm small{font-size:11.5px!important}.cnm .gp .gsep{margin:0 2px}}
+/* opponent logo in the game line ("@ [logo] · Mon 8:15 PM ET"): same 22x20 mark as the badge by the name (set per team in rebuild.py); negative margins keep the line height unchanged */
+.cnm .gp .gha{margin-right:4px}
+.cnm small .nfl.opp{display:inline-flex;vertical-align:middle;margin-top:-8px;margin-bottom:-8px;transform:none!important}
+.cnm small .gp{padding:4px 0;margin:-4px 0}
+/* name badge logo: centered on the name's text line (equal overshoot above and below); injury tag centered too; 3px between name and logo. Row heights unchanged (logo margin box stays 16px). */
+.cnm b{align-items:center!important;position:relative;top:.75px}
+.cnm b .nfl.tm{align-self:center;margin:-2px 0!important;transform:none!important}
+.cn.b .cnm b .nfl.tm{margin:-2px 0!important}
+.cnm b .inj{align-self:center;transform:none!important}
+/* opponent logo in the game line: centered on the kickoff text */
+.cnm small .nfl.opp{position:relative;top:-1.4px}
+/* ===== Matchup row scale: ONE knob. Change --rs on the next line (1 = original sizes, 1.15 = preview default, 1.2 = largest tested). ===== */
+.cr.lu{--rs:1.1}
+/* base sizes at rs=1 (per breakpoint, same as the original rules); everything below derives from --rs */
+.cr.lu{--rh:calc(1 + (var(--rs) - 1)*.5);--rc:calc(1 + (var(--rs) - 1)*.3);--nfs:14.5px;--gfs:12.5px;--sq0:33.6px;--cvf:16px;
+ margin-inline:calc((var(--rs) - 1)*-70px)}
+@media (max-width:419px){.cr.lu{--nfs:14px;--gfs:12px;--sq0:31.8px}}
+@media (max-width:370px){.cr.lu{--nfs:13.5px;--gfs:11.5px;--sq0:32px}}
+.cr.lu .cnm b{font-size:calc(var(--nfs)*var(--rs))!important}
+.cr.lu .cnm b .nfl.tm{width:calc(22px*var(--rh))!important;height:calc(20px*var(--rh))!important;margin-top:calc(-2px*var(--rh))!important;margin-bottom:calc(-2px*var(--rh))!important}
+.cr.lu .cnm small{font-size:calc(var(--gfs)*var(--rh))!important}
+.cr.lu .cnm small .nfl.opp{width:calc(22px*var(--rh))!important;height:calc(20px*var(--rh))!important;margin-top:calc(-8px*var(--rh));margin-bottom:calc(-8px*var(--rh));top:calc(-1.4px*var(--rh))}
+.cr.lu .cnm small .gp{padding-block:calc(4px*var(--rh));margin-block:calc(-4px*var(--rh))}
+.cr.lu .cnm b .inj{font-size:calc(12px*var(--rh))!important;padding:calc(1.5px*var(--rs)) calc(3.5px*var(--rs)) calc(3.5px*var(--rs))!important;min-width:calc(19px*var(--rs))}
+.cr.lu .cn,.cr.lu .cn .pq{--sq:calc(var(--sq0)*var(--rs))!important}
+.cr.lu .cn{gap:calc(4px - (var(--rs) - 1)*6px)!important}
+.cr.lu .pqi>span{font-size:calc(12.5px*var(--rc))!important}.cr.lu .pqi>b{font-size:calc(16.5px*var(--rc))!important}
+.cr.lu .pq.l3 .pqi>span{font-size:calc(11px*var(--rc))!important}.cr.lu .pq.l3 .pqi>b{font-size:calc(14.5px*var(--rc))!important}
+.cr.lu .cv{font-size:calc(var(--cvf)*var(--rh))!important}
+.cr.lu .cv.a{padding-right:calc(5px - (var(--rs) - 1)*10px)}.cr.lu .cv.b{padding-left:calc(5px - (var(--rs) - 1)*10px)}
+/* projected (grey) numbers: more contrast (was #6b7385, ~4:1 on the dark tile; now ~6.5:1) */
+.cr.lu .cv:not(.act){color:#8f98ab}
+.cr.lu.wa .cv.a:not(.act),.cr.lu.wb .cv.b:not(.act){color:var(--label)}
+/* ---- breathing room (Oct 28 pm): tile/name gap, name/badge/tag gaps, larger points, bolder game line ---- */
+.cr.lu .cn{gap:6px!important}
+.cr.lu .cnm b{gap:4px!important}
+.cr.lu .cnm b .inj{margin-left:2px}
+.cr.lu .cnm small{margin-top:7px}
+.cr.lu .cv{font-size:calc(17.5px*var(--rh))!important}
+.cnm .gp .gha,.cnm .gp .gwhen{font-weight:600;color:var(--label)}
+.cnm .gp .gsep{margin:0 3.5px!important}
+.cnm .gp .gha{margin-right:4px}
+.cr.lu{margin-inline:-10.5px}
+@media (max-width:419px){.cr.lu .cnm small{font-size:calc(11.4px*var(--rh))!important}.cnm .gp .gsep{margin:0 2.5px!important}.cnm .gp .gha{margin-right:2.5px}}
+/* ===== position bands (Oct 28): full-height position strip on each player row + subtle row frame =====
+   Applies to Matchups / Playoffs / Custom (.cr.lu), Compare (.cr) and Rosters (.rr2). The band replaces the square tile,
+   so there is no tile-to-text alignment to maintain. */
+.cr,.rr2{--bw:34px;--bg2:7px;position:relative;background:var(--deck-2);border:1px solid var(--hair)!important;border-radius:9px;margin-block:0 5px!important;min-height:54px;box-sizing:border-box;overflow:hidden}
+.cr{padding:8px calc(var(--bw) + var(--bg2)) 8px calc(var(--bw) + var(--bg2))!important}
+.rr2{padding:8px 10px 8px calc(var(--bw) + var(--bg2) + 2px)!important;grid-template-columns:minmax(0,1fr) 46px 36px!important;column-gap:8px!important}
+.cr .cn>.pq,.rr2>.pq{position:absolute!important;top:0;bottom:0;width:var(--bw)!important;height:auto!important;margin:0!important;transform:none!important;align-self:auto!important;
+  border-radius:0;background:color-mix(in srgb,var(--pc) 82%,#0b0e14);display:flex;align-items:center;justify-content:center}
+.cr .cn.a>.pq,.rr2>.pq{left:0;box-shadow:inset -1px 0 0 rgba(0,0,0,.25)}
+.cr .cn.b>.pq{right:0;box-shadow:inset 1px 0 0 rgba(0,0,0,.25)}
+.cr .pq .pqi,.rr2 .pq .pqi{flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.cr .pq .pqi>span,.rr2 .pq .pqi>span{font-size:12px!important;letter-spacing:.04em!important;opacity:.85}
+.cr .pq .pqi>b,.rr2 .pq .pqi>b{font-size:19px!important;margin-left:0!important}
+.cr .pq.l3 .pqi>b,.rr2 .pq.l3 .pqi>b{font-size:16px!important}
+.cr .cn{gap:0!important}
+/* matchup rows keep their slightly wider frame */
+.cr.lu{margin-inline:-10.5px}
+.cr.lu .cnm b .inj{position:relative;top:-1.6px}
+/* ---- Matchups / Playoffs readability (Oct 28 pm) ---- */
+.muc label span{font-size:14px!important}
+.pane-mu details summary{font-size:15.5px!important}
+.mcmp .mcr>span{font-size:16px!important}
+.mcmp .mcr>em{font-size:13.5px!important}
+.mbr{font-size:14px!important}
+.mch span{font-size:13px!important}
+.lsh{font-size:16px!important}
+.lctl label{font-size:14px!important}
+.lnote{font-size:12.5px!important}
+.ltot small{font-size:14px!important}
+.ltot em,.ltot2 em{font-size:13.5px!important}
+.ltot2>span{font-size:14.5px!important}
+/* band position label bigger */
+.cr .pq .pqi>span,.rr2 .pq .pqi>span{font-size:14px!important;opacity:.9}
+@media (max-width:419px){.muc label span{font-size:12.5px!important}}@media (max-width:370px){.muc label span{font-size:11.5px!important}}
+/* Rosters: team mark beside the name (logo when pipeline/logos has one), GP line underneath */
+.rn>b .nfl.tm{flex:none;align-self:center;margin:-2px 0;transform:translateY(-1.1px)}
+.rn>b{align-items:center!important}
+.rn small .gp{margin-left:0!important}
+/* ---- Oct 28 pm: glossary behind a Hide / Show switch (hidden by default); explainer notes removed ---- */
+.key{display:none!important}
+#gl-s:checked~.pane .key{display:grid!important}
+.glw{flex-basis:100%;display:flex;align-items:center;gap:12px;margin-top:24px}
+.glw>span{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--label)}
+.glc label{font-size:14px}
+#gl-h:checked~.pane .glc label[for="gl-h"],#gl-s:checked~.pane .glc label[for="gl-s"]{background:var(--chalk);color:var(--ink)}
+.lnote{display:none!important}
+.lctl{margin-bottom:14px}
+/* points row: bigger totals and label */
+.ltot small{font-size:16px!important;color:var(--label)!important}
+.ltot em,.ltot2 em{font-size:15px!important;color:var(--label)}
+.ltot em .pj,.ltot2 em .pj{font-size:13.5px!important;color:var(--steel)!important}
+.ltot2>span{font-size:16px!important}
+/* Rosters: header line and column heads larger, brighter; column heads aligned to the framed rows */
+.rtop>span{font-size:15px!important;color:var(--label)!important}
+.rtop>span b{font-size:18.5px!important}
+.rcol{grid-template-columns:minmax(0,1fr) 46px 36px!important;column-gap:8px!important;padding:10px 11px 4px calc(var(--bw,34px) + 7px + 3px)!important;--bw:34px}
+.rcol span{font-size:14px!important;color:var(--label)!important}
+.rcol span:first-child{grid-column:1!important}
+#rs-g:checked~.rop .rcol span:nth-child(2){color:var(--dim)!important}
+#rs-g:checked~.rop .rcol span:nth-child(3){color:var(--chalk)!important}
+/* ---- Oct 28 evening ---- */
+/* stop iOS Safari text autosizing (it enlarged some paragraphs when the glossary opened) */
+html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!important}
+/* names: room for descenders (g, y, p) inside the ellipsis box */
+.cnm b>span,.nmx,.cnm b span{padding-block:.14em;margin-block:-.14em;line-height:1.1}
+/* Rosters: position group totals larger */
+.rgh>b{font-size:17px!important;color:var(--chalk)!important}
+.rgh>b small{font-size:12px!important;color:var(--steel)!important}
+/* Costliest lineup calls: framed cards, week pill, team name, one framed delta; player points plain */
+.dcl2{background:var(--deck-2);border:1px solid var(--hair);border-radius:10px;padding:10px 12px 8px;margin:0 0 8px}
+.dcl2+.dcl2{border-top:1px solid var(--hair)!important}
+.dch2{display:flex!important;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--hair)}
+.dch2 .dwk{font-style:normal;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--label);background:var(--hair);border-radius:5px;padding:3px 7px 2px;flex:none}
+.dch2 .dtm{flex:1;min-width:0;font-size:15px!important;font-weight:600;color:var(--chalk)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dch2 .dsw{flex:none;display:inline-flex;align-items:baseline;gap:5px;padding:4px 9px 3px;border-radius:7px;background:var(--hair);box-shadow:inset 0 0 0 1px var(--line-strong)}
+.dch2 .dsw b{font-size:17px!important;color:var(--chalk)!important}
+.dch2 .dsw small{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--steel)}
+.dln2{display:grid!important;grid-template-columns:62px minmax(0,1fr) auto!important;align-items:center;column-gap:8px;padding:4px 0}
+.dln2 .dlb{font-size:12px!important}
+.dln2 .dnm b{font-size:15px}
+.dln2 em{font-size:15px!important;font-weight:600!important;opacity:.9}
+.dft{margin-top:6px}
+/* full team names: game chips become a 2-column grid (odd last chip spans both), names wrap instead of truncating */
+.mug{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important;margin:0 0 12px!important}
+.mug label:last-child:nth-child(odd){grid-column:1/-1}
+.mug label{padding:8px 6px!important}
+.mug label span{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;text-align:center;line-height:1.1;font-size:14px!important}
+@media (max-width:370px){.mug label span{font-size:13px!important}}
+.prd .prl b{white-space:normal;text-align:center;max-width:8.5em;line-height:1.1}
+/* Slate: To win row sits directly under Running total */
+.slc:has(+.sltw){padding-bottom:0!important}
+.sltw{padding:3px 0 8px!important}
+.sltw em{color:var(--steel)!important}
+/* Points columns run the full height of the row, like the position band: final = green/red, projected = neutral */
+.cr.lu .cv.act,.cr.lu .cv.pjc{align-self:stretch;margin-block:-8px;display:flex;align-items:stretch;justify-content:center!important;padding:0!important}
+.cr.lu .cv .fs{width:100%!important;height:auto!important;min-height:0!important;border-radius:0!important;gap:4px!important}
+.cr.lu .cv .fs.up{box-shadow:inset 1px 0 0 rgba(63,214,155,.38),inset -1px 0 0 rgba(63,214,155,.38)!important}
+.cr.lu .cv .fs.dn{box-shadow:inset 1px 0 0 rgba(255,93,115,.38),inset -1px 0 0 rgba(255,93,115,.38)!important}
+.cr.lu .cv .fs.pj{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;background:rgba(255,255,255,.035);box-shadow:inset 1px 0 0 var(--hair),inset -1px 0 0 var(--hair)}
+.cr.lu .cv .fs small{font-family:var(--display);font-weight:600;font-size:8.5px;letter-spacing:.1em;opacity:.75}
+.cr.lu .cv.pjc .fs small{color:var(--dim);opacity:1}
+.cr.lu{grid-template-areas:"na va vb nb" "sa va vb sb"!important}
+.cr.lu::after{top:0;bottom:0}
+.cr.lu .sln.sla{padding-right:5px!important}.cr.lu .sln.slb{padding-left:5px!important}
+/* stat lines: top-three scoring stats, brighter; each stat stays whole and wraps only at the separators */
+.cr.lu .sln{font-size:12px!important;color:var(--label)!important;line-height:1.3!important}
+.cr.lu .sln u{font-size:10px!important;color:var(--steel)!important;margin-left:2px}
+.cr.lu .sln .sit{white-space:nowrap}
+.cr.lu .sln .sdt{font-style:normal;color:var(--dim)}
+@media (max-width:419px){.cr.lu .sln{font-size:11.5px!important}.cr.lu .sln u{font-size:9.5px!important}}
+@media (max-width:370px){.cr.lu .sln{font-size:11px!important}.cr.lu .sln u{font-size:9px!important;margin-left:1px}}
+/* stats sit apart by spacing, no separator dots (a dot left hanging at a line end looked broken) */
+.cr.lu .sln{display:flex!important;flex-wrap:wrap;column-gap:8px;align-content:flex-start}
+.cr.lu .sln.slb{justify-content:flex-end}
+.sltw>span .dlt{margin:0!important}
+/* compact category stat lines: 'RU 14-67-1 • REC 7-24-1'; categories never split */
+.cr.lu .sln{column-gap:0!important}
+.cr.lu .sln u{margin:0 3px 0 0!important;letter-spacing:.04em}
+.cr.lu .sln .sdt{display:inline!important;font-style:normal;color:var(--dim);margin:0 6px}
+/* category dots: a dot sits between categories but is clipped away at a line edge, so a wrapped line never starts or ends on one */
+.cr.lu .sln .sdt{display:none!important}
+.cr.lu .sln .sit{position:relative}
+.cr.lu .sln.sla{margin-left:-15px;clip-path:inset(-4px -4px -4px 15px)}
+.cr.lu .sln.sla .sit{margin-left:15px}
+.cr.lu .sln.sla .sit::before{content:"•";position:absolute;left:-10.5px;color:var(--dim)}
+.cr.lu .sln.slb{margin-right:-15px;clip-path:inset(-4px 15px -4px -4px)}
+.cr.lu .sln.slb .sit{margin-right:15px}
+.cr.lu .sln.slb .sit::after{content:"•";position:absolute;right:-10.5px;color:var(--dim)}
+/* Points tiles cover the name + game lines only; the stat line runs the full half-width underneath, on one line */
+.cr.lu{grid-template-areas:"na va vb nb" "sa sa sb sb"!important;row-gap:6px!important}
+.cr.lu .cv.act,.cr.lu .cv.pjc{margin-block:-8px 0!important}
+.cr.lu:not(:has(.sln)) .cv.act,.cr.lu:not(:has(.sln)) .cv.pjc{margin-bottom:-8px!important}
+.cr.lu .sln{flex-wrap:nowrap!important;white-space:nowrap;min-height:0!important}
+.cr.lu .sln.sla{margin-left:-12px;clip-path:inset(-4px -4px -4px 12px)}.cr.lu .sln.sla .sit{margin-left:12px}.cr.lu .sln.sla .sit::before{left:-8.5px}
+.cr.lu .sln.slb{margin-right:-12px;clip-path:inset(-4px 12px -4px -4px)}.cr.lu .sln.slb .sit{margin-right:12px}.cr.lu .sln.slb .sit::after{right:-8.5px}
+.cr.lu .sln u{margin-right:2.5px!important}
+/* long stat lines step down in size so they stay on one line */
+/* fixed stat-line box so smaller type never changes the row height */
+.cr.lu .sln{height:16px;line-height:16px!important;align-items:baseline}
+/* close the tile's bottom edge when the stat line sits beneath it */
+.cr.lu:has(.sln) .cv .fs.up{box-shadow:inset 1px 0 0 rgba(63,214,155,.38),inset -1px 0 0 rgba(63,214,155,.38),inset 0 -1px 0 rgba(63,214,155,.38)!important;border-radius:0 0 4px 4px!important}
+.cr.lu:has(.sln) .cv .fs.dn{box-shadow:inset 1px 0 0 rgba(255,93,115,.38),inset -1px 0 0 rgba(255,93,115,.38),inset 0 -1px 0 rgba(255,93,115,.38)!important;border-radius:0 0 4px 4px!important}
+.cr.lu:has(.sln) .cv .fs.pj{box-shadow:inset 1px 0 0 var(--hair),inset -1px 0 0 var(--hair),inset 0 -1px 0 var(--hair);border-radius:0 0 4px 4px!important}
+
+.inj.i-FL{background:rgba(255,93,115,.22)!important;color:#ff8a98!important;box-shadow:inset 0 0 0 1px rgba(255,93,115,.55)}
+@media (max-width:419px){.cr.lu .sln u{letter-spacing:.01em;margin-right:2px!important}
+ .cr.lu .sln.sla{margin-left:-11px;clip-path:inset(-4px -4px -4px 11px)}.cr.lu .sln.sla .sit{margin-left:11px}.cr.lu .sln.sla .sit::before{left:-8px}
+ .cr.lu .sln.slb{margin-right:-11px;clip-path:inset(-4px 11px -4px -4px)}.cr.lu .sln.slb .sit{margin-right:11px}.cr.lu .sln.slb .sit::after{right:-8px}}
+@media (max-width:370px){.cr.lu .sln{font-size:10px!important}.cr.lu .sln u{font-size:8px!important}}
+/* position bands stop where the points tiles stop (stat line 16px + row gap 6px + padding 8px below), same rounded bottom */
+.cr.lu:has(.sln) .cn>.pq{bottom:30px!important;border-radius:0 0 4px 4px}
+/* rows without a stat line: no empty second grid row, so tiles reach the row's bottom edge */
+.cr.lu:not(:has(.sln)){row-gap:0!important}
+/* rows with a stat line: tiles and bands end level with the bottom of the opponent logo (4px below the game line) */
+.cr.lu:has(.sln) .cv.act,.cr.lu:has(.sln) .cv.pjc{margin-bottom:-4px!important}
+.cr.lu:has(.sln) .cn>.pq{bottom:26px!important}
+/* band corners: outer bottom corner follows the row's own curve, inner bottom corner matches the points tiles */
+.cr.lu:has(.sln) .cn.a>.pq{border-radius:0 0 4px 8px!important}
+.cr.lu:has(.sln) .cn.b>.pq{border-radius:0 0 8px 4px!important}
+/* centre the stat line in the space under the tiles (row height and band edge unchanged) */
+.cr.lu:has(.sln){padding-bottom:5px!important}
+.cr.lu .sln{margin-top:3px}
+/* lost-fumble flag: sits in the corner under the position band, level with the stat line */
+.cr.lu .flg{position:absolute;bottom:calc(5px + 8px);transform:translateY(50%);font-style:normal;font-family:var(--display);font-weight:700;font-size:10.5px;line-height:1;letter-spacing:.04em;
+  padding:2px 4px 2.5px;border-radius:3px;background:rgba(255,93,115,.22);color:#ff8a98;box-shadow:inset 0 0 0 1px rgba(255,93,115,.55)}
+.cr.lu .cn.a .flg{left:calc(var(--bw)/2);translate:-50% 0}
+.cr.lu .cn.b .flg{right:calc(var(--bw)/2);translate:50% 0}
+/* position bands anchor to the player cell (grid row 1), not the whole row, so extra rows below (stat line,
+   Detailed panel) never move them: top/bottom bleed through the row padding, left/right out over the band column */
+.cr.lu .cn{position:relative;align-self:stretch}
+.cr.lu .cn>.pq{top:-8px!important;bottom:-8px!important}
+.cr.lu:has(.sln) .cn>.pq{bottom:-4px!important}
+.cr.lu .cn.a>.pq{left:calc(-1*(var(--bw) + var(--bg2)))!important}
+.cr.lu .cn.b>.pq{right:calc(-1*(var(--bw) + var(--bg2)))!important;left:auto!important}
+.cr.lu .flg{bottom:-17px!important}
+.cr.lu .cn.a .flg{left:calc(var(--bw)/2 - var(--bw) - var(--bg2))!important}
+.cr.lu .cn.b .flg{right:calc(var(--bw)/2 - var(--bw) - var(--bg2))!important;left:auto!important}
+
+/* Lean / Detailed stats switch (Matchups) */
+#ld-l:checked~.mwx .ldw label[for="ld-l"],#ld-d:checked~.mwx .ldw label[for="ld-d"]{background:var(--chalk);color:var(--ink)}
+.sdx{display:none}
+#ld-d:checked~.mwx .cr.lu:has(.sdx){grid-template-areas:"na va vb nb" "sa sa sb sb" "xa xa xb xb"!important}
+#ld-d:checked~.mwx .sdx{display:flex;flex-direction:column;gap:4px;min-width:0;margin-top:4px;padding-top:7px;border-top:1px solid var(--hair);font-size:11.5px;line-height:1.25;color:var(--label);font-variant-numeric:tabular-nums}
+.sdxa{grid-area:xa;margin-right:4px}.sdxb{grid-area:xb;margin-left:4px;align-items:flex-end;text-align:right}
+.dxl{display:flex;align-items:baseline;gap:7px;max-width:100%}
+.sdxb .dxl{flex-direction:row-reverse}
+.dxl>u{flex:none;text-decoration:none;font-family:var(--display);font-weight:600;font-size:9.5px;letter-spacing:.08em;color:var(--dim)}
+.dxl>span{display:flex;flex-wrap:wrap;gap:1px 8px;min-width:0}
+.sdxb .dxl>span{justify-content:flex-end}
+.dxl b{font-weight:500;white-space:nowrap}
+.dxl b i{font-style:normal;font-family:var(--display);font-weight:600;font-size:9px;letter-spacing:.04em;color:var(--steel);margin-left:1.5px;text-transform:uppercase}
+.dxl b em{font-style:normal;font-family:var(--display);font-weight:600;font-size:9.5px;letter-spacing:.03em;color:var(--steel);margin-right:3px}
+/* Detailed panel: label column + values, both halves start on the same line */
+#ld-d:checked~.mwx .sdx{align-self:start}
+.dxl{display:grid!important;grid-template-columns:34px minmax(0,1fr);column-gap:6px}
+.sdxb .dxl{grid-template-columns:minmax(0,1fr) 34px;direction:ltr}
+.sdxb .dxl>u{order:2;text-align:right}.sdxb .dxl>span{order:1}
+.sdxb{align-items:stretch!important}
+.dxl>span{gap:1px 7px!important}
+/* lineup controls: a 2x2 grid of equal switches (Position/Slate, Actual/Optimal, Lean/Detailed, Pts / Gm) */
+#rk-t:checked~.mwx .lrw label[for="rk-t"],#rk-g:checked~.mwx .lrw label[for="rk-g"]{background:var(--chalk);color:var(--ink)}
+/* position band rank: season points rank by default, points-per-game rank when / Gm is on */
+.pq .pqi>b.rkg{display:none}
+#rk-g:checked~.mwx .pq .pqi>b.rkt{display:none}
+#rk-g:checked~.mwx .pq .pqi>b.rkg{display:block}
+.cr .pq .pqi>b.b3,.rr2 .pq .pqi>b.b3{font-size:16px!important}
+/* lineup switches: compact, titled from the middle (ORDER | LINEUP / STATS | RANK); columns line up across rows */
+.lgrid{display:grid!important;grid-template-columns:max-content minmax(max-content,1fr) minmax(max-content,1fr) max-content;align-items:center;gap:8px 7px!important}
+.lgrid .pseg{display:grid;grid-auto-flow:column;grid-auto-columns:auto;justify-self:stretch}
+.lgrid .pseg label{text-align:center;padding-inline:8px!important;font-size:12.5px!important}
+.lgrid .lt{font-style:normal;font-family:var(--display);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);white-space:nowrap}
+.lgrid .lt.ltr{text-align:right}
+@media (max-width:419px){.lgrid{column-gap:5px!important}.lgrid .pseg label{padding-inline:6.5px!important;font-size:12px!important}.lgrid .lt{font-size:9.5px;letter-spacing:.08em}}
+@media (max-width:370px){.lgrid .pseg label{padding-inline:4.5px!important;font-size:11px!important}.lgrid .lt{font-size:8.5px;letter-spacing:.04em}}
+/* Detailed values: a dot between items, clipped away at a line edge (same trick as the Lean stat line) */
+.dxl>span{column-gap:0!important}
+.dxl b{position:relative}
+.sdxa .dxl>span{margin-left:-11px;clip-path:inset(-4px -4px -4px 11px)}
+.sdxa .dxl b{margin-left:11px}
+.sdxa .dxl b::before{content:"·";position:absolute;left:-8px;color:var(--dim);font-weight:700}
+.sdxb .dxl>span{margin-right:-11px;clip-path:inset(-4px 11px -4px -4px)}
+.sdxb .dxl b{margin-right:11px}
+.sdxb .dxl b::after{content:"·";position:absolute;right:-8px;color:var(--dim);font-weight:700}
+.dxl b{color:var(--chalk)}
+.dxl b.dch s{text-decoration:none;color:var(--dim);margin:0 2px;font-weight:500}
+.dxl b.dch{white-space:normal}.dxl b.dch>span{white-space:nowrap}
+.dxl b.dch{display:block!important;min-width:0;white-space:normal!important}.sdxb .dxl b.dch{text-align:right}.dxl b.dch s{margin:0 1px!important}
+/* Detailed panel colours: every number white; line titles take the matching position-tile colour */
+.dxl b,.dxl b.dch,.dxl b.dch span{color:#fff!important}
+.dx-pass>u{color:#f7739c!important}.dx-rush>u{color:#3ddcc1!important}.dx-rec>u{color:#5ec6f4!important}
+.dx-xp>u,.dx-fg>u{color:#c491ff!important}.dx-def>u,.dx-allow>u{color:#c98a72!important}
+.dx-pts>u{color:var(--label)!important}
+.ptnote{display:none;margin:8px 2px 0;font-size:12px;color:var(--steel)}#pm-start:checked~.ptnote{display:block}
+/* ===== Tabs: 3 per row on top, Playoffs + Team Hub sharing the last row ===== */
+.tabs{grid-template-columns:repeat(6,1fr)!important}
+.tabs label{grid-column:span 2}
+.tabs label.tpo{grid-column:span 3!important}
+/* ===== Team Hub ===== */
+.thx0>.posh{margin-bottom:10px}
+.thc0{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.thc0 label{display:flex;align-items:center;justify-content:center;text-align:center;min-height:36px;padding:6px 6px;border-radius:7px;border:1px solid var(--hair);background:var(--ink);cursor:pointer;
+  font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:uppercase;color:var(--steel);line-height:1.1}
+.thctl{margin:0 0 4px!important}
+#thv-n:checked~.thctl label[for="thv-n"],#thv-s:checked~.thctl label[for="thv-s"],#thv-r:checked~.thctl label[for="thv-r"],#thv-h:checked~.thctl label[for="thv-h"],
+#thk-t:checked~.thpg label[for="thk-t"],#thk-g:checked~.thpg label[for="thk-g"]{background:var(--chalk);color:var(--ink)}
+.thpg{display:none}.thv{display:none}
+#thv-n:checked~.thpg .thv-n,#thv-s:checked~.thpg .thv-s,#thv-r:checked~.thpg .thv-r,#thv-h:checked~.thpg .thv-h{display:block}
+#thk-g:checked~.thpg .pq .pqi>b.rkt{display:none}#thk-g:checked~.thpg .pq .pqi>b.rkg{display:block}
+.thh{display:flex;flex-direction:column;gap:3px;margin:14px 0 12px}
+.thn{font-family:var(--display);font-weight:700;font-size:30px;line-height:1.05;letter-spacing:.02em;text-transform:uppercase;color:var(--chalk)}
+.tho{font-size:13px;color:var(--steel)}
+.thbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.thb{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px 2px;border-radius:5px}
+.thb.t1{color:#f4c451;background:rgba(244,196,81,.14);box-shadow:inset 0 0 0 1px rgba(244,196,81,.45)}
+.thb.t2{color:var(--label);background:rgba(201,210,227,.08);box-shadow:inset 0 0 0 1px rgba(201,210,227,.3)}
+.tht{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.tht>span{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:9px 10px 10px;background:var(--deck-2);border:1px solid var(--hair);border-radius:9px;min-width:0}
+.tht em,.thc em{font-style:normal;font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.tht b{font-family:var(--display);font-weight:700;font-size:23px;line-height:1;color:var(--chalk);font-variant-numeric:tabular-nums}
+.tht small{font-size:11px;line-height:1.2;color:var(--steel)}
+.tht .ch{margin-left:0}
+.tht4{margin-bottom:8px}.tht3{margin-bottom:6px}
+.ths{margin-top:20px}
+.thsh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px;white-space:nowrap}
+.thsh small{font-family:var(--body);font-weight:500;font-size:11px;letter-spacing:0;text-transform:none;color:var(--steel);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* framed rows, display font for every number */
+.thw,.thy,.thx:not(.thxh){display:grid;align-items:center;gap:8px;padding:8px 10px;margin-bottom:5px;background:var(--deck-2);border:1px solid var(--hair);border-radius:9px;font-size:14px}
+.thw{grid-template-columns:22px 30px minmax(0,1fr) auto 34px}
+.thw .xwk,.thy .xyr{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.02em;color:var(--steel)}
+.thw .xres{font-family:var(--display);font-weight:700;font-size:13px;text-align:center;border-radius:4px;padding:2px 0 1px;letter-spacing:.04em}
+.thw .xres.w{color:var(--win);background:var(--win-bg)}.thw .xres.l{color:var(--loss);background:var(--loss-bg)}
+.thw .xres.u{font-size:9.5px;letter-spacing:.06em;color:var(--label);background:transparent}
+.thw .xop{color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thw .xsc{font-family:var(--display);font-weight:600;font-size:16px;color:var(--steel);font-variant-numeric:tabular-nums;white-space:nowrap}.thw .xsc b{color:var(--chalk);font-weight:700}.thw .xsc i{font-style:normal;margin:0 2px;color:var(--dim)}
+.thw .ch{justify-self:end;margin:0}
+.thw.thf{grid-template-columns:22px 30px minmax(0,1fr) 56px 40px;background:var(--ink)}
+.thw.thf.nx{border-color:#3a4254}
+.thw .xbar{height:6px;border-radius:3px;background:var(--hair);overflow:hidden}.thw .xbar i{display:block;height:100%;border-radius:3px}
+.thw .xbar.xg i{background:var(--win)}.thw .xbar.xr i{background:var(--loss)}
+.thw .xpct{text-align:right;font-family:var(--display);font-weight:700;font-size:16px;color:var(--chalk);font-variant-numeric:tabular-nums}
+.thc{display:flex;flex-direction:column;gap:6px;padding:10px;background:var(--deck-2);border:1px solid var(--hair);border-radius:9px;font-size:14px;color:var(--label)}
+.thc .cc{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.thc .cc b{color:var(--chalk);font-weight:600}
+.thc .cc .v{font-family:var(--display);font-weight:700;font-size:17px;font-variant-numeric:tabular-nums}.thc .v.dn{color:var(--loss)}.thc .v.up{color:var(--win)}
+.thc .cc.sw{padding-top:6px;border-top:1px solid var(--hair)}.thc .cc.sw .v{color:var(--chalk)}
+.thp{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.thp>span{display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 2px;background:var(--deck-2);border:1px solid var(--hair);border-radius:9px}
+.thp b{font-family:var(--display);font-weight:700;font-size:18px;color:var(--chalk);font-variant-numeric:tabular-nums}
+.thp .ch{margin:0}
+@media (max-width:400px){.thp{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.thrc{margin-bottom:6px}
+/* draft capital grid: years down, rounds across */
+.thdg{display:grid;grid-template-columns:40px repeat(4,minmax(0,1fr));gap:5px}
+.thdg .dh{text-align:center;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.1em;color:var(--dim)}
+.thdg .dy{align-self:center;font-family:var(--display);font-weight:700;font-size:15px;color:var(--label)}
+.thdg .dc{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:52px;padding:6px 3px;background:var(--deck-2);border:1px solid var(--hair);border-radius:8px;text-align:center;min-width:0}
+.thdg .dc b{font-family:var(--display);font-weight:700;font-size:20px;line-height:1;color:var(--chalk)}
+.thdg .dc.r1:not(.none){box-shadow:inset 0 0 0 1px rgba(244,196,81,.5)}.thdg .dc.r1:not(.none) b{color:#f4c451}
+.thdg .dc.none{background:transparent}.thdg .dc.none b{color:var(--dim)}
+.thdg .dc i{font-style:normal;font-size:10.5px;line-height:1.15;color:var(--steel);overflow-wrap:anywhere}
+.thdg .dc i.in{color:var(--label)}.thdg .dc i.out{color:var(--dim);text-decoration:line-through;text-decoration-color:rgba(98,107,124,.6)}
+/* history */
+.thy{grid-template-columns:44px 54px minmax(0,1fr) 30px 96px}
+.thy b,.thy .xpf,.thy .xsd{font-family:var(--display);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums}
+.thy b{color:var(--chalk)}.thy .xpf{color:var(--steel)}.thy .xsd{color:var(--steel);text-align:center}
+.thy .xfn{justify-self:end;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px 2px;border-radius:5px;color:var(--steel)}
+.xfn.f1{color:#f4c451;background:rgba(244,196,81,.14);box-shadow:inset 0 0 0 1px rgba(244,196,81,.45)}
+.xfn.f2{color:var(--chalk);background:rgba(201,210,227,.1);box-shadow:inset 0 0 0 1px rgba(201,210,227,.35)}
+.xfn.f3,.xfn.f4,.xfn.f5{color:var(--label);box-shadow:inset 0 0 0 1px var(--hair)}
+.xfn.f6{color:var(--dim)}
+.xfn.f0{color:var(--steel);box-shadow:inset 0 0 0 1px var(--hair)}
+.thy.thyh,.thx.thxh{display:grid;padding:0 11px 5px;margin:0;background:none;border:0}
+.thy.thyh>*,.thx.thxh>*{font-family:var(--display)!important;font-weight:600!important;font-size:11px!important;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)!important;background:none!important;box-shadow:none!important;padding:0!important}
+.thy.thyh{grid-template-columns:44px 54px minmax(0,1fr) 30px 96px;gap:8px}.thy.thyh .xfn{justify-self:center}
+.thy.now{background:var(--ink)}
+/* head-to-head table */
+.thx:not(.thxh),.thx.thxh{grid-template-columns:minmax(0,1fr) 42px 30px 122px;gap:8px;align-items:center}
+.thx .xop{color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thx b{font-family:var(--display);font-weight:700;font-size:17px;color:var(--chalk);text-align:right;font-variant-numeric:tabular-nums}
+.thx b.up{color:var(--win)}.thx b.dn{color:var(--loss)}
+.thx .xpo{font-family:var(--display);font-weight:600;font-size:15px;color:var(--steel);text-align:center}
+.thx .xls{font-family:var(--display);font-weight:600;font-size:14px;color:var(--steel);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.thx .xls i{font-style:normal}.thx .xls i.w{color:var(--win)}.thx .xls i.l{color:var(--loss)}
+@media (max-width:419px){.thw,.thy,.thx{font-size:13.5px}.thx:not(.thxh),.thx.thxh{grid-template-columns:minmax(0,1fr) 38px 26px 116px;gap:6px}.thw{gap:6px;padding-inline:8px}.thc0 label{font-size:13px}}
+.thx .xls small{font-size:12px;color:var(--dim);margin-right:2px}.thy .xfn{justify-self:center}
+@media (max-width:419px){.thx .xop{white-space:normal;line-height:1.15}}
+/* Team Hub v3 */
+.thx0>.posh{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tdd{flex:0 1 auto;min-width:0}
+.tdd summary{padding:7px 11px;gap:8px;border-radius:9px;font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--chalk);max-width:240px}
+.tdd .ddm{left:auto;right:0;min-width:230px;z-index:30}
+.tdd .ddm label{font-family:var(--display);font-weight:700;font-size:14.5px;letter-spacing:.05em;text-transform:uppercase}
+.tdd .ddm label i{width:18px;text-align:right;margin-right:4px}
+.thnr{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px}
+.thnr .rat{flex:none}
+.thw .xbar.xn i{background:var(--steel)}
+.thp>span{padding:0 0 9px!important;overflow:hidden}
+.thp>span>i{align-self:stretch;display:block;text-align:center;font-style:normal;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.06em;padding:4px 0 3px;
+  background:color-mix(in srgb,var(--pc) 82%,#0b0e14);color:#0f1218}
+.tha{display:flex;align-items:baseline;gap:10px;padding:9px 11px;margin-bottom:5px;background:var(--deck-2);border:1px solid var(--hair);border-radius:9px;font-size:14px;line-height:1.35;color:var(--label)}
+.tha>i{flex:none;width:7px;height:7px;border-radius:50%;transform:translateY(-1px)}
+.tha.up>i{background:var(--win)}.tha.dn>i{background:var(--loss)}
+.thx:not(.thxh),.thx.thxh{grid-template-columns:minmax(0,1fr) 46px 34px!important;row-gap:3px!important}
+.thx .xls{grid-column:1 / -1;text-align:left!important;font-family:var(--body)!important;font-weight:500!important;font-size:12.5px!important;color:var(--steel)!important;white-space:normal!important}
+.thx .xls .sep{font-style:normal;color:var(--dim);margin:0 6px}
+.thx .xls i.w,.thx .xls i.l{font-weight:700}
+.thx .xop{white-space:nowrap!important}
+.thp .ch{background:var(--hair)!important;color:var(--steel)!important;box-shadow:none!important}
+.thp .ch.g{background:var(--win-bg)!important;color:var(--win)!important}.thp .ch.b{background:var(--loss-bg)!important;color:var(--loss)!important}
+.thp .ch.gold{background:rgba(244,196,81,.16)!important;color:#f4c451!important;box-shadow:inset 0 0 0 1px rgba(244,196,81,.45)!important}
+.thp>span>.ch{align-self:center!important;width:auto!important;min-width:30px}
+.tdd summary .sv{color:var(--chalk)}
+/* ===== Team Hub charts ===== */
+.thkg{display:grid;grid-template-columns:1fr;gap:10px}
+.thk{background:var(--deck);border:1px solid var(--hair);border-radius:12px;padding:12px 12px 10px;min-width:0}
+.thkh{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.thkh b{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--label)}
+.thkh small{font-size:11.5px;color:var(--steel)}
+.thsvg{display:block;width:100%;height:auto;overflow:visible;font-family:var(--body)}
+.thsvg .gl{stroke:#262c38;stroke-width:1}
+.thsvg .zl{stroke:#3a4254;stroke-width:1}
+.thsvg .avg{stroke:#626b7c;stroke-width:1}
+.thsvg .ax{fill:#9aa3b5;font-size:10.5px;font-variant-numeric:tabular-nums}
+.thsvg .axt{fill:#626b7c;font-size:10px;letter-spacing:.04em}
+.thsvg .qd{fill:#626b7c;font-size:9.5px}
+.thsvg .dl{fill:#eef0f4;font-size:11.5px;font-weight:600}
+.thsvg .dv{fill:#eef0f4;font-family:var(--display);font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.thsvg .dvs{fill:#c9d2e3;font-family:var(--display);font-weight:600;font-size:11.5px;font-variant-numeric:tabular-nums}
+.thsvg .dl2{fill:#9aa3b5;font-family:var(--display);font-weight:700;font-size:13px}.thsvg .dl2.up{fill:#3fd69b}.thsvg .dl2.dn{fill:#ff5d73}
+.thsvg .yl{fill:#c9d2e3;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.04em}
+.thsvg .yl.sel{fill:#eef0f4}
+.thsvg .hv{fill:#eef0f4;font-family:var(--display);font-weight:700;font-size:12px;font-variant-numeric:tabular-nums}
+.thsvg .dot{stroke:var(--deck);stroke-width:2}
+.thsvg .ln0{fill:none;stroke:#3a4254;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.thsvg .ln1{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.thsvg .rng{fill:#262c38}
+.thsvg .med{stroke:#9aa3b5;stroke-width:2;stroke-linecap:round}
+.thsvg .medt{stroke:#eef0f4;stroke-width:2;stroke-linecap:round}
+.thsvg .lgavg{stroke:#eef0f4;stroke-width:2;stroke-linecap:round}
+.thsvg rect,.thsvg path,.thsvg circle{transition:opacity .15s}
+.thsvg rect:hover,.thsvg path:hover,.thsvg circle:hover{opacity:.8}
+.thlg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-size:11.5px;color:var(--steel)}
+.thlg span{display:inline-flex;align-items:center;gap:5px}
+.thlg i{display:inline-block;flex:none}
+.thlg i.sq{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.thlg i.dot{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.thlg i.tick{width:2px;height:12px;border-radius:1px;background:var(--c)}
+.thlg i.line{width:14px;height:2px;border-radius:1px;background:var(--c)}
+/* desktop: Team Hub opens up into a card grid */
+@media (min-width:960px){
+  .wrap:has(#tab-th:checked){max-width:1180px}
+  .thkg{grid-template-columns:1fr 1fr}
+  .thk.wide{grid-column:1 / -1}
+  .thk .thsvg{max-width:560px;margin:0 auto}
+  .thk.wide .thsvg{max-width:720px}
+}
+.thctl{margin:0 0 4px}.thctl .pseg{display:grid;grid-template-columns:repeat(4,1fr)}.thctl .pseg label{text-align:center}
+.thrk{display:inline-flex;align-items:center;gap:8px;margin-left:auto}.thrk .lt{font-style:normal;font-family:var(--display);font-weight:600;font-size:10.5px;letter-spacing:.1em;color:var(--dim)}
+.thrk .pseg label{font-size:12px!important;padding:4px 9px!important;letter-spacing:0;text-transform:none}
+.thsh:has(.thrk){align-items:center}
+.thsvg .yl.tn{font-family:var(--body);font-weight:500;font-size:11px;letter-spacing:0}
+.thx:not(.thxh),.thx.thxh{grid-template-columns:minmax(0,1fr) 46px 64px!important}
+/* in-page live scores */
+.lt-v{font-weight:inherit}
+.mlive{margin-left:auto;margin-right:10px;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--steel);white-space:nowrap}
+.mlive.on{color:#efd38a}.mlive.on::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#efd38a;margin-right:6px;vertical-align:1px;animation:mlp 1.6s ease-in-out infinite}
+@keyframes mlp{50%{opacity:.35}}
+.cr.lu .cv .fs.lv{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;background:rgba(232,193,90,.14);box-shadow:inset 1px 0 0 rgba(232,193,90,.45),inset -1px 0 0 rgba(232,193,90,.45)}
+.cr.lu:has(.sln) .cv .fs.lv{box-shadow:inset 1px 0 0 rgba(232,193,90,.45),inset -1px 0 0 rgba(232,193,90,.45),inset 0 -1px 0 rgba(232,193,90,.45)!important;border-radius:0 0 4px 4px!important}
+.cr.lu .cv .fs.lv small{color:#efd38a;opacity:1}
+/* detailed stat lines: category labels as two-tone tags (no frame), values baseline-aligned */
+.dxl>span{align-items:baseline!important}
+.dxl>u{display:inline-flex!important;align-items:center;justify-content:center;box-sizing:border-box;height:16px;padding:0 0 1px!important;border-radius:3px;font-size:10px!important;font-weight:700!important;letter-spacing:.05em!important;align-self:start;margin-top:0}
+.dx-pass>u{background:rgba(247,115,156,.15)}
+.dx-rush>u{background:rgba(61,220,193,.14)}
+.dx-rec>u{background:rgba(94,198,244,.15)}
+.dx-pts>u{background:rgba(238,240,244,.09);color:var(--chalk)!important}
+
+.cr.lu .flg.fk{background:rgba(238,240,244,.10);color:#c3cad8;box-shadow:inset 0 0 0 1px rgba(238,240,244,.32)}
+.cr.lu .flgs{position:absolute;bottom:-17px;display:flex;gap:2px;transform:translateY(50%)}
+.cr.lu .cn.a .flgs{left:calc(0px - var(--bw) - var(--bg2))}
+.cr.lu .cn.b .flgs{right:calc(0px - var(--bw) - var(--bg2));left:auto}
+.cr.lu .flgs .flg{padding:2px 2.5px 2.5px!important;font-size:10px!important;letter-spacing:.02em!important}
+.cr.lu .flgs .flg{position:static!important;transform:none!important;translate:none!important}
+
+/* points vs projection above the FINAL score */
+.cv .fs .fdf{display:block;height:10px;font-style:normal;font-family:var(--display);font-weight:700;font-size:10px;letter-spacing:.02em;line-height:1;font-variant-numeric:tabular-nums}
+.cv .fs.up .fdf{color:#7fdcb6}.cv .fs.dn .fdf{color:#ff8a9a}
+/* three lines (difference, score, label) spaced evenly, measured on the ink; the bottom border counts as the edge */
+.cr.lu .cv .fs{justify-content:space-evenly!important;gap:0!important;box-sizing:border-box}
+.cr.lu .cv .fs{padding-bottom:2.4px!important}.cr.lu:has(.sln) .cv .fs{padding-bottom:2.4px!important}
+.cr.lu .cv .fs .fdf{transform:translateY(.8px)}.cr.lu .cv .fs small{transform:translateY(-.5px)}

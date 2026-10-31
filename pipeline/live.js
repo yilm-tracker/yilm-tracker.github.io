@@ -1,0 +1,67 @@
+// In-page live scores for the Matchups tab (live site only; the download file has no script).
+// While the current week has games on, the page asks Sleeper directly (it allows any origin) and patches the
+// lineup rows in place: player points, FINAL / LIVE tile, game status, stat line, and each team's points total.
+// Polling: every 60 s while a game is in progress and the page is visible; every 10 min otherwise.
+// The hourly site rebuild still recomputes everything else (slate totals, optimal lineups, odds).
+(function(){
+  var box=document.getElementById('mlive');if(!box||!window.fetch)return;
+  var W=+box.dataset.w,L='1335450123487961088',Y='2026',A='https://api.sleeper.app/v1',S='https://api.sleeper.com';
+  var cells=document.querySelectorAll('.cv[data-p]');if(!cells.length)return;
+  var last=0,lastStats=0,stats={},timer=null;
+  function get(u){return fetch(u,{cache:'no-store'}).then(function(r){if(!r.ok)throw r.status;return r.json()})}
+  function f1(x){return (Math.round(x*10)/10).toFixed(1)}
+  function grp(lab,nums){return '<span class="sit"><u>'+lab+'</u> '+nums.map(function(n){return typeof n==='number'&&n<0?'(−'+(-n)+')':String(n)}).join('-')+'</span>'}
+  function statline(pos,s){  // same compact format as the build (statline.py)
+    if(!s)return '';var g=function(k){return Math.round(s[k]||0)},o=[],td=function(c,y,t){return t?[c,y,t]:[c,y]};
+    if(pos==='QB'){var pa=[g('pass_yd')];if(g('pass_int'))pa.push(g('pass_td'),g('pass_int'));else if(g('pass_td'))pa.push(g('pass_td'));o.push(grp('PA',pa));if(g('rush_att'))o.push(grp('RU',td(g('rush_att'),g('rush_yd'),g('rush_td'))))}
+    else if(pos==='RB'){if(g('rush_att'))o.push(grp('RU',td(g('rush_att'),g('rush_yd'),g('rush_td'))));if(g('rec'))o.push(grp('REC',td(g('rec'),g('rec_yd'),g('rec_td'))));if(!o.length)o.push(grp('RU',[0,0]))}
+    else if(pos==='WR'||pos==='TE'){if(g('rec')||g('rec_tgt'))o.push(grp('REC',td(g('rec'),g('rec_yd'),g('rec_td'))));if(g('rush_att'))o.push(grp('RU',td(g('rush_att'),g('rush_yd'),g('rush_td'))));if(!o.length)o.push(grp('REC',[0,0]))}
+    else if(pos==='K'){o.push(grp('FG',[g('fgm')+'/'+g('fga')]),grp('XP',[g('xpm')+'/'+g('xpa')]))}
+    else if(pos==='DEF'){o.push(grp('SK',[g('sack')]),grp('TO',[g('int')+g('fum_rec')]));if(g('def_td'))o.push(grp('TD',[g('def_td')]));o.push(grp('PA',[g('pts_allow')]))}
+    return o.join('<i class="sdt">•</i>');
+  }
+  function apply(st,mt){
+    var pp={},tot={},live=0,done=0;
+    mt.forEach(function(m){tot[m.roster_id]=m.points;for(var k in (m.players_points||{}))pp[k]=m.players_points[k]});
+    cells.forEach(function(el){
+      var pid=el.dataset.p,row=el.closest('.cr'),gp=row&&row.querySelector('.gp[data-t]');
+      var cn=el.previousElementSibling; while(cn&&!cn.classList.contains('cn'))cn=cn.previousElementSibling;
+      var t=cn&&cn.querySelector('.gp[data-t]');t=t?t.dataset.t:null;var s=t&&st[t];if(!s||s==='pre')return;
+      var v=pp[pid]||0,j=+el.dataset.j,fin=s==='post';
+      el.classList.remove('pjc');el.classList.add('act');
+      var df=Math.round((v-j)*10)/10;el.innerHTML='<span class="fs '+(fin?(v>=j?'up':'dn'):'lv')+'" title="Projected '+f1(j)+'">'+'<em class="fdf">'+(fin?(df>=0?'+':'\u2212')+Math.abs(df).toFixed(1):'')+'</em>'+f1(v)+'<small>'+(fin?'FINAL':'LIVE')+'</small></span>';
+      var gl=cn.querySelector('.gp[data-t]');
+      if(gl){var w=gl.querySelector('.gwhen'),sp=gl.querySelector('.gsep');
+        if(fin){if(w)w.remove();if(sp)sp.remove();gl.classList.add('fin')}else if(w)w.textContent='Live'}
+      var z=row.querySelector('[data-sp="'+pid+'"]');
+      if(z&&stats[pid]!==undefined){var h=statline(z.dataset.pos,stats[pid]);if(h){z.innerHTML=h;z.className='sln '+(z.className.indexOf('sla')>=0?'sla':'slb')}}
+    });
+    document.querySelectorAll('.ltot [data-r]').forEach(function(sp){var r=+sp.dataset.r,b=sp.querySelector('.lt-v');if(b&&tot[r]!==undefined&&tot[r]>0)b.textContent=f1(tot[r])});
+    document.querySelectorAll('.ltot').forEach(function(row){var s=row.querySelectorAll('[data-r]');if(s.length!==2)return;
+      var a=+s[0].querySelector('.lt-v').textContent||0,b=+s[1].querySelector('.lt-v').textContent||0;s[0].classList.toggle('up',a>b);s[1].classList.toggle('up',b>a)});
+    for(var k in st){if(st[k]==='in')live++;if(st[k]==='post')done++}
+    return live;
+  }
+  function tick(){
+    if(document.visibilityState!=='visible'){schedule(60000);return}
+    get(S+'/scores/nfl/regular/'+Y+'/'+W).then(function(sc){
+      var st={},soon=false,now=Date.now();
+      sc.forEach(function(x){var m=x.metadata||{},k=x.status==='in_game'?'in':x.status==='complete'?'post':'pre';
+        if(m.home_team)st[m.home_team]=k;if(m.away_team)st[m.away_team]=k;
+        var d=Date.parse(m.date_time||'');if(k==='pre'&&d&&d-now<15*60000&&d-now>-6*3600000)soon=true});
+      var anyIn=Object.keys(st).some(function(k){return st[k]==='in'});
+      if(!anyIn&&!soon&&last){schedule(600000);return}
+      var needStats=anyIn&&now-lastStats>110000||!lastStats;
+      return Promise.all([get(A+'/league/'+L+'/matchups/'+W),needStats?get(S+'/stats/nfl/'+Y+'/'+W+'?season_type=regular'):null]).then(function(r){
+        if(r[1]){stats={};r[1].forEach(function(x){if(x.stats&&(x.stats.gp||x.stats.gms_active||x.player&&x.player.position==='DEF'))stats[x.player_id]=x.stats});lastStats=now}
+        var n=apply(st,r[0]);last=now;
+        var d=new Date();box.hidden=false;box.classList.toggle('on',n>0);
+        box.textContent=(n>0?'Live · ':'Updated ')+d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+        schedule(n>0||soon?60000:600000);
+      });
+    }).catch(function(){schedule(120000)});
+  }
+  function schedule(ms){clearTimeout(timer);timer=setTimeout(tick,ms)}
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&Date.now()-last>55000)schedule(500)});
+  tick();
+})();

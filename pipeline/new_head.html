@@ -1,0 +1,1144 @@
+<meta charset="utf-8">
+<title>Official Dynasty League</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: masthead with season timeline, then a board split into Bye / Playoffs / Chasing.
+   Each team row: stats and two bars on the left, record / could-have / games back / last-5 chart in a right column. */
+:root{
+  --ink:#0f1218; --deck:#161a22; --deck-2:#1c212b; --chalk:#eef0f4; --label:#c9d2e3; --steel:#9aa3b5; --dim:#626b7c; --hair:#262c38;
+  --pylon:#ff7a1a; --sky:#7fa6ff;
+  --win:#3fd69b; --win-bg:rgba(63,214,155,.15); --loss:#ff5d73; --loss-bg:rgba(255,93,115,.15); --neutral-bar:#596278;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+  /* aliases used by the no-JS build */
+  --bg:var(--ink); --surface:var(--deck); --fg:var(--chalk); --muted:var(--steel); --faint:var(--dim); --line:var(--hair); --line-strong:#353c4b;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--ink);color:var(--chalk);font-family:var(--body);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding-block:24px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button{font:inherit;color:inherit}
+.num,.r{font-variant-numeric:tabular-nums}
+
+/* Masthead */
+header{display:grid;grid-template-columns:1fr auto;align-items:end;gap:2px 16px;margin-bottom:18px}
+.eyebrow{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--steel)}
+h1{grid-column:1;margin:0;font-family:var(--display);font-weight:700;font-size:58px;line-height:.9;text-transform:uppercase;letter-spacing:.01em}
+.clock{grid-column:2;grid-row:1 / span 2;text-align:right;font-family:var(--display);font-weight:700;text-transform:uppercase;line-height:1}
+.clock b{display:block;font-size:46px}
+.clock span{font-size:12px;letter-spacing:.12em;color:var(--steel)}
+.wk{grid-column:1 / -1;margin-top:6px;font-size:12.5px;color:var(--steel)}
+.season{grid-column:1 / -1;margin-top:12px}
+.weeks{display:grid;grid-template-columns:repeat(17,1fr);gap:3px}
+.weeks i{height:5px;border-radius:1px;background:var(--hair)}
+.weeks i.done{background:var(--chalk)}
+.weeks i.po{background:transparent;box-shadow:inset 0 0 0 1px var(--pylon)}
+.weeks-k{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--dim);margin-top:5px}
+
+/* Controls */
+.tg{display:grid;grid-template-columns:1fr 1fr;background:var(--deck);border:1px solid var(--hair);border-radius:10px;padding:3px;margin-bottom:10px}
+.tg button,.tg .tb{border:0;background:none;padding:8px 0;border-radius:7px;font:600 13px var(--body);color:var(--steel);cursor:pointer;text-align:center;box-shadow:none}
+.tg button[aria-pressed="true"],#vh:checked~.tg .tbh,#vm:checked~.tg .tbm{background:var(--chalk)!important;color:var(--ink)!important;box-shadow:none!important}
+.lensrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.lensrow .lt{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-right:2px}
+.lensrow label{border:1px solid var(--hair);background:var(--deck);border-radius:999px;padding:4px 11px;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--steel);cursor:pointer}
+.lr{position:fixed;top:50%;left:0;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
+#ls-luck:checked~.lensrow label[for="ls-luck"],#ls-ap:checked~.lensrow label[for="ls-ap"],#ls-pa:checked~.lensrow label[for="ls-pa"],#ls-opp:checked~.lensrow label[for="ls-opp"]{border-color:var(--chalk);color:var(--chalk)}
+.lr:focus-visible~.lensrow label{outline:0}
+.ldesc{font-size:12px;color:var(--steel);margin-bottom:12px}
+.ldesc span{display:none}
+#ls-luck:checked~.ldesc .d-luck,#ls-ap:checked~.ldesc .d-ap,#ls-pa:checked~.ldesc .d-pa,#ls-opp:checked~.ldesc .d-opp{display:inline}
+.hint{display:none}
+
+/* Board and tiers */
+.board{background:var(--deck);border:1px solid var(--hair);border-radius:16px;padding:0 14px 4px}
+.tier-bye{--tc:var(--pylon)} .tier-po{--tc:var(--sky)} .tier-out{--tc:var(--steel)}
+.tier{display:flex;align-items:baseline;gap:10px;padding:16px 0 6px;font-family:var(--display);text-transform:uppercase;position:relative}
+.tier:not(:first-child){margin-top:18px;padding-top:24px}
+.tier:not(:first-child)::before{content:"";position:absolute;left:-14px;right:-14px;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--tc) 18%,var(--tc) 82%,transparent);box-shadow:0 0 10px 0 var(--tc);opacity:.7}
+.tier b{font-weight:700;font-size:24px;letter-spacing:.06em;color:var(--tc);line-height:1}
+.tier span{font-weight:600;font-size:13px;letter-spacing:.1em;color:var(--dim)}
+.tier em{margin-left:auto;font-style:normal;font-weight:600;font-size:13px;letter-spacing:.1em;color:var(--label)}
+
+/* Team row */
+.r{display:grid;grid-template-columns:30px minmax(0,1fr) 84px 78px;column-gap:9px;row-gap:4px;align-items:center;padding:12px 0;border-top:1px solid var(--hair);cursor:pointer;-webkit-tap-highlight-color:transparent;position:relative}
+.tier+.r,.tier+.xp+.r{border-top:0}
+.r:focus-visible{outline:2px solid var(--sky);outline-offset:2px;border-radius:6px}
+.rk{grid-column:1;grid-row:1 / span 2;font-family:var(--display);font-weight:700;font-size:32px;line-height:1;text-align:center;color:var(--tc)}
+.tier-out .rk{color:var(--dim)}
+.r>.nm{grid-column:2 / 4;grid-row:1;align-self:end}
+.r>.hl{grid-column:2;grid-row:2;align-self:start}
+.st.s1a{grid-column:1 / 4;grid-row:3;margin-top:4px} .st.s1b{grid-column:1 / 4;grid-row:4} .st.s2{grid-row:5}
+.l5w{grid-column:3 / 5;grid-row:6;align-self:center;justify-self:end;margin-top:4px}
+.nm{display:flex;align-items:center;gap:5px;min-width:0;font-weight:600;font-size:15px}
+.nm .tn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.out .nm{color:var(--steel)}
+.mv{flex:none;font-size:11px;font-weight:500;display:inline-flex;align-items:center;gap:2px}
+.tri{width:8px;height:7px;fill:currentColor}
+.mv.up{color:var(--win)} .mv.dn{color:var(--loss)} .mv.eq{color:var(--dim)}
+.hl{display:block;font-size:11px;color:var(--steel);white-space:nowrap;min-width:0}
+.hl b{font-weight:500;color:var(--steel)}
+.lb{font-style:normal;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--label);margin-right:4px}
+.hl .lb{font-size:10.5px;margin-right:3px;color:var(--dim)}
+[hidden]{display:none!important}
+.st{grid-column:1 / -1;display:flex;align-items:baseline;flex-wrap:nowrap;white-space:nowrap;gap:0 9px;font-size:11.5px;color:var(--steel);min-width:0}
+
+.st .v,.st .pf{color:var(--chalk);font-weight:500}
+.st .pw{font-style:normal;color:var(--dim)}
+.out .st .v,.out .st .pf{opacity:.85}
+.ch{display:inline-block;padding:0 4px;border-radius:4px;font-size:10.5px;font-weight:500;margin-left:4px;background:var(--hair);color:var(--steel)}
+.ch.g{background:var(--win-bg);color:var(--win)} .ch.b{background:var(--loss-bg);color:var(--loss)}
+
+/* Bars */
+.bars{grid-column:1 / 3;grid-row:6;display:grid;gap:7px;margin-top:4px}
+.bl{display:grid;grid-template-columns:46px minmax(0,148px);align-items:center;gap:6px}
+@media (max-width:400px){ .bl{grid-template-columns:46px minmax(0,120px)} }
+.bl>span{font-family:var(--display);font-weight:600;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.trk{position:relative;height:6px;border-radius:3px;background:var(--hair);overflow:hidden}
+.trk i{position:absolute;top:0;bottom:0;left:0;border-radius:3px;background:var(--neutral-bar)}
+.trk i.g{background:var(--win)} .trk i.b{background:var(--loss)}
+.trk.div::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--steel)}
+.lz{display:none}
+#ls-luck:checked~.board .lz-luck,#ls-ap:checked~.board .lz-ap,#ls-pa:checked~.board .lz-pa,#ls-opp:checked~.board .lz-opp{display:grid}
+
+/* Right column */
+.side{grid-column:4;grid-row:1 / span 4;align-self:start;display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+.gbk{display:flex;align-items:center;gap:6px;margin-top:3px}
+.gbk .gl{display:flex;flex-direction:column;align-items:flex-end;font-family:var(--display);font-weight:600;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--label);line-height:1.15}
+.gbk b{font-family:var(--display);font-weight:700;font-size:22px;line-height:1;color:var(--chalk)}
+.rr{display:flex;align-items:center;gap:6px}
+.rr b{font-family:var(--display);font-weight:700;font-size:26px;line-height:1}
+.sk{font-family:var(--display);font-weight:700;font-size:12px;line-height:1.5;padding:0 5px;border-radius:4px}
+.sk.w{background:var(--win-bg);color:var(--win)} .sk.l{background:var(--loss-bg);color:var(--loss)}
+.chl{font-family:var(--display);font-weight:600;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--label);line-height:1.1;margin-top:2px}
+.cw{font-size:11px;color:var(--steel);line-height:1.2;white-space:nowrap}
+.cw b{color:var(--chalk);font-weight:600}
+.gb{display:flex;align-items:baseline;gap:5px;margin-top:3px;line-height:1.1;white-space:nowrap}
+.gb .chl{margin:0}
+.gb b{font-weight:600;font-size:12px;color:var(--chalk)}
+.l5c{display:block;width:90px;height:auto}
+
+/* Expanded weekly strip */
+.strip{grid-column:1 / -1;grid-row:7;display:flex;gap:8px;overflow-x:auto;padding:6px 0 2px;cursor:default;scroll-snap-type:x proximity}
+.gm{flex:0 0 auto;min-width:104px;border:1px solid var(--hair);border-radius:8px;padding:7px 10px 8px;background:var(--deck-2);scroll-snap-align:start}
+.gm .h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--steel)}
+.res{font-family:var(--display);font-weight:700;font-size:13px;padding:0 6px;border-radius:4px}
+.res.w{background:var(--win-bg);color:var(--win)} .res.l{background:var(--loss-bg);color:var(--loss)}
+.gm .sc{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.15;margin-top:5px;white-space:nowrap}
+.gm .vs{font-size:11px;color:var(--steel);margin-top:4px;white-space:nowrap}
+.gm .os{font-size:12px;white-space:nowrap}
+.gm.fut{background:transparent;border-style:dashed}
+.gm.fut .up{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--steel);margin-top:8px}
+
+.key{margin-top:16px;display:grid;gap:6px;font-size:12px;color:var(--steel)}
+.key b{color:var(--chalk);font-weight:600}
+
+@media (max-width:380px){
+  .r{grid-template-columns:26px minmax(0,1fr) 72px 78px;column-gap:7px}
+  .hl{font-size:10px} .hl .lb{font-size:9.5px}
+  .rk{font-size:28px} .nm{font-size:14px} .st{font-size:10.5px;gap:0 6px} .st .ch{font-size:10px} .lb{font-size:11px} h1{font-size:50px}
+  .l5c{width:80px}
+}
+
+/* v4: stat lines with inline bars, season chart */
+.sb{grid-column:1 / 4;display:grid;grid-template-columns:var(--stw) minmax(0,1fr);align-items:center;gap:8px;font-size:11.5px;color:var(--steel);white-space:nowrap;min-width:0}
+.r{--stw:161px}
+.sb .stx{overflow:hidden}
+.sb .v,.sb .pf{color:var(--chalk);font-weight:500}
+.sb .pw{font-style:normal;color:var(--dim)}
+.s-pf{grid-row:3;margin-top:4px} .s-pa{grid-row:4} .s-lk{grid-row:5}
+.st.s2{grid-row:6}
+.side{grid-row:1 / span 5 !important}
+.szw{grid-column:1 / -1;grid-row:7;margin-top:6px}
+.szn{display:block;width:100%;height:auto}
+.strip{grid-row:8 !important}
+@media (max-width:380px){ .r{--stw:151px} .sb{font-size:10.5px;gap:6px} .sb .ch{font-size:10px} }
+
+/* lean right column */
+.side{gap:1px}
+.side .cw{line-height:1.25}
+.side .gbl{margin-top:6px}
+.sb{padding-right:10px}
+
+/* 10-segment rank bars */
+.seg10{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:2px}
+.seg10 i{height:6px;border-radius:1.5px;background:var(--hair)}
+.seg10 i.on{background:var(--neutral-bar)}
+.seg10.g i.on{background:var(--win)} .seg10.b i.on{background:var(--loss)}
+
+/* bigger names, big games-back number */
+.nm,.r .nm{font-size:17px !important;line-height:21px}
+.gbn{font-family:var(--display);font-weight:700;font-size:28px;line-height:.9;color:var(--chalk);margin-top:1px}
+.side .gbl{margin-top:3px !important}
+.side{grid-row:1 / span 6 !important}
+.st.s2{grid-column:1 / 4}
+@media (max-width:380px){ .nm,.r .nm{font-size:16px !important} .gbn{font-size:26px} }
+
+.gb1{display:flex;align-items:baseline;gap:6px;margin-top:4px}
+.gb1 .chl{margin:0;font-size:11px}
+.gb1 b{font-family:var(--display);font-weight:700;font-size:20px;line-height:1;color:var(--chalk)}
+
+.gbs{display:grid;gap:3px;margin-top:5px;justify-items:end}
+.gbs .gb1{margin:0;gap:7px}
+.gbs .gb1 b{font-size:13px;min-width:8px;text-align:right}
+.gbs .gb1{align-items:baseline;gap:5px}
+
+.side .gbh{font-size:11px;margin-top:5px}
+.side .subw{margin-top:6px;display:flex;flex-direction:column;align-items:flex-end}
+
+/* name may use the free space left of the record */
+.r>.nm{grid-column:2 / -1;padding-right:72px;align-self:start}
+.r>.hl{align-self:start}
+
+/* Points by position */
+.posx{margin-top:16px;background:var(--deck);border:1px solid var(--hair);border-radius:16px;padding:14px 12px 8px}
+.posh{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;font-family:var(--display);text-transform:uppercase}
+.posh b{font-weight:700;font-size:22px;letter-spacing:.05em;color:var(--chalk);line-height:1}
+.posh span{font-weight:600;font-size:12px;letter-spacing:.1em;color:var(--dim)}
+.pr{display:grid;grid-template-columns:98px repeat(6,minmax(0,1fr));align-items:center;column-gap:4px;padding:6px 0;border-top:1px solid var(--hair)}
+.pr.ph{border-top:0;padding:2px 0 4px}
+.pr.ph span{font-family:var(--display);font-weight:600;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--label);text-align:center}
+.pr.ph span:first-child{text-align:left}
+.pr>span[role="rowheader"]{font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pr>span[role="rowheader"] em{font-style:normal;font-family:var(--display);font-weight:700;font-size:14px;color:var(--tc);display:inline-block;width:18px}
+.pr.tier-out>span[role="rowheader"]{color:var(--steel)}
+.pr.tier-out>span[role="rowheader"] em{color:var(--dim)}
+.pr>span[role="cell"]{display:flex;flex-direction:column;align-items:center;gap:2px;font-variant-numeric:tabular-nums}
+.pr>span[role="cell"] b{font-weight:500;font-size:12.5px;color:var(--chalk)}
+.pr .ch{margin:0;font-style:normal;font-size:10px;padding:0 4px}
+@media (max-width:380px){ .pr{column-gap:2px;grid-template-columns:86px repeat(6,minmax(0,1fr))} .pr>span[role="cell"] b{font-size:11.5px} .pr>span[role="rowheader"]{font-size:11.5px} .pr>span[role="rowheader"] em{width:15px} }
+
+.posh{justify-content:space-between;align-items:center}
+.pseg{display:flex;background:var(--ink);border:1px solid var(--hair);border-radius:8px;padding:2px}
+.pseg label{font-family:var(--body);font-weight:600;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--steel);padding:4px 9px;border-radius:6px;cursor:pointer}
+#pm-start:checked~.posh label[for="pm-start"],#pm-wk:checked~.posh label[for="pm-wk"],#pm-tot:checked~.posh label[for="pm-tot"]{background:var(--chalk);color:var(--ink)}
+.pt-wk,.pt-tot{display:none}
+#pm-wk:checked~.pt-start,#pm-tot:checked~.pt-start{display:none}
+#pm-wk:checked~.pt-wk,#pm-tot:checked~.pt-tot{display:block}
+
+.pr .ch.gold{background:rgba(244,196,81,.16);color:#f4c451;box-shadow:inset 0 0 0 1px rgba(244,196,81,.45)}
+
+.posh{flex-wrap:wrap;row-gap:8px}
+.posh b{white-space:nowrap}
+.pseg label{white-space:nowrap}
+
+/* chip geometry: fixed height, text centred both ways */
+.ch{display:inline-flex !important;align-items:center;justify-content:center;height:16px;min-width:22px;padding:0 4px !important;line-height:1 !important;vertical-align:1px;box-sizing:border-box;font-variant-numeric:tabular-nums}
+.pr .ch{min-width:30px;height:17px;vertical-align:0}
+.pr .ch.last{box-shadow:inset 0 0 0 1px rgba(255,93,115,.55)}
+
+/* align chips on an integer grid so text sits dead centre */
+.st{align-items:center}
+.st>span{display:inline-flex;align-items:center;height:16px}
+.sb .stx{display:flex;align-items:center;height:16px;white-space:nowrap}
+.sb .stx .pw{margin-left:4px}
+.sb .lw{font-weight:600;color:var(--label)}
+.sb .stx.spl{grid-column:1 / -1}
+.stx.spl .v+.pw{margin-left:3px}
+.stx.spl .dpl{color:var(--chalk)}
+.sb .stx.spl{flex-wrap:wrap;height:auto;row-gap:1px;overflow:visible}
+.stx.spl .brk{flex-basis:100%;height:0}
+.stx.spl .brk+.v{margin-left:0}
+.dpg{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));column-gap:4px;width:100%;margin-top:3px}
+.dpc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
+.dpc b{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.06em;color:var(--pc);line-height:1}
+.dpc span{font-family:var(--display);font-weight:600;font-size:14px;color:var(--chalk);font-variant-numeric:tabular-nums;line-height:1.1}
+.dpc span.z{color:var(--dim)}
+.stx.spl .pu{margin:0 6px 0 -1px !important}
+.stx.spl .dt{font-style:normal;color:var(--dim);margin:0 6px}
+@media (max-width:380px){.stx.spl .dt{margin:0 3px}.stx.spl .pu{margin-right:3px !important}.stx.spl .v+.pw{margin-left:2px}}
+.ch{vertical-align:middle;padding-top:0 !important;padding-bottom:0 !important;text-box:trim-both cap alphabetic}
+.pr>span[role="cell"] b{line-height:16px;height:16px}
+.pr .ch{padding:0 4px !important}
+
+/* Optical centring: the inner text box is trimmed to cap height and baseline,
+   so the glyphs themselves (not the font's line box) are centred in each tile. */
+.ch,.sk,.res{display:inline-flex !important;align-items:center;justify-content:center}
+.ct{display:block;line-height:1;text-box:trim-both cap alphabetic}
+.sk,.res{height:18px;padding:0 6px !important;line-height:1 !important}
+.gm .res{height:18px}
+
+@supports not (text-box: trim-both cap alphabetic){ .ct{padding-bottom:1px} }
+
+/* Lineup row sits under Luck */
+.s-lu{grid-row:6} .st.s2{grid-row:7 !important} .szw{grid-row:8 !important} .strip{grid-row:9 !important}
+.side{grid-row:1 / span 7 !important}
+
+/* bar tracks: faint frame shows the full extent; rounded ends */
+.trk{border-radius:3px;box-shadow:inset 0 0 0 .75px #3a4254}
+.seg10 i{border-radius:2.5px}
+.seg10 i:not(.on){box-shadow:inset 0 0 0 .75px #3a4254}
+/* luck fill: flat where it meets the centre line, rounded at the outer end */
+.trk.div i.pos{border-radius:0 3px 3px 0}
+.trk.div i.neg{border-radius:3px 0 0 3px}
+
+.s-sk{grid-row:7} .st.s2{grid-row:8 !important} .szw{grid-row:9 !important} .strip{grid-row:10 !important}
+
+/* Leaderboard */
+.lbx{margin-top:16px;background:var(--deck);border:1px solid var(--hair);border-radius:16px;padding:14px 12px 8px}
+.lbc{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 8px;margin:0 -12px;padding-left:12px;padding-right:12px}
+.lbc::-webkit-scrollbar{display:none}
+.lbc label{flex:none;border:1px solid var(--hair);background:var(--ink);border-radius:999px;padding:5px 11px;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--steel);cursor:pointer;white-space:nowrap}
+.lbt{display:none}
+.lbd{font-size:11.5px;color:var(--dim);margin:2px 0 6px}
+.lbr{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;column-gap:10px;padding:7px 0;border-top:1px solid var(--hair)}
+.lbr .ch{margin:0;min-width:30px;height:17px}
+.lbr .ch{font-style:normal;padding:0 4px !important}
+.lbr .ch.gold{background:rgba(244,196,81,.16);color:#f4c451;box-shadow:inset 0 0 0 1px rgba(244,196,81,.45)}
+.lbr .ch.last{box-shadow:inset 0 0 0 1px rgba(255,93,115,.55)}
+.lbn{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.lbv{font-weight:600;font-size:14px;color:var(--chalk);font-variant-numeric:tabular-nums;text-align:right}
+LB_CSS
+/* Position tiles (Sleeper colours) */
+.pp{--pc:#9aa3b5;display:inline-flex;align-items:center;justify-content:center;height:18px;width:38px;border-radius:4px;background:var(--pc);color:#0f1218;font-style:normal;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.02em;white-space:nowrap}
+.p-qb{--pc:#f7739c} .p-rb{--pc:#3ddcc1} .p-wr{--pc:#5ec6f4} .p-te{--pc:#fca95c} .p-k{--pc:#c491ff} .p-def{--pc:#c98a72} .p-ir{--pc:#ff5d73} .p-tx{--pc:#9aa3b5}
+.pr.ph .pp{width:30px;height:16px;font-size:11px;letter-spacing:.06em;margin:0 auto}
+.pr.ph span.ct{color:#0f1218;text-align:center}
+/* Rosters */
+.rox{margin-top:16px;background:var(--deck);border:1px solid var(--hair);border-radius:16px;padding:14px 12px 10px}
+.rop{display:none}
+.rtop{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 10px;padding:6px 0 2px}
+.rtop b{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rtop>span{font-size:13px;color:var(--steel);white-space:nowrap;display:flex;align-items:baseline;gap:3px}
+.rtop>span b{font-family:var(--display);font-weight:700;font-size:16px;color:var(--chalk);letter-spacing:.01em}
+.rtop>span i{font-style:normal;color:var(--dim);margin:0 2px}
+.rcol,.rr2{display:grid;grid-template-columns:31.5px minmax(0,1fr) 48px 32px;column-gap:10px;align-items:center}
+.rcol{padding:8px 0 0}
+.rcol span{font-family:var(--display);font-weight:600;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--steel);text-align:right}
+.rcol span:first-child{grid-column:1 / 3;text-align:left}
+.rgh{display:flex;align-items:center;gap:8px;margin-top:14px;padding-bottom:5px;font-family:var(--display);text-transform:uppercase;border-bottom:1px solid color-mix(in srgb,var(--pc) 55%,transparent)}
+.rgh span{flex:1;display:flex;align-items:baseline;gap:7px;font-weight:700;font-size:14px;letter-spacing:.1em;color:var(--pc)}
+.rgh em{font-style:normal;font-weight:600;font-size:12px;letter-spacing:.06em;color:var(--dim)}
+.rgh b{font-weight:700;font-size:14px;letter-spacing:.02em;color:var(--label);font-variant-numeric:tabular-nums}
+.rgh b small{font-weight:600;font-size:10.5px;letter-spacing:.1em;color:var(--dim);margin-left:3px}
+.rr2{padding:7px 0;border-top:1px solid var(--hair)}
+.rgh+.rr2{border-top:0}
+.rn{display:flex;flex-direction:column;min-width:0;line-height:1;gap:4px}
+.rr2>.pq{--sq:31.5px;--sqt:0px;align-self:center;margin-top:2.5px}
+.pag{flex:none;font-style:normal;font-weight:500;font-size:12.5px;line-height:1;color:var(--steel)}
+.ga{font-style:normal;font-family:var(--body);font-weight:500;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--steel);margin-left:4px}
+.ga b{font-weight:500;color:var(--label)}
+.nmx .fi{display:none}
+@media (max-width:380px){ .nmx.lg .fn{display:none} .nmx.lg .fi{display:inline} }
+.rn>b{display:flex;align-items:flex-end;line-height:1;gap:6px;min-width:0;font-weight:600;font-size:14px;color:var(--chalk)}
+.nmx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;line-height:1}
+.irx{flex:none;width:12px;height:12px;display:block;align-self:center}
+.rn small{font-size:12px;color:var(--dim);display:flex;align-items:baseline;gap:0;white-space:nowrap}
+.rn small{align-items:center;line-height:1}
+.rn .nfl{height:16px}
+.nfl{flex:none;display:inline-flex;align-items:center;justify-content:center;width:31px;height:15px;border-radius:3px;font-style:normal;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.04em;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+.rn .gp{margin-left:7px}
+.by::before{content:"";margin:0 3px}
+.rn .gp{color:var(--steel)}
+.by{font-style:normal;color:var(--dim)}
+.by b{font-weight:600;color:var(--steel)}
+.by.past,.by.past b{color:#4b5262}
+.by.now,.by.now b{color:var(--sky)}
+.rv{text-align:right;font-family:var(--display);font-weight:700;font-size:19px;line-height:1;color:var(--chalk);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.rg2{text-align:right;font-size:12.5px;color:var(--steel);font-variant-numeric:tabular-nums}
+.p-ir~.rr2 .rv,.p-tx~.rr2 .rv{color:var(--label)}
+@media (max-width:380px){ .rcol,.rr2{grid-template-columns:31.5px minmax(0,1fr) 44px 30px;column-gap:8px} .rv{font-size:18px} }
+
+/* Matchups */
+.mux{margin-top:16px;background:var(--deck);border:1px solid var(--hair);border-radius:16px;padding:14px 12px 10px}
+.mux .posh span{font-size:13px;letter-spacing:.12em;color:var(--sky);font-weight:700}
+.muc label i{font-style:normal;color:var(--dim);margin:0 6px;font-weight:600}
+.mup{display:none}
+.mux .ch{margin:0;font-style:normal;font-size:11px;height:17px;min-width:26px}
+.mux .ch.gold{background:rgba(244,196,81,.16);color:#f4c451;box-shadow:inset 0 0 0 1px rgba(244,196,81,.45)}
+.mux .ch.last{box-shadow:inset 0 0 0 1px rgba(255,93,115,.55)}
+.mcard{margin-top:6px;background:var(--ink);border:1px solid var(--hair);border-radius:12px;padding:12px}
+.mch{display:flex;justify-content:center;font-family:var(--display);text-transform:uppercase}
+.mch span{font-weight:600;font-size:12px;letter-spacing:.14em;color:var(--steel)}
+.mvs{display:grid;grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);align-items:start;column-gap:8px;margin-top:6px}
+.mus{display:flex;flex-direction:column;gap:4px;min-width:0}
+.mus.msr{align-items:flex-end;text-align:right}
+.mus .ch{align-self:flex-start}
+.mus.msr .ch{align-self:flex-end}
+.mus b{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.02;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+.mrec{font-family:var(--display);font-weight:700;font-size:17px;color:var(--label)}
+.mform{display:flex;gap:3px}
+.fm{width:8px;height:8px;border-radius:2px}
+.fm.w{background:var(--win)} .fm.l{background:var(--loss)}
+.mv2{align-self:center;text-align:center;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.mcmp{margin-top:12px;border-top:1px solid var(--hair)}
+.mcr{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:6px 0;border-bottom:1px solid var(--hair);font-variant-numeric:tabular-nums}
+.mcr em{font-style:normal;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--steel);text-align:center;padding:0 8px}
+.mcr>span{font-size:14px;font-weight:500;color:var(--steel)}
+.mcr>span:last-child{text-align:right}
+.mcr>span.up{color:var(--chalk);font-weight:700}
+.mprev{font-size:12.5px;color:var(--steel);margin-top:8px;text-align:center}
+.mprev b{font-weight:600}
+.mprev b.w,.mprev b.l{color:var(--chalk)}
+.mbys{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;margin-top:8px}
+.mbl{display:flex;flex-direction:column;gap:5px;min-width:0}
+.mbl.msr{align-items:flex-end}
+.mbt{font-family:var(--display);font-weight:600;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--sky);display:flex;gap:6px;align-items:baseline}
+.mbt em{font-style:normal;color:var(--chalk);font-weight:700;font-size:13px}
+.mbr{display:flex;align-items:flex-start;gap:6px;font-size:12.5px;color:var(--label);min-width:0;max-width:100%}
+.mbl.msr .mbr{flex-direction:row-reverse}
+.mbl.msr .mbr span{text-align:right}
+.mbr span{min-width:0;line-height:1.2}
+.mbr.none{color:var(--dim)}
+.pp.sm{width:24px;height:15px;font-size:10.5px;border-radius:3px;flex:none}
+.msw{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:14px;background:var(--ink);border:1px solid var(--hair);border-radius:9px;padding:3px}
+.msw label{text-align:center;padding:6px 4px;border-radius:6px;font-size:12px;font-weight:600;color:var(--steel);cursor:pointer;line-height:1.25;display:flex;align-items:center;justify-content:center}
+.msa:checked~.msw label[for$="a"],.msb:checked~.msw label[for$="b"]{background:var(--chalk);color:var(--ink)}
+.msch{display:none}
+.msa:checked~.msch-a,.msb:checked~.msch-b{display:block}
+.msh{margin-top:12px;padding-bottom:5px;border-bottom:1px solid #3a4254;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--label)}
+.mrow{display:grid;grid-template-columns:38px 22px minmax(0,1fr) auto;column-gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--hair);font-variant-numeric:tabular-nums}
+.msh+.mrow{border-top:0}
+.mwk{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--steel)}
+.mres{display:inline-flex;align-items:center;justify-content:center;width:22px;height:20px;border-radius:4px;font-style:normal;font-family:var(--display);font-weight:700;font-size:13px}
+.mres.w{background:var(--win-bg);color:var(--win)} .mres.l{background:var(--loss-bg);color:var(--loss)}
+.mres.u{box-shadow:inset 0 0 0 1px #3a4254}
+.mrow.now .mres.u{box-shadow:inset 0 0 0 1px rgba(127,166,255,.6)}
+.mrow.now .mres.u::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--sky)}
+.mmid{display:flex;flex-direction:column;gap:2px;min-width:0}
+.mop{display:flex;align-items:flex-start;gap:7px;font-size:14px;font-weight:600;min-width:0;white-space:nowrap}
+.mop>span{min-width:0;white-space:normal;line-height:1.2}
+.mop .mt,.mop .ch{flex:none}
+.msc{font-size:12.5px;color:var(--steel);white-space:nowrap}
+.msc b{font-family:var(--display);font-weight:700;font-size:15px;color:var(--chalk)}
+.msc>span{margin:0 4px;color:var(--dim)}
+.mor{font-size:12.5px;color:var(--steel);white-space:nowrap}
+.mt{font-style:normal;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:0 5px;height:16px;display:inline-flex;align-items:center;border-radius:3px}
+.mt.hi{background:#cf9a2c;color:#0f1218}
+.mt.lo{background:#a24253;color:#fff}
+.mrun{text-align:right;font-family:var(--display);font-weight:700;font-size:15px;color:var(--label)}
+.mby{font-style:normal;font-size:12px;color:var(--sky);box-shadow:inset 0 0 0 1px rgba(127,166,255,.45);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.mrow.now .mwk{color:var(--sky)}
+@media (max-width:380px){ .mrow{grid-template-columns:34px 22px minmax(0,1fr) auto;column-gap:8px} .mus b{font-size:19px} }
+
+.rbl,.rqseg{display:none}
+#rv-pts:checked~.rop .rbpos,.rbpos-g,#rs-g:checked~.rop .rbpos-p{display:none}
+#rv-pos:checked~#rs-g:checked~.rop .rbpos-g{display:block}
+.rqseg.rsseg,#rv-pts:checked~.rqseg.rsseg{display:inline-flex;margin:0 0 12px 0 !important}
+#rv-pts:checked~#rq-all:checked~#rs-p:checked~.rop .rbl-ap,#rv-pts:checked~#rq-noqb:checked~#rs-p:checked~.rop .rbl-np,
+#rv-pts:checked~#rq-all:checked~#rs-g:checked~.rop .rbl-ag,#rv-pts:checked~#rq-noqb:checked~#rs-g:checked~.rop .rbl-ng{display:block}
+#rv-pts:checked~.rqseg{display:inline-flex;margin:0 0 10px}
+.rsseg{margin-left:6px !important}
+#rq-all:checked~.rqseg label[for="rq-all"],#rq-noqb:checked~.rqseg label[for="rq-noqb"],#rs-p:checked~.rqseg label[for="rs-p"],#rs-g:checked~.rqseg label[for="rs-g"]{background:var(--chalk);color:var(--ink)}
+.rbl .rr2:first-child{border-top:0}
+.rbl-ag .rv,.rbl-ng .rv,.rbpos-g .rv{font-family:var(--body);font-weight:500;font-size:12.5px;color:var(--steel)}
+.rbl-ag .rg2,.rbl-ng .rg2,.rbpos-g .rg2{font-family:var(--display);font-weight:700;font-size:19px;color:var(--chalk)}
+#rs-g:checked~.rop .rcol span:nth-child(2){color:var(--dim)}
+#rs-g:checked~.rop .rcol span:nth-child(3){color:var(--chalk)}
+#rs-g:checked~.rop .rcol,#rs-g:checked~.rop .rbpos-g .rr2,#rv-pts:checked~#rs-g:checked~.rop .rbl-ag .rr2,#rv-pts:checked~#rs-g:checked~.rop .rbl-ng .rr2{grid-template-columns:31.5px minmax(0,1fr) 40px 40px}
+.rseg{display:inline-flex;margin:0 6px 12px 0;vertical-align:top}
+.rqseg{vertical-align:top}
+#rv-pos:checked~.rseg label[for="rv-pos"],#rv-pts:checked~.rseg label[for="rv-pts"]{background:var(--chalk);color:var(--ink)}
+.rsub{font-size:12px;color:var(--steel);margin:-2px 0 8px}
+.rs-pg{display:none}
+#rs-g:checked~.rsub .rs-pt{display:none}
+#rs-g:checked~.rsub .rs-pg{display:inline}
+.rbpts .rr2:first-child{border-top:0}
+.txc{flex:none;align-self:center;font-style:normal;font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--steel);box-shadow:inset 0 0 0 1px #3a4254;border-radius:3px;padding:0 4px;height:15px;display:inline-flex;align-items:center}
+
+
+/* Top tabs */
+.tabs{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px -16px 16px;padding:8px 16px;background:var(--ink);border-bottom:1px solid var(--hair)}
+.tabs label{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.06em;text-transform:uppercase;color:var(--label);padding:7px 4px 6px;border-radius:9px;border:1px solid var(--hair);background:var(--deck);cursor:pointer;text-align:center;white-space:nowrap}
+#tab-st:checked~.tabs label[for="tab-st"],#tab-lb:checked~.tabs label[for="tab-lb"],#tab-ro:checked~.tabs label[for="tab-ro"],#tab-mu:checked~.tabs label[for="tab-mu"],#tab-sx:checked~.tabs label[for="tab-sx"],#tab-cm:checked~.tabs label[for="tab-cm"],#tab-po:checked~.tabs label[for="tab-po"],#tab-th:checked~.tabs label[for="tab-th"]{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}
+.pane{display:none}
+#tab-st:checked~.pane-st,#tab-lb:checked~.pane-lb,#tab-ro:checked~.pane-ro,#tab-mu:checked~.pane-mu,#tab-sx:checked~.pane-sx,#tab-cm:checked~.pane-cm,#tab-po:checked~.pane-po,#tab-th:checked~.pane-th{display:block}
+.pane>section:first-child{margin-top:0}
+@media (max-width:370px){ .tabs label{font-size:16px;letter-spacing:.04em} }
+
+
+/* Lean / Full standings */
+.dens{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin:10px 0 0}
+.dens>span{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--steel)}
+#dn-lean:checked~.dens label[for="dn-lean"],#dn-full:checked~.dens label[for="dn-full"]{background:var(--chalk);color:var(--ink)}
+#dn-lean:checked~.board :is(.s-lk,.s-lu,.s-sk,.szw,.subw){display:none}
+#dn-lean:checked~.board .r{grid-template-rows:21px min-content min-content min-content min-content 1fr}
+.board .r>.rk{align-self:start;margin-top:4.2px}
+#dn-lean:checked~.board .side{grid-row:1 / span 6 !important;grid-column:4;flex-direction:column;align-items:flex-end;align-self:start;gap:1px}
+#dn-lean:checked~.board .side .rr{justify-content:flex-end}
+#dn-lean:checked~.board .side{pointer-events:none}
+#dn-lean:checked~.board .side>*{pointer-events:auto}
+
+
+
+/* Compare */
+.cmx{--ca:#7fa6ff;--cb:#f59a52;background:var(--deck);border:1px solid var(--hair);border-radius:16px;padding:14px 8px 10px}
+.cpk{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;position:relative;z-index:5}
+.dd{position:relative;min-width:0}
+.dd summary{list-style:none;display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--ink);border:1px solid #3a4254;border-radius:10px;cursor:pointer;font-weight:600;font-size:13.5px;min-width:0}
+.dd summary::-webkit-details-marker{display:none}
+.dd[open] summary{border-color:var(--chalk)}
+.ddk{flex:none;width:18px;height:18px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:12px;color:#0f1218}
+.dd-a .ddk{background:var(--ca)} .dd-b .ddk{background:var(--cb)}
+.sv{display:none;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd summary svg{flex:none;width:10px;height:6px;color:var(--steel);margin-left:auto}
+.dd[open] summary svg{transform:rotate(180deg)}
+.ddm{position:absolute;top:calc(100% + 4px);left:0;right:0;min-width:200px;background:#1c212b;border:1px solid #3a4254;border-radius:10px;padding:4px;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+.dd-b .ddm{left:auto;right:0}
+.ddm label{display:flex;align-items:center;gap:8px;padding:8px 8px;border-radius:7px;font-size:13.5px;font-weight:500;color:var(--label);cursor:pointer;white-space:nowrap}
+.ddm label i{font-style:normal;font-family:var(--display);font-weight:700;font-size:12px;color:var(--dim);width:16px;text-align:right}
+.csub{margin-bottom:4px !important}
+.cpg{display:inline-flex;margin:12px 0 4px}
+#cs-p:checked~.cpn .cpg label[for="cs-p"],#cs-g:checked~.cpn .cpg label[for="cs-g"]{background:var(--chalk);color:var(--ink)}
+.cpn,.csame,.cs{display:none}
+.csame{padding:24px 0;text-align:center;color:var(--steel);font-size:13px}
+.chead{margin-top:2px;padding:10px 12px}
+.cpn .mvs{margin-top:0;grid-template-areas:"a m b"} .cpn .mvs>.msl{grid-area:a} .cpn .mvs>.mv2{grid-area:m} .cpn .mvs>.msr{grid-area:b}
+.cpn .mus b{font-size:19px}
+.cpn .mcr,.cgh{grid-template-areas:"a m b"} .cpn .mcr>:first-child,.cgh>:first-child{grid-area:a} .cpn .mcr>em,.cgh>em{grid-area:m} .cpn .mcr>:last-child,.cgh>:last-child{grid-area:b}
+.cpn .msh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;white-space:nowrap}
+.cmx .ch{margin:0;font-style:normal;font-size:11px;height:17px;min-width:26px}
+.cmx .ch.gold{background:rgba(244,196,81,.16);color:#f4c451;box-shadow:inset 0 0 0 1px rgba(244,196,81,.45)}
+.cmx .ch.last{box-shadow:inset 0 0 0 1px rgba(255,93,115,.55)}
+.cpn .msh small{flex:1;min-width:0;white-space:normal;font-family:var(--body);font-weight:500;font-size:11px;line-height:1.25;letter-spacing:0;text-transform:none;color:var(--steel);text-align:right}
+.cpn .mcmp{margin-top:0;border-top:0}
+.cpn .mcr em{display:flex;justify-content:center}
+.cpn .mcr em .pp.sm{width:auto;min-width:30px;padding:0 4px}
+.cpn .mcr>span .pp.sm{width:auto;min-width:34px;padding:0 4px;height:17px;font-size:11.5px}
+.cpn .mcr>span{display:flex;align-items:center}
+.cpn .mcr>:last-child{justify-content:flex-end}
+.cpn .mprev{text-align:center;margin-top:10px}
+.cpn .mprev b{color:var(--chalk)}
+/* chart */
+.cch{display:block;width:100%;height:auto;margin-top:8px}
+.cleg{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--label);margin-top:2px}
+.cleg span{display:flex;align-items:center;gap:6px}
+.cleg i{width:14px;height:3px;border-radius:2px}
+.cleg .la{background:var(--ca)} .cleg .lb{background:var(--cb)}
+/* players */
+.cgh{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-top:12px;padding-bottom:4px;border-bottom:1px solid color-mix(in srgb,var(--pc) 55%,transparent);font-variant-numeric:tabular-nums}
+.cgh>span{font-family:var(--display);font-weight:600;font-size:14px;color:var(--steel)}
+.cgh>span.up{color:var(--chalk);font-weight:700}
+.cgh>:last-child{text-align:right}
+.cgh>em{font-style:normal;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.12em;color:var(--pc);padding:0 10px}
+.cr{display:grid;grid-template-columns:minmax(0,1fr) 37px 37px minmax(0,1fr);grid-template-areas:"na va vb nb";column-gap:3px;align-items:center;padding:7px 0;border-top:1px solid var(--hair);position:relative}
+.cgh+.cr{border-top:0}
+.cr::after{content:"";position:absolute;left:50%;top:7px;bottom:7px;width:1px;background:var(--hair)}
+.cn.a{grid-area:na} .cv.a{grid-area:va} .cv.b{grid-area:vb} .cn.b{grid-area:nb}
+.cn{display:flex;align-items:center;gap:5px;min-width:0}
+.cn.b{flex-direction:row-reverse}
+.cnm{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.25}
+.cn.b .cnm{align-items:flex-end;text-align:right}
+.cnm b{display:flex;align-items:flex-end;gap:3px;min-width:0;max-width:100%;font-size:14px;font-weight:600;color:var(--chalk)}
+.cnm b span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cnm small{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--steel);white-space:nowrap}
+.cn.b small{flex-direction:row-reverse}
+.cn .pp.sm{width:38px;height:18px;font-size:12px;border-radius:4px;padding:0;letter-spacing:.02em}
+.cbp{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-areas:"na m nb"}
+.cbp::after{display:none}
+.cbp>em{grid-area:m;font-style:normal;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.1em;color:var(--steel);padding:0 6px}
+.cbpw .cr:first-child{border-top:0}
+.cn{align-items:stretch}
+.cnm b{line-height:1}
+.cn.b .cnm b{flex-direction:row-reverse}
+.cnm b .pag{flex:none;font-size:12px}
+@media (max-width:400px){ .cr{grid-template-columns:minmax(0,1fr) 34px 34px minmax(0,1fr);column-gap:2px} .cv{font-size:15px} .cv.a{padding-right:3px} .cv.b{padding-left:3px} .cnm b{font-size:13.5px;gap:3px} .cnm b .pag{font-size:11.5px} .cn{gap:4px} .cr.cbp{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)} }
+.cnm{gap:4px;line-height:1;justify-content:center}
+.cnm small{line-height:1}
+.cnm .nfl{height:16px}
+.pq{--pc:#9aa3b5;flex:none;align-self:flex-start;width:var(--sq);height:var(--sq);padding:0;box-sizing:border-box;margin-top:var(--sqt);border-radius:6px;background:var(--pc);color:#0f1218;font-style:normal;display:flex;align-items:center;justify-content:center;font-family:var(--display);line-height:1}
+.cn{--sq:31.5px;--sqt:3px}
+.pq{--sq:31.5px}
+.pqi{display:flex;align-items:flex-end}
+.pqi>span{font-weight:700;font-size:11.5px;letter-spacing:0;text-box:trim-both cap alphabetic}
+.pqi>b{font-weight:700;font-size:15px;letter-spacing:0;margin-left:1px;text-box:trim-both cap alphabetic}
+.pq.l3 .pqi>span{font-size:10px}.pq.l3 .pqi>b{font-size:13px}
+.pq.p-qb{--pc:#f7739c} .pq.p-rb{--pc:#3ddcc1} .pq.p-wr{--pc:#5ec6f4} .pq.p-te{--pc:#fca95c} .pq.p-k{--pc:#c491ff} .pq.p-def{--pc:#c98a72}
+.cv{font-family:var(--display);font-weight:600;font-size:16px;color:#7d8597;font-variant-numeric:tabular-nums}
+.cv.a{text-align:right;padding-right:4px} .cv.b{text-align:left;padding-left:4px}
+.cag{font-weight:500}
+.cnm .cag small{display:inline;font-size:10.5px;font-weight:500;color:var(--dim);margin-left:2px}
+.pag.ay,.cag.ay,.ga b.ay{color:#6fc9a4} .pag.ap,.cag.ap,.ga b.ap{color:#d4af6a} .pag.ao,.cag.ao,.ga b.ao{color:#e0838f}
+.cr.wa .cv.a,.cr.wb .cv.b{color:var(--chalk)}
+.cpn .mcr>span.up{font-weight:500;color:var(--chalk)}
+.cgh>span.up{font-weight:600}
+.cir{flex:none;width:9px;height:9px;border-radius:2px;background:#ff5d73 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M5 2v6M2 5h6' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") center/9px no-repeat}
+.cpl-g{display:none}
+#cs-g:checked~.cpn .cpl-p{display:none} #cs-g:checked~.cpn .cpl-g{display:block}
+/* schedule */
+.csr>span{gap:6px;min-width:0}
+.csr>span b{font-size:13px;font-weight:600;line-height:1.2;min-width:0}
+.csr{align-items:center}
+.csr>:last-child b{text-align:right}
+.csr>:first-child{flex-direction:row;justify-content:flex-start !important}
+.csr>:last-child{flex-direction:row-reverse;justify-content:flex-start !important}
+.csr .mby{padding:0 6px;font-size:11px}
+.csr .ch{flex:none}
+/* picks */
+.pk{flex:none;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:var(--hair);color:var(--chalk);font-style:normal;font-family:var(--display);font-weight:700;font-size:12px;margin-right:3px}
+.cpk2>:last-child .pk{margin:0 0 0 3px}
+.cpk2>:first-child{justify-content:flex-start}
+.pk.via{box-shadow:inset 0 0 0 1px var(--sky);color:var(--sky);background:rgba(127,166,255,.1)}
+.pk.faab{background:rgba(63,214,155,.15);color:var(--win)}
+.cpk2 .none{color:var(--dim)}
+/* trades */
+.ctr{padding:8px 0;border-bottom:1px solid var(--hair)}
+.ctw{text-align:center;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--steel)}
+.ctg{align-items:start !important;border:0 !important;padding:4px 0 0 !important}
+.ctg>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ctg>:last-child{align-items:flex-end}
+.ctg>:last-child .ti{flex-direction:row-reverse}
+.ctg em{padding-top:2px}
+.ti{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--label);min-width:0;max-width:100%}
+.ti span{min-width:0;line-height:1.25}
+.ctg>:last-child .ti span{text-align:right}
+.ti b{font-family:var(--display);font-weight:700;font-size:13px;color:var(--chalk);flex:none}
+.ti .pk{margin:0}
+.ti.none{color:var(--dim)}
+
+CMP_CSS
+.l5d{display:flex;gap:2px;align-items:center;justify-content:flex-end;margin:3px 0 2px}
+.l5d i{width:6px;height:6px;border-radius:1.5px}
+.l5d i.w{background:var(--win)} .l5d i.l{background:var(--loss)}
+
+
+/* record never wraps; long records slightly smaller */
+.rr{flex-wrap:nowrap;white-space:nowrap}
+.rr.rr4 b{font-size:22px}
+.side{min-width:0}
+/* Scoring + detail: one quiet row */
+#tab-st:checked~.pane-st{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:8px}
+.pane-st>*:not(.tg):not(.dens){flex:0 0 100%}
+.pane-st>.lr,.pane-st>.vr{flex:0 0 0 !important}
+.tg{display:inline-flex !important;grid-template-columns:none;background:var(--ink);border-radius:10px;padding:3px;gap:2px;margin:0 0 12px !important}
+.tg button,.tg .tb{flex:none !important;font-size:12.5px !important;font-weight:600;padding:6px 11px !important;border-radius:7px;line-height:1.15}
+.dens{margin:0 0 12px !important}
+
+
+/* Controls: one size and rhythm everywhere */
+.pseg{border-radius:10px;padding:3px;gap:2px}
+.pseg label{font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:7px;line-height:1.15}
+.tg{margin-bottom:12px}
+.tg button,.tg .tb{font-size:13.5px;padding:8px 0}
+.posh{margin-bottom:12px}
+.posh b{line-height:1.1}
+.dens{margin:0 0 12px}
+.dens>span{font-size:12px}
+.rsub{font-size:12.5px;margin:-4px 0 12px}
+#rv-pts:checked~.rqseg{margin:0 6px 12px 0 !important}
+.rsseg{margin-left:0 !important}
+.cpg{margin:12px 0 0}
+.lbc{gap:8px;padding-top:2px;padding-bottom:12px}
+.lbc label{font-size:13.5px;padding:6px 12px;letter-spacing:.06em}
+.lbd{font-size:12.5px;margin:0 0 8px;color:var(--steel)}
+.msw{margin-top:16px;padding:3px;border-radius:10px}
+.msw label{font-size:13px;padding:7px 6px;border-radius:7px}
+.cpk{margin-bottom:12px}
+.dd summary{padding:9px 11px;font-size:13.5px}
+.ddm label{font-size:13.5px;padding:9px 10px}
+.csub{margin-bottom:0 !important}
+
+
+/* Matchup lineups */
+.lus .msh{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.lus .msh small{font-family:var(--body);font-weight:500;font-size:11px;letter-spacing:0;text-transform:none;color:var(--steel)}
+.ltot,.ltot2{grid-template-columns:1fr auto 1fr}
+.ltot>span{font-family:var(--display);font-weight:700;font-size:22px;color:var(--steel)}
+.ltot>span.up{color:var(--chalk)}
+.ltot2>span{font-size:13px;color:var(--steel)}
+.ltot em .pj,.ltot2 em .pj{font-style:normal;text-transform:none;letter-spacing:0;font-family:var(--body);font-weight:500;font-size:11px;color:var(--steel)}
+.ltot small,.ltot2 small{font-family:var(--body);font-weight:500;font-size:12px;color:var(--steel)}
+.ltot>:last-child,.ltot2>:last-child{text-align:right}
+.lu{grid-template-columns:minmax(0,1fr) 38px 38px minmax(0,1fr) !important;grid-template-areas:"na va vb nb" !important;column-gap:4px !important}
+.lsl{grid-area:sl;font-style:normal;font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.06em;color:var(--dim);text-align:center}
+.lu .cv{color:#6b7385;font-weight:500}
+.lu .cv.a{text-align:right;padding-right:5px} .lu .cv.b{text-align:left;padding-left:5px}
+.lu.wa .cv.a,.lu.wb .cv.b{color:var(--label)}
+.lu .cv.act{color:var(--chalk);font-weight:700}
+.lu .gp.fin{color:var(--label)}
+.inj{flex:none;font-style:normal;font-family:var(--display);font-weight:700;font-size:10px;line-height:1;padding:2px 3px;border-radius:3px;align-self:center}
+.inj.i-Q{background:rgba(244,196,81,.16);color:#e6b85c} .inj.i-D,.inj.i-O,.inj.i-IR{background:rgba(255,93,115,.16);color:#ff7a8a}
+.lu .cn.b .cnm b{flex-direction:row-reverse}
+@media (max-width:380px){.lu .cnm small{flex-wrap:wrap;gap:3px 4px;font-size:11.5px}.lu .cnm small .gp{flex-basis:100%}.lu .cn.b .cnm small .gp{text-align:right}}
+.lbh{margin-top:18px}
+
+
+/* Matchup picker: all five games visible */
+.mug{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:0 -4px 12px}
+.mug label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 1px;border-radius:4px;border:1px solid var(--hair);background:var(--ink);cursor:pointer;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:0;line-height:1;text-transform:uppercase;color:var(--steel);text-align:center;min-width:0}
+.mug label span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mug label i{width:14px;height:1px;background:currentColor;opacity:.4}
+@media (max-width:400px){.mug label{font-size:11.5px}} @media (max-width:370px){.mug{gap:3px}.mug label{font-size:11px}}
+/* final scores boxed */
+.lu .cv.act{align-self:stretch;display:flex;align-items:center;padding:0 !important}
+.lu .cv.a.act{justify-content:flex-end} .lu .cv.b.act{justify-content:flex-start}
+.lu .cv .fs{display:flex;flex-direction:column;align-items:center;justify-content:center;width:38px;height:100%;min-height:40px;border-radius:4px;line-height:1;gap:3px}
+.lu .cv .fs small{font-family:var(--display);font-weight:600;font-size:8.5px;letter-spacing:.1em;opacity:.75}
+.lu .cv .fs.up{background:rgba(63,214,155,.16);box-shadow:inset 0 0 0 1px rgba(63,214,155,.38)}
+.lu .cv .fs.dn{background:rgba(255,93,115,.15);box-shadow:inset 0 0 0 1px rgba(255,93,115,.38)}
+
+
+/* Matchup weeks */
+.mwx{display:none}
+.mux .posh{position:relative;z-index:6}
+.wdd summary{padding:6px 10px;gap:6px;border-radius:8px;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--sky);min-width:0}
+.wdd .sv{flex:none}
+.wdd .ddm{left:auto;right:0;min-width:150px}
+.wdd .ddm label{font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.wdd .ddm label i{width:38px;text-align:left;font-size:10.5px;letter-spacing:.08em}
+.hres{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.1em;padding:2px 6px;border-radius:3px;align-self:flex-start}
+.mus.msr .hres{align-self:flex-end}
+.hres.w{background:var(--win-bg);color:var(--win)} .hres.l{background:var(--loss-bg);color:var(--loss)}
+.hsc{font-family:var(--display);font-weight:700;font-size:28px;line-height:1;color:var(--chalk)}
+.hrk{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--steel)}
+.mus.msr .hrk{justify-content:flex-end}
+.hmar{text-align:center;margin-top:10px;font-size:12.5px;color:var(--steel)}
+.hmar b{color:var(--chalk);font-weight:600}
+
+
+/* stat lines + bye weeks */
+.lu{grid-template-areas:"na va vb nb" "sa sa sb sb" !important;row-gap:5px}
+.sln{align-self:start;font-size:11px;line-height:1.35;color:var(--steel);font-variant-numeric:tabular-nums;min-width:0}
+.sln.sla{grid-area:sa;padding-right:8px} .sln.slb{grid-area:sb;text-align:right;padding-left:8px;display:block}
+.sln u{text-decoration:none;font-family:var(--display);font-weight:600;font-size:9.5px;letter-spacing:.06em;color:var(--dim);margin-left:2px}
+
+
+/* actual / optimal lineups */
+.lsh{display:flex;justify-content:space-between;align-items:center}
+.lsw label{padding:5px 10px;font-size:12px}
+#lo-a:checked~.mwx .lsw label[for="lo-a"],#lo-o:checked~.mwx .lsw label[for="lo-o"]{background:var(--chalk);color:var(--ink)}
+.lnote{font-size:11px;color:var(--steel);margin:6px 0 2px;text-align:right}
+.lus-o{display:none}
+#lo-o:checked~.mwx .lus-a{display:none}
+#lo-o:checked~.mwx .lus-o{display:block}
+.lopn{text-align:center;margin:8px 0 4px}
+.cn.swp .cnm b::after{content:"BN";flex:none;align-self:center;margin-left:1px;font-family:var(--display);font-weight:700;font-size:10px;letter-spacing:.06em;color:var(--sky);border:1px solid rgba(127,166,255,.5);border-radius:3px;padding:0 3px;vertical-align:1px}
+
+/* team assessment card (bottom of each roster) */
+.ras{margin-top:22px;padding:14px 14px 12px;border:1px solid var(--hair);border-radius:12px;background:var(--deck-2)}
+.rah{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rah b{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.04em;text-transform:uppercase}
+.rat{font-style:normal;font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px 2px;border-radius:6px;box-shadow:inset 0 0 0 1px currentColor}
+.rat.tc{color:#3fd69b}.rat.tp{color:var(--sky)}.rat.tb{color:#d4af6a}.rat.tl{color:var(--steel)}
+.ral{margin-top:12px;padding:10px 12px;border-radius:9px;background:var(--ink)}
+.ralh{display:flex;align-items:center;gap:9px}
+.ralh b{display:grid;place-items:center;width:24px;height:24px;border-radius:6px;font-family:var(--display);font-weight:700;font-size:15px;line-height:1;padding-top:1px}
+.ralh b.up{background:rgba(63,214,155,.16);color:#3fd69b;box-shadow:inset 0 0 0 1px rgba(63,214,155,.4)}
+.ralh b.dn{background:rgba(255,93,115,.15);color:#ff7d8e;box-shadow:inset 0 0 0 1px rgba(255,93,115,.4)}
+.ralh span{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.03em;color:var(--chalk);font-variant-numeric:tabular-nums}
+.ral p{margin:7px 0 0;font-size:13px;line-height:1.5;color:var(--label)}
+.rash{margin:14px 0 8px;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--steel)}
+.rak{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.rak span{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 7px;border-radius:8px;background:var(--ink);min-width:0}
+.rak em{font-style:normal;font-size:10.5px;color:var(--steel);white-space:nowrap}
+.rak b{font-family:var(--display);font-weight:700;font-size:19px;line-height:1;color:var(--chalk);font-variant-numeric:tabular-nums}
+.rak i{font-style:normal;font-size:10.5px;color:var(--dim);white-space:nowrap}
+.rag h4{margin:14px 0 6px;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.rag.up h4{color:#3fd69b}.rag.dn h4{color:#ff7d8e}
+.rag ul{margin:0;padding:0;list-style:none}
+.rag li{position:relative;padding:0 0 0 14px;margin:0 0 6px;font-size:13px;line-height:1.45;color:var(--label)}
+.rag li::before{content:"";position:absolute;left:1px;top:.56em;width:5px;height:5px;border-radius:50%}
+.rag.up li::before{background:#3fd69b}.rag.dn li::before{background:#ff7d8e}
+.ran{margin-top:10px;font-size:11px;color:var(--dim)}
+
+/* ===== Stats tab modules ===== */
+.sxp{display:none}
+.sxnav{margin-bottom:4px}
+.sxc{margin-top:16px;background:var(--deck);border:1px solid var(--hair);border-radius:16px;padding:14px 12px 10px}
+.tpn{display:flex;flex-direction:column;gap:4px;min-width:0}
+.tpb{display:flex}
+.sxh{display:flex;flex-direction:column;gap:3px;margin:18px 0 8px}
+.sxc>.sxh:first-child{margin-top:4px}
+.sxc>.sxh:first-child b{font-size:22px;letter-spacing:.05em}
+.sxh b{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:.04em;text-transform:uppercase;color:var(--chalk);line-height:1.1}
+.sxh span{font-size:12px;color:var(--steel)}
+.sxh span:empty{display:none}
+.sxt .sxr{display:grid;grid-template-columns:var(--cols);align-items:center;column-gap:6px;padding:8px 0;border-bottom:1px solid var(--hair);min-width:0}
+.sxt .sxr>span:not(:first-child){text-align:right}
+.sxhd{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.sxt .sxhd{padding:0 0 6px}
+.sxn{display:block;font-size:14px;font-weight:500;color:var(--chalk);line-height:1.25}
+.sxnm{display:flex;flex-direction:column;gap:5px;min-width:0}
+.sxv{font-family:var(--display);font-weight:600;font-size:16px;color:var(--label);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sxv.b{font-weight:700;color:var(--chalk)}
+.sxv.up{color:#5fd3a5}.sxv.dn{color:#f08a98}
+.sxsd{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;max-width:150px;align-self:center}
+.odr{padding:9px 0;border-bottom:1px solid var(--hair)}
+.odt{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.odt .sxsd{flex:none;width:118px;max-width:none}
+.odv{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:6px}
+.odv>span{text-align:right}
+.odx>.sxhd{padding:0 0 6px;border-bottom:1px solid var(--hair)}
+.sxo .sxr:not(.sxhd)>.sxnm{grid-column:1 / -1}
+.sxv small{font-size:.68em;font-weight:500;color:var(--dim);margin-left:1px}
+.sxsd i{height:6px;border-radius:2px;background:rgba(238,240,244,var(--a));box-shadow:inset 0 0 0 1px rgba(98,107,124,.35)}
+.sxsd i.po{background:rgba(127,166,255,var(--a))}
+/* matrices */
+.sxm .sxr{display:grid;grid-template-columns:78px repeat(10,minmax(0,1fr));align-items:center;column-gap:3px;padding:2px 0}
+.sxm .sxhd span{text-align:center;font-size:11px;letter-spacing:.04em;background:none!important;height:auto!important}
+.mxn{font-size:12.5px;font-weight:500;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sxm .sxr>span:not(.mxn){display:grid;place-items:center;height:26px;border-radius:5px;font-family:var(--display);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums;color:var(--label);background:var(--ink)}
+.mx.up{background:rgba(63,214,155,.14)!important;color:#7fdcb6!important}
+.mx.dn{background:rgba(255,93,115,.12)!important;color:#f29aa6!important}
+.mx.dg{background:var(--chalk)!important;color:var(--ink)!important}
+.hmx .sxr{grid-template-columns:78px repeat(var(--n),minmax(0,1fr)) 38px}
+.hm.r1,.hm.r2{background:rgba(63,214,155,.30)!important;color:#c9f5e2!important}
+.hm.r3{background:rgba(63,214,155,.16)!important;color:#9fe3c6!important}
+.hm.r8{background:rgba(255,93,115,.12)!important;color:#f2a3ad!important}
+.hm.r9,.hm.r10{background:rgba(255,93,115,.24)!important;color:#ffc5cc!important}
+.sxm .sxr>span.hav{background:none;color:var(--chalk);font-weight:700}
+.bym .sxr{grid-template-columns:78px repeat(var(--n),minmax(0,1fr))}
+.bx.b0{color:var(--dim)!important}
+.bx.b1{background:rgba(212,175,106,.12)!important;color:#d9be86!important}
+.bx.b2{background:rgba(212,175,106,.26)!important;color:#ecd39c!important}
+.bx.b3{background:rgba(255,122,26,.30)!important;color:#ffd0ac!important}
+.bnl{display:grid;grid-template-columns:44px 84px minmax(0,1fr);gap:6px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--hair);font-size:13px}
+.bnl>span{font-family:var(--display);font-weight:600;color:var(--steel)}
+.bnl b{font-weight:500;color:var(--chalk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bnl>i{font-style:normal;color:var(--label)}
+/* trades */
+.trd{margin:0 0 10px;padding:10px 12px;border:1px solid var(--hair);border-radius:10px;background:var(--deck-2)}
+.trw{font-size:12px;color:var(--steel);margin-bottom:8px}
+.trg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.tsd{display:flex;flex-direction:column;min-width:0}
+.tnm{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.02em;color:var(--label);line-height:1.15}
+.trc{font-size:11px;color:var(--dim);margin:2px 0 6px}
+.tpl{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--label);margin-bottom:5px;min-width:0}
+.tpl span{min-width:0;line-height:1.25}
+.tpl{align-items:flex-start} .tpl .nb,.tpl b{margin-top:1px}
+.tpl b{margin-left:auto;font-family:var(--display);font-weight:600;font-size:14px;color:var(--label);font-variant-numeric:tabular-nums}
+.tpk{font-size:12.5px;color:var(--steel);margin-bottom:5px}
+.ttot{margin-top:auto;padding-top:6px;border-top:1px solid var(--hair);display:flex;align-items:baseline;gap:5px}
+.ttot b{font-family:var(--display);font-weight:700;font-size:19px;color:var(--steel);font-variant-numeric:tabular-nums}
+.ttot span{font-size:11.5px;color:var(--dim)}
+.ttot{min-height:31px;align-items:center}
+.tsd.win .tnm,.tsd.win .ttot b{color:var(--chalk)}
+/* lineup calls */
+.dcl{padding:8px 0;border-bottom:1px solid var(--hair)}
+.dch{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.dch span{font-size:12px;color:var(--steel);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dch b{font-family:var(--display);font-weight:700;font-size:16px;color:var(--chalk);font-variant-numeric:tabular-nums}
+.dcb{font-size:13.5px;color:var(--steel);margin-top:2px}
+.dcb b{font-weight:500;color:var(--chalk)}
+.dcb .nw{white-space:nowrap}
+.dtag{display:block;width:fit-content;margin-top:6px;font-style:normal;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px 1px;border-radius:5px}
+.dtag{color:#f29aa6;background:rgba(255,93,115,.12);box-shadow:inset 0 0 0 1px rgba(255,93,115,.35)}
+/* projections */
+.ppl{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--hair)}
+.pnm{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px;min-width:0}
+.pnm b{font-size:14px;font-weight:500;color:var(--chalk)}
+.pnm .pmt{flex-basis:100%;font-size:11.5px;color:var(--steel)}
+/* margins */
+.gml{display:grid;grid-template-columns:34px minmax(0,1fr) 62px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--hair);font-size:13.5px;color:var(--steel)}
+.gwk{font-family:var(--display);font-weight:600;font-size:13px}
+.gtm{display:flex;flex-direction:column;gap:2px;min-width:0}
+.gtm>span{display:flex;justify-content:space-between;gap:8px}
+.gtm b{font-weight:500;color:var(--chalk)}
+.gtm em{font-style:normal;font-family:var(--display);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
+.gtm>span:first-child em{color:var(--chalk)}
+.gmv{text-align:right;font-family:var(--display);font-weight:700;font-size:17px;color:var(--chalk);font-variant-numeric:tabular-nums}
+/* stacked bars */
+.stb{padding:8px 0 9px;border-bottom:1px solid var(--hair)}
+.stt{display:flex;justify-content:space-between;align-items:baseline;gap:8px;min-width:0}
+.stt>span:last-child{flex:none;font-size:12px;color:var(--steel);white-space:nowrap}
+.stt>span:last-child b{font-family:var(--display);font-weight:700;font-size:14px;color:var(--chalk)}
+.bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--hair);margin:6px 0 4px}
+.bar i{display:block;height:100%}
+.bar .b1{background:var(--chalk)} .bar .b2{background:#7f889a}
+.stn{font-size:12px;color:var(--steel);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ybar,.obar,.sbar{display:flex;gap:2px;height:10px;border-radius:5px;background:none!important;overflow:visible}
+.ybar i,.obar i,.sbar i,.hbr i,.dvb i{border-radius:3px!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 -2px 0 rgba(0,0,0,.18)}
+.ybar i[style^="width:0.0"],.obar i[style^="width:0.0"],.sbar i[style^="width:0.0"]{display:none}
+.obar::after,.sbar::after{content:"";flex:1 1 0;min-width:0;border-radius:3px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.hbr,.dvb{height:8px;border-radius:4px;overflow:visible}
+.bar .y0{background:#6fc9a4}.bar .y1{background:#d4af6a}.bar .y2{background:#e0838f}.bar .y3{background:#4a5263}
+.stt b.ay{color:#6fc9a4!important}.stt b.ap{color:#d4af6a!important}.stt b.ao{color:#e0838f!important}
+.ylg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--steel);margin:-2px 0 6px}
+.ylg span{display:inline-flex;align-items:center;gap:5px}
+.ylg span::before{content:"";width:10px;height:6px;border-radius:2px}
+.ylg .ay::before{background:#6fc9a4}.ylg .ap::before{background:#d4af6a}.ylg .ao::before{background:#e0838f}.ylg .ad::before{background:#4a5263}
+
+/* --- Stats colour layer --- */
+.pz{display:inline-grid;place-items:center;min-width:24px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:4px;background:var(--pc);color:#0f1218!important;font-style:normal;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.03em;line-height:1;text-box:trim-both cap alphabetic;margin-right:6px;flex:none}
+.sxnb{display:flex;flex-direction:column;gap:6px;min-width:0}
+.dvb{display:block;position:relative;height:6px;border-radius:3px;background:rgba(255,255,255,.04)}
+.dvb::before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--dim)}
+.dvb i{position:absolute;top:0;bottom:0}
+.dvb i.up{left:50%;background:#3fd69b;border-radius:0 3px 3px 0}
+.dvb i.dn{right:50%;background:#ff6b7f;border-radius:3px 0 0 3px}
+.hbr{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.05);overflow:hidden}
+.hbr i{display:block;height:100%;border-radius:3px}
+.hbr i.up{background:#3fd69b}.hbr i.dn{background:#ff6b7f}.hbr i.am{background:linear-gradient(90deg,#d4af6a,#ff8a5c)}
+/* odds */
+.olg{display:flex;gap:14px;font-size:11.5px;color:var(--steel);margin:-2px 0 10px}
+.olg span{display:inline-flex;align-items:center;gap:5px}
+.olg span::before{content:"";width:10px;height:6px;border-radius:2px}
+.olg .o1::before{background:#e8c15a}.olg .o2::before{background:#3fd69b}.olg .o3::before{background:#7fa6ff}
+.obar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:rgba(255,255,255,.05);margin:2px 0 8px}
+.obar i{display:block;height:100%}
+.obar .o1{background:#e8c15a}.obar .o2{background:#3fd69b}.obar .o3{background:#7fa6ff}
+.odt{margin-bottom:6px!important}
+.odn{color:var(--steel)!important;font-size:15px!important}
+.sxv.c1,.sxhd .c1{color:#e8c15a}.sxv.c2,.sxhd .c2{color:#5fd3a5}.sxv.c3,.sxhd .c3{color:#93b4ff}
+.sxv.c3.b{color:#a9c3ff}
+/* trades */
+.tpb{display:flex;align-items:center}
+.pkc{display:inline-grid;place-items:center;min-width:26px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:4px;margin-right:6px;font-style:normal;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.03em;color:#0f1218;background:#626b7c}
+.pkc.r1{background:#e8c15a}.pkc.r2{background:#c9d2e3}.pkc.r3,.pkc.r4{background:#7a8396}
+.pkc.fb{background:#7fa6ff}
+.tpk{display:flex;align-items:center;flex-wrap:wrap;color:var(--label)}
+.tpk{flex-wrap:nowrap;align-items:flex-start}
+.tpk .pkc{margin-top:1px}
+.pkt{color:var(--label);line-height:1.35}
+.pkt em{font-style:normal;color:var(--steel)}
+.tsd{position:relative}
+.tsd.win .ttot b{color:#5fd3a5}
+.tsd.win .ttot{border-top-color:rgba(63,214,155,.45)}
+/* lineups */
+.dln{display:grid;grid-template-columns:50px minmax(0,1fr) 40px 36px;align-items:center;gap:8px;margin-top:6px}
+.dlb{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.dnm{display:flex;align-items:center;min-width:0;font-size:13.5px}
+.dnm b{font-weight:500;color:var(--chalk);line-height:1.25}
+.dln em{font-style:normal;text-align:right;font-family:var(--display);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.dln em.up{color:#5fd3a5}.dln em.dn{color:#f08a98}
+.dch b{color:#5fd3a5!important}
+.sxv.z{color:var(--dim)!important}
+/* projections */
+.pnm{align-items:center}
+.pnm .pz{margin-right:0}
+/* margins */
+.wl{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:4px;margin-right:6px;font-style:normal;font-family:var(--display);font-weight:700;font-size:10.5px;line-height:1;vertical-align:1px}
+.wl.w{background:rgba(63,214,155,.2);color:#7fdcb6}.wl.l{background:rgba(255,93,115,.16);color:#f29aa6}
+.gtm>span{align-items:center}
+.gln{display:flex;align-items:flex-start;min-width:0;line-height:1.3}
+.gln .wl{margin-top:2px;flex:none}
+.gtm>span:first-child em{color:#7fdcb6!important}
+.gmv{justify-self:end;padding:4px 8px 3px;border-radius:6px;font-size:16px!important}
+.gmv.cl{background:rgba(232,193,90,.14);color:#efd38a!important}
+.gmv.bo{background:rgba(63,214,155,.14);color:#8fe3c0!important}
+/* stars */
+.sbar{gap:2px;background:rgba(255,255,255,.05)}
+.sbar i{opacity:.55;background:var(--pc)}
+.sbar i.s1{opacity:1}
+.stn{display:flex;flex-wrap:wrap;gap:4px 12px;white-space:normal!important}
+.stn>span{display:inline-flex;align-items:center;color:var(--label)}
+.stn em{font-style:normal;color:var(--dim);margin-left:4px}
+/* byes */
+.bnl>i{display:flex;flex-wrap:wrap;gap:4px 10px}
+.bnl>i>span{display:inline-flex;align-items:center}
+.bnl{align-items:start}
+
+/* opp rk + all-play first in the stat block (Full and Lean) */
+.board .r>.st.s2{grid-row:3 !important;margin-top:4px}
+.board .r>.s-pf{grid-row:4;margin-top:0}.board .r>.s-pa{grid-row:5}.board .r>.s-lk{grid-row:6}.board .r>.s-lu{grid-row:7}.board .r>.s-sk{grid-row:8}
+.board .r>.szw{grid-row:9 !important}.board .r>.strip{grid-row:10 !important}
+/* ===== Playoffs ===== */
+.tabs label.tpo{grid-column:1 / -1}
+.prsub{font-size:12.5px;color:var(--steel);margin:-6px 0 12px}
+.brk{display:grid;gap:14px}
+.brc{display:grid;grid-template-columns:1fr;gap:8px}
+@media (min-width:520px){.brc{grid-template-columns:1fr 1fr}}
+.brh{grid-column:1 / -1;display:flex;align-items:baseline;gap:8px;padding-bottom:5px;border-bottom:1px solid var(--hair)}
+.brh b{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--chalk)}
+.brh span{font-size:12px;color:var(--steel)}
+.bg{display:flex;flex-direction:column;gap:5px;padding:8px 10px 7px;border:1px solid var(--hair);border-radius:10px;background:var(--deck-2);cursor:pointer;min-width:0}
+.brc .bg:only-of-type,.brc .bg:nth-last-of-type(1):nth-of-type(1){grid-column:1 / -1}
+.bgh{grid-column:1 / -1;font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.bt{display:flex;align-items:center;gap:6px;min-width:0;color:var(--steel)}
+.bt .bn{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.bt b{margin-left:auto;font-family:var(--display);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.bt.bw{color:var(--chalk)}
+.bpj{font-style:normal;font-size:10.5px;color:var(--dim);flex:none}
+.bgw{grid-column:1 / -1;font-size:11px;color:var(--steel);border-top:1px solid var(--hair);padding-top:5px}
+.bby{grid-column:1 / -1;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--label)}
+.bby>span{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-right:2px}
+.bby b{font-weight:500;margin-right:8px}
+.bkx{margin-top:14px}
+.bkp,.ppn,.psame,.pwl{display:none}
+.pbh{margin-top:26px}
+.pwk{display:inline-flex;margin:0 0 12px}
+.psame{padding:24px 0;text-align:center;color:var(--steel);font-size:13px}
+
+TH_CSS
+PO_CSS
+SX_CSS
+/* lineup slate view */
+.lctl{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:10px 0 2px}
+.lvw label{padding:5px 10px;font-size:12px}
+#lv-p:checked~.mwx .lvw label[for="lv-p"],#lv-s:checked~.mwx .lvw label[for="lv-s"]{background:var(--chalk);color:var(--ink)}
+.lsv{display:none}
+#lv-s:checked~.mwx .lsv{display:block}
+#lv-s:checked~.mwx .lpv{display:none}
+.stl{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;margin:10px 0 4px}
+.stc{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 5px;border-radius:7px;background:var(--ink);box-shadow:inset 0 0 0 1px var(--hair);min-width:0}
+.stc b{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--label);line-height:1}
+.stc i{font-style:normal;font-size:10.5px;color:var(--steel);white-space:nowrap;line-height:1.1}
+.stc em{font-style:normal;font-family:var(--display);font-weight:700;font-size:15px;color:var(--chalk);font-variant-numeric:tabular-nums;line-height:1.1;margin-top:2px}
+.stc em u{text-decoration:none;color:var(--dim);margin:0 3px}
+.stc.final{box-shadow:inset 0 0 0 1px rgba(63,214,155,.35)}
+.stc.live{box-shadow:inset 0 0 0 1px rgba(232,193,90,.55)}
+.stc.bye{opacity:.6}
+.slx{--sc:#7fa6ff;margin-top:22px}
+.slx.sx-final{--sc:#5fd3a5}.slx.sx-live{--sc:#e8c15a}.slx.sx-bye{--sc:#9aa3b5}
+.slg{display:flex;align-items:center;gap:8px;padding-bottom:6px;border-bottom:1px solid color-mix(in srgb,var(--sc) 60%,transparent)}
+.slg b{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.08em;text-transform:uppercase;color:var(--sc);line-height:1}
+.slg em{font-style:normal;font-size:12px;color:var(--steel)}
+.slg em u{text-decoration:none;color:var(--dim);margin:0 2px}
+.slg .ss{margin-left:auto}
+.slh{grid-template-columns:1fr auto 1fr!important;border-bottom:0!important;padding:8px 0 2px!important}
+.slh>span{font-family:var(--display);font-weight:700;font-size:18px;color:var(--label);font-variant-numeric:tabular-nums}
+.slh>span.up{color:var(--chalk)}
+.slh>span:last-child,.slc>span:last-child{text-align:right}
+.slh small,.slc small{font-family:var(--body);font-weight:500;font-size:12px;color:var(--steel)}
+.slh em{font-size:10.5px!important;color:var(--steel)!important}
+.ss{font-style:normal;font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 6px 2px;border-radius:4px;line-height:1}
+.ss.final{color:#7fdcb6;background:rgba(63,214,155,.14)}
+.ss.live{color:#efd38a;background:rgba(232,193,90,.16)}
+.ss.upcoming{color:#a9c3ff;background:rgba(127,166,255,.14)}
+.ss.bye{color:var(--dim);background:rgba(255,255,255,.04)}
+.slc{grid-template-columns:1fr auto 1fr!important;padding:2px 0 8px!important}
+.slc>span{font-family:var(--display);font-weight:600;font-size:14px;color:var(--steel);font-variant-numeric:tabular-nums}
+.dlt{font-style:normal;font-family:var(--display);font-weight:700;font-size:13px;font-variant-numeric:tabular-nums;margin:0 0 0 5px;white-space:nowrap}
+.slh>span:last-child .dlt,.slc>span:last-child .dlt{margin:0 5px 0 0}
+.dlt.up{color:#5fd3a5}.dlt.dn{color:#f08a98}.dlt.ev{color:var(--steel)}
+.slc em{font-size:10.5px!important;color:var(--dim)!important}
+
+MU_CSS
+RO_CSS
+
+/* timeline: week number under every pill, framed NFL bye weeks */
+.weeks{gap:6px;padding:0 2px}
+.wkc{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.wkc .wb{display:flex;align-items:flex-end;width:100%;height:30px;position:relative}
+.wkc .wb::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:2px;border-radius:1px}
+.wkc.bye .wb::after{background:var(--sky)}
+.wkc i{display:block;width:100%;border-radius:3px 3px 1px 1px;background:var(--hair)}
+.wkc i.done{background:var(--chalk)}
+.wkc i.fut{height:100%;background:transparent;box-shadow:inset 0 0 0 1px #2c3240;border-radius:3px}
+.wkc i.po{height:100%;background:transparent;box-shadow:inset 0 0 0 1.5px var(--pylon);border-radius:3px;opacity:.85}
+.wkc>span:last-child{margin-top:5px}
+.wkc span{font-size:9.5px;line-height:1;color:var(--dim);font-variant-numeric:tabular-nums}
+.wkc .wv{display:flex;flex-direction:column;align-items:center;height:19px;justify-content:flex-end;font-family:var(--display);font-weight:500;font-size:8.6px;line-height:1;color:var(--chalk);font-variant-numeric:tabular-nums;letter-spacing:0;white-space:nowrap;margin-bottom:-1px}
+.wkc .wv small{font-family:var(--display);font-weight:500;font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-top:1px}
+@media(min-width:380px){.wkc .wv{font-size:9.5px}}@media(min-width:420px){.wkc .wv{font-size:10.5px}}
+.weeks-k{justify-content:flex-start;gap:14px;margin-top:8px;font-size:11px}
+.weeks-k span{display:inline-flex;align-items:center;gap:6px}
+.weeks-k .kw::before{content:"";width:6px;height:10px;border-radius:2px 2px 1px 1px;background:var(--chalk)}
+.weeks-k .kb::before{content:"";width:14px;height:2px;border-radius:1px;background:var(--sky)}
+.weeks-k .kp::before{content:"";width:10px;height:12px;border-radius:2px;box-shadow:inset 0 0 0 1.5px var(--pylon)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Official</div>
+    <h1>The League</h1>
+    <div class="clock"><b>__LEFT__</b><span>weeks left</span></div>
+    <div class="wk">Through Week __G__ · Top 6 make playoffs · Top 2 get byes</div>
+    <div class="season" aria-label="Season progress: __G__ of 14 regular-season weeks played, playoffs weeks 15 to 17">
+      <div class="weeks">SEGMENTS</div>
+      <div class="weeks-k"><span class="kw">League points per week</span><span class="kb">NFL byes</span><span class="kp">Playoffs</span></div>
+    </div>
+  </header>
+
+<input type="radio" name="gloss" id="gl-h" class="lr" checked><input type="radio" name="gloss" id="gl-s" class="lr"><input type="radio" name="tab" id="tab-st" class="lr tabr" checked><input type="radio" name="tab" id="tab-lb" class="lr tabr"><input type="radio" name="tab" id="tab-ro" class="lr tabr"><input type="radio" name="tab" id="tab-mu" class="lr tabr"><input type="radio" name="tab" id="tab-cm" class="lr tabr"><input type="radio" name="tab" id="tab-sx" class="lr tabr"><input type="radio" name="tab" id="tab-po" class="lr tabr"><input type="radio" name="tab" id="tab-th" class="lr tabr">
+  <nav class="tabs" aria-label="Sections"><label for="tab-st">Standings</label><label for="tab-lb">Leaderboards</label><label for="tab-sx">Stats</label><label for="tab-ro">Rosters</label><label for="tab-mu">Matchups</label><label for="tab-cm">Compare</label><label for="tab-po" class="tpo">Playoffs</label><label for="tab-th" class="tpo">Team Hub</label></nav>
+  <div class="pane pane-st">
+  <input type="radio" name="dens" id="dn-full" class="lr" checked><input type="radio" name="dens" id="dn-lean" class="lr">
+    <div class="tg" role="group" aria-label="Scoring format">
+    <button id="bh" aria-pressed="true">H2H</button>
+    <button id="bm" aria-pressed="false">Median</button>
+  </div>
+
+
+  <div class="dens"><span>Detail</span><div class="pseg" role="group" aria-label="Detail level"><label for="dn-lean">Lean</label><label for="dn-full">Full</label></div></div>
+  <div class="hint"></div>
+  <div class="board" id="list"></div>
+  <div class="glw"><span>Glossary</span><div class="pseg glc" role="group" aria-label="Glossary"><label for="gl-h">Hide</label><label for="gl-s">Show</label></div></div>
+  <div class="key">
+    <div><b>Tap a team</b> for weekly results and the remaining schedule.</div>
+    <div><b>Lean / Full</b> Lean keeps each team to its seed, record, streak, standings range, games back and the PF and PA lines; Full adds the rest of the stat lines and the season chart.</div>
+    <div><b>Season chart</b> one column per regular-season week. The bar is the team's score (green win, red loss) and the white tick is the opponent's score. When the opponent had the week's highest score its tick is gold with a white frame, and for the week's lowest burgundy with a white frame, matching the #1 and #10 tiles. <b>RANK</b> is where the team's score finished that week out of 10 (#1 gold, 2–3 green, 8–9 red, #10 red with an outline). <b>OPP</b> is where the opponent's score finished, in the same colours (so green there means your opponent scored well). Dashed columns are weeks still to play. <b>W / L chip</b> is the current streak.</div>
+    <div><b>PF and PA bars</b> 10 segments, one per league rank: #1 fills all 10, #10 fills 1. Green ranks 1–3, red 8–10, grey otherwise (for PA, #1 is the most points against). <b>Luck bar</b> runs from a centre line: right is lucky, left is unlucky.</div>
+    <div><b>Games back</b> how many games behind each line: <b>1st</b> place, <b>Bye</b> (2nd, the last bye spot) and <b>Play-Off</b> (6th, the last playoff spot). Only the lines a team is behind are shown.</div>
+    <div><b>Hi / Lo / Avg</b> highest, lowest and average standings position after each week so far.</div>
+    <div><b>Rank chips</b> league rank for each stat. Ranks 1–3 green, 8–10 red, T = tied. PF and PA #1 = most points. Opp rk #1 = hardest schedule. All-play #1 = most all-play wins. Luck #1 = luckiest.</div>
+    <div><b>Opp rk</b> average rank of your opponent's score within that week's 10 scores. 1 means you faced the week's top score; 10 means the lowest.</div>
+    <div><b>All-play</b> record if you played all 9 teams every week. It measures how well you scored, with your schedule taken out.</div>
+    <div><b>Luck</b> actual wins minus expected wins (shown as <b>xW</b>). Expected wins = all-play win % × games played. Example: 44-10 all-play is 81.5%, × 6 games = 4.89 expected wins; with 6 actual wins, luck is +1.11.</div>
+    <div><b>Dropped pts per wk</b> the points dropped each week, split by position. Each time a bench player should have started, the gap between him and the starter he replaces (same position, or RB/WR/TE through the flex) is credited to the bench player's position. The six add up to the total.</div>
+    <div><b>Tot Eff</b> total (whole-lineup) efficiency: actual points as a share of the best possible lineup each week (Max PF, using everyone on the roster including the bench). <b>/wk</b> is the average points per week dropped (left on the bench). The bar has 10 segments, one per league rank: #1 (most efficient) fills all 10.</div>
+    <div><b>Could have</b> <b>Won</b>: matches you could have won if you played your optimal lineup. <b>Lost</b>: matches you could have lost if your opponent played their optimal lineup.</div>
+    <div><b>Median scoring</b> adds a win each week for a top-5 score and a loss otherwise. Ties broken by PF.</div>
+  </div>
+  </div>
+  <div class="pane pane-lb">
+  LB_SECTION
+  <div class="glw"><span>Glossary</span><div class="pseg glc" role="group" aria-label="Glossary"><label for="gl-h">Hide</label><label for="gl-s">Show</label></div></div>
+  <div class="key">
+    <div><b>Leaderboard</b> pick a stat to rank all 10 teams by it. Same rank colours as elsewhere.</div>
+    <div><b>Rank chips</b> league rank for each stat. Ranks 1–3 green, 8–10 red, T = tied. PF and PA #1 = most points. Opp rk #1 = hardest schedule. All-play #1 = most all-play wins. Luck #1 = luckiest.</div>
+    <div><b>Opp rk</b> average rank of your opponent's score within that week's 10 scores. 1 means you faced the week's top score; 10 means the lowest.</div>
+    <div><b>All-play</b> record if you played all 9 teams every week. It measures how well you scored, with your schedule taken out.</div>
+    <div><b>Luck</b> actual wins minus expected wins (shown as <b>xW</b>). Expected wins = all-play win % × games played. Example: 44-10 all-play is 81.5%, × 6 games = 4.89 expected wins; with 6 actual wins, luck is +1.11.</div>
+    <div><b>Dropped pts per wk</b> the points dropped each week, split by position. Each time a bench player should have started, the gap between him and the starter he replaces (same position, or RB/WR/TE through the flex) is credited to the bench player's position. The six add up to the total.</div>
+    <div><b>Tot Eff</b> total (whole-lineup) efficiency: actual points as a share of the best possible lineup each week (Max PF, using everyone on the roster including the bench). <b>/wk</b> is the average points per week dropped (left on the bench). The bar has 10 segments, one per league rank: #1 (most efficient) fills all 10.</div>
+  </div>
+  </div>
+  <div class="pane pane-ro">
+  RO_SECTION
+  <div class="glw"><span>Glossary</span><div class="pseg glc" role="group" aria-label="Glossary"><label for="gl-h">Hide</label><label for="gl-s">Show</label></div></div>
+  <div class="key">
+    <div><b>Rosters</b> current Sleeper rosters. <b>By position</b> groups them, with injured reserve and taxi squad listed separately; <b>By points</b> lists every player from most to fewest points so you can see where a team's strength sits. <b>No QBs</b> drops quarterbacks; <b>Pts/g</b> sorts by points per game played instead of season total, so a player who missed games isn't buried, and the tile switches to his rank by points per game (ranked against every NFL player at the position with 3+ games; players with fewer games are slotted into that list). The coloured tile is the player's rank among every NFL player at that position by season points in this league's scoring (RB5 = fifth-most RB points); tied players share a rank. <b>Pts</b> season total, <b>/g</b> per game played. Bye week in blue if it is this week, dimmed once it has passed. The small badge is the player's NFL team in its colours; a red cross marks a player in an IR slot. The number after the name is age in years (from date of birth), coloured green for under 27, amber for 27–30 and red for 31 and over; each position heading shows the group's average age in the same colours.</div>
+  </div>
+  </div>
+  <div class="pane pane-mu">
+  MU_SECTION
+  <div class="glw"><span>Glossary</span><div class="pseg glc" role="group" aria-label="Glossary"><label for="gl-h">Hide</label><label for="gl-s">Show</label></div></div>
+  <div class="key">
+    <div><b>Matchups</b> one option per game this week. <b>Lineups</b> shows each team's Sleeper starters slot by slot (QB, RB, RB, WR, WR, TE, flex, K, DEF), then active bench players: a shaded box marks a final score (green = beat the projection, red = fell short), grey = Sleeper's projection in this league's scoring; vs = home game, @ = away. <b>Projected</b> = points scored plus projections for players still to play. Q / D / O = questionable, doubtful, out. Stat lines: <b>PA</b> pass yards-TD(-INT), <b>RU</b> carries-yards(-TD), <b>REC</b> catches-yards(-TD); defenses <b>SK</b> sacks, <b>TO</b> takeaways (INT + fumble recoveries), <b>PA</b> points allowed. A small red <b>FL</b> flag under the position tile = lost fumble (2FL = two). <b>FK</b> (grey) = fumble the offense kept: no points lost. <b>Pts / Gm</b> switches the number on the position tile between the season points rank and the points-per-game rank (players with 3+ games). <b>Lean / Detailed</b>: Detailed adds a panel under each player who has played. Traditional lines are tied with dashes, e.g. <b>RUSH</b> 7CAR-73YD-1TD, <b>PASS</b> 23/29CMP-195YD-3TD-1INT, <b>REC</b> 5/6TGT-27YD (catches/targets); extras follow after a dot (sacks taken, average, longest). Kickers: XP and field goals by distance (20s, 30s, 40s, 50+ made/attempted); defenses: plays made and points/yards allowed; fumbles lost or kept; <b>PTS</b> = where the player's points came from in this league's scoring.</div>
+    <div><b>Slate</b> groups starters by kickoff window: slate points (projected) and the running total. <b>Needs over proj</b> = going into that slate, how many points the trailing team's starters from that slate on had to score above their projections to catch up, assuming the leader's hit theirs (earlier slates count actual scores; live players the higher of actual and projection). Filled in for finished slates and the next one to play; later slates stay blank until their turn.</div>
+    <div><b>Home</b> / <b>Road</b> strips on the inner edge of each lineup row mark a home or road game; <b>Home · Road</b> in the matchup box counts each team's starters at home and on the road this week (starters on bye are left out).</div>
+    <div><b>All-play</b> record if you played all 9 teams every week. It measures how well you scored, with your schedule taken out.</div>
+    <div><b>Luck</b> actual wins minus expected wins (shown as <b>xW</b>). Expected wins = all-play win % × games played. Example: 44-10 all-play is 81.5%, × 6 games = 4.89 expected wins; with 6 actual wins, luck is +1.11.</div>
+  </div>
+  </div>
+  <div class="pane pane-th">
+  TH_SECTION
+  <div class="glw"><span>Glossary</span><div class="pseg glc" role="group" aria-label="Glossary"><label for="gl-h">Hide</label><label for="gl-s">Show</label></div></div>
+  <div class="key">
+    <div><b>Team Hub</b> one team at a time, in two views. <b>Data</b>: the team's row from every league table: odds, season numbers with league rank (1st = best; for Left on bench, 1st = fewest), points per start by position (bar = share of the league best), weekly score rank, star dependence, age, dropped points, margins, home / road and bye exposure. Same figures as the Stats tab.</div>
+    <div><b>Trends</b>: week-by-week lines for points (dashed = league median, dot colour = result), standings, points-for rank, all-play win %, luck (wins minus expected wins, green above zero, red below), playoff / bye / #1 seed odds and projected finish (average finishing place across the simulations, 1st at the top). Tap a week number, or tap / drag along any chart, to move every chart to that week. Dashed lines on Standings and Projected finish mark the bye line (2nd, blue) and the playoff line (6th). Past-week playoff odds re-run the simulation with only the scores known then (early-season averages pulled toward the league average); the latest week shows the same odds as Stats &gt; Odds.</div>
+  </div>
+  </div>
+  <div class="pane pane-po">
+  PO_SECTION
+  <div class="glw"><span>Glossary</span><div class="pseg glc" role="group" aria-label="Glossary"><label for="gl-h">Hide</label><label for="gl-s">Show</label></div></div>
+  <div class="key">
+    <div><b>Home</b> / <b>Road</b> strips on the inner edge of each playoff lineup row mark a home or road game; <b>Home · Road</b> in the matchup box counts each team's set-lineup starters at home and on the road.</div>
+    <div><b>Playoffs</b> the top 6 by record (then points for) make it; seeds 1 and 2 get byes. Week 15: 3 v 6 and 4 v 5. Week 16: 1 plays the 4/5 winner, 2 plays the 3/6 winner (a fixed bracket, Sleeper's default). Week 17 is the final. Later rounds use the projected winner of each game, marked <b>proj.</b>; tap any game to open it.</div>
+    <div><b>Projections</b> each team's best legal lineup (QB, 2 RB, 2 WR, TE, flex, K, DEF) from its current roster, leaving out IR and taxi. Player projections are Sleeper's for that week, scored with league settings. <b>Win chance</b> compares the two projected totals with a spread scaled to their size, the same way as the in-season odds.</div>
+    <div><b>Custom</b> pick team A, team B and a playoff week to see that game.</div>
+  </div>
+  </div>
+  <div class="pane pane-cm">
+  CMP_SECTION
+  <div class="glw"><span>Glossary</span><div class="pseg glc" role="group" aria-label="Glossary"><label for="gl-h">Hide</label><label for="gl-s">Show</label></div></div>
+  <div class="key">
+    <div><b>Compare</b> pick team <b>A</b> and team <b>B</b> from the two menus, then a topic. Throughout, the better value is in white and team A is on the left. <b>Overview</b>: season stats and any meeting this season. <b>Scoring</b>: both teams' weekly scores on one chart, consistency (Swing = standard deviation of weekly scores; lower is steadier), and <b>Schedule swap</b>: each team's record if its weekly scores had faced the other team's opponents. <b>Positions</b>: points per start, each team's best-ranked player, and how many startable players (top 12 QB, TE, K, DEF; top 24 RB, WR). <b>Players</b>: players paired off from best to worst at each position, points down the middle; <b>Pts / Pts/g</b> switches season total and points per game; with Pts/g the rank tiles show points-per-game ranks (against NFL players at the position with 3+ games). Taxi squad is left out; a red cross marks IR; the number after each name is the player's age (shaded by band: under 27, 27–30, 31+). <b>Depth</b>: bench points per week (rostered players not started), roster totals and how many players average 10+ per game. <b>Schedule</b>: remaining opponents' average seed and PF, games against the top 3, and players lost to NFL byes, then week by week. <b>Dynasty</b>: average age of QB, RB, WR and TE (plain and weighted by points) and rookie picks owned for 2027–2029 (number = round; blue outline = acquired from another team). <b>Trades</b>: trades each team has made and any trades between the two, with points the players have scored since.</div>
+  </div>
+  </div>
+  <div class="pane pane-sx">
+  SX_SECTION
+  <div class="glw"><span>Glossary</span><div class="pseg glc" role="group" aria-label="Glossary"><label for="gl-h">Hide</label><label for="gl-s">Show</label></div></div>
+  <div class="key">
+    <div><b>Home / Road</b> starters playing at home or on the road, Weeks so far (starters on bye left out). <b>Record by lineup lean</b> = results in games where more of a team's starters were at home, or more on the road. <b>Points per start</b> and <b>Against projection</b> compare the same starts at home and on the road; the small figures are the number of home · road starts. Brighter figure = the higher of the two; <b>Diff</b> = home minus road.</div>
+    <div><b>Points by position</b> average points per player started at each position (season total ÷ number of starts), so using the flex on an RB or WR doesn't inflate that position. Starts with no game (a player started on his bye week, or inactive) are left out of Per start, since they say nothing about the player; they still count in Per week and Total. <b>Per week</b> is the season total ÷ games played and <b>Total</b> is the season total; both include flex starts. League rank underneath: #1 gold, 2–3 green, 8–9 red, #10 red with an outline, T = tied.
+    <div><b>Odds</b> each remaining game (Weeks 7–14) is simulated 20,000 times. A team's weekly score is drawn from its season average blended 65/35 with the league average, with a spread from its own and the league's week-to-week swing. Seeds go by wins, then points for. The 10 small bars under each name are its chance of finishing in seeds 1 to 10 (brighter = more likely; blue = playoff seeds). <b>Proj W</b> is average final wins.</div>
+    <div><b>Schedules</b> each row is a team's real weekly scores played against the column team's schedule (if that schedule meets the row team, it faces the column team's score instead). The white square is the actual record; green = more wins with that schedule, red = fewer. Columns: RR Team Ram Rod, BP Bill's Block Party, HH Homer's Heroes, MA Mandingoes, RI Team RIPMFL, CT Cheating is Trying, CV Convicts, NF Nuts in the Face, AP Reverse Apache Master, CW Canton waitlist. <b>Luck</b> = actual wins minus the average across all 10 schedules.</div>
+    <div><b>Trades</b> total points scored by the players each side received, from the first Sunday after the trade through the latest completed week, whether or not they were started. Picks and FAAB are listed but not scored. Brighter side = more points so far.</div>
+    <div><b>Lineups</b> the biggest single cases of a bench player outscoring the starter he could have replaced (same position, or RB/WR/TE through the flex). <b>Cost the win</b> = that swap alone would have flipped a loss. <b>Winnable</b> = losses where the best possible lineup from the roster would have beaten the opponent's actual score.</div>
+    <div><b>Projections</b> starters' points minus Sleeper's projections. <b>Beat</b> = weeks the lineup beat its projection. Players need 3+ starts; K and DEF excluded.</div>
+    <div><b>Margins</b> record in games decided by under 10 points (close) and by 30 or more (blowout); <b>Avg</b> = average margin of victory or defeat.</div>
+    <div><b>Stars</b> share of the team's season points (scored by starters) that came from its single top scorer (white) and its next two (grey).</div>
+    <div><b>Age</b> share of starters' season points by each player's current age: 25 and under, 26–29, 30+; DEF has no age.</div>
+    <div><b>Ranks</b> where each team's score ranked among all 10 that week (1 = highest), green for top 3, red for bottom 3; sorted by average.</div>
+    <div><b>Byes</b> number of core starters (top QB, 2 RB, 3 WR, TE, K and DEF by season points on the current roster) on bye in each remaining regular-season week.</div>
+  </div>
+  </div>
+  </div>
+</div>
+
+<script>

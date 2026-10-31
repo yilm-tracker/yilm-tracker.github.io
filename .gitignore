@@ -1,0 +1,13 @@
+node_modules/
+__pycache__/
+site/
+.season/
+pipeline/*_section.html
+pipeline/*_css.css
+pipeline/po_static.*
+pipeline/pos/pos_section.html
+pipeline/standings.html
+pipeline/DynastyStandings.html
+pipeline/lists.json
+pipeline/live.json
+.cache/
