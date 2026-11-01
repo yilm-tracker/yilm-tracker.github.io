@@ -124,6 +124,7 @@ def card(a,b,w,label):
           ('PF / wk',f'{T[a][5]:.1f}',f'{T[b][5]:.1f}',T[a][5],T[b][5]),
           ('PF rank',f'#{T[a][4]}',f'#{T[b][4]}',-T[a][4],-T[b][4]),
           ('All-play',f'{T[a][10]}-{T[a][11]}',f'{T[b][10]}-{T[b][11]}',T[a][10],T[b][10]),
+          ('Every-week H2H',*(lambda w,l:(f'{w}-{l}',f'{l}-{w}',w,l))(sum(p[2]>q[2] for p,q in zip(WK[a],WK[b])),sum(p[2]<q[2] for p,q in zip(WK[a],WK[b])))),
           ('Luck',f'{T[a][12]:+.2f}',f'{T[b][12]:+.2f}',None,None),
           (MB.HRLAB,*[MB.hrval(MB.hr_count([mp(q,w) for q in setlineup(x,w)]),MB.hr_count(MB.optimal([mp(q,w) for q in pool(x,w)]))) for x in (a,b)],None,None)]
     cmp=''.join(f'<div class="mcr"><span class="{"up" if va is not None and va>vb else ""}">{x}</span><em>{l}</em><span class="{"up" if va is not None and vb>va else ""}">{y}</span></div>' for l,x,y,va,vb in rows)

@@ -40,6 +40,7 @@ def card(a,b):
     rows=[('PF / wk',f'{T[a][5]:.1f}',f'{T[b][5]:.1f}',T[a][5],T[b][5]),
           ('PF rank',f'#{T[a][4]}',f'#{T[b][4]}',-T[a][4],-T[b][4]),
           ('All-play',f'{T[a][10]}-{T[a][11]}',f'{T[b][10]}-{T[b][11]}',T[a][10],T[b][10]),
+          ('Every-week H2H',*(lambda w,l:(f'{w}-{l}',f'{l}-{w}',w,l))(sum(p[2]>q[2] for p,q in zip(WK[a],WK[b])),sum(p[2]<q[2] for p,q in zip(WK[a],WK[b])))),
           ('Luck',f'{T[a][12]:+.2f}',f'{T[b][12]:+.2f}',None,None),
           ('On bye',str(len(byes(a,W))),str(len(byes(b,W))),-len(byes(a,W)),-len(byes(b,W))),
           (HRLAB,*[hrval(hr_count(LW['out'][str(RID[x])]['st']),hr_count(optimal(_rpool(LW['out'][str(RID[x])])))) for x in (a,b)],None,None)]
