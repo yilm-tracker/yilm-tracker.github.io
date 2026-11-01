@@ -45,7 +45,7 @@ export async function pullWeekly(get, D) {
     get(`${S}/schedule/nfl/regular/${SEASON}`)]);
   const ss = lg.scoring_settings;
   const pull_m7 = {
-    M7: mD.map(x => ({ rid: x.roster_id, mid: x.matchup_id, pts: x.points, st: x.starters, pp: x.players_points })),
+    M7: mD.map(x => ({ rid: x.roster_id, mid: x.matchup_id, pts: x.points, st: (x.starters || []).filter(p => p && p !== '0'), pp: x.players_points })),
     RO: ro.map(r => ({ rid: r.roster_id, pl: r.players || [], res: r.reserve, taxi: r.taxi, own: r.owner_id })),
     TP: tp,
   };
@@ -83,7 +83,7 @@ export async function pullWeekly(get, D) {
     state, ss, pos: lg.roster_positions,
     ro: ro.map(r => ({ rid: r.roster_id, own: r.owner_id, n: (r.players || []).length, res: r.reserve, taxi: r.taxi })),
     us: us.map(u => [u.user_id, u.display_name, (u.metadata || {}).team_name]),
-    m8: mN.map(x => [x.roster_id, x.matchup_id, x.starters]),
+    m8: mN.map(x => [x.roster_id, x.matchup_id, (x.starters || []).filter(p => p && p !== '0')]),
     t7: tD.filter(t => t.type == 'trade').map(tr), t8: tN.filter(t => t.type == 'trade').map(tr), ntp: tp.length,
   };
   return { pull_m7, pull_pts: P, pull8, pull8a };

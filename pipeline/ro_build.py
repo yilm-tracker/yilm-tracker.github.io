@@ -3,6 +3,7 @@ import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).r
 # and ro_ranks.json (competition rank among all NFL players at the position). CSS-only team switcher.
 import json,re,html
 P=__DTP__+''
+import sys as _s0;_s0.path.insert(0,P);import lg
 s=open(P+'data_block.js',encoding='utf-8').read()
 H=json.loads(re.search(r'const H=(\[.*?\]);',s).group(1))
 R=json.load(open(P+'rosters.json',encoding='utf-8'))
@@ -11,7 +12,7 @@ def norm(n):
     n=n.replace('’',"'").replace(' 👑','').strip(); return {'RIPMFL':'Team RIPMFL'}.get(n,n)
 R={norm(k):v for k,v in R.items()}
 assert set(R)==set(H),set(R)^set(H)
-SHORT={"Team Ram Rod":"Ram Rod","Bill's Block Party":"Block Party","Homer's Heroes":"Homer's","Mandingoes":"Mandingoes","Team RIPMFL":"RIPMFL","Cheating is Trying":"Cheating","Convicts":"Convicts","Nuts in the Face":"Nuts","Reverse Apache Master":"Apache","Canton waitlist":"Canton"}
+SHORT=dict(lg.SHORT)
 SHORT0=dict(SHORT);SHORT={k:k for k in SHORT}  # full team names everywhere; SHORT0 keeps the data-file short names
 ORD=['QB','RB','WR','TE','K','DEF']
 e=html.escape
@@ -80,7 +81,7 @@ def panel(i,t):
             o+= [prow(p[0],p[1],p[2],p[3],p[4],p[6],p[7],True,sk=='g') for p in sorted(pl,key=key) if keep(p)]
             o.append('</div>')
     o.append(_AS(t)+'</div>');return ''.join(o)
-radios='<input type="radio" name="rcol" id="rc-p" class="lr" checked><input type="radio" name="rcol" id="rc-t" class="lr"><input type="radio" name="rview" id="rv-pos" class="lr" checked><input type="radio" name="rview" id="rv-pts" class="lr"><input type="radio" name="rq" id="rq-all" class="lr" checked><input type="radio" name="rq" id="rq-noqb" class="lr"><input type="radio" name="rsort" id="rs-p" class="lr" checked><input type="radio" name="rsort" id="rs-g" class="lr">'+''.join(f'<input type="radio" name="ros" id="ro-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(10))
+radios='<input type="radio" name="rcol" id="rc-p" class="lr" checked><input type="radio" name="rcol" id="rc-t" class="lr"><input type="radio" name="rview" id="rv-pos" class="lr" checked><input type="radio" name="rview" id="rv-pts" class="lr"><input type="radio" name="rq" id="rq-all" class="lr" checked><input type="radio" name="rq" id="rq-noqb" class="lr"><input type="radio" name="rsort" id="rs-p" class="lr" checked><input type="radio" name="rsort" id="rs-g" class="lr">'+''.join(f'<input type="radio" name="ros" id="ro-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N))
 chips='<div class="roc rogd" role="tablist" aria-label="Team">'+''.join(f'<label for="ro-{i}"><em class="rrk">{i+1}</em><span>{e(SHORT[t])}</span></label>' for i,t in enumerate(H))+'</div>'
 CTRL=('<div class="rctl lctl lgrid">'
       '<div class="pseg rcseg" role="group" aria-label="Tile colors"><label for="rc-p">Position</label><label for="rc-t">Team</label></div><i class="lt">Colors</i>'
@@ -90,7 +91,7 @@ CTRL=('<div class="rctl lctl lgrid">'
 sec=('<section class="rox" aria-labelledby="roh">'+radios+
      '<div class="posh"><b id="roh">Rosters</b></div><div class="rsub">Tile = position rank by <span class="rs-pt">points</span><span class="rs-pg">points per game</span> · Wk 1–'+str(DONE)+'</div>'+chips+CTRL+
      ''.join(panel(i,t) for i,t in enumerate(H))+'</section>')
-css=''.join(f'#ro-{i}:checked~.roc label[for="ro-{i}"]{{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}}#ro-{i}:checked~.rop-{i}{{display:block}}' for i in range(10))
+css=''.join(f'#ro-{i}:checked~.roc label[for="ro-{i}"]{{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}}#ro-{i}:checked~.rop-{i}{{display:block}}' for i in range(lg.N))
 sel=lambda pairs:','.join(f'#{i}:checked~.rctl label[for="{i}"]' for i in pairs)
 css+=(sel(['rv-pos','rv-pts','rs-p','rs-g','rc-p','rc-t','rq-all','rq-noqb'])+'{background:var(--chalk);color:var(--ink)}'
       '.rox .rctl .pseg{display:grid!important;margin:0!important}'
@@ -102,7 +103,7 @@ css+=(sel(['rv-pos','rv-pts','rs-p','rs-g','rc-p','rc-t','rq-all','rq-noqb'])+'{
       '.rox .rogd label span{overflow:hidden;text-overflow:ellipsis;min-width:0}'
       '@media(max-width:429px){.rox .rogd label{font-size:12.5px;letter-spacing:.02em;padding:6px 8px;gap:6px}}@media(max-width:374px){.rox .rogd label{font-size:11.5px;letter-spacing:.01em;padding:6px 6px;gap:5px}}'
       '.rox .rogd .rrk{font-style:normal;flex:none;min-width:1.2em;text-align:right;color:var(--steel);font-variant-numeric:tabular-nums}'
-      +''.join(f'#ro-{i}:checked~.roc label[for="ro-{i}"] .rrk{{color:var(--ink);opacity:.55}}' for i in range(10))
+      +''.join(f'#ro-{i}:checked~.roc label[for="ro-{i}"] .rrk{{color:var(--ink);opacity:.55}}' for i in range(lg.N))
       +team_tiles('#rc-t:checked~.rop'))
 open(P+'ro_section.html','w',encoding='utf-8').write(sec)
 open(P+'ro_css.css','w',encoding='utf-8').write(css)

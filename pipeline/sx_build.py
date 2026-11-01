@@ -2,6 +2,7 @@ import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).r
 # Renders the Stats tab: sub-tab nav + Positions (existing POS_SECTION placeholder) + 10 modules.
 import html,sys
 P=__DTP__+''
+import sys as _s0;_s0.path.insert(0,P);import lg
 sys.path.insert(0,P)
 import sx_data as D
 from nfl_colors import badge_c as badge
@@ -142,7 +143,7 @@ def m_byes():
         rows.append(f'<div class="sxr"><span class="mxn">{e(SHORT[t])}</span>{cells}</div>')
         for w in wk:
             if len(BY[t][w])>=2:notes.append((w,t,BY[t][w]))
-    HH=D._g('H');tone=lambda r:'gold' if r==1 else 'g' if r<=3 else 'b' if r>=8 else ''
+    HH=D._g('H');tone=lg.tone
     def opp(t,w):
         f=[x for x in D.FUT[t] if x[0]==w]
         if not f:return ''
@@ -231,7 +232,7 @@ def m_homeroad():
     rows=[[nm(t),f'<span class="sxv">{_hrrec(HRT[t]["lh"])}</span>',f'<span class="sxv">{_hrrec(HRT[t]["lr"])}</span>'] for t in sorted(TEAMS,key=lambda t:-(HRT[t]['lh'][0]+HRT[t]['lr'][0]))]
     o.append(table([('Team',''),(HT,'64px'),(RT,'64px')],rows,'hx-tb'))
     # 3 scoring by position
-    POS=['QB','RB','WR','TE','K','DEF']
+    POS=list(lg.POS)
     def grp(f):
         hh=[x for x in HRS if x[0] and f(x)];rr=[x for x in HRS if not x[0] and f(x)];return hh,rr
     rows=[];rows2=[]

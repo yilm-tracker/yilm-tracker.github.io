@@ -10,9 +10,10 @@ e=html.escape
 X=json.load(open(P+'pull_top.json',encoding='utf-8'))
 D,MIN,PL=X['D'],X['minGp'],X['P']
 import sys;sys.path.insert(0,P);from nfl_colors import badge_c as badge,NFLC,team_tiles
+import lg
 BYE=json.load(open(P+'ro_ranks.json',encoding='utf-8')).get('_bye',{})
 RN={int(k):v for k,v in json.load(open(P+'cmp_extra.json',encoding='utf-8'))['rn'].items()}
-SHORT0={"Team Ram Rod":"Ram Rod","Bill's Block Party":"Block Party","Homer's Heroes":"Homer's","Mandingoes":"Mandingoes","Team RIPMFL":"RIPMFL","Cheating is Trying":"Cheating","Convicts":"Convicts","Nuts in the Face":"Nuts","Reverse Apache Master":"Apache","Canton waitlist":"Canton"}
+SHORT0=dict(lg.SHORT)
 ORD=['QB','RB','WR','TE','K','DEF'];TOP=50
 NAMES={'QB':'Quarterbacks','RB':'Running backs','WR':'Wide receivers','TE':'Tight ends','K':'Kickers','DEF':'Defenses'}
 def nmh(name,pos):

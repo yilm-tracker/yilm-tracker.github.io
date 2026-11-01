@@ -7,6 +7,7 @@ import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).r
 # Output: th_section.html + th_css.css (inserted by rebuild.py when features.json has "teamhub": true).
 import json,re,html,sys,csv,math,random,statistics as st
 P=__DTP__;sys.path.insert(0,P)
+import lg
 import sx_data as D
 import sx_build as SB
 e=html.escape
@@ -14,7 +15,7 @@ T,WK,FUT,G,TEAMS=D.T,D.WK,D.FUT,D.G,D.TEAMS
 H=D._g('H');POSH=D._g('POS')['H']
 N=len(TEAMS);SHORT0=D.SHORT0;FS=D.FROM_SHORT
 ORD=['QB','RB','WR','TE','K','DEF']
-tone=lambda r:'gold' if r==1 else 'g' if r<=3 else 'b' if r>=8 else ''
+tone=lg.tone
 def ordn(n):return f'{n}{"th" if 10<=n%100<=20 else {1:"st",2:"nd",3:"rd"}.get(n%10,"th")}'
 def crank(vals,t,low=False):
     v=vals[t];return 1+sum(1 for x in vals.values() if (x<v-1e-9 if low else x>v+1e-9))

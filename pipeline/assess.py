@@ -4,6 +4,7 @@ import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).r
 import json,re,html,statistics as stt
 from datetime import date
 P=__DTP__+''
+import sys as _s0;_s0.path.insert(0,P);import lg
 e=html.escape
 _s=open(P+'data_block.js',encoding='utf-8').read()
 def _g(k):return json.loads(re.search(r'const '+k+r'=(.*?);\n',_s).group(1))
@@ -19,11 +20,11 @@ R={_norm(k):v for k,v in R0.items()}
 TEAMS=list(T)
 G=len(WK[TEAMS[0]]);NOW=G+1;FIN=not any(FUT.values())
 RID={v:int(k) for k,v in X['rn'].items()}
-SHORT={"Team Ram Rod":"Ram Rod","Bill's Block Party":"Block Party","Homer's Heroes":"Homer's","Mandingoes":"Mandingoes","Team RIPMFL":"RIPMFL","Cheating is Trying":"Cheating","Convicts":"Convicts","Nuts in the Face":"Nuts","Reverse Apache Master":"Apache","Canton waitlist":"Canton"}
+SHORT=dict(lg.SHORT)
 SHORT0=dict(SHORT);SHORT={k:k for k in SHORT}  # full team names everywhere; SHORT0 keeps the data-file short names
-FN=lambda n:{**{v:k for k,v in SHORT0.items()},"Bill's":"Bill's Block Party"}.get(n,n)
+FN=lambda n:lg.FULL.get(n,n)
 # Owner's stated dynasty holds: never flagged as surplus or drop candidates.
-HOLDS={"Bill's Block Party":{'Cam Little','Seattle Seahawks'}}
+HOLDS={}
 def age(pid):
     b=X['age'].get(pid)
     if not b:return None
@@ -34,7 +35,7 @@ def rank(vals,t,desc=True):
 pg=lambda p:p[4]/p[6] if p[6] else 0
 def act(t):return [p for p in R[t] if p[7]!='TX']
 def by(t,pos):return sorted([p for p in act(t) if p[2]==pos and p[7]!='IR'],key=lambda p:-p[4])
-NEED={'QB':1,'RB':2,'WR':3,'TE':1,'K':1,'DEF':1}
+NEED=dict(lg.CORE)
 POSN={'QB':'QB','RB':'RB','WR':'WR','TE':'TE','K':'Kicker','DEF':'Defence'}
 GRP={t:{pos:sum(p[4] for p in by(t,pos)[:n]) for pos,n in NEED.items()} for t in TEAMS}
 GRANK={t:{pos:rank({k:GRP[k][pos] for k in TEAMS},t) for pos in NEED} for t in TEAMS}
@@ -65,13 +66,7 @@ def _parse(sx):
         f=x.split('|');pos,name=HM.get(f[0],['DEF' if not f[0].isdigit() else '?',f[0]])
         o.append(dict(pid=f[0],pos=pos,name=name,proj=float(f[2]),pts=float(f[3])))
     return o
-def _opt(pool):
-    by={}
-    for q in pool:by.setdefault(q['pos'],[]).append(q)
-    for k in by:by[k].sort(key=lambda q:-q['pts'])
-    g=lambda pos,n:by.get(pos,[])[:n]
-    fl=sorted(by.get('RB',[])[2:]+by.get('WR',[])[2:]+by.get('TE',[])[1:],key=lambda q:-q['pts'])[:1]
-    return sum(q['pts'] for q in g('QB',1)+g('RB',2)+g('WR',2)+g('TE',1)+fl+g('K',1)+g('DEF',1))
+def _opt(pool):return lg.optsum(pool)
 def lastweek(t):
     w=WK[t][-1];d=HI['w'][str(G)][str(RID[t])]
     st=_parse(d[2]);bn=_parse(d[3])
@@ -96,24 +91,24 @@ def assess(t):
     good=[];bad=[]
     # results vs underlying
     if pfr<=3:good.append((9-pfr,f'Scoring {pfa:.1f}/wk, {ordn(pfr)} in the league ({pfa-LGPF:+.1f} vs average).'))
-    if pfr>=8:bad.append((pfr,f'Scoring {pfa:.1f}/wk, {ordn(pfr)} in the league ({pfa-LGPF:+.1f} vs average).'))
+    if pfr>=lg.N-2:bad.append((pfr,f'Scoring {pfa:.1f}/wk, {ordn(pfr)} in the league ({pfa-LGPF:+.1f} vs average).'))
     if apx-w>=0.75:good.append((7,f'Better than the record: all-play {apw}-{apl} points to about {apx:.1f} wins, not {w}.'))
     if w-apx>=0.75:bad.append((7,f'Record flatters: all-play {apw}-{apl} points to about {apx:.1f} wins, not {w}.'))
     if apr<=2 and not any('all-play' in x for _,x in good):good.append((6,f'All-play {apw}-{apl}, '+('best in the league.' if apr==1 else f'{ordn(apr)} best.')))
     if par<=2:bad.append((4,f'Faced the {"most" if par==1 else "2nd-most"} points against ({pa/G:.1f}/wk).'))
-    if par>=9:good.append((3,f'Faced the {"fewest" if par==10 else "2nd-fewest"} points against ({pa/G:.1f}/wk) – some schedule luck.'))
-    if stdr>=9:good.append((5,f'Steady: {"lowest" if stdr==10 else "2nd-lowest"} week-to-week swing, floor {FLOOR[t]:.1f}.'))
+    if par>=lg.N-1:good.append((3,f'Faced the {"fewest" if par==lg.N else "2nd-fewest"} points against ({pa/G:.1f}/wk) – some schedule luck.'))
+    if stdr>=lg.N-1:good.append((5,f'Steady: {"lowest" if stdr==lg.N else "2nd-lowest"} week-to-week swing, floor {FLOOR[t]:.1f}.'))
     if stdr<=2:bad.append((5,f'Volatile: {"highest" if stdr==1 else "2nd-highest"} week-to-week swing ({FLOOR[t]:.1f} to {max(x[2] for x in WK[t]):.1f}).'))
     if flr==1 and stdr<9:good.append((5,f'Highest floor in the league ({FLOOR[t]:.1f}).'))
     if efr<=2:good.append((5,f'Sharp lineups: {ef[0]:.1f}% of max points, {ordn(efr)} in the league.'))
-    if efr>=8:bad.append((5,f'Lineup leaks: {ef[1]:.1f} pts/wk left on the bench ({ordn(efr)} in efficiency).'))
+    if efr>=lg.N-2:bad.append((5,f'Lineup leaks: {ef[1]:.1f} pts/wk left on the bench ({ordn(efr)} in efficiency).'))
     # position groups
-    for pos in ('QB','RB','WR','TE','DEF','K'):
+    for pos in lg.POS:
         r=GRANK[t][pos];top=by(t,pos)[:NEED[pos]]
         names=', '.join(pl(p) for p in top) if top else 'none'
         lab=POSN[pos]+(' room' if pos in('QB','RB','WR','TE') else '')
         if r<=2 and pos not in('K',):good.append((8 if pos in('RB','WR') else 6,f'{lab} {ordn(r)}: {names}.'))
-        if r>=9 and pos not in('K','DEF'):bad.append((8 if pos in('RB','WR','QB') else 6,f'{lab} {ordn(r)} ({GRP[t][pos]:.0f} pts vs {GAVG[pos]:.0f} avg): {names}.'))
+        if r>=lg.N-1 and pos not in('K','DEF'):bad.append((8 if pos in('RB','WR','QB') else 6,f'{lab} {ordn(r)} ({GRP[t][pos]:.0f} pts vs {GAVG[pos]:.0f} avg): {names}.'))
     # QB depth / surplus (1-QB league)
     qbs=[p for p in act(t) if p[2]=='QB' and p[7]!='IR']
     good_q=[p for p in qbs if (PG.get(p[0]) or [99])[0]<=15]
@@ -141,7 +136,7 @@ def assess(t):
         if len(bw[b])>=2:bad.append((3,f'Week {b} bye crunch: {", ".join(e(x) for x in bw[b])}.'))
     # dynasty
     if ager<=3:good.append((4,f'Young roster (avg {AGE[t]:.1f}, {ordn(ager)}-youngest).'))
-    if ager>=8:bad.append((3,f'Older roster (avg {AGE[t]:.1f}, {ordn(11-ager)}-oldest).'))
+    if ager>=lg.N-2:bad.append((3,f'Older roster (avg {AGE[t]:.1f}, {ordn(lg.N+1-ager)}-oldest).'))
     nf=len(FIRSTS[t])
     if nf>=4:good.append((6,f'Draft capital: {nf} 1sts in {YRS[0]}–{YRS[2][2:]} ('+', '.join(f"{y} {SHORT[X['rn'][str(o)]]}" for y,_,o in FIRSTS[t])+').'))
     if nf==0:bad.append((6,f'No 1st-round picks in {YRS[0]}, {YRS[1]} or {YRS[2]}.'))
@@ -154,10 +149,10 @@ def assess(t):
     good.sort(key=lambda x:-x[0]);bad.sort(key=lambda x:-x[0])
     # verdict
     seed=min(hr,mr)
-    if FIN:tier,tc=(('Contender','tc') if apr<=2 else ('Playoff team','tp')) if hr<=6 else ('Missed playoffs','tl')
+    if FIN:tier,tc=(('Contender','tc') if apr<=2 else ('Playoff team','tp')) if hr<=lg.PO else ('Missed playoffs','tl')
     elif apr<=2:tier,tc='Contender','tc'
-    elif hr<=6 and fw>=7.5:tier,tc='Playoff team','tp'
-    elif hr<=6 or fw>=6.5:tier,tc='Bubble','tb'
+    elif hr<=lg.PO and fw>=7.5:tier,tc='Playoff team','tp'
+    elif hr<=lg.PO or fw>=6.5:tier,tc='Bubble','tb'
     else:tier,tc='Long shot','tl'
     fr=f'{round(fw)}-{round(fl)}'
     return dict(tier=tier,tc=tc,good=[x for _,x in good[:5]],bad=[x for _,x in bad[:5]],

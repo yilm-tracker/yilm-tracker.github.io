@@ -36,3 +36,5 @@ def optimal(pool,pos=lambda q:q['pos'],pts=lambda q:q['pts'],slots=None):
     return out
 def optsum(pool,pos=lambda q:q['pos'],pts=lambda q:q['pts'],slots=None):return round(sum(pts(q) for q in optimal(pool,pos,pts,slots) if q is not None),2)
 def tone(r):return 'gold' if r==1 else 'g' if r<=3 else 'b last' if r==N else 'b' if r>N-3 else ''
+CORE=dict(NEED)                      # core starters per position (a SUPER_FLEX spot is a second QB in practice)
+if 'SUPER_FLEX' in SLOTS and 'QB' in CORE:CORE['QB']+=SLOTS.count('SUPER_FLEX')

@@ -4,6 +4,7 @@ import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).r
 import json,re,html,csv,sys,statistics as stt
 from datetime import date
 P=__DTP__+''
+import sys as _s0;_s0.path.insert(0,P);import lg
 sys.path.insert(0,P);from nfl_colors import badge_c as badge,NFL_CSS
 s=open(P+'data_block.js',encoding='utf-8').read()
 g=lambda n:json.loads(re.search(r'const '+n+r'=(.*?);\n',s).group(1))
@@ -16,18 +17,18 @@ X=json.load(open(P+'cmp_extra.json',encoding='utf-8'))
 EF=json.load(open(P+'eff.json'))
 SKo=json.load(open(P+'skill_opt.json'));SKo.pop('_note',None)
 SK={t:v['act']/v['opt']*100 for t,v in SKo.items()}
-POS=['QB','RB','WR','TE','K','DEF']
+POS=list(lg.POS)
 PS={norm(r['team']):{p:float(r[p])/max(1,int(r['starts_'+p])-int(r.get('nogame_'+p) or 0)) for p in POS} for r in csv.DictReader(open(P+'pos/pos.csv',encoding='utf-8'))}
-SHORT={"Team Ram Rod":"Ram Rod","Bill's Block Party":"Block Party","Homer's Heroes":"Homer's","Mandingoes":"Mandingoes","Team RIPMFL":"RIPMFL","Cheating is Trying":"Cheating","Convicts":"Convicts","Nuts in the Face":"Nuts","Reverse Apache Master":"Apache","Canton waitlist":"Canton"}
+SHORT=dict(lg.SHORT)
 SHORT0=dict(SHORT);SHORT={k:k for k in SHORT}  # full team names everywhere; SHORT0 keeps the data-file short names
-FULL={**{v:k for k,v in SHORT0.items()},**{k:k for k in SHORT0}};FULL["Bill's"]="Bill's Block Party"
+FULL=dict(lg.FULL)
 RN={int(k):v for k,v in X['rn'].items()};RID={v:k for k,v in RN.items()}
 e=html.escape;G=len(WK[H[0]]);W=G+1;TODAY=date.today()
 from datetime import datetime as _dtm
 _K=json.load(open(P+'kick.json')).get('1',{})
 OPEN=min((int(_dtm.fromisoformat(v[0]).timestamp()*1000) for v in _K.values() if v and v[0]),default=1788800000000)-86400000
 seed=lambda t:H.index(t)+1
-tone=lambda r:'gold' if r==1 else 'g' if r<=3 else 'b last' if r==10 else 'b' if r>=8 else ''
+tone=lg.tone
 chip=lambda r:f'<i class="ch {tone(r)}"><span class="ct">#{r}</span></i>'
 form=lambda t:''.join(f'<i class="fm {"w" if x[2]>x[3] else "l"}"></i>' for x in WK[t][-5:])
 SUF={'Jr.','Sr.','II','III','IV','V'}
@@ -224,8 +225,8 @@ def panel(i,j):
     side=lambda x,cl:f'<div class="mus {cl}">{chip(seed(x))}<b>{e(x)}</b><span class="mrec">{T[x][0]}-{T[x][1]}</span><span class="mform">{form(x)}</span></div>'
     return (f'<div class="cpn cp-{i}-{j}"><div class="mcard chead"><div class="mvs">{side(a,"msl")}<span class="mv2">vs</span>{side(b,"msr")}</div></div>'
             +overview(a,b)+scoring(a,b)+positions(a,b)+playersec(a,b)+depth(a,b)+schedule(a,b)+dynasty(a,b)+trades(a,b)+'</div>')
-radios=(''.join(f'<input type="radio" name="ca" id="ca-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(10))+
-        ''.join(f'<input type="radio" name="cb" id="cb-{i}" class="lr"{" checked" if i==1 else ""}>' for i in range(10))+
+radios=(''.join(f'<input type="radio" name="ca" id="ca-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N))+
+        ''.join(f'<input type="radio" name="cb" id="cb-{i}" class="lr"{" checked" if i==1 else ""}>' for i in range(lg.N))+
         ''.join(f'<input type="radio" name="csub" id="ct-{k}" class="lr"{" checked" if k=="ov" else ""}>' for k,_ in SUBS)+
         '<input type="radio" name="cs" id="cs-p" class="lr" checked><input type="radio" name="cs" id="cs-g" class="lr">')
 _SVS={}  # full team names everywhere
@@ -238,12 +239,12 @@ html_=('<section class="cmx" aria-labelledby="cmh">'+radios+
      '<div class="posh"><b id="cmh">Compare</b></div>'+
      '<div class="cpk">'+dd('a','A')+dd('b','B')+'</div>'+nav+
      '<div class="csame">Pick two different teams.</div>'+
-     ''.join(panel(i,j) for i in range(10) for j in range(10) if i<j)+'</section>')
-css=''.join(f'#ca-{i}:checked~.cpk .dd-a .sv-{i},#cb-{i}:checked~.cpk .dd-b .sv-{i}{{display:inline}}#ca-{i}:checked~.cpk .dd-a label[for="ca-{i}"],#cb-{i}:checked~.cpk .dd-b label[for="cb-{i}"]{{background:var(--chalk);color:var(--ink)}}' for i in range(10))
-css+=','.join(f'#ca-{i}:checked~#cb-{j}:checked~.cp-{min(i,j)}-{max(i,j)}' for i in range(10) for j in range(10) if i!=j)+'{display:block}'
-css+=''.join(f'#ca-{i}:checked~#cb-{i}:checked~.csame{{display:block}}' for i in range(10))
+     ''.join(panel(i,j) for i in range(lg.N) for j in range(lg.N) if i<j)+'</section>')
+css=''.join(f'#ca-{i}:checked~.cpk .dd-a .sv-{i},#cb-{i}:checked~.cpk .dd-b .sv-{i}{{display:inline}}#ca-{i}:checked~.cpk .dd-a label[for="ca-{i}"],#cb-{i}:checked~.cpk .dd-b label[for="cb-{i}"]{{background:var(--chalk);color:var(--ink)}}' for i in range(lg.N))
+css+=','.join(f'#ca-{i}:checked~#cb-{j}:checked~.cp-{min(i,j)}-{max(i,j)}' for i in range(lg.N) for j in range(lg.N) if i!=j)+'{display:block}'
+css+=''.join(f'#ca-{i}:checked~#cb-{i}:checked~.csame{{display:block}}' for i in range(lg.N))
 css+=''.join(f'#ct-{k}:checked~.csub label[for="ct-{k}"]{{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}}#ct-{k}:checked~.cpn .cs-{k}{{display:block}}' for k,_ in SUBS)
-FL=':is('+','.join(f'#ca-{j}:checked~#cb-{i}:checked~.cp-{i}-{j}' for i in range(10) for j in range(10) if i<j)+')'
+FL=':is('+','.join(f'#ca-{j}:checked~#cb-{i}:checked~.cp-{i}-{j}' for i in range(lg.N) for j in range(lg.N) if i<j)+')'
 flip={'':'--ca:#f59a52;--cb:#7fa6ff','.mcr,.cgh':'grid-template-areas:"b m a"','.mcr>:first-child,.cgh>:first-child':'text-align:right;justify-content:flex-end','.mcr>:last-child,.cgh>:last-child':'text-align:left;justify-content:flex-start',
  '.mvs':'grid-template-areas:"b m a"','.mus.msl':'align-items:flex-end;text-align:right','.mus.msr':'align-items:flex-start;text-align:left',
  '.mus.msl .ch':'align-self:flex-end','.mus.msr .ch':'align-self:flex-start','.cleg':'flex-direction:row-reverse',

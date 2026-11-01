@@ -18,6 +18,7 @@ if BO:
     for f in os.listdir(SRC):
         if CODE_RE.search(f) and f!='data_block.js' and not re.match(r'.*_(section|css)\.|standings\.html|DynastyStandings|po_static',f):
             shutil.copy(os.path.join(SRC,f),os.path.join(WS,f))
+    shutil.copy(os.path.join(SRC,'pos','build_pos.py'),os.path.join(WS,'pos','build_pos.py'))
 else:
     if os.path.isdir(ROOT):shutil.rmtree(ROOT)
     os.makedirs(ROOT)

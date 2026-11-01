@@ -5,6 +5,7 @@ import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).r
 import json,re,html,os,math,sys
 from datetime import date
 P=__DTP__+''
+import sys as _s0;_s0.path.insert(0,P);import lg
 sys.path.insert(0,P)
 from nfl_colors import badge_c as badge
 e=html.escape
@@ -22,11 +23,11 @@ if os.path.exists(P+'pull8.json'):
     for pid,m in json.load(open(P+'pull8.json'))['META'].items():
         if m and m[3]:INJM[pid]=m[3]
 PROJ=json.load(open(P+'po_proj.json')) if os.path.exists(P+'po_proj.json') else None
-SHORT={"Team Ram Rod":"Ram Rod","Bill's Block Party":"Block Party","Homer's Heroes":"Homer's","Mandingoes":"Mandingoes","Team RIPMFL":"RIPMFL","Cheating is Trying":"Cheating","Convicts":"Convicts","Nuts in the Face":"Nuts","Reverse Apache Master":"Apache","Canton waitlist":"Canton"}
+SHORT=dict(lg.SHORT)
 SHORT0=dict(SHORT);SHORT={k:k for k in SHORT}  # full team names everywhere; SHORT0 keeps the data-file short names
-FULL={**{v:k for k,v in SHORT0.items()},**{k:k for k in SHORT0}};FULL["Bill's"]="Bill's Block Party"
+FULL=dict(lg.FULL)
 WEEKS=[15,16,17];RND={15:'Wild Card',16:'Semi Finals',17:'Championship'}
-tone=lambda r:'gold' if r==1 else 'g' if r<=3 else 'b last' if r==10 else 'b' if r>=8 else ''
+tone=lg.tone
 chip=lambda r:f'<i class="ch {tone(r)}"><span class="ct">#{r}</span></i>'
 seed=lambda t:H.index(t)+1
 def age(pid):
@@ -47,19 +48,13 @@ def pool(t,w):
         if p[7] in('IR','TX'):continue
         v,opp=proj(p[0],w);out.append(dict(pid=p[0],name=p[1],pos=p[2],nfl=p[3],pj=v,opp=opp,gp=ppg(p[0])[1],inj=INJM.get(p[0])))
     return out
-SLOTS=['QB','RB','RB','WR','WR','TE','FLEX','K','DEF']
-def best(t,w):
-    by={}
-    for q in pool(t,w):by.setdefault(q['pos'],[]).append(q)
-    for k in by:by[k].sort(key=lambda q:-q['pj'])
-    gg=lambda p_,n:(by.get(p_,[])+[None]*n)[:n]
-    fl=sorted(by.get('RB',[])[2:]+by.get('WR',[])[2:]+by.get('TE',[])[1:],key=lambda q:-q['pj'])[:1]+[None]
-    return gg('QB',1)+gg('RB',2)+gg('WR',2)+gg('TE',1)+fl[:1]+gg('K',1)+gg('DEF',1)
+SLOTS=[lg.SLAB.get(x,x) for x in lg.SLOTS]
+def best(t,w):return lg.optimal(pool(t,w),pts=lambda q:q['pj'])
 BEST={(t,w):best(t,w) for t in H for w in WEEKS}
 PT={(t,w):round(sum(q['pj'] for q in BEST[(t,w)] if q),1) for t in H for w in WEEKS}
 # finished playoff games (po_actual.json, written for a past season): real scores replace projections
 ACT=json.load(open(P+'po_actual.json')) if os.path.exists(P+'po_actual.json') else None
-_RN={1:"Convicts",2:"Homer's Heroes",3:"Team Ram Rod",4:"Team RIPMFL",5:"Reverse Apache Master",6:"Canton waitlist",7:"Nuts in the Face",8:"Bill's Block Party",9:"Mandingoes",10:"Cheating is Trying"}
+_RN=dict(lg.RN)
 AW={(_RN[int(r)],int(w)):v[1] for w,d in (ACT or {}).get('w',{}).items() for r,v in d.items()}
 PT.update(AW)
 FINAL=any(k[1]==17 for k in AW)  # championship played: the bracket is the result, no projections
@@ -83,7 +78,7 @@ def cell(q,side):
 import mu_build as MB
 MB.HATILE=True  # HOME / ROAD tiles in the playoff lineups
 _W8=json.load(open(P+f'wk{G+1}.json'))
-RIDN={"Convicts":1,"Homer's Heroes":2,"Team Ram Rod":3,"Team RIPMFL":4,"Reverse Apache Master":5,"Canton waitlist":6,"Nuts in the Face":7,"Bill's Block Party":8,"Mandingoes":9,"Cheating is Trying":10}
+RIDN=dict(lg.RID)
 HOMEW=json.load(open(P+'po_home.json')) if os.path.exists(P+'po_home.json') else {}
 def mp(q,w):
     """player dict -> Matchups row format [pid,pos,name,nfl,proj,act,opp,inj,done,ha,week]"""
@@ -192,16 +187,16 @@ def bpanel(i,j):
     lab=''.join(f'<span class="pwl pwl-{w}">Week {w} · {RND[w]}</span>' for w in WEEKS)
     return f'<div class="ppn pp-{i}-{j}">{card(a,b,15,lab)}{lineup(a,b,15)}</div>'
 radios=('<input type="radio" name="pview" id="pv-b" class="lr" checked><input type="radio" name="pview" id="pv-c" class="lr">'+''.join(f'<input type="radio" name="bk" id="bk-{k}" class="lr"{" checked" if n==0 else ""}>' for n,(k,*_) in enumerate(GAMES))+
-        ''.join(f'<input type="radio" name="pa" id="pa-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(10))+
-        ''.join(f'<input type="radio" name="pb" id="pb-{i}" class="lr"{" checked" if i==1 else ""}>' for i in range(10))+
+        ''.join(f'<input type="radio" name="pa" id="pa-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N))+
+        ''.join(f'<input type="radio" name="pb" id="pb-{i}" class="lr"{" checked" if i==1 else ""}>' for i in range(lg.N))+
         ''.join(f'<input type="radio" name="pw" id="pw-{w}" class="lr"{" checked" if w==17 else ""}>' for w in WEEKS)+
         ''.join(f'<input type="radio" name="{k}lopt" id="{k}lo-a" class="lr" checked><input type="radio" name="{k}lopt" id="{k}lo-o" class="lr"><input type="radio" name="{k}lview" id="{k}lv-p" class="lr" checked><input type="radio" name="{k}lview" id="{k}lv-s" class="lr">' for k in 'bp'))
 import gzip,base64
 if FINAL:PPX=''
 elif WSP:
-    _M={f'{i}-{j}-{w}':f'<div class="ppn">{card(H[i],H[j],w,f"Week {w} · {RND[w]}")}{lineup(H[i],H[j],w)}</div>' for i in range(10) for j in range(10) if i!=j for w in WEEKS}
+    _M={f'{i}-{j}-{w}':f'<div class="ppn">{card(H[i],H[j],w,f"Week {w} · {RND[w]}")}{lineup(H[i],H[j],w)}</div>' for i in range(lg.N) for j in range(lg.N) if i!=j for w in WEEKS}
     open(P+'po_static.html','w',encoding='utf-8').write(''.join(f'<div class="ppn pp-{k}">{v[17:]}' for k,v in _M.items()))
-    open(P+'po_static.css','w').write(','.join(f'#pa-{i}:checked~#pb-{j}:checked~#pw-{w}:checked~.pp-{i}-{j}-{w}' for i in range(10) for j in range(10) if i!=j for w in WEEKS)+'{display:block}')
+    open(P+'po_static.css','w').write(','.join(f'#pa-{i}:checked~#pb-{j}:checked~#pw-{w}:checked~.pp-{i}-{j}-{w}' for i in range(lg.N) for j in range(lg.N) if i!=j for w in WEEKS)+'{display:block}')
     _Z=base64.b64encode(gzip.compress(json.dumps(_M,separators=(",",":")).encode(),9,mtime=0)).decode()
     PPX=('<div class="ppx" aria-live="polite"></div><script type="text/plain" id="ppz">'+_Z+'</script>'
          '<script>(function(){var M=null,P=null,x=document.querySelector(".ppx");'
@@ -213,7 +208,7 @@ elif WSP:
          'document.addEventListener("change",function(e){var n=e.target&&e.target.name;if(n==="pa"||n==="pb"||n==="pw")draw()});'
          'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",draw);else draw()})()</script>')
 else:
-    PPX=''.join(bpanel(i,j) for i in range(10) for j in range(10) if i!=j)
+    PPX=''.join(bpanel(i,j) for i in range(lg.N) for j in range(lg.N) if i!=j)
 wk='<div class="pseg pwk" role="group" aria-label="Week">'+''.join(f'<label for="pw-{w}">Wk {w}</label>' for w in WEEKS)+'</div>'
 def placings():
     # places 1-6 from the placement games (1st, 3rd, 5th) in the winners bracket; 7-10 by regular-season seed
@@ -245,12 +240,12 @@ css+=('.pvw{display:inline-flex;margin:0 0 14px}#pv-b:checked~.pvw label[for="pv
       '#pv-c:checked~.prd,#pv-c:checked~.rkey,#pv-c:checked~.bkx,'
       '#pv-b:checked~.ppk,#pv-b:checked~.pwk,#pv-b:checked~.psame,#pv-b:checked~.ppx,#pv-b:checked~.ppn{display:none!important}')
 css+=BRCSS+''.join(f'#bk-{k}:checked~.pbr label[for="bk-{k}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#bk-{k}:checked~.prd label[for="bk-{k}"]{{border-color:var(--chalk);background:var(--deck-2)}}#bk-{k}:checked~.bkx .bkp-{k}{{display:block}}' for k,*_ in GAMES)
-css+=''.join(f'#pa-{i}:checked~.ppk .dd-a .sv-{i},#pb-{i}:checked~.ppk .dd-b .sv-{i}{{display:inline}}#pa-{i}:checked~.ppk .dd-a label[for="pa-{i}"],#pb-{i}:checked~.ppk .dd-b label[for="pb-{i}"]{{background:var(--chalk);color:var(--ink)}}#pa-{i}:checked~#pb-{i}:checked~.psame{{display:block}}' for i in range(10))
+css+=''.join(f'#pa-{i}:checked~.ppk .dd-a .sv-{i},#pb-{i}:checked~.ppk .dd-b .sv-{i}{{display:inline}}#pa-{i}:checked~.ppk .dd-a label[for="pa-{i}"],#pb-{i}:checked~.ppk .dd-b label[for="pb-{i}"]{{background:var(--chalk);color:var(--ink)}}#pa-{i}:checked~#pb-{i}:checked~.psame{{display:block}}' for i in range(lg.N))
 css+=''.join(f'#pw-{w}:checked~.pwk label[for="pw-{w}"]{{background:var(--chalk);color:var(--ink)}}' for w in WEEKS)
 if WSP:
     css+='.ppx .ppn{display:block}'
 else:
-    css+=','.join(f'#pa-{i}:checked~#pb-{j}:checked~.pp-{i}-{j}' for i in range(10) for j in range(10) if i!=j)+'{display:block}'
+    css+=','.join(f'#pa-{i}:checked~#pb-{j}:checked~.pp-{i}-{j}' for i in range(lg.N) for j in range(lg.N) if i!=j)+'{display:block}'
     css+=''.join(f'#pw-{w}:checked~.ppn .pwl-{w}{{display:inline}}' for w in WEEKS)
 css+=('.pox .pfph{margin-top:22px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}.pox .pfph small{font-family:var(--body);font-weight:500;font-size:11px;letter-spacing:0;text-transform:none;color:var(--steel)}.pfph{margin-bottom:8px}.pfpx{display:flex;flex-direction:column;gap:4px}'
       '.pfpr{display:grid;grid-template-columns:1.6em 2.9em minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--hair);border-radius:6px;background:var(--ink)}'

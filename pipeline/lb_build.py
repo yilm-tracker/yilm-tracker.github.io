@@ -2,13 +2,14 @@ import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).r
 # Builds the "Leaderboard" section: pick a stat, see all 10 teams ranked by it (CSS-only radios, works without JS).
 import json,re,csv
 P=__DTP__+''
+import sys as _s0;_s0.path.insert(0,P);import lg
 s=open(P+'data_block.js',encoding='utf-8').read()
 T=json.loads(re.search(r'const T=(\{.*?\});',s).group(1))
 G=int(re.search(r'const G=(\d+);',s).group(1))
 EF=json.load(open(P+'eff.json'));SKr=json.load(open(P+'skill_opt.json'));SKr.pop('_note',None)
 rows=list(csv.DictReader(open(P+'pos/pos.csv',encoding='utf-8')))
 nm=lambda n:{'RIPMFL':'Team RIPMFL'}.get(n.replace('’',"'").replace(' \U0001F451','').strip(),n.replace('’',"'").replace(' \U0001F451','').strip())
-PS={nm(r['team']):{p:float(r[p])/max(1,int(r['starts_'+p])-int(r.get('nogame_'+p) or 0)) for p in ['QB','RB','WR','TE','K','DEF']} for r in rows}
+PS={nm(r['team']):{p:float(r[p])/max(1,int(r['starts_'+p])-int(r.get('nogame_'+p) or 0)) for p in list(lg.POS)} for r in rows}
 sg=lambda v:('+' if v>0 else '−' if v<0 else '')+f"{abs(v):.2f}"
 # key, label, value fn, display fn, low_is_rank1
 STATS=[
@@ -21,9 +22,9 @@ STATS=[
  ('opp','Opp rk',lambda t:T[t][9],lambda t:f"{T[t][9]:.1f}",True),
  ('eff','Eff',lambda t:EF[t][0],lambda t:f"{EF[t][0]:.1f}%",False),
  ('skill','Skill',lambda t:SKr[t]['act']/SKr[t]['opt']*100,lambda t:f"{SKr[t]['act']/SKr[t]['opt']*100:.1f}%",False),
-]+[(p.lower(),p,(lambda p:lambda t:PS[t][p])(p),(lambda p:lambda t:f"{PS[t][p]:.1f}")(p),False) for p in ['QB','RB','WR','TE','K','DEF']]
+]+[(p.lower(),p,(lambda p:lambda t:PS[t][p])(p),(lambda p:lambda t:f"{PS[t][p]:.1f}")(p),False) for p in list(lg.POS)]
 DESC={'pf':'Points for, season total','pa':'Points against, season total','max':'Best possible lineup points, season total','ap':'Record if you played every team every week','xw':'Expected wins from all-play win %','luck':'Actual wins minus expected wins','opp':'Average weekly rank of opponent score (#1 = hardest schedule)','eff':'Actual PF as a share of Max PF','skill':'RB/WR/TE/FLEX points as a share of the best combo on the roster','qb':'QB points per start','rb':'RB points per start','wr':'WR points per start','te':'TE points per start','k':'K points per start','def':'DEF points per start'}
-tone=lambda r:'gold' if r==1 else 'g' if r<=3 else 'b last' if r==10 else 'b' if r>=8 else ''
+tone=lg.tone
 teams=list(T)
 out=['<section class="lbx" aria-labelledby="lbh">',''.join(f'<input type="radio" name="lbm" id="lb-{k}" class="lr"{" checked" if i==0 else ""}>' for i,(k,*_) in enumerate(STATS)),
  '<div class="posh"><b id="lbh">Leaderboard</b></div>',

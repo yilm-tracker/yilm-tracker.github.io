@@ -4,16 +4,17 @@ import json,re,statistics as stt
 from datetime import date,datetime,timezone,timedelta
 import numpy as np
 P=__DTP__+''
+import sys as _s0;_s0.path.insert(0,P);import lg
 _s=open(P+'data_block.js',encoding='utf-8').read()
 def _g(k):return json.loads(re.search(r'const '+k+r'=(.*?);\n',_s).group(1))
 T=_g('T');WK=_g('WK');FUT=_g('FUT');PH=_g('PH')
 TEAMS=list(T);G=len(WK[TEAMS[0]]);NOW=G+1
 X=json.load(open(P+'cmp_extra.json',encoding='utf-8'))
 RN={int(k):v for k,v in X['rn'].items()};RID={v:k for k,v in RN.items()}
-SHORT={"Team Ram Rod":"Ram Rod","Bill's Block Party":"Block Party","Homer's Heroes":"Homer's","Mandingoes":"Mandingoes","Team RIPMFL":"RIPMFL","Cheating is Trying":"Cheating","Convicts":"Convicts","Nuts in the Face":"Nuts","Reverse Apache Master":"Apache","Canton waitlist":"Canton"}
+SHORT=dict(lg.SHORT)
 SHORT0=dict(SHORT);SHORT={k:k for k in SHORT}  # full team names everywhere; SHORT0 keeps the data-file short names
-CODE={"Team Ram Rod":"RR","Bill's Block Party":"BP","Homer's Heroes":"HH","Mandingoes":"MA","Team RIPMFL":"RI","Cheating is Trying":"CT","Convicts":"CV","Nuts in the Face":"NF","Reverse Apache Master":"AP","Canton waitlist":"CW"}
-FROM_SHORT={**{v:k for k,v in SHORT0.items()},**{k:k for k in SHORT0}};FROM_SHORT["Bill's"]="Bill's Block Party"
+CODE=dict(lg.CODE)
+FROM_SHORT=dict(lg.FULL)
 HI=json.load(open(P+'hist.json'));HM=HI['m']
 AGE=dict(X['age']);AGE.update(json.load(open(P+'age_extra.json')))
 R0=json.load(open(P+'rosters.json',encoding='utf-8'))
@@ -35,13 +36,7 @@ def parse(sx):
     return o
 def lineup(t,w):
     d=HI['w'][str(w)][str(RID[t])];return parse(d[2]),parse(d[3])
-def optimal(pool):
-    by={}
-    for q in pool:by.setdefault(q['pos'],[]).append(q)
-    for k in by:by[k].sort(key=lambda q:-q['pts'])
-    g=lambda pos,n:by.get(pos,[])[:n]
-    fl=sorted(by.get('RB',[])[2:]+by.get('WR',[])[2:]+by.get('TE',[])[1:],key=lambda q:-q['pts'])[:1]
-    return g('QB',1)+g('RB',2)+g('WR',2)+g('TE',1)+fl+g('K',1)+g('DEF',1)
+def optimal(pool):return [q for q in lg.optimal(pool) if q is not None]
 def result(t,w):
     x=WK[t][w-1];return x[2],x[3],FROM_SHORT[x[1]]
 # integrity: starters sum to recorded score
@@ -53,9 +48,9 @@ for t in TEAMS:
 def odds(n=20000,seed=7):
     rng=np.random.default_rng(seed)
     sc={t:np.array([w[2] for w in WK[t]]) for t in TEAMS}
-    lg=np.mean(np.concatenate(list(sc.values())))
+    lgm=np.mean(np.concatenate(list(sc.values())))
     pooled=np.mean([np.var(sc[t]) for t in TEAMS])
-    mu={t:0.65*sc[t].mean()+0.35*lg for t in TEAMS}
+    mu={t:0.65*sc[t].mean()+0.35*lgm for t in TEAMS}
     sd={t:float(np.sqrt(0.5*np.var(sc[t])+0.5*pooled)) for t in TEAMS}
     idx={t:i for i,t in enumerate(TEAMS)}
     weeks=sorted({f[0] for t in TEAMS for f in FUT[t]})
@@ -70,13 +65,13 @@ def odds(n=20000,seed=7):
             a,b=idx[t],idx[o];W[:,a]+=S[:,a]>S[:,b];W[:,b]+=S[:,b]>S[:,a]
     key=W*10000+PF  # wins, then points for
     order=np.argsort(-key,axis=1);seed_of=np.empty_like(order)
-    rows=np.arange(n)[:,None];seed_of[rows,order]=np.arange(10)[None,:]
+    rows=np.arange(n)[:,None];seed_of[rows,order]=np.arange(lg.N)[None,:]
     out={}
     for t in TEAMS:
         i=idx[t];s=seed_of[:,i]
-        out[t]=dict(po=float((s<6).mean()*100),bye=float((s<2).mean()*100),top=float((s==0).mean()*100),
-                    w=float(W[:,i].mean()),dist=[float((s==k).mean()*100) for k in range(10)])
-    return out,dict(n=n,weeks=weeks,lg=float(lg))
+        out[t]=dict(po=float((s<lg.PO).mean()*100),bye=float((s<lg.BYE_N).mean()*100),top=float((s==0).mean()*100),
+                    w=float(W[:,i].mean()),dist=[float((s==k).mean()*100) for k in range(lg.N)])
+    return out,dict(n=n,weeks=weeks,lg=float(lgm))
 # ---------- 2. schedule swap
 def schedswap():
     M={}
@@ -189,7 +184,7 @@ def youth():
 # ---------- 9. weekly rank heatmap
 def heat():return {t:[w[4] for w in WK[t]] for t in TEAMS}
 # ---------- 10. bye exposure (core starters by season points, current rosters)
-NEED={'QB':1,'RB':2,'WR':3,'TE':1,'K':1,'DEF':1}
+NEED=dict(lg.CORE)
 def byes():
     out={}
     for t in TEAMS:

@@ -3,6 +3,7 @@ import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).r
 # then a switch between the two teams' results so far and remaining schedule (with NFL bye counts from current rosters).
 import json,re,html
 P=__DTP__+''
+import sys as _s0;_s0.path.insert(0,P);import lg
 s=open(P+'data_block.js',encoding='utf-8').read()
 g=lambda n:json.loads(re.search(r'const '+n+r'=(.*?);\n',s).group(1))
 T,H,WK,FUT=g('T'),g('H'),g('WK'),g('FUT')
@@ -10,12 +11,12 @@ R=json.load(open(P+'rosters.json',encoding='utf-8'));BYE=json.load(open(P+'ro_ra
 def norm(n):
     n=n.replace('’',"'").replace(' 👑','').strip(); return {'RIPMFL':'Team RIPMFL'}.get(n,n)
 R={norm(k):v for k,v in R.items()}
-SHORT={"Team Ram Rod":"Ram Rod","Bill's Block Party":"Block Party","Homer's Heroes":"Homer's","Mandingoes":"Mandingoes","Team RIPMFL":"RIPMFL","Cheating is Trying":"Cheating","Convicts":"Convicts","Nuts in the Face":"Nuts","Reverse Apache Master":"Apache","Canton waitlist":"Canton"}
+SHORT=dict(lg.SHORT)
 SHORT0=dict(SHORT);SHORT={k:k for k in SHORT}  # full team names everywhere; SHORT0 keeps the data-file short names
-FULL={**{v:k for k,v in SHORT0.items()},**{k:k for k in SHORT0}};FULL["Bill's"]="Bill's Block Party"
+FULL=dict(lg.FULL)
 e=html.escape;DONE=len(WK[H[0]]);W=DONE+1
 seed=lambda t:H.index(t)+1
-tone=lambda r:'gold' if r==1 else 'g' if r<=3 else 'b last' if r==10 else 'b' if r>=8 else ''
+tone=lg.tone
 chip=lambda r:f'<i class="ch {tone(r)}"><span class="ct">#{r}</span></i>'
 def rec(t):return f'{T[t][0]}-{T[t][1]}'
 ORD=['QB','RB','WR','TE','K','DEF']
@@ -109,7 +110,7 @@ def _age(pid):
     b=_X['age'].get(pid)
     if not b:return None
     y,m,dd=map(int,b.split('-'));return (_d.today()-_d(y,m,dd)).days/365.25
-SLOTS=['QB','RB','RB','WR','WR','TE','FLEX','K','DEF']
+SLOTS=[lg.SLAB.get(x,x) for x in lg.SLOTS]
 INJ={'Questionable':'Q','Doubtful':'D','Out':'O','IR':'IR'}
 from statline import statline as _sl, fumbles as _fl, fumbles_kept as _fk, detail as _dx
 def lval(p):
@@ -180,14 +181,7 @@ def lrow(pa,pb,slot):
         return f'<span class="sdx sdx{side}">{t}</span>' if t else ''
     return f'<div class="cr lu{w}">{lcell(pa,"a")}{lcell(pb,"b")}{sl(pa,"a")}{sl(pb,"b")}{dx(pa,"a")}{dx(pb,"b")}</div>'
 
-def optimal(pool):
-    v=lambda p:lval(p)[0]
-    by={}
-    for p in pool:by.setdefault(p[1],[]).append(p)
-    for k in by:by[k].sort(key=v,reverse=True)
-    g=lambda pos,n:(by.get(pos,[])+[None]*n)[:n]
-    fl=sorted([q for q in by.get('RB',[])[2:]+by.get('WR',[])[2:]+by.get('TE',[])[1:]],key=v,reverse=True)[:1]+[None]
-    return g('QB',1)+g('RB',2)+g('WR',2)+g('TE',1)+fl[:1]+g('K',1)+g('DEF',1)
+def optimal(pool):return lg.optimal(pool,pos=lambda p:p[1],pts=lambda p:lval(p)[0])
 
 # ---------- slate view: group starters by kickoff window (ET)
 from zoneinfo import ZoneInfo as _Z
@@ -330,7 +324,7 @@ def panel(i,a,b):
             f'<input type="radio" name="mt{i}" id="mt{i}a" class="lr msa" checked><input type="radio" name="mt{i}" id="mt{i}b" class="lr msb">'
             f'<div class="msw"><label for="mt{i}a">{e(a)}</label><label for="mt{i}b">{e(b)}</label></div>'
             f'<div class="msch msch-a">{sched(a)}</div><div class="msch msch-b">{sched(b)}</div></div>')
-radios=''.join(f'<input type="radio" name="mus" id="mu-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(5))
+radios=''.join(f'<input type="radio" name="mus" id="mu-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N//2))
 def _rw(t,w):
     g=WK[t][:w];return f'{sum(x[2]>x[3] for x in g)}-{sum(x[2]<x[3] for x in g)}'
 def streak(t,upto=None):
@@ -351,7 +345,7 @@ def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb=''):
 _cur=lambda t:sum(lval(p)[0] for p in LW['out'][str(RID[t])]['st'])
 chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b)) for i,(a,b) in enumerate(games))+'</div>'
 cur='' if FIN else f'<div class="mwx mwx-{W}">'+radios+chips+''.join(panel(i,a,b) for i,(a,b) in enumerate(games))+'</div>'
-css=''.join(f'#mu-{i}:checked~.muc2 label[for="mu-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#mu-{i}:checked~.mup-{i}{{display:block}}' for i in range(5))
+css=''.join(f'#mu-{i}:checked~.muc2 label[for="mu-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#mu-{i}:checked~.mup-{i}{{display:block}}' for i in range(lg.N//2))
 # ---------- historical weeks
 HS=json.load(open(P+'hist.json'));META=HS['m']
 def hp(sp,inj=None):
@@ -389,12 +383,12 @@ for w in range(DONE,0,-1):
         if H.index(b)<H.index(a):a,b=b,a
         gl.append((a,b))
     gl.sort(key=lambda g:H.index(g[0]))
-    hr=''.join(f'<input type="radio" name="hw{w}" id="hw{w}-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(5))
+    hr=''.join(f'<input type="radio" name="hw{w}" id="hw{w}-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N//2))
     _hx=lambda t:WK[t][w-1]
     hc=f'<div class="mpk hwc{w}" role="tablist">'+''.join(prow_(f'hw{w}-{i}',a,b,_hx(a)[4],_hx(b)[4],'W' if R2[str(RID[a])][1]>R2[str(RID[b])][1] else 'L','W' if R2[str(RID[b])][1]>R2[str(RID[a])][1] else 'L',R2[str(RID[a])][1],R2[str(RID[b])][1],True,_rw(a,w),_rw(b,w)) for i,(a,b) in enumerate(gl))+'</div>'
     hpn=''.join(f'<div class="mup hwp{w}-{i}">{hcard(w,a,b,R2[str(RID[a])],R2[str(RID[b])])}{hlineups(R2[str(RID[a])],R2[str(RID[b])])}</div>' for i,(a,b) in enumerate(gl))
     hist+=f'<div class="mwx mwx-{w}">'+hr+hc+hpn+'</div>'
-    css+=''.join(f'#hw{w}-{i}:checked~.hwc{w} label[for="hw{w}-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#hw{w}-{i}:checked~.hwp{w}-{i}{{display:block}}' for i in range(5))
+    css+=''.join(f'#hw{w}-{i}:checked~.hwc{w} label[for="hw{w}-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#hw{w}-{i}:checked~.hwp{w}-{i}{{display:block}}' for i in range(lg.N//2))
 wr=''.join(f'<input type="radio" name="mwk" id="mw-{w}" class="lr"{" checked" if w==WT else ""}>' for w in range(1,WT+1))
 dd=('<details class="dd wdd"><summary>'+''.join(f'<span class="sv wsv-{w}">Week {w}</span>' for w in range(1,WT+1))+
     '<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>'
@@ -442,7 +436,7 @@ css+=('.mug.muc label>span{white-space:nowrap!important}@media(max-width:419px){
       '.muc .mrk{display:inline-block;margin-right:4px;text-align:right;font-style:normal;'
       'font-family:var(--display);font-weight:700;font-size:inherit;letter-spacing:0;color:var(--steel);font-variant-numeric:tabular-nums}'
       '.muc .mrk.gold{color:#e8c15a}.muc .mrk.g{color:var(--win)}.muc .mrk.b{color:#ff8a9a}'
-      +''.join(f'#mu-{i}:checked~.muc label[for="mu-{i}"] .mrk{{color:var(--ink);opacity:.55}}' for i in range(5)))
+      +''.join(f'#mu-{i}:checked~.muc label[for="mu-{i}"] .mrk{{color:var(--ink);opacity:.55}}' for i in range(lg.N//2)))
 open(P+'mu_section.html','w',encoding='utf-8').write(sec);open(P+'mu_css.css','w',encoding='utf-8').write(css)
 if __name__=='__main__':
     for a,b in games: print(a,'v',b,len(byes(a,W)),len(byes(b,W)))
