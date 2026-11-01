@@ -10,6 +10,7 @@ RN={int(t['rid']):t['name'] for t in L['teams']};RID={v:k for k,v in RN.items()}
 TEAMS=[RN[r] for r in sorted(RN)]
 MGR={t['name']:t['mgr'] for t in L['teams']}         # Sleeper display name of the manager
 AV={t['name']:t.get('avatar') for t in L['teams']}   # avatar file under avatars/, or None
+NICK={t['name']:t.get('nick') or t.get('mgr') or '' for t in L['teams']}  # manager's name as the league uses it
 SHORT={t:t for t in TEAMS};SHORT0=dict(SHORT)        # data files and the page both use full team names
 FULL=dict(SHORT)
 def _code(n):

@@ -89,8 +89,11 @@ h=h.replace('</style>',(':root{--ink:#0f1d2e;--deck:#162a3d;--deck-2:#1b3248;--c
    '@media (max-width:380px){.pr{grid-template-columns:104px repeat(var(--np),minmax(0,1fr));column-gap:5px}.pr>span[role="cell"] b{font-size:14.5px}}' if len(_lgb.POS)<=4 else '')+
   ('.sxm .sxr{grid-template-columns:70px repeat(var(--nt),minmax(0,1fr));column-gap:2px}.sxm .sxr>span:not(.mxn){font-size:13px;height:24px;border-radius:4px}.sxm .sxr .mxn{font-size:12px}' if _lgb.N>10 else '')+
   '.av{flex:none;display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--deck-2) center/cover no-repeat;box-shadow:0 0 0 1px var(--hair)}'
+  '.r>.rav{position:absolute;left:39px;top:12px;width:40px;height:40px;box-shadow:0 0 0 1.5px var(--line-strong)}.r.hav>.nm,.r.hav>.hl{padding-left:49px}'
+  '.hl .mgr{font-style:normal;color:var(--label);font-weight:500}'
+  '@media (max-width:380px){.r>.rav{left:33px;width:36px;height:36px}.r.hav>.nm,.r.hav>.hl{padding-left:44px}}'
   +_av+'</style>'),1)
-d_av='const AVR='+json.dumps(_avr,ensure_ascii=False)+';\n'
+d_av='const AVR='+json.dumps(_avr,ensure_ascii=False)+',NIK='+json.dumps(_lgb.NICK,ensure_ascii=False)+';\n'
 h=h.replace('SEGMENTS',segs).replace('POS_SECTION',open(P+'pos/pos_section.html',encoding='utf-8').read())
 import json,subprocess as sp
 EF={t:v[:2] for t,v in json.load(open(P+'eff.json')).items()}

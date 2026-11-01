@@ -61,14 +61,17 @@ teams=[]
 for r in sorted(ROS,key=lambda r:r['roster_id']):
     u=US.get(r['owner_id']) or {};md=u.get('metadata') or {}
     nm=(md.get('team_name') or u.get('display_name') or f"Team {r['roster_id']}").strip()
-    av=None
-    if str(r['roster_id']) in AVS:
+    av=None;FD=os.path.join(SRC,'faces');FJ=json.load(open(os.path.join(FD,'faces.json'))) if os.path.exists(os.path.join(FD,'faces.json')) else {}
+    if os.path.exists(os.path.join(FD,f"{r['owner_id']}.webp")):  # the league's own cartoon face for this manager
+        av=f"{r['roster_id']}.webp"
+        if not BO:os.makedirs(os.path.join(WS,'avatars'),exist_ok=True);shutil.copy(os.path.join(FD,f"{r['owner_id']}.webp"),os.path.join(WS,'avatars',av))
+    elif str(r['roster_id']) in AVS:
         av=f"{r['roster_id']}.webp"
         if not BO:  # whatever Sleeper served (types are often mislabelled): centre-crop to a 128px square webp
             from PIL import Image;import io
             im=Image.open(io.BytesIO(base64.b64decode(AVS[str(r['roster_id'])].split(',',1)[1]))).convert('RGB');w_,h_=im.size;m_=min(w_,h_)
             im.crop(((w_-m_)//2,(h_-m_)//2,(w_-m_)//2+m_,(h_-m_)//2+m_)).resize((128,128),Image.LANCZOS).save(os.path.join(WS,'avatars',av),'WEBP',quality=82)
-    teams.append({'rid':r['roster_id'],'name':nm,'mgr':u.get('display_name') or '','avatar':av})
+    teams.append({'rid':r['roster_id'],'name':nm,'mgr':u.get('display_name') or '','nick':(FJ.get(r['owner_id']) or {}).get('nick') or u.get('display_name') or '','avatar':av})
 assert len({t['name'] for t in teams})==len(teams),'duplicate team names'
 pot=int(LG['settings'].get('playoff_teams') or 6)
 W_('league.json',{'season':Y,'lid':LID,'name':LG['name'],'teams':teams,'slots':LG['roster_positions'],'po_teams':pot,
