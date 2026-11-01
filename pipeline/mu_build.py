@@ -348,7 +348,7 @@ def nmx(t):
 try:
     import lg as _LG;_AVR={t:_LG.RID[t] for t,f in _LG.AV.items() if f}   # manager faces (leagues that have them)
 except Exception:_AVR={}
-def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=None,fa='',fb=''):
+def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=None,fa='',fb='',sm=None):
     """one game in the picker (about Sleeper's matchup-card height), two mirrored halves:
     1) face (if any) and win chance at the outer edge, live points with the projection under them at the inner edge
     2) a bar: sim win chance this week, the result for a finished week
@@ -365,11 +365,11 @@ def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=No
                 f'<b class="gn">{e(SHORT[t])}</b>'
                 f'<span class="gb"><span class="grc">{rc}</span><i class="stk {tg[:1].lower()}">{tg}</i><span class="gfm">{fm}</span>'
                 f'<i class="gsd {tone(r) if not final else ""}" title="{"Week score rank" if final else "Seed"}">#{r}</i></span></span>')
-    return (f'<label for="{fr}" class="g4{" fin" if final else ""}">{half(a,ra,ta,va,ua,ca,ja,fa,"gl",pa,ua)}<i class="g4vs">vs</i>'
+    return (f'<label for="{fr}" class="g4{" fin" if final else ""}">{half(a,ra,ta,va,ua,ca,ja,fa,"gl",pa,ua)}<span class="g4m"><i class="g4vs">vs</i>{f'<span class="g4sim" title="Average simulated score"><small>Sim</small><b>{sm[0]:.0f}<i>–</i>{sm[1]:.0f}</b></span>' if sm else ''}</span>'
             f'{half(b,rb,tb,vb,ub,cb,jb,fb,"gr",None if pa is None else 100-pa,ub)}</label>')
 _pj=lambda t:round(sum(p[4] for p in LW['out'][str(RID[t])]['st']),1)  # starters' projections (same figure as the lineup's points band)
 _cur=lambda t:round(sum(p[5] for p in LW['out'][str(RID[t])]['st']),2)  # points scored so far (the projection sits underneath)
-chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b),round(_SD.simgame(a,b)[2]*100),_pj(a),_pj(b),form(a),form(b)) for i,(a,b) in enumerate(games))+'</div>'
+chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b),round(_SD.simgame(a,b)[2]*100),_pj(a),_pj(b),form(a),form(b),_SD.simgame(a,b)[:2]) for i,(a,b) in enumerate(games))+'</div>'
 cur='' if FIN else f'<div class="mwx mwx-{W}">'+radios+chips+''.join(panel(i,a,b) for i,(a,b) in enumerate(games))+'</div>'
 css=''.join(f'#mu-{i}:checked~.muc2 label[for="mu-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#mu-{i}:checked~.mup-{i}{{display:block}}' for i in range(lg.N//2))
 # ---------- historical weeks
@@ -425,7 +425,7 @@ sec=('<section class="mux" aria-labelledby="muh">'+'<input type="radio" name="lc
 # team names in the game boxes: the largest size (up to 16px) that fits each half, re-fitted when a week is shown or the width changes
 sec+=('<script>(function(){function fit(){document.querySelectorAll(".g4 .gn").forEach(function(el){if(!el.clientWidth)return;'
       'if(el.dataset.fw==el.clientWidth)return;el.dataset.fw=el.clientWidth;el.style.fontSize="";var f=parseFloat(getComputedStyle(el).fontSize);'
-      'while(el.scrollWidth>el.clientWidth+0.5&&f>11.5){f-=0.5;el.style.fontSize=f+"px"}})}'
+      'while(el.scrollWidth>el.clientWidth+0.5&&f>11){f-=0.5;el.style.fontSize=f+"px"}})}'
       'fit();document.addEventListener("change",function(){requestAnimationFrame(fit)});window.addEventListener("resize",function(){requestAnimationFrame(fit)});'
       'if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){document.querySelectorAll(".g4 .gn").forEach(function(el){el.dataset.fw=""});fit()})})()</script>')
 css+=''.join(f'#mw-{w}:checked~.posh .wsv-{w}{{display:inline}}#mw-{w}:checked~.mwx-{w}{{display:block}}#mw-{w}:checked~.posh label[for="mw-{w}"]{{background:var(--chalk);color:var(--ink)}}' for w in range(1,WT+1))
@@ -473,12 +473,15 @@ css+=('.mug.muc label>span{white-space:nowrap!important}@media(max-width:419px){
       +''.join(f'#mu-{i}:checked~.muc label[for="mu-{i}"] .mrk{{color:var(--ink);opacity:.55}}' for i in range(lg.N//2)))
 # picker: one card per game at about Sleeper's height, two mirrored halves
 css+=('.mpk{grid-template-columns:1fr!important;gap:8px}.mpk label:last-child:nth-child(odd){grid-column:auto;justify-self:stretch;width:auto}'
-      '.mpk label.g4{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);column-gap:10px;align-items:start;padding:7px 12px;'
+      '.mpk label.g4{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);column-gap:8px;align-items:start;padding:7px 12px;'
       'font-size:15px;letter-spacing:.02em;min-height:92px;box-sizing:border-box}'
-      '.g4 .g4vs{align-self:center;font-style:normal;display:grid;place-items:center;width:30px;height:28px;border-radius:7px;background:var(--ink);box-shadow:inset 0 0 0 1px var(--hair);'
-      'font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.06em;color:var(--dim);margin-top:2px}'
+      '.g4 .g4m{align-self:stretch;display:flex;flex-direction:column;align-items:center}'
+      '.g4 .g4vs{margin:auto 0;font-style:normal;display:grid;place-items:center;width:30px;height:28px;border-radius:7px;background:var(--ink);box-shadow:inset 0 0 0 1px var(--hair);'
+      'font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.06em;color:var(--dim)}'
+      '.g4 .g4sim{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1;font-family:var(--display);font-weight:700;font-size:11.5px;color:var(--label);font-variant-numeric:tabular-nums;white-space:nowrap}'
+      '.g4 .g4sim small{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}.g4 .g4sim b{font-weight:700;white-space:nowrap}.g4 .g4sim i{font-style:normal;margin:0 1px;color:var(--dim)}'
       '.g4 .gs{display:flex;flex-direction:column;min-width:0}'
-      '.g4 .g4t{display:flex;align-items:flex-end;gap:6px;min-height:30px}.g4 .gr .g4t{flex-direction:row-reverse}'
+      '.g4 .g4t{display:flex;align-items:flex-end;gap:3px;min-height:30px}.g4 .gr .g4t{flex-direction:row-reverse}'
       '.g4 .gsp{flex:1}'
       '.g4 .g4a{width:28px;height:28px;flex:none;align-self:center}'
       '.g4 .g4p{font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.04em;white-space:nowrap;padding-bottom:1px}'
@@ -499,7 +502,7 @@ css+=('.mpk{grid-template-columns:1fr!important;gap:8px}.mpk label:last-child:nt
       '.g4 .gsd{flex:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-width:23px;height:16px;padding:0 3px 1px;border-radius:3px;'
       'font-style:normal;font-family:var(--display);font-weight:600;font-size:11px;font-variant-numeric:tabular-nums;background:var(--hair);color:var(--steel)}'
       '.g4 .gsd.gold{color:#e8c15a;background:rgba(232,193,90,.14)}.g4 .gsd.g{color:var(--win);background:rgba(63,214,155,.12)}.g4 .gsd.b{color:#ff8a9a;background:rgba(255,93,115,.12)}'
-      '@media(max-width:384px){.mpk label.g4{padding:7px 10px;column-gap:7px}.g4 .g4vs{width:26px}.g4 .gn{font-size:15px}.g4 .sc{font-size:17px}.g4 .g4a{width:24px;height:24px}.g4 .g4t{gap:4px}.g4 .g4p{font-size:11.5px}.g4 .gfm{display:none}}')
+      '@media(max-width:384px){.mpk label.g4{padding:7px 10px;column-gap:7px}.g4 .g4vs{width:26px}.g4 .gn{font-size:15px}.g4 .sc{font-size:17px}.g4 .g4a{width:24px;height:24px}.g4 .g4t{gap:2px}.g4 .g4p{font-size:11.5px}.g4 .gfm{display:none}}')
 open(P+'mu_section.html','w',encoding='utf-8').write(sec);open(P+'mu_css.css','w',encoding='utf-8').write(css)
 if __name__=='__main__':
     for a,b in games: print(a,'v',b,len(byes(a,W)),len(byes(b,W)))
