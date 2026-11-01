@@ -10,3 +10,7 @@ json.dump(P,open('po_proj.json','w'));json.dump(d['HOME'],open('po_home.json','w
 k=json.load(open('kick.json'))
 for w in ['15','16','17']:k[w]={t:[v[0],'pre'] for t,v in d['KICK'][w].items()}
 json.dump(k,open('kick.json','w'));print('ok',len(allp))
+# every remaining week's projections (league scoring) for the player-level season sim: {week: {player: points}}
+FP={w:m for w,m in d.get('FP',{}).items()}
+for w in ['15','16','17']:FP[w]={pid:v[0] for pid,v in d['PO'][w].items()}
+json.dump(FP,open('fut_proj.json','w'))

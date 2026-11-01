@@ -13,6 +13,11 @@ on:
     - cron: '*/10 0-5 * * 2'      # Monday night
     - cron: '*/10 17-23 * 12 6'   # December Saturdays
     - cron: '*/10 0-5 * 12 0'     # December Saturday nights
+    - cron: '*/10 16-23 * 11 4'     # Thanksgiving Thursday daytime games (November Thursdays)
+    - cron: '*/10 17-23 * 11,12 5'  # Friday games (Black Friday, Christmas on a Friday)
+    - cron: '*/10 0-5 * 11,12 6'    # Friday night games
+    - cron: '*/10 17-23 * 12 3'     # Christmas on a Wednesday
+    - cron: '*/10 0-5 * 12 4'       # Christmas Wednesday night
 
 permissions:
   contents: read

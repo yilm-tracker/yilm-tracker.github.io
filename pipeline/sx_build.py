@@ -28,16 +28,43 @@ def table(cols,rows,cls=''):
     return f'<div class="sxt {cls}" style="--cols:{tpl}"><div class="sxr sxhd">{hd}</div>'+''.join(f'<div class="sxr">{"".join(r)}</div>' for r in rows)+'</div>'
 # ---------- 1 Odds
 O,meta=D.odds()
-def m_odds():
-    rows=[]
-    for t in sorted(TEAMS,key=lambda t:(-O[t]['po'],-O[t]['w'])):
-        o=O[t];a,b,c=o['top'],o['bye']-o['top'],o['po']-o['bye']
+import psim as _PS
+PS=_PS.run()
+def _otab(rows_src,title_col,old=False):
+    rows=[];nc=5 if title_col else 4
+    for t in sorted(TEAMS,key=lambda t:(-rows_src[t]['po'],-rows_src[t]['w'])):
+        o=rows_src[t];a,b,c=o['top'],o['bye']-o['top'],o['po']-o['bye']
         bar='<span class="obar">'+''.join(f'<i class="{k}" style="width:{v:.2f}%"></i>' for k,v in (('o1',a),('o2',b),('o3',c)) if v>=1)+'</span>'
+        tc=f'<span class="sxv c4">{pct(o["title"])}</span>' if title_col else ''
         rows.append(f'<div class="odr"><div class="odt">{nm(t)}<span class="sxv odn">{rec(t)}</span></div>{bar}'
-                    f'<div class="odv"><span class="sxv">{o["w"]:.1f}</span><span class="sxv c1">{pct(o["top"])}</span><span class="sxv c2">{pct(o["bye"])}</span><span class="sxv b c3">{pct(o["po"])}</span></div></div>')
-    hd='<div class="odv sxhd"><span>Proj W</span><span class="c1">#1 seed</span><span class="c2">Bye</span><span class="c3">Playoffs</span></div>'
+                    f'<div class="odv" style="grid-template-columns:repeat({nc},minmax(0,1fr))"><span class="sxv">{o["w"]:.1f}</span><span class="sxv c1">{pct(o["top"])}</span><span class="sxv c2">{pct(o["bye"])}</span><span class="sxv b c3">{pct(o["po"])}</span>{tc}</div></div>')
+    hd=(f'<div class="odv sxhd" style="grid-template-columns:repeat({nc},minmax(0,1fr))"><span>Proj W</span><span class="c1">#1 seed</span><span class="c2">Bye</span><span class="c3">Playoffs</span>'
+        +('<span class="c4">Title</span>' if title_col else '')+'</div>')
+    return '<div class="odx">'+hd+''.join(rows)+'</div>'
+def m_odds():
+    tit='title' in next(iter(PS['teams'].values()))
     lg='<div class="olg"><span class="o1">#1 seed</span><span class="o2">Bye</span><span class="o3">Playoffs</span></div>'
-    return head('Playoff odds',f'{meta["n"]:,} simulations of Weeks {meta["weeks"][0]}–{meta["weeks"][-1]}' if meta['weeks'] else 'regular season complete · final seeds')+lg+'<div class="odx">'+hd+''.join(rows)+'</div>'
+    wk=PS['weeks']
+    sub=(f'{PS["n"]:,} simulated seasons, Weeks {wk[0]}–{wk[-1]}'+(' + playoffs' if tit else '') if wk else 'regular season complete · final seeds')
+    sw=('<input type="radio" name="odm" id="odm-p" class="lr" checked><input type="radio" name="odm" id="odm-t" class="lr">'
+        '<div class="odsw"><label for="odm-p">Player sim</label><label for="odm-t">Team average</label></div>')
+    note=('<p class="odnote odn-p">Each starter drawn from his Sleeper projection with a position-fitted spread, teammates correlated, '
+          'best projected lineup each week, live scores for the week in progress.</p>'
+          '<p class="odnote odn-t">The earlier model: each team\'s score drawn from its season average (65%, with 35% league average) and spread. '
+          'No rosters, injuries or byes.</p>')
+    css=('<style>.odsw{display:inline-flex;gap:2px;padding:3px;border-radius:9px;background:var(--deck-2);box-shadow:inset 0 0 0 1px var(--hair);margin:2px 0 8px}'
+         '.odsw label{padding:6px 12px;border-radius:7px;font-weight:600;font-size:13px;color:var(--steel);cursor:pointer}'
+         '#odm-p:checked~.odsw label[for=odm-p],#odm-t:checked~.odsw label[for=odm-t]{background:var(--chalk);color:var(--ink)}'
+         '.odm-t,.odn-t{display:none}#odm-t:checked~.odm-p,#odm-t:checked~.odn-p{display:none}#odm-t:checked~.odm-t,#odm-t:checked~.odn-t{display:block}'
+         '.odnote{margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--steel)}.sxv.c4,.sxhd .c4{color:var(--chalk)}</style>')
+    return (head('Playoff odds',sub)+css+sw+note+lg+f'<div class="odm-p">{_otab(PS["teams"],tit)}</div><div class="odm-t">{_otab(O,False)}</div>')
+def m_draft():
+    tm=PS['teams'];rows=[]
+    for t in sorted(TEAMS,key=lambda t:tm[t]['avgpick']):
+        d=tm[t]['pick'];rows.append([f'<span>{nm(t)}</span>',f'<span class="sxv">{tm[t]["avgpick"]:.1f}</span>',f'<span class="sxv c1">{pct(d[0])}</span>',f'<span class="sxv">{pct(sum(d[:3]))}</span>'])
+    return (head('Draft order odds','Next rookie draft, from the same simulated seasons')+
+            '<p class="odnote">Assumes non-playoff teams pick by reverse standings (worst record first) and playoff teams by finish (champion last).</p>'+
+            table([('Team',''),('Avg pick','64px'),('1.01','56px'),('Top 3','56px')],rows))
 # ---------- 2 Schedule swap
 M=D.schedswap()
 def m_sched():
@@ -284,7 +311,7 @@ def m_homeroad():
     o.append(head('Points per start by team','Each team\'s starters at home and on the road · sorted by the gap'))
     o.append(table([('Team',''),(HT,'56px'),(RT,'56px'),('Diff','52px')],rows,'hx-tb'))
     return ''.join(o)
-MODS=[('pos','Positions',None),('odds','Odds',m_odds),('sch','Schedules',m_sched),('ew','Every week',m_everyweek),('trd','Trades',m_trades),('lu','Lineups',m_lineups),('prj','Projections',m_proj),
+MODS=[('pos','Positions',None),('odds','Odds',m_odds),*([('drf','Draft',m_draft)] if 'pick' in next(iter(PS['teams'].values())) else []),('sch','Schedules',m_sched),('ew','Every week',m_everyweek),('trd','Trades',m_trades),('lu','Lineups',m_lineups),('prj','Projections',m_proj),
       ('mg','Margins',m_close),('st','Stars',m_stars),('yo','Age',m_youth),('rk','Ranks',m_heat),('by','Byes',m_byes),('hr','Home / Road',m_homeroad)]
 if NOW>14:MODS=[m for m in MODS if m[0]!='by']  # regular season over: no byes ahead
 def build():

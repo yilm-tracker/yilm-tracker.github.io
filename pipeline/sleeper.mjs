@@ -106,6 +106,15 @@ export async function pullPlayoffs(get) {
     for (const x of sc) { const t = x.metadata && x.metadata.date_time; for (const tm of [x.metadata?.home_team, x.metadata?.away_team]) if (tm) k[tm] = [t, x.status]; }
     out.KICK[w] = k;
   }
+  // projections for the rest of the regular season (current week on), for the player-level season sim
+  const po0 = +(lg.settings && lg.settings.playoff_week_start) || 15;
+  const now = (sch.find(x => x.week < po0 && x.status != 'complete') || { week: po0 }).week;
+  out.FP = {};
+  for (let w = now; w < po0; w++) {
+    const pr = await get(projURL(w)).catch(() => []), m = {};
+    for (const r of pr) if (ids.has(r.player_id)) m[r.player_id] = Math.round(leagueScore(r.stats, ss) * 100) / 100;
+    out.FP[w] = m;
+  }
   out.n = ids.size;
   return out;
 }
