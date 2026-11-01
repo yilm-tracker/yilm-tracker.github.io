@@ -539,3 +539,12 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .cnm .gp .gha.ht.h{background:rgba(63,214,155,.14);color:#7fdcb6;box-shadow:inset 0 0 0 1px rgba(63,214,155,.5)}
 .cnm .gp .gha.ht.r{background:rgba(150,160,255,.13);color:#b9c1ff;box-shadow:inset 0 0 0 1px rgba(150,160,255,.5)}
 .cnm .gp .gha.ht.h{padding:0 0 3px}.cnm .gp .gha.ht.r{padding:0 0 3.1px 1px}
+
+/* lineup points: a scoreboard band (live points large, projection under) */
+.mcr.ltot.lsb{grid-template-columns:1fr auto 1fr;align-items:center;margin:4px 0 10px;padding:12px 14px;border:0;border-radius:10px;background:var(--ink);box-shadow:inset 0 0 0 1px var(--hair)}
+.mcr.ltot.lsb>span{display:flex;flex-direction:column;gap:5px;font-family:var(--display);line-height:1;color:var(--steel)}
+.mcr.ltot.lsb>span:last-child{align-items:flex-end}
+.mcr.ltot.lsb .lt-v{font-size:32px;font-weight:700;letter-spacing:.01em;font-variant-numeric:tabular-nums}
+.mcr.ltot.lsb>span.up .lt-v{color:var(--chalk)}
+.mcr.ltot.lsb small{font-family:var(--body)!important;font-weight:500!important;font-size:13px!important;color:var(--steel)!important;font-variant-numeric:tabular-nums}
+.mcr.ltot.lsb em{font-family:var(--display);font-weight:700;font-size:13px!important;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)!important;font-style:normal}
