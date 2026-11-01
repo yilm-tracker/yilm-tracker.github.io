@@ -361,13 +361,12 @@ def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=No
         else:lab,cls,wd=(f'{pw}% win','w' if pw>50 else 'l' if pw<50 else 'e',pw)
         av=f'<i class="av g4a av-{_AVR[t]}" aria-hidden="true"></i>' if t in _AVR else ''
         return (f'<span class="gs {cl}">'
-                f'<span class="g4t">{av}<span class="g4o" title="Pre-game projection">{"" if og is None else f"({og:.1f})"}</span>'
+                f'<span class="g4t">{av}<i class="gsd {tone(r) if not final else ""}" title="{"Week score rank" if final else "Seed"}">#{r}</i><span class="g4o" title="Pre-game projection">{"" if og is None else f"({og:.1f})"}</span>'
                 f'<span class="sc{" hi" if hi else ""}" data-r="{RID[t]}">{v:.1f}</span>'
                 f'<span class="gpj{" fz" if low=="Final" else ""}" title="{"" if low=="Final" else "Live projection"}">{low}</span></span>'
                 f'<span class="g4w"><span class="g4p {cls}">{lab}</span><span class="g4b"><i class="{cls}" style="width:{wd}%"></i></span></span>'
                 f'<b class="gn">{e(SHORT[t])}</b>'
-                f'<span class="gb"><span class="grc">{rc}</span><i class="stk {tg[:1].lower()}">{tg}</i><span class="gfm">{fm}</span>'
-                f'<i class="gsd {tone(r) if not final else ""}" title="{"Week score rank" if final else "Seed"}">#{r}</i></span></span>')
+                f'<span class="gb"><span class="grc">{rc}</span><i class="stk {tg[:1].lower()}">{tg}</i><span class="gfm">{fm}</span></span></span>')
     return (f'<label for="{fr}" class="g4{" fin" if fz else ""}">{half(a,ra,ta,va,ua,ca,ja,fa,"gl",pa,ua,oa)}<span class="g4m"><i class="g4vs">vs</i>{f'<span class="g4sim" title="Average simulated score"><small>Sim</small><b>{sm[0]:.0f}<i>–</i>{sm[1]:.0f}</b></span>' if sm else ''}</span>'
             f'{half(b,rb,tb,vb,ub,cb,jb,fb,"gr",None if pa is None else 100-pa,ub,ob)}</label>')
 # In-week projection and win chance, the way Sleeper does them: finished players count their points, live players their
@@ -502,9 +501,9 @@ css+=('.mpk{grid-template-columns:1fr!important;gap:8px}.mpk label:last-child:nt
       '.g4 .g4sim{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1;font-family:var(--display);font-weight:700;font-size:11.5px;color:var(--label);font-variant-numeric:tabular-nums;white-space:nowrap}'
       '.g4 .g4sim small{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}.g4 .g4sim b{font-weight:700;white-space:nowrap}.g4 .g4sim i{font-style:normal;margin:0 1px;color:var(--dim)}'
       '.g4 .gs{display:flex;flex-direction:column;min-width:0}'
-      '.g4 .g4t{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"av . o sc" "av . . pj";column-gap:4px;row-gap:2px;align-items:baseline;min-height:34px;line-height:1}'
-      '.g4 .gr .g4t{grid-template-areas:"sc o . av" "pj . . av";grid-template-columns:auto auto minmax(0,1fr) auto}'
-      '.g4 .g4a{grid-area:av;align-self:center}.g4 .g4o{grid-area:o;justify-self:end}.g4 .gr .g4o{justify-self:start}.g4 .g4t .sc{grid-area:sc;justify-self:end}.g4 .gr .g4t .sc{justify-self:start}'
+      '.g4 .g4t{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"av . o sc" "av sd sd pj";column-gap:4px;row-gap:2px;align-items:baseline;min-height:34px;line-height:1}'
+      '.g4 .gr .g4t{grid-template-areas:"sc o . av" "pj sd sd av";grid-template-columns:auto auto minmax(0,1fr) auto}'
+      '.g4 .g4a{grid-area:av;align-self:center}.g4 .g4t .gsd{grid-area:sd;justify-self:start;align-self:end}.g4 .gr .g4t .gsd{justify-self:end}.g4 .g4o{grid-area:o;justify-self:end}.g4 .gr .g4o{justify-self:start}.g4 .g4t .sc{grid-area:sc;justify-self:end}.g4 .gr .g4t .sc{justify-self:start}'
       '.g4 .g4w{display:flex;align-items:center;gap:7px;margin:5px 0 6px}.g4 .gr .g4w{flex-direction:row-reverse}.g4 .g4w .g4b{flex:1;margin:0}.g4 .g4p{flex:none;line-height:1;padding:0}.g4 .g4t .gpj{grid-area:pj;justify-self:end}.g4 .gr .g4t .gpj{justify-self:start}'
       '.g4 .g4o{font-family:var(--body);font-weight:500;font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1}'
       '.g4 .gpj.fz{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--steel)}'
@@ -521,7 +520,7 @@ css+=('.mpk{grid-template-columns:1fr!important;gap:8px}.mpk label:last-child:nt
       '.g4 .gn{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;font-size:17px;line-height:20px;height:20px;color:var(--chalk)}.g4 .gr .gn{text-align:right}'
       '.g4 .gb{display:flex;align-items:center;gap:5px;margin-top:6px;min-width:0;line-height:1;font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:0;text-transform:none;color:var(--steel)}'
       '.g4 .gr .gb{flex-direction:row-reverse}'
-      '.g4 .grc{flex:none;font-weight:600;color:var(--label);font-variant-numeric:tabular-nums}'
+      '.g4 .grc{flex:none;font-size:14px;font-weight:600;color:var(--label);font-variant-numeric:tabular-nums}'
       '.g4 .stk{flex:none;width:24px;height:18px;font-size:10.5px}'
       '.g4 .gfm{display:inline-flex;gap:2px;flex:none}.g4 .gr .gfm{flex-direction:row-reverse}'
       '.g4 .gfm .fm{display:block;width:6px;height:6px;border-radius:1.5px;background:var(--neutral-bar)}.g4 .gfm .fm.w{background:var(--win)}.g4 .gfm .fm.l{background:var(--loss)}'
