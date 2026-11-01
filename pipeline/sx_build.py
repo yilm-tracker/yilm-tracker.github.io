@@ -59,9 +59,19 @@ def m_everyweek():
     hd='<span></span>'+''.join(f'<span>{CODE[b]}</span>' for b in order)
     rows=[]
     for a in order:
-        cells=''.join('<span class="mx dg"></span>' if a==b else f'<span class="mx{" up" if EW[a][b][0]>EW[a][b][1] else " dn" if EW[a][b][0]<EW[a][b][1] else ""}" title="{e(a)} {_rec(EW[a][b])} vs {e(b)}">{EW[a][b][0]}</span>' for b in order)
+        cells=''.join('<span class="mx dg"></span>' if a==b else f'<span class="mx{" up" if EW[a][b][0]>EW[a][b][1] else " dn" if EW[a][b][0]<EW[a][b][1] else ""}" title="{e(a)} {_rec(EW[a][b])} vs {e(b)}" tabindex="0" role="button" data-a="{e(a)}" data-b="{e(b)}" data-w="{EW[a][b][0]}" data-l="{EW[a][b][1]}" data-t="{EW[a][b][2]}">{EW[a][b][0]}</span>' for b in order)
         rows.append(f'<div class="sxr"><span class="mxn">{e(SHORT[a])}</span>{cells}</div>')
-    mat=f'<div class="sxm"><div class="sxr sxhd">{hd}</div>{"".join(rows)}</div>'
+    mat=(f'<div class="sxm ewm"><div class="sxr sxhd">{hd}</div>{"".join(rows)}<div class="ewb" hidden><span class="ewa"></span><b class="ewr"></b><span class="ewo"></span><i class="ewp"></i></div></div>'
+         '<script>(function(){var m=document.currentScript.previousElementSibling,b=m.querySelector(".ewb"),cur=null;'
+         'function hide(){b.hidden=true;if(cur)cur.classList.remove("on");cur=null}'
+         'function show(c){if(cur)cur.classList.remove("on");cur=c;c.classList.add("on");'
+         'b.querySelector(".ewa").textContent=c.dataset.a;b.querySelector(".ewo").textContent=c.dataset.b;'
+         'b.querySelector(".ewr").textContent=c.dataset.w+"\u2013"+c.dataset.l+(+c.dataset.t?"\u2013"+c.dataset.t:"");'
+         'b.hidden=false;var y=c.offsetTop-b.offsetHeight-7;if(y<0)y=c.offsetTop+c.offsetHeight+7,b.classList.add("below");else b.classList.remove("below");'
+         'b.style.top=y+"px";b.querySelector(".ewp").style.left=(c.offsetLeft+c.offsetWidth/2)+"px"}'
+         'm.addEventListener("click",function(e){var c=e.target.closest(".mx[data-w]");if(!c)return;if(c===cur)hide();else show(c);e.stopPropagation()});'
+         'm.addEventListener("keydown",function(e){if((e.key==="Enter"||e.key===" ")&&e.target.dataset.w){e.preventDefault();e.target.click()}});'
+         'document.addEventListener("click",function(e){if(cur&&!b.contains(e.target))hide()})})()</script>')
     # the closest calls: pairs whose every-week record is within one win, and the most lopsided
     pr=sorted({tuple(sorted((a,b))) for a in TEAMS for b in TEAMS if a!=b},key=lambda p:(abs(EW[p[0]][p[1]][0]-EW[p[0]][p[1]][1]),p))
     def line(a,b):
@@ -69,7 +79,7 @@ def m_everyweek():
         if r[1]>r[0]:a,b=b,a;r=EW[a][b]
         return [nm(a),f'<span class="sxv b">{_rec(r)}</span>',nm(b)]
     lop=sorted(pr,key=lambda p:-abs(EW[p[0]][p[1]][0]-EW[p[0]][p[1]][1]))[:6]
-    return (head('Every-week head to head',f'Wins if the row team had played the column team every week, Weeks 1–{G}')+mat+
+    return (head('Every-week head to head',f'Row team wins if the row team had played the column team every week, Weeks 1–{G}')+'<p class="ewh">Tap a cell for the full record</p>'+mat+
             head('Most lopsided','Same opponent every week, better team first')+table([('Team',''),('Record','52px'),('vs','minmax(0,1fr)')],[line(*p) for p in lop],'ewl'))
 # ---------- 3 Trades
 def m_trades():
@@ -285,7 +295,7 @@ def build():
     nav='<div class="lbc sxnav" role="tablist" aria-label="Stats">'+''.join(f'<label for="sx-{k}">{lab}</label>' for k,lab,_ in MODS)+'</div>'
     pans=''.join(f'<div class="sxp sxp-{k}">'+('POS_SECTION' if f is None else f'<section class="sxc">{f()}</section>')+'</div>' for k,_,f in MODS)
     css=''.join(f'#sx-{k}:checked~.sxnav label[for="sx-{k}"]{{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}}#sx-{k}:checked~.sxp-{k}{{display:block}}' for k,_,_ in MODS)
-    css+=HXCSS+'.sxm .sxr>span.ewd{background:var(--line-strong);opacity:.55}.ewl .sxr>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.ewl .sxr>span:nth-child(2){text-align:center}'+('.bnl .bnt{display:flex;flex-direction:column;gap:3px;white-space:nowrap;overflow:visible}'
+    css+=HXCSS+'.ewh{margin:-4px 0 10px;font-size:12px;color:var(--dim)}.ewm{position:relative}.ewm .mx[data-w]{cursor:pointer;-webkit-tap-highlight-color:transparent}.ewm .mx.on{box-shadow:inset 0 0 0 1.5px var(--chalk)}.ewb{position:absolute;left:0;right:0;z-index:3;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;column-gap:10px;padding:9px 12px;border-radius:8px;background:var(--chalk);color:var(--ink);box-shadow:0 6px 20px rgba(0,0,0,.45);font-size:13.5px;font-weight:600;line-height:1.2}.ewb[hidden]{display:none}.ewb .ewa{text-align:left}.ewb .ewo{text-align:right}.ewb .ewr{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.02em;font-variant-numeric:tabular-nums;white-space:nowrap}.ewb .ewp{position:absolute;bottom:-6px;width:12px;height:12px;margin-left:-6px;background:var(--chalk);transform:rotate(45deg);border-radius:2px}.ewb.below .ewp{bottom:auto;top:-6px}.sxm .sxr>span.ewd{background:var(--line-strong);opacity:.55}.ewl .sxr>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.ewl .sxr>span:nth-child(2){text-align:center}'+('.bnl .bnt{display:flex;flex-direction:column;gap:3px;white-space:nowrap;overflow:visible}'
       '.bnl .bop{font-size:11.5px;font-weight:500;color:var(--steel)}.bnl .bop em{font-style:normal;font-family:var(--display);font-weight:700;color:var(--label);margin:0 1px}'
       '.bnl .bop em{display:inline-flex;align-items:center;justify-content:center;width:20px;height:16px;padding-bottom:1px;box-sizing:border-box;margin:0 4px 0 3px;border-radius:3px;background:rgba(238,240,244,.08);font-size:11px;vertical-align:1px}'
       '.bnl .bop em.gold{color:#e8c15a;background:rgba(232,193,90,.14)}.bnl .bop em.g{color:var(--win);background:rgba(63,214,155,.12)}.bnl .bop em.b{color:#ff8a9a;background:rgba(255,93,115,.12)}'
