@@ -106,6 +106,9 @@ _DP={_t:[round(v,2) for v in _D.dropped(_t).values()] for _t in _D.TEAMS}
 import lg as _lg
 d+='// league: teams, playoff teams, byes, positions started\nconst NT='+str(_lg.N)+',PO='+str(_lg.PO)+',BYN='+str(_lg.BYE_N)+',LPOS='+json.dumps(_lg.POS)+';\n'
 d+='// dropped points per week by position [QB,RB,WR,TE,K,DEF]: bench player who should have started minus the starter he replaces, credited to the bench player\'s position\nconst DP='+json.dumps(_DP)+';\n'
+_SO0,_=_D.odds()
+_SO={_t:[round(sum((k+1)*q for k,q in enumerate(_o['dist']))/100,1),_o['top'],_o['bye'],_o['po']] for _t,_o in _SO0.items()}
+d+='// season-end sim (the playoff-odds model, 20,000 runs): [average finishing seed, % 1st, % bye, % playoffs]\nconst SO='+json.dumps({_t:[round(x,2) for x in v] for _t,v in _SO.items()})+';\n'
 d+=d_av
 import os as _os,base64 as _b64
 _LG='';_MIME={'svg':'image/svg+xml','png':'image/png','webp':'image/webp'}

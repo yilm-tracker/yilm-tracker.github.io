@@ -243,6 +243,14 @@ h1{grid-column:1;margin:0;font-family:var(--display);font-weight:700;font-size:5
 .stx.spl .brk{flex-basis:100%;height:0}
 .stx.spl .brk+.v{margin-left:0}
 .dpg{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));column-gap:4px;width:100%;margin-top:3px}
+/* dropped points and the season sim side by side when both fit, the sim on its own line below otherwise */
+.stx.spl.dps{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;column-gap:14px;row-gap:9px}
+.dps .dpb{display:flex;flex-direction:column;min-width:0}.dps .dph{display:flex;align-items:center;height:16px;white-space:nowrap}.dps .dph .pw{margin-left:4px}
+.dps .dpd{flex:0 0 auto}.dps .dpd .dpg{display:flex;column-gap:12px;width:auto}.dps .dpd .dpc{min-width:24px}
+.dps .dso{flex:0 0 auto}.dps .dso .dpg{display:flex;column-gap:11px;width:auto}
+.dpc.so b{color:var(--label);text-transform:uppercase}
+.board .r>.s-sk{grid-column:1 / -1}
+
 .dpc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
 .dpc b{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.06em;color:var(--pc);line-height:1}
 .dpc span{font-family:var(--display);font-weight:600;font-size:14px;color:var(--chalk);font-variant-numeric:tabular-nums;line-height:1.1}
