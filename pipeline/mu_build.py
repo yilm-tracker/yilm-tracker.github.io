@@ -345,20 +345,28 @@ def streak(t,upto=None):
 def nmx(t):
     full=e(SHORT[t]);sh=e(SHORT0.get(t,t))
     return f'<span class="nf">{full}</span><span class="ns">{sh}</span>'
+try:
+    import lg as _LG;_AVR={t:_LG.RID[t] for t,f in _LG.AV.items() if f}   # manager faces (leagues that have them)
+except Exception:_AVR={}
 def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=None,fa='',fb=''):
-    """one game in the picker: a full-width box split into two mirrored halves. Top: rank, name, score (scores meet in
-    the middle). Bottom: streak and last-5 dots at the outer edge, record and pre-game projection under the score.
-    A thin bar along the bottom splits the sim win chance (this week only)."""
+    """one game in the picker (about Sleeper's matchup-card height), two mirrored halves:
+    1) face (if any) and win chance at the outer edge, live points with the projection under them at the inner edge
+    2) a bar: sim win chance this week, the result for a finished week
+    3) the full team name   4) record, streak, last 5, seed"""
     ua,ub=(va>vb,vb>va) if final else (False,False)
-    def half(t,r,tg,v,hi,rc,pj,fm,cl):
-        ln=''
-        return (f'<span class="gs {cl}"><span class="gt"><b class="gn{ln}">{e(SHORT[t])}</b>'
-                f'<span class="sc{" hi" if hi else ""}" data-r="{RID[t]}">{v:.1f}</span></span>'
-                f'<span class="gb"><em class="mrk {tone(r) if not final else ""}" title="{"Week score rank" if final else "Seed"}">{r}</em><i class="stk {tg[:1].lower()}">{tg}</i><span class="gfm">{fm}</span><i class="gsp"></i>'
-                f'<span class="grc">{rc}</span><span class="gpj" title="Projected before kickoff">{"" if pj is None else f"{pj:.1f}"}</span></span></span>')
-    bar=(f'<span class="gwp" title="Sim win chance {pa}% – {100-pa}%"><i class="{"hi" if pa>50 else ""}" style="width:{pa}%"></i><i class="{"hi" if pa<50 else ""}" style="width:{100-pa}%"></i></span>' if pa is not None else '')
-    return (f'<label for="{fr}" class="g2{" fin" if final else ""}">{half(a,ra,ta,va,ua,ca,ja,fa,"gl")}<i class="gdv"></i>'
-            f'{half(b,rb,tb,vb,ub,cb,jb,fb,"gr")}{bar}</label>')
+    def half(t,r,tg,v,hi,rc,pj,fm,cl,pw,won):
+        if final:lab,cls,wd=('Won','w',100) if won else ('Lost','l',100)
+        else:lab,cls,wd=(f'{pw}% win','w' if pw>50 else 'l' if pw<50 else 'e',pw)
+        av=f'<i class="av g4a av-{_AVR[t]}" aria-hidden="true"></i>' if t in _AVR else ''
+        return (f'<span class="gs {cl}">'
+                f'<span class="g4t">{av}<span class="g4p {cls}">{lab}</span><i class="gsp"></i>'
+                f'<span class="g4s"><span class="sc{" hi" if hi else ""}" data-r="{RID[t]}">{v:.1f}</span><span class="gpj">{"" if pj is None else f"{pj:.1f}"}</span></span></span>'
+                f'<span class="g4b"><i class="{cls}" style="width:{wd}%"></i></span>'
+                f'<b class="gn">{e(SHORT[t])}</b>'
+                f'<span class="gb"><span class="grc">{rc}</span><i class="stk {tg[:1].lower()}">{tg}</i><span class="gfm">{fm}</span>'
+                f'<i class="gsd {tone(r) if not final else ""}" title="{"Week score rank" if final else "Seed"}">#{r}</i></span></span>')
+    return (f'<label for="{fr}" class="g4{" fin" if final else ""}">{half(a,ra,ta,va,ua,ca,ja,fa,"gl",pa,ua)}<i class="g4vs">vs</i>'
+            f'{half(b,rb,tb,vb,ub,cb,jb,fb,"gr",None if pa is None else 100-pa,ub)}</label>')
 _pj=lambda t:round(sum(p[4] for p in LW['out'][str(RID[t])]['st']),1)  # starters' projections (same figure as the lineup's points band)
 _cur=lambda t:round(sum(p[5] for p in LW['out'][str(RID[t])]['st']),2)  # points scored so far (the projection sits underneath)
 chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b),round(_SD.simgame(a,b)[2]*100),_pj(a),_pj(b),form(a),form(b)) for i,(a,b) in enumerate(games))+'</div>'
@@ -415,11 +423,11 @@ dd=('<details class="dd wdd"><summary>'+''.join(f'<span class="sv wsv-{w}">Week 
     '<div class="ddm">'+''.join(f'<label for="mw-{w}"><i>{"Now" if w==W else "Final"}</i>Week {w}</label>' for w in range(WT,0,-1))+'</div></details>')
 sec=('<section class="mux" aria-labelledby="muh">'+'<input type="radio" name="lcol" id="lc-p" class="lr" checked><input type="radio" name="lcol" id="lc-t" class="lr"><input type="radio" name="lopt" id="lo-a" class="lr" checked><input type="radio" name="lopt" id="lo-o" class="lr"><input type="radio" name="lview" id="lv-p" class="lr" checked><input type="radio" name="lview" id="lv-s" class="lr"><input type="radio" name="ldet" id="ld-l" class="lr" checked><input type="radio" name="ldet" id="ld-d" class="lr"><input type="radio" name="lrank" id="rk-t" class="lr" checked><input type="radio" name="lrank" id="rk-g" class="lr">'+wr+f'<div class="posh"><b id="muh">Matchups</b><span id="mlive" class="mlive" data-w="{W}" hidden></span>{dd}</div>'+cur+hist+'</section>')
 # team names in the game boxes: the largest size (up to 16px) that fits each half, re-fitted when a week is shown or the width changes
-sec+=('<script>(function(){function fit(){document.querySelectorAll(".g2 .gn").forEach(function(el){if(!el.clientWidth)return;'
+sec+=('<script>(function(){function fit(){document.querySelectorAll(".g4 .gn").forEach(function(el){if(!el.clientWidth)return;'
       'if(el.dataset.fw==el.clientWidth)return;el.dataset.fw=el.clientWidth;el.style.fontSize="";var f=parseFloat(getComputedStyle(el).fontSize);'
-      'while(el.scrollWidth>el.clientWidth+0.5&&f>12){f-=0.5;el.style.fontSize=f+"px"}})}'
+      'while(el.scrollWidth>el.clientWidth+0.5&&f>11.5){f-=0.5;el.style.fontSize=f+"px"}})}'
       'fit();document.addEventListener("change",function(){requestAnimationFrame(fit)});window.addEventListener("resize",function(){requestAnimationFrame(fit)});'
-      'if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){document.querySelectorAll(".g2 .gn").forEach(function(el){el.dataset.fw=""});fit()})})()</script>')
+      'if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){document.querySelectorAll(".g4 .gn").forEach(function(el){el.dataset.fw=""});fit()})})()</script>')
 css+=''.join(f'#mw-{w}:checked~.posh .wsv-{w}{{display:inline}}#mw-{w}:checked~.mwx-{w}{{display:block}}#mw-{w}:checked~.posh label[for="mw-{w}"]{{background:var(--chalk);color:var(--ink)}}' for w in range(1,WT+1))
 css+=('.mpk{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:0 0 12px}.mpk label:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 2.5px)}'
       '.mop .mrc{font-style:normal;flex:none;color:var(--steel);font-size:.86em;font-variant-numeric:tabular-nums;margin-left:6px}'
@@ -463,30 +471,35 @@ css+=('.mug.muc label>span{white-space:nowrap!important}@media(max-width:419px){
       'font-family:var(--display);font-weight:700;font-size:inherit;letter-spacing:0;color:var(--steel);font-variant-numeric:tabular-nums}'
       '.muc .mrk.gold{color:#e8c15a}.muc .mrk.g{color:var(--win)}.muc .mrk.b{color:#ff8a9a}'
       +''.join(f'#mu-{i}:checked~.muc label[for="mu-{i}"] .mrk{{color:var(--ink);opacity:.55}}' for i in range(lg.N//2)))
-# picker: one box per game, full width, split into mirrored halves
-css+=('.mpk{grid-template-columns:1fr!important;gap:7px}.mpk label:last-child:nth-child(odd){grid-column:auto;justify-self:stretch;width:auto}'
-      '.mpk label.g2{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);column-gap:12px;align-items:stretch;padding:10px 12px 12px;'
-      'font-size:15px;letter-spacing:.03em;overflow:hidden}'
-      '.g2 .gdv{background:var(--hair)}'
-      '.g2 .gs{display:flex;flex-direction:column;gap:8px;min-width:0}'
-      '.g2 .gt,.g2 .gb{display:flex;align-items:center;gap:5px;min-width:0;line-height:1}'
-      '.g2 .gr .gt,.g2 .gr .gb{flex-direction:row-reverse}'
-      '.g2 .mrk{flex:none;min-width:1em;font-family:var(--display);font-weight:700;font-size:14px;font-style:normal;text-align:center;color:var(--steel)}'
-      '.g2 .gn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;color:var(--chalk)}.g2 .gr .gn{text-align:right}'
-      '.g2 .gn{font-size:16px;letter-spacing:.02em}'
-      '.g2 .sc{flex:none;font-size:17px;font-variant-numeric:tabular-nums;color:var(--chalk);min-width:2.6em;text-align:right}.g2 .gr .sc{text-align:left}'
-      '.g2.fin .sc{color:var(--steel)}.g2.fin .sc.hi{color:var(--chalk)}'
-      '.g2 .gb{gap:4px;overflow:hidden;font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:0;text-transform:none;color:var(--steel)}'
-      '.g2 .stk{flex:none;width:2.5em;height:1.6em;font-size:10.5px}'
-      '.g2 .gfm{display:inline-flex;gap:2px;flex:none}.g2 .gr .gfm{flex-direction:row-reverse}'
-      '.g2 .gfm .fm{display:block;width:5px;height:5px;border-radius:1.5px;background:var(--neutral-bar)}.g2 .gfm .fm.w{background:var(--win)}.g2 .gfm .fm.l{background:var(--loss)}'
-      '.g2 .gsp{flex:1}'
-      '.g2 .grc{flex:none;font-variant-numeric:tabular-nums;color:var(--label)}'
-      '.g2 .gpj{flex:none;min-width:2.9em;text-align:right;font-variant-numeric:tabular-nums;color:var(--dim)}.g2 .gr .gpj{text-align:left}'
-      '.g2 .gwp{position:absolute;left:0;right:0;bottom:0;height:3px;display:flex;gap:2px}'
-      '.g2 .gwp i{display:block;height:100%;background:var(--line-strong)}.g2 .gwp i.hi{background:var(--steel)}'
-      '@media(max-width:399px){.mpk label.g2{padding:9px 10px 11px;column-gap:9px;font-size:14px}.g2 .sc{font-size:16px}.g2 .gn{font-size:15px}.g2 .gb{font-size:11.5px}.g2 .gfm{gap:2px}.g2 .gfm .fm{width:5px;height:5px}}'
-      '@media(max-width:384px){.g2 .gfm{display:none}}')
+# picker: one card per game at about Sleeper's height, two mirrored halves
+css+=('.mpk{grid-template-columns:1fr!important;gap:8px}.mpk label:last-child:nth-child(odd){grid-column:auto;justify-self:stretch;width:auto}'
+      '.mpk label.g4{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);column-gap:10px;align-items:start;padding:7px 12px;'
+      'font-size:15px;letter-spacing:.02em;min-height:92px;box-sizing:border-box}'
+      '.g4 .g4vs{align-self:center;font-style:normal;display:grid;place-items:center;width:30px;height:28px;border-radius:7px;background:var(--ink);box-shadow:inset 0 0 0 1px var(--hair);'
+      'font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.06em;color:var(--dim);margin-top:2px}'
+      '.g4 .gs{display:flex;flex-direction:column;min-width:0}'
+      '.g4 .g4t{display:flex;align-items:flex-end;gap:6px;min-height:30px}.g4 .gr .g4t{flex-direction:row-reverse}'
+      '.g4 .gsp{flex:1}'
+      '.g4 .g4a{width:28px;height:28px;flex:none;align-self:center}'
+      '.g4 .g4p{font-family:var(--display);font-weight:700;font-size:12.5px;letter-spacing:.04em;white-space:nowrap;padding-bottom:1px}'
+      '.g4 .g4p.w{color:var(--win)}.g4 .g4p.l{color:#ff8a9a}.g4 .g4p.e{color:var(--steel)}'
+      '.g4 .g4s{display:flex;flex-direction:column;align-items:flex-end;gap:1px;line-height:1}.g4 .gr .g4s{align-items:flex-start}'
+      '.g4 .sc{font-size:18px;font-variant-numeric:tabular-nums;color:var(--chalk)}.g4 .g4t>*{flex-shrink:0}.g4 .gsp{flex:1 1 0;min-width:0}.g4.fin .sc{color:var(--steel)}.g4.fin .sc.hi{color:var(--chalk)}'
+      '.g4 .gpj{font-family:var(--body);font-weight:500;font-size:11px;letter-spacing:0;color:var(--dim);font-variant-numeric:tabular-nums}'
+      '.g4 .g4b{display:block;height:4px;margin:4px 0 5px;border-radius:2px;background:var(--hair);overflow:hidden}.g4 .gr .g4b{display:flex;justify-content:flex-end}'
+      '.g4 .g4b i{display:block;height:100%;border-radius:2px;background:var(--steel)}.g4 .g4b i.w{background:var(--win)}.g4 .g4b i.l{background:#ff8a9a}'
+      '.g4.fin .g4b i.l{opacity:.55}'
+      '.g4 .gn{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;font-size:16px;line-height:1.05;color:var(--chalk)}.g4 .gr .gn{text-align:right}'
+      '.g4 .gb{display:flex;align-items:center;gap:5px;margin-top:4px;min-width:0;line-height:1;font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:0;text-transform:none;color:var(--steel)}'
+      '.g4 .gr .gb{flex-direction:row-reverse}'
+      '.g4 .grc{flex:none;font-weight:600;color:var(--label);font-variant-numeric:tabular-nums}'
+      '.g4 .stk{flex:none;width:23px;height:16px;font-size:10.5px}'
+      '.g4 .gfm{display:inline-flex;gap:2px;flex:none}.g4 .gr .gfm{flex-direction:row-reverse}'
+      '.g4 .gfm .fm{display:block;width:5px;height:5px;border-radius:1.5px;background:var(--neutral-bar)}.g4 .gfm .fm.w{background:var(--win)}.g4 .gfm .fm.l{background:var(--loss)}'
+      '.g4 .gsd{flex:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-width:23px;height:16px;padding:0 3px 1px;border-radius:3px;'
+      'font-style:normal;font-family:var(--display);font-weight:600;font-size:11px;font-variant-numeric:tabular-nums;background:var(--hair);color:var(--steel)}'
+      '.g4 .gsd.gold{color:#e8c15a;background:rgba(232,193,90,.14)}.g4 .gsd.g{color:var(--win);background:rgba(63,214,155,.12)}.g4 .gsd.b{color:#ff8a9a;background:rgba(255,93,115,.12)}'
+      '@media(max-width:384px){.mpk label.g4{padding:7px 10px;column-gap:7px}.g4 .g4vs{width:26px}.g4 .gn{font-size:15px}.g4 .sc{font-size:17px}.g4 .g4a{width:24px;height:24px}.g4 .g4t{gap:4px}.g4 .g4p{font-size:11.5px}.g4 .gfm{display:none}}')
 open(P+'mu_section.html','w',encoding='utf-8').write(sec);open(P+'mu_css.css','w',encoding='utf-8').write(css)
 if __name__=='__main__':
     for a,b in games: print(a,'v',b,len(byes(a,W)),len(byes(b,W)))
