@@ -533,3 +533,9 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .cr.lu .cv .fs{justify-content:space-evenly!important;gap:0!important;box-sizing:border-box}
 .cr.lu .cv .fs{padding-bottom:2.4px!important}.cr.lu:has(.sln) .cv .fs{padding-bottom:2.4px!important}
 .cr.lu .cv .fs .fdf{transform:translateY(.8px)}.cr.lu .cv .fs small{transform:translateY(-.5px)}
+
+/* home / road: a small square tile in place of the plain "vs" / "@" (green home, blue road) */
+.cnm .gp .gha.ht{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:20px;height:17px;margin-right:4px;border-radius:4px;font-family:var(--display);font-weight:700;font-size:11.5px;line-height:1;letter-spacing:0;vertical-align:middle;padding:0 0 1px}
+.cnm .gp .gha.ht.h{background:rgba(63,214,155,.14);color:#7fdcb6;box-shadow:inset 0 0 0 1px rgba(63,214,155,.5)}
+.cnm .gp .gha.ht.r{background:rgba(150,160,255,.13);color:#b9c1ff;box-shadow:inset 0 0 0 1px rgba(150,160,255,.5)}
+.cnm .gp .gha.ht.h{padding:0 0 3px}.cnm .gp .gha.ht.r{padding:0 0 3.1px 1px}

@@ -30,6 +30,7 @@ for t in ([] if FIN else H):
     if t in seen: continue
     o=FULL[FUT[t][0][1]];assert FULL[FUT[o][0][1]]==t;seen|={t,o};games.append((t,o))
 assert FIN or len(games)==lg.N//2
+import sx_data as _SD
 def card(a,b):
     def side(x,cl):
         bl=byes(x,W)
@@ -37,7 +38,9 @@ def card(a,b):
         return (f'<div class="mus {cl}">{chip(seed(x))}<b>{e(x)}</b><span class="mrec">{rec(x)}</span><span class="mform">{form(x)}</span></div>',
                 f'<div class="mbl {cl}">{lst}</div>')
     sa,ba=side(a,'msl');sb,bb=side(b,'msr')
-    rows=[('PF / wk',f'{T[a][5]:.1f}',f'{T[b][5]:.1f}',T[a][5],T[b][5]),
+    ma,mb,pw=_SD.simgame(a,b);pa=round(pw*100);pb=100-pa
+    rows=[('Sim pts',f'{ma:.1f}',f'{mb:.1f}',ma,mb),('Sim win',f'{pa}%',f'{pb}%',pa,pb),
+          ('PF / wk',f'{T[a][5]:.1f}',f'{T[b][5]:.1f}',T[a][5],T[b][5]),
           ('PF rank',f'#{T[a][4]}',f'#{T[b][4]}',-T[a][4],-T[b][4]),
           ('All-play',f'{T[a][10]}-{T[a][11]}',f'{T[b][10]}-{T[b][11]}',T[a][10],T[b][10]),
           ('Every-week H2H',*(lambda w,l:(f'{w}-{l}',f'{l}-{w}',w,l))(sum(p[2]>q[2] for p,q in zip(WK[a],WK[b])),sum(p[2]<q[2] for p,q in zip(WK[a],WK[b])))),
@@ -78,7 +81,7 @@ _NICK={'ARI':'Cardinals','ATL':'Falcons','BAL':'Ravens','BUF':'Bills','CAR':'Pan
 'LV':'Raiders','LAC':'Chargers','LAR':'Rams','MIA':'Dolphins','MIN':'Vikings','NE':'Patriots','NO':'Saints','NYG':'Giants',
 'NYJ':'Jets','PHI':'Eagles','PIT':'Steelers','SF':'49ers','SEA':'Seahawks','TB':'Buccaneers','TEN':'Titans','WAS':'Commanders'}
 _LOGOS={f.rpartition('.')[0] for f in (_dt_os.listdir(P+'logos') if _dt_os.path.isdir(P+'logos') else []) if f.rpartition('.')[2].lower() in('svg','png','webp')}
-HATILE=True  # HOME / ROAD strip on the inner edge of every lineup cell (Matchups and Playoffs)
+HATILE=False  # (old) vertical HOME / ROAD strip beside the points; home/road is now the vs / @ tile in the game line
 def _hax(p):
     """'vs' (home) / '@' (road) for a lineup entry, '' when the player has no game"""
     if not p or not p[6]:return ''
@@ -102,9 +105,11 @@ def _gline(ha,opp):
             lab=('at ' if ha=='@' else 'vs ')+_NICK[opp]
             return f'{tile}<em class="nfl opp n-{opp}" role="img" aria-label="{lab}" title="{lab}"><span class="ct">{opp}</span></em>'
         return tile+opp
-    if opp not in _LOGOS or opp not in _NICK:return (ha+' ' if ha else '')+opp
+    # home game: green "vs" tile; road game: blue "@" tile (same colours as the HOME / ROAD tiles)
+    pre=(f'<span class="gha ht {"h" if ha=="vs" else "r"}" title="{"Home" if ha=="vs" else "Road"}">{ha}</span>' if ha in('vs','@') else
+         f'<span class="gha" aria-hidden="true">{ha}</span>' if ha else '')
+    if opp not in _LOGOS or opp not in _NICK:return pre+opp
     lab=('at ' if ha=='@' else 'vs ' if ha else '')+_NICK[opp]
-    pre=f'<span class="gha" aria-hidden="true">{ha}</span>' if ha else ''
     return f'{pre}<em class="nfl opp n-{opp}" role="img" aria-label="{lab}" title="{lab}"><span class="ct">{opp}</span></em>'
 _TAG={p[0]:p[7] for t in R for p in R[t]}
 def _age(pid):
@@ -337,14 +342,16 @@ def streak(t,upto=None):
 def nmx(t):
     full=e(SHORT[t]);sh=e(SHORT0.get(t,t))
     return f'<span class="nf">{full}</span><span class="ns">{sh}</span>'
-def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb=''):
-    """one game in the picker, teams stacked: rank, name, streak (or result), score"""
+def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None):
+    """one game in the picker, full width, teams stacked: rank, name, record, streak (or result), sim win % (this
+    week only), score"""
     ua,ub=(va>vb,vb>va) if final else (False,False)
-    line=lambda t,r,tg,v,hi,rc:(f'<span class="pr2"><em class="mrk {tone(r) if not final else ""}">{r}</em><b>{nmx(t)}</b><span class="prc">{rc}</span>'
-                             f'<i class="stk {tg[:1].lower()}">{tg}</i><span class="sc{" hi" if hi else ""}">{v:.1f}</span></span>')
-    return f'<label for="{fr}"{" class=fin" if final else ""}>{line(a,ra,ta,va,ua,ca)}<i class="dv"></i>{line(b,rb,tb,vb,ub,cb)}</label>'
+    line=lambda t,r,tg,v,hi,rc,pw:(f'<span class="pr2"><em class="mrk {tone(r) if not final else ""}">{r}</em><b>{nmx(t)}</b><span class="prc">{rc}</span>'
+                             f'<i class="stk {tg[:1].lower()}">{tg}</i>'+(f'<span class="pwp{" hi" if pw>50 else ""}" title="Sim win chance">{pw}%</span>' if pw is not None else '')+
+                             f'<span class="sc{" hi" if hi else ""}">{v:.1f}</span></span>')
+    return f'<label for="{fr}"{" class=fin" if final else ""}>{line(a,ra,ta,va,ua,ca,pa)}<i class="dv"></i>{line(b,rb,tb,vb,ub,cb,None if pa is None else 100-pa)}</label>'
 _cur=lambda t:sum(lval(p)[0] for p in LW['out'][str(RID[t])]['st'])
-chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b)) for i,(a,b) in enumerate(games))+'</div>'
+chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b),round(_SD.simgame(a,b)[2]*100)) for i,(a,b) in enumerate(games))+'</div>'
 cur='' if FIN else f'<div class="mwx mwx-{W}">'+radios+chips+''.join(panel(i,a,b) for i,(a,b) in enumerate(games))+'</div>'
 css=''.join(f'#mu-{i}:checked~.muc2 label[for="mu-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#mu-{i}:checked~.mup-{i}{{display:block}}' for i in range(lg.N//2))
 # ---------- historical weeks
@@ -438,6 +445,15 @@ css+=('.mug.muc label>span{white-space:nowrap!important}@media(max-width:419px){
       'font-family:var(--display);font-weight:700;font-size:inherit;letter-spacing:0;color:var(--steel);font-variant-numeric:tabular-nums}'
       '.muc .mrk.gold{color:#e8c15a}.muc .mrk.g{color:var(--win)}.muc .mrk.b{color:#ff8a9a}'
       +''.join(f'#mu-{i}:checked~.muc label[for="mu-{i}"] .mrk{{color:var(--ink);opacity:.55}}' for i in range(lg.N//2)))
+# full-width game rows (one per line, any number of games), bigger type, full names
+css+=('.mpk{grid-template-columns:1fr!important;gap:6px}.mpk label:last-child:nth-child(odd){grid-column:auto;justify-self:stretch;width:auto}'
+      '.mpk label{padding:10px 14px;font-size:16px;letter-spacing:.03em;gap:7px}'
+      '.mpk .pr2{grid-template-columns:1.3em minmax(0,1fr) 2.4em 2.7em 2.6em 3.3em;gap:9px}.mpk .fin .pr2{grid-template-columns:1.3em minmax(0,1fr) 2.4em 2.7em 3.3em}'
+      '.mpk .dv{margin-left:calc(1.3em + 9px)}.mpk .nf{display:inline}.mpk .ns{display:none}'
+      '.mpk .stk{font-size:11.5px}.mpk .prc{text-align:right}'
+      '.mpk .pwp{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;font-size:.86em;letter-spacing:0;color:var(--steel)}.mpk .pwp.hi{color:var(--label)}'
+      '@media(max-width:399px){.mpk label{font-size:14.5px;padding:10px 11px;letter-spacing:.02em}.mpk .pr2{gap:6px}.mpk .dv{margin-left:calc(1.3em + 6px)}}'
+      '@media(max-width:374px){.mpk label{font-size:13.5px;padding:9px 9px}.mpk .pr2{gap:5px}}')
 open(P+'mu_section.html','w',encoding='utf-8').write(sec);open(P+'mu_css.css','w',encoding='utf-8').write(css)
 if __name__=='__main__':
     for a,b in games: print(a,'v',b,len(byes(a,W)),len(byes(b,W)))

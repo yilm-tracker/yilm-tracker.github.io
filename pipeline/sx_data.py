@@ -86,6 +86,15 @@ def odds(n=20000,seed=7):
         out[t]=dict(po=float((s<lg.PO).mean()*100),bye=float((s<lg.BYE_N).mean()*100),top=float((s==0).mean()*100),
                     w=float(W[:,i].mean()),dist=[float((s==k).mean()*100) for k in range(lg.N)])
     return out,dict(n=n,weeks=weeks,lg=float(lgm))
+def simgame(a,b):
+    """this week's game under the playoff-odds model (each score ~ Normal(65% own average + 35% league average,
+    blended spread)): the model's expected points for each side and a's win chance (what the 20,000 runs converge to)"""
+    from math import erf,sqrt
+    sc={t:np.array([w[2] for w in WK[t]]) for t in TEAMS};lgm=np.mean(np.concatenate(list(sc.values())))
+    pooled=np.mean([np.var(sc[t]) for t in TEAMS])
+    mu=lambda t:0.65*sc[t].mean()+0.35*lgm;sd=lambda t:float(np.sqrt(0.5*np.var(sc[t])+0.5*pooled))
+    ma,mb=float(mu(a)),float(mu(b));z=(ma-mb)/sqrt(sd(a)**2+sd(b)**2)
+    return ma,mb,0.5*(1+erf(z/sqrt(2)))
 # ---------- 2. schedule swap
 def everyweek():
     """record if a played b every week: a's score vs b's score in each week 1..G -> {a:{b:(w,l,t)}}"""

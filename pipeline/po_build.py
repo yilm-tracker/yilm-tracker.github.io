@@ -76,7 +76,7 @@ def cell(q,side):
     return (f'<span class="cn {side}">{sq}<span class="cnm"><b><span>{e(nm)}</span>{ij}</b>'
             f'<small>{badge(q["nfl"])}<span class="gp">{sub}</span></small></span></span><span class="cv {side}">{q["pj"]:.1f}</span>')
 import mu_build as MB
-MB.HATILE=True  # HOME / ROAD tiles in the playoff lineups
+MB.HATILE=False  # home / road shown by the vs / @ tile in each game line
 _W8=json.load(open(P+f'wk{G+1}.json'))
 RIDN=dict(lg.RID)
 HOMEW=json.load(open(P+'po_home.json')) if os.path.exists(P+'po_home.json') else {}
