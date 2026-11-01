@@ -36,6 +36,7 @@
       var z=row.querySelector('[data-sp="'+pid+'"]');
       if(z&&stats[pid]!==undefined){var h=statline(z.dataset.pos,stats[pid]);if(h){z.innerHTML=h;z.className='sln '+(z.className.indexOf('sla')>=0?'sla':'slb')}}
     });
+    document.querySelectorAll('.muc2 .sc[data-r]').forEach(function(sp){var r=+sp.dataset.r;if(tot[r]!==undefined&&tot[r]>0)sp.textContent=f1(tot[r])});  // game picker
     document.querySelectorAll('.ltot [data-r]').forEach(function(sp){var r=+sp.dataset.r,b=sp.querySelector('.lt-v');if(b&&tot[r]!==undefined&&tot[r]>0)b.textContent=f1(tot[r])});
     document.querySelectorAll('.ltot').forEach(function(row){var s=row.querySelectorAll('[data-r]');if(s.length!==2)return;
       var a=+s[0].querySelector('.lt-v').textContent||0,b=+s[1].querySelector('.lt-v').textContent||0;s[0].classList.toggle('up',a>b);s[1].classList.toggle('up',b>a)});

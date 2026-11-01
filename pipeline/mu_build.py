@@ -342,16 +342,23 @@ def streak(t,upto=None):
 def nmx(t):
     full=e(SHORT[t]);sh=e(SHORT0.get(t,t))
     return f'<span class="nf">{full}</span><span class="ns">{sh}</span>'
-def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None):
-    """one game in the picker, full width, teams stacked: rank, name, record, streak (or result), sim win % (this
-    week only), score"""
+def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=None,fa='',fb=''):
+    """one game in the picker: a full-width box split into two mirrored halves. Top: rank, name, score (scores meet in
+    the middle). Bottom: streak and last-5 dots at the outer edge, record and pre-game projection under the score.
+    A thin bar along the bottom splits the sim win chance (this week only)."""
     ua,ub=(va>vb,vb>va) if final else (False,False)
-    line=lambda t,r,tg,v,hi,rc,pw:(f'<span class="pr2"><em class="mrk {tone(r) if not final else ""}">{r}</em><b>{nmx(t)}</b><span class="prc">{rc}</span>'
-                             f'<i class="stk {tg[:1].lower()}">{tg}</i>'+(f'<span class="pwp{" hi" if pw>50 else ""}" title="Sim win chance">{pw}%</span>' if pw is not None else '')+
-                             f'<span class="sc{" hi" if hi else ""}">{v:.1f}</span></span>')
-    return f'<label for="{fr}"{" class=fin" if final else ""}>{line(a,ra,ta,va,ua,ca,pa)}<i class="dv"></i>{line(b,rb,tb,vb,ub,cb,None if pa is None else 100-pa)}</label>'
-_cur=lambda t:sum(lval(p)[0] for p in LW['out'][str(RID[t])]['st'])
-chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b),round(_SD.simgame(a,b)[2]*100)) for i,(a,b) in enumerate(games))+'</div>'
+    def half(t,r,tg,v,hi,rc,pj,fm,cl):
+        ln=' xln' if len(t)>17 else ' ln' if len(t)>12 else ''
+        return (f'<span class="gs {cl}"><span class="gt"><em class="mrk {tone(r) if not final else ""}">{r}</em><b class="gn{ln}">{e(SHORT[t])}</b>'
+                f'<span class="sc{" hi" if hi else ""}" data-r="{RID[t]}">{v:.1f}</span></span>'
+                f'<span class="gb"><i class="stk {tg[:1].lower()}">{tg}</i><span class="gfm">{fm}</span><i class="gsp"></i>'
+                f'<span class="grc">{rc}</span><span class="gpj" title="Projected before kickoff">{"" if pj is None else f"{pj:.1f}"}</span></span></span>')
+    bar=(f'<span class="gwp" title="Sim win chance {pa}% – {100-pa}%"><i class="{"hi" if pa>50 else ""}" style="width:{pa}%"></i><i class="{"hi" if pa<50 else ""}" style="width:{100-pa}%"></i></span>' if pa is not None else '')
+    return (f'<label for="{fr}" class="g2{" fin" if final else ""}">{half(a,ra,ta,va,ua,ca,ja,fa,"gl")}<i class="gdv"></i>'
+            f'{half(b,rb,tb,vb,ub,cb,jb,fb,"gr")}{bar}</label>')
+_pj=lambda t:next((x[2] for x in FUT[t] if x[0]==W and x[2]),None)  # pre-game projection for the set lineup
+_cur=lambda t:round(sum(p[5] for p in LW['out'][str(RID[t])]['st']),2)  # points scored so far (the projection sits underneath)
+chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b),round(_SD.simgame(a,b)[2]*100),_pj(a),_pj(b),form(a),form(b)) for i,(a,b) in enumerate(games))+'</div>'
 cur='' if FIN else f'<div class="mwx mwx-{W}">'+radios+chips+''.join(panel(i,a,b) for i,(a,b) in enumerate(games))+'</div>'
 css=''.join(f'#mu-{i}:checked~.muc2 label[for="mu-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#mu-{i}:checked~.mup-{i}{{display:block}}' for i in range(lg.N//2))
 # ---------- historical weeks
@@ -379,6 +386,8 @@ def hcard(w,a,b,A,B):
     return (f'<div class="mcard"><div class="mch"><span>Week {w} · Final</span></div>'
             f'<div class="mvs">{side(a,A,"msl",wa)}<span class="mv2">vs</span>{side(b,B,"msr",not wa)}</div>'
             f'<div class="hmar">Margin <b>{abs(A[1]-B[1]):.1f}</b></div></div>')
+_hpj=lambda X:round(sum(float(x.split('|')[2]) for x in X[2].split(',') if x),1)  # projected total of the starters that week
+_hfm=lambda t,w:''.join(f'<i class="fm {"w" if x[2]>x[3] else "l"}"></i>' for x in WK[t][:w][-5:])
 hist=''
 HW=[0]
 for w in range(DONE,0,-1):
@@ -393,7 +402,7 @@ for w in range(DONE,0,-1):
     gl.sort(key=lambda g:H.index(g[0]))
     hr=''.join(f'<input type="radio" name="hw{w}" id="hw{w}-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N//2))
     _hx=lambda t:WK[t][w-1]
-    hc=f'<div class="mpk hwc{w}" role="tablist">'+''.join(prow_(f'hw{w}-{i}',a,b,_hx(a)[4],_hx(b)[4],'W' if R2[str(RID[a])][1]>R2[str(RID[b])][1] else 'L','W' if R2[str(RID[b])][1]>R2[str(RID[a])][1] else 'L',R2[str(RID[a])][1],R2[str(RID[b])][1],True,_rw(a,w),_rw(b,w)) for i,(a,b) in enumerate(gl))+'</div>'
+    hc=f'<div class="mpk hwc{w}" role="tablist">'+''.join(prow_(f'hw{w}-{i}',a,b,_hx(a)[4],_hx(b)[4],streak(a,w),streak(b,w),R2[str(RID[a])][1],R2[str(RID[b])][1],True,_rw(a,w),_rw(b,w),None,_hpj(R2[str(RID[a])]),_hpj(R2[str(RID[b])]),_hfm(a,w),_hfm(b,w)) for i,(a,b) in enumerate(gl))+'</div>'
     hpn=''.join(f'<div class="mup hwp{w}-{i}">{hcard(w,a,b,R2[str(RID[a])],R2[str(RID[b])])}{hlineups(R2[str(RID[a])],R2[str(RID[b])])}</div>' for i,(a,b) in enumerate(gl))
     hist+=f'<div class="mwx mwx-{w}">'+hr+hc+hpn+'</div>'
     css+=''.join(f'#hw{w}-{i}:checked~.hwc{w} label[for="hw{w}-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#hw{w}-{i}:checked~.hwp{w}-{i}{{display:block}}' for i in range(lg.N//2))
@@ -445,15 +454,30 @@ css+=('.mug.muc label>span{white-space:nowrap!important}@media(max-width:419px){
       'font-family:var(--display);font-weight:700;font-size:inherit;letter-spacing:0;color:var(--steel);font-variant-numeric:tabular-nums}'
       '.muc .mrk.gold{color:#e8c15a}.muc .mrk.g{color:var(--win)}.muc .mrk.b{color:#ff8a9a}'
       +''.join(f'#mu-{i}:checked~.muc label[for="mu-{i}"] .mrk{{color:var(--ink);opacity:.55}}' for i in range(lg.N//2)))
-# full-width game rows (one per line, any number of games), bigger type, full names
-css+=('.mpk{grid-template-columns:1fr!important;gap:6px}.mpk label:last-child:nth-child(odd){grid-column:auto;justify-self:stretch;width:auto}'
-      '.mpk label{padding:10px 14px;font-size:16px;letter-spacing:.03em;gap:7px}'
-      '.mpk .pr2{grid-template-columns:1.3em minmax(0,1fr) 2.4em 2.7em 2.6em 3.3em;gap:9px}.mpk .fin .pr2{grid-template-columns:1.3em minmax(0,1fr) 2.4em 2.7em 3.3em}'
-      '.mpk .dv{margin-left:calc(1.3em + 9px)}.mpk .nf{display:inline}.mpk .ns{display:none}'
-      '.mpk .stk{font-size:11.5px}.mpk .prc{text-align:right}'
-      '.mpk .pwp{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;font-size:.86em;letter-spacing:0;color:var(--steel)}.mpk .pwp.hi{color:var(--label)}'
-      '@media(max-width:399px){.mpk label{font-size:14.5px;padding:10px 11px;letter-spacing:.02em}.mpk .pr2{gap:6px}.mpk .dv{margin-left:calc(1.3em + 6px)}}'
-      '@media(max-width:374px){.mpk label{font-size:13.5px;padding:9px 9px}.mpk .pr2{gap:5px}}')
+# picker: one box per game, full width, split into mirrored halves
+css+=('.mpk{grid-template-columns:1fr!important;gap:7px}.mpk label:last-child:nth-child(odd){grid-column:auto;justify-self:stretch;width:auto}'
+      '.mpk label.g2{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);column-gap:12px;align-items:stretch;padding:10px 12px 12px;'
+      'font-size:15px;letter-spacing:.03em;overflow:hidden}'
+      '.g2 .gdv{background:var(--hair)}'
+      '.g2 .gs{display:flex;flex-direction:column;gap:8px;min-width:0}'
+      '.g2 .gt,.g2 .gb{display:flex;align-items:center;gap:5px;min-width:0;line-height:1}'
+      '.g2 .gr .gt,.g2 .gr .gb{flex-direction:row-reverse}'
+      '.g2 .mrk{flex:none;width:auto;min-width:.8em;font-size:13px;font-style:normal;text-align:center}'
+      '.g2 .gn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;color:var(--chalk)}.g2 .gr .gn{text-align:right}'
+      '.g2 .gn{font-size:14px;letter-spacing:.015em}.g2 .gn.ln{font-size:12.5px;letter-spacing:0}.g2 .gn.xln{font-size:11.5px;letter-spacing:0}'
+      '.g2 .sc{flex:none;font-size:17px;font-variant-numeric:tabular-nums;color:var(--chalk);min-width:2.6em;text-align:right}.g2 .gr .sc{text-align:left}'
+      '.g2.fin .sc{color:var(--steel)}.g2.fin .sc.hi{color:var(--chalk)}'
+      '.g2 .gb{font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:0;text-transform:none;color:var(--steel)}'
+      '.g2 .stk{flex:none;width:2.5em;height:1.6em;font-size:10.5px}'
+      '.g2 .gfm{display:inline-flex;gap:3px;flex:none}.g2 .gr .gfm{flex-direction:row-reverse}'
+      '.g2 .gfm .fm{display:block;width:6px;height:6px;border-radius:1.5px;background:var(--neutral-bar)}.g2 .gfm .fm.w{background:var(--win)}.g2 .gfm .fm.l{background:var(--loss)}'
+      '.g2 .gsp{flex:1}'
+      '.g2 .grc{flex:none;font-variant-numeric:tabular-nums;color:var(--label)}'
+      '.g2 .gpj{flex:none;min-width:3.6em;text-align:right;font-variant-numeric:tabular-nums;color:var(--dim)}.g2 .gr .gpj{text-align:left}'
+      '.g2 .gwp{position:absolute;left:0;right:0;bottom:0;height:3px;display:flex;gap:2px}'
+      '.g2 .gwp i{display:block;height:100%;background:var(--line-strong)}.g2 .gwp i.hi{background:var(--steel)}'
+      '@media(max-width:399px){.mpk label.g2{padding:9px 10px 11px;column-gap:9px;font-size:14px}.g2 .sc{font-size:16px}.g2 .gn{font-size:13px}.g2 .gn.ln{font-size:12px}.g2 .gn.xln{font-size:11px}.g2 .gb{font-size:11.5px}.g2 .gfm{gap:2px}.g2 .gfm .fm{width:5px;height:5px}}'
+      '@media(max-width:374px){.g2 .gfm{display:none}}')
 open(P+'mu_section.html','w',encoding='utf-8').write(sec);open(P+'mu_css.css','w',encoding='utf-8').write(css)
 if __name__=='__main__':
     for a,b in games: print(a,'v',b,len(byes(a,W)),len(byes(b,W)))
