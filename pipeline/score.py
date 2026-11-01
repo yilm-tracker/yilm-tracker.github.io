@@ -19,7 +19,7 @@ for rid,X in wk['out'].items():
     X['pts']=L['tp'].get(rid,X['pts'])
     s=sum(p[5] for p in X['st'])
     assert abs(s-X['pts'])<0.02,(rid,s,X['pts'])
-wk['done']=sorted(set(L['done']));wk['live']=sorted(set(L.get('live',[])))
+wk['done']=sorted(set(L['done']));wk['live']=sorted(set(L.get('live',[])));wk['left']=L.get('left',{})
 st[W]={k:('x' if v=='0' else v) for k,v in L['S'].items()}
 json.dump(wk,open(P+f'wk{W}.json','w'));json.dump(st,open(P+'stats.json','w'),separators=(',',':'))
 print('updated',n,'player scores; final teams',wk['done'],'; live',L['live'])

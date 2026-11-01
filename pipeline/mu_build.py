@@ -367,9 +367,25 @@ def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=No
                 f'<i class="gsd {tone(r) if not final else ""}" title="{"Week score rank" if final else "Seed"}">#{r}</i></span></span>')
     return (f'<label for="{fr}" class="g4{" fin" if final else ""}">{half(a,ra,ta,va,ua,ca,ja,fa,"gl",pa,ua)}<span class="g4m"><i class="g4vs">vs</i>{f'<span class="g4sim" title="Average simulated score"><small>Sim</small><b>{sm[0]:.0f}<i>–</i>{sm[1]:.0f}</b></span>' if sm else ''}</span>'
             f'{half(b,rb,tb,vb,ub,cb,jb,fb,"gr",None if pa is None else 100-pa,ub)}</label>')
-_pj=lambda t:round(sum(p[4] for p in LW['out'][str(RID[t])]['st']),1)  # starters' projections (same figure as the lineup's points band)
-_cur=lambda t:round(sum(p[5] for p in LW['out'][str(RID[t])]['st']),2)  # points scored so far (the projection sits underneath)
-chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b),round(_SD.simgame(a,b)[2]*100),_pj(a),_pj(b),form(a),form(b),_SD.simgame(a,b)[:2]) for i,(a,b) in enumerate(games))+'</div>'
+# In-week projection and win chance, the way Sleeper does them: finished players count their points, live players their
+# points plus the projection for the share of their game still to play (game clock), the rest their projection. Each team's
+# uncertainty is a 27-point spread for a full week (actual minus projected starter totals, this league), shrinking as games end.
+_LEFT=LW.get('left',{});TSD=27.0
+def _lx(p):
+    if lval(p)[1]:return p[5],0.0
+    if p[3] in LIVEG:f=float(_LEFT.get(p[3],0.5));return p[5]+p[4]*f,f
+    return p[4],1.0
+def _lp(t):
+    st=[p for p in LW['out'][str(RID[t])]['st'] if p];x=[_lx(p) for p in st];s2=sum(p[4]**2 for p in st)
+    return sum(e for e,_ in x),(TSD**2*sum(w*p[4]**2 for (_,w),p in zip(x,st))/s2 if s2 else 0.0)
+def _lwin(a,b):
+    from math import erf,sqrt
+    (ea,va),(eb,vb)=_lp(a),_lp(b)
+    if va+vb<1e-6:return 100 if ea>eb else 0 if eb>ea else 50
+    return max(1,min(99,round(50*(1+erf((ea-eb)/sqrt(2*(va+vb)))))))
+_pj=lambda t:round(_lp(t)[0],1)   # live projected total (Sleeper's figure under the score)
+_cur=lambda t:round(sum(p[5] for p in LW['out'][str(RID[t])]['st'] if p),2)  # points scored so far
+chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b),_lwin(a,b),_pj(a),_pj(b),form(a),form(b),_SD.simgame(a,b)[:2]) for i,(a,b) in enumerate(games))+'</div>'
 cur='' if FIN else f'<div class="mwx mwx-{W}">'+radios+chips+''.join(panel(i,a,b) for i,(a,b) in enumerate(games))+'</div>'
 css=''.join(f'#mu-{i}:checked~.muc2 label[for="mu-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#mu-{i}:checked~.mup-{i}{{display:block}}' for i in range(lg.N//2))
 # ---------- historical weeks

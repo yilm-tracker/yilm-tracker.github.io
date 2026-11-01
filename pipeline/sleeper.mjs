@@ -115,7 +115,14 @@ const STATK = { QB: ['pass_cmp', 'pass_att', 'pass_yd', 'pass_td', 'pass_int', '
 STATK.TE = STATK.WR;
 export async function pullLive(get, W, known) {
   const L = `${A}/league/${LEAGUE}`;
-  const [sc, m, st] = await Promise.all([get(`${S}/schedule/nfl/regular/${SEASON}`), get(`${L}/matchups/${W}`), get(`${S}/stats/nfl/${SEASON}/${W}?season_type=regular`)]);
+  const [sc, m, st, gs] = await Promise.all([get(`${S}/schedule/nfl/regular/${SEASON}`), get(`${L}/matchups/${W}`), get(`${S}/stats/nfl/${SEASON}/${W}?season_type=regular`), get(`${S}/scores/nfl/regular/${SEASON}/${W}`).catch(() => [])]);
+  // share of each live game still to play (game clock), for the in-week win chance: 1 at kickoff, 0 at the end; overtime ~0
+  const left = {};
+  for (const x of gs || []) {
+    if (x.status != 'in_game') continue; const md = x.metadata || {}, q = +md.quarter_num || 1, [mm, ss] = String(md.time_remaining || '15:00').split(':').map(Number);
+    const r = q > 4 ? 0.02 : Math.max(0, Math.min(1, ((4 - q) * 900 + (mm || 0) * 60 + (ss || 0)) / 3600));
+    for (const t of [md.home_team, md.away_team]) if (t) left[t] = Math.round(r * 1000) / 1000;
+  }
   const done = sc.filter(g => g.week == W && g.status == 'complete').flatMap(g => [g.home, g.away]);
   const live = sc.filter(g => g.week == W && g.status == 'in_game').flatMap(g => [g.home, g.away]);
   const pp = {}, tp = {}, sts = {};
@@ -141,7 +148,7 @@ export async function pullLive(get, W, known) {
       extra[id] = [id, p.position || '', p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || id, p.team || '', q ? leagueScore(q.stats, ss) : 0, 0, q ? q.opponent || null : null, inj];
     }
   }
-  return { w: W, done, live, tp, pp: pz, S: S_, starters: sts, extra };
+  return { w: W, done, live, left, tp, pp: pz, S: S_, starters: sts, extra };
 }
 
 // Full stat lines for the Detailed lineup view. Keeps every stat the league scores (so a points breakdown can be
