@@ -56,7 +56,9 @@ def overview(a,b):
     h2=''.join(f'<div class="mprev">Week {x[0]}: <b>{e(a) if x[2]>x[3] else e(b)}</b> won {max(x[2],x[3]):.1f}–{min(x[2],x[3]):.1f}</div>' for x in m) or '<div class="mprev">Haven’t played yet this season</div>'
     nxt=[x for x in FUT[a] if FULL[x[1]]==b]
     if nxt: h2+=f'<div class="mprev">Meet in Week {nxt[0][0]}</div>'
-    body=(row('Record',f'{A[0]}-{A[1]}',f'{B[0]}-{B[1]}',A[0],B[0])+row('PF / wk',f'{A[5]:.1f}',f'{B[5]:.1f}',A[5],B[5])+
+    ew=lambda x,y:(sum(p[2]>q[2] for p,q in zip(WK[x],WK[y])),sum(p[2]<q[2] for p,q in zip(WK[x],WK[y])))
+    ea,eb=ew(a,b),ew(b,a)
+    body=(row('Record',f'{A[0]}-{A[1]}',f'{B[0]}-{B[1]}',A[0],B[0])+row('Every-week H2H',f'{ea[0]}-{ea[1]}',f'{eb[0]}-{eb[1]}',ea[0],eb[0])+row('PF / wk',f'{A[5]:.1f}',f'{B[5]:.1f}',A[5],B[5])+
       row('PA / wk',f'{A[8]:.1f}',f'{B[8]:.1f}')+row('Max PF / wk',f'{EF[a][3]/G:.1f}',f'{EF[b][3]/G:.1f}',EF[a][3],EF[b][3])+
       row('All-play',f'{A[10]}-{A[11]}',f'{B[10]}-{B[11]}',A[10],B[10])+row('Luck',f'{A[12]:+.2f}',f'{B[12]:+.2f}')+
       row('Eff',f'{EF[a][0]:.0f}%',f'{EF[b][0]:.0f}%',round(EF[a][0]),round(EF[b][0]))+row('Skill',f'{SK[a]:.0f}%',f'{SK[b]:.0f}%',round(SK[a]),round(SK[b])))

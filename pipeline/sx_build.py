@@ -34,8 +34,8 @@ def m_odds():
         o=O[t];a,b,c=o['top'],o['bye']-o['top'],o['po']-o['bye']
         bar='<span class="obar">'+''.join(f'<i class="{k}" style="width:{v:.2f}%"></i>' for k,v in (('o1',a),('o2',b),('o3',c)) if v>=1)+'</span>'
         rows.append(f'<div class="odr"><div class="odt">{nm(t)}<span class="sxv odn">{rec(t)}</span></div>{bar}'
-                    f'<div class="odv"><span class="sxv">{o["w"]:.1f}</span><span class="sxv b c3">{pct(o["po"])}</span><span class="sxv c2">{pct(o["bye"])}</span><span class="sxv c1">{pct(o["top"])}</span></div></div>')
-    hd='<div class="odv sxhd"><span>Proj W</span><span class="c3">Playoffs</span><span class="c2">Bye</span><span class="c1">#1 seed</span></div>'
+                    f'<div class="odv"><span class="sxv">{o["w"]:.1f}</span><span class="sxv c1">{pct(o["top"])}</span><span class="sxv c2">{pct(o["bye"])}</span><span class="sxv b c3">{pct(o["po"])}</span></div></div>')
+    hd='<div class="odv sxhd"><span>Proj W</span><span class="c1">#1 seed</span><span class="c2">Bye</span><span class="c3">Playoffs</span></div>'
     lg='<div class="olg"><span class="o1">#1 seed</span><span class="o2">Bye</span><span class="o3">Playoffs</span></div>'
     return head('Playoff odds',f'{meta["n"]:,} simulations of Weeks {meta["weeks"][0]}–{meta["weeks"][-1]}' if meta['weeks'] else 'regular season complete · final seeds')+lg+'<div class="odx">'+hd+''.join(rows)+'</div>'
 # ---------- 2 Schedule swap
@@ -48,10 +48,29 @@ def m_sched():
         cells=''.join(f'<span class="mx{" dg" if a==b else " up" if M[a][b]>M[a][a] else " dn" if M[a][b]<M[a][a] else ""}">{M[a][b]}</span>' for b in order)
         rows.append(f'<div class="sxr"><span class="mxn">{e(SHORT[a])}</span>{cells}</div>')
     mat=f'<div class="sxm"><div class="sxr sxhd">{hd}</div>{"".join(rows)}</div>'
-    av={a:sum(M[a][b] for b in TEAMS)/10 for a in TEAMS}
+    av={a:sum(M[a][b] for b in TEAMS)/len(TEAMS) for a in TEAMS}
     lr=[[nmb(a,dvb(T[a][0]-av[a],1.2)),f'<span class="sxv">{T[a][0]}</span>',f'<span class="sxv">{av[a]:.1f}</span>',f'<span class="sxv b {"up" if T[a][0]-av[a]>=0.5 else "dn" if T[a][0]-av[a]<=-0.5 else ""}">{sgn(T[a][0]-av[a])}</span>'] for a in sorted(TEAMS,key=lambda a:-(T[a][0]-av[a]))]
     return (head('Schedule swap',f'Wins through Week {G} with each team\'s schedule')+mat+
-            head('Schedule luck','Actual wins vs average across all 10 schedules')+table([('Team',''),('Wins','42px'),('Avg','42px'),('Luck','46px')],lr))
+            head('Schedule luck',f'Actual wins vs average across all {len(TEAMS)} schedules')+table([('Team',''),('Wins','42px'),('Avg','42px'),('Luck','46px')],lr))
+EW=D.everyweek()
+def _rec(r):return f'{r[0]}-{r[1]}'+(f'-{r[2]}' if r[2] else '')
+def m_everyweek():
+    order=D.PH
+    hd='<span></span>'+''.join(f'<span>{CODE[b]}</span>' for b in order)
+    rows=[]
+    for a in order:
+        cells=''.join('<span class="mx ewd"></span>' if a==b else f'<span class="mx{" up" if EW[a][b][0]>EW[a][b][1] else " dn" if EW[a][b][0]<EW[a][b][1] else ""}" title="{e(a)} {_rec(EW[a][b])} vs {e(b)}">{EW[a][b][0]}</span>' for b in order)
+        rows.append(f'<div class="sxr"><span class="mxn">{e(SHORT[a])}</span>{cells}</div>')
+    mat=f'<div class="sxm"><div class="sxr sxhd">{hd}</div>{"".join(rows)}</div>'
+    # the closest calls: pairs whose every-week record is within one win, and the most lopsided
+    pr=sorted({tuple(sorted((a,b))) for a in TEAMS for b in TEAMS if a!=b},key=lambda p:(abs(EW[p[0]][p[1]][0]-EW[p[0]][p[1]][1]),p))
+    def line(a,b):
+        r=EW[a][b]
+        if r[1]>r[0]:a,b=b,a;r=EW[a][b]
+        return [nm(a),f'<span class="sxv b">{_rec(r)}</span>',nm(b)]
+    lop=sorted(pr,key=lambda p:-abs(EW[p[0]][p[1]][0]-EW[p[0]][p[1]][1]))[:6]
+    return (head('Every-week head to head',f'Wins if the row team had played the column team every week, Weeks 1–{G}')+mat+
+            head('Most lopsided','Same opponent every week, better team first')+table([('Team',''),('Record','52px'),('vs','minmax(0,1fr)')],[line(*p) for p in lop],'ewl'))
 # ---------- 3 Trades
 def m_trades():
     out=[head('Trade scorecard',f'Points scored since each trade · through Week {G}')]
@@ -258,7 +277,7 @@ def m_homeroad():
     o.append(head('Points per start by team','Each team\'s starters at home and on the road · sorted by the gap'))
     o.append(table([('Team',''),(HT,'56px'),(RT,'56px'),('Diff','52px')],rows,'hx-tb'))
     return ''.join(o)
-MODS=[('pos','Positions',None),('odds','Odds',m_odds),('sch','Schedules',m_sched),('trd','Trades',m_trades),('lu','Lineups',m_lineups),('prj','Projections',m_proj),
+MODS=[('pos','Positions',None),('odds','Odds',m_odds),('sch','Schedules',m_sched),('ew','Every week',m_everyweek),('trd','Trades',m_trades),('lu','Lineups',m_lineups),('prj','Projections',m_proj),
       ('mg','Margins',m_close),('st','Stars',m_stars),('yo','Age',m_youth),('rk','Ranks',m_heat),('by','Byes',m_byes),('hr','Home / Road',m_homeroad)]
 if NOW>14:MODS=[m for m in MODS if m[0]!='by']  # regular season over: no byes ahead
 def build():
@@ -266,7 +285,7 @@ def build():
     nav='<div class="lbc sxnav" role="tablist" aria-label="Stats">'+''.join(f'<label for="sx-{k}">{lab}</label>' for k,lab,_ in MODS)+'</div>'
     pans=''.join(f'<div class="sxp sxp-{k}">'+('POS_SECTION' if f is None else f'<section class="sxc">{f()}</section>')+'</div>' for k,_,f in MODS)
     css=''.join(f'#sx-{k}:checked~.sxnav label[for="sx-{k}"]{{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}}#sx-{k}:checked~.sxp-{k}{{display:block}}' for k,_,_ in MODS)
-    css+=HXCSS+('.bnl .bnt{display:flex;flex-direction:column;gap:3px;white-space:nowrap;overflow:visible}'
+    css+=HXCSS+'.sxm .sxr>span.ewd{background:none}.ewl .sxr>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.ewl .sxr>span:nth-child(2){text-align:center}'+('.bnl .bnt{display:flex;flex-direction:column;gap:3px;white-space:nowrap;overflow:visible}'
       '.bnl .bop{font-size:11.5px;font-weight:500;color:var(--steel)}.bnl .bop em{font-style:normal;font-family:var(--display);font-weight:700;color:var(--label);margin:0 1px}'
       '.bnl .bop em{display:inline-flex;align-items:center;justify-content:center;width:20px;height:16px;padding-bottom:1px;box-sizing:border-box;margin:0 4px 0 3px;border-radius:3px;background:rgba(238,240,244,.08);font-size:11px;vertical-align:1px}'
       '.bnl .bop em.gold{color:#e8c15a;background:rgba(232,193,90,.14)}.bnl .bop em.g{color:var(--win);background:rgba(63,214,155,.12)}.bnl .bop em.b{color:#ff8a9a;background:rgba(255,93,115,.12)}'

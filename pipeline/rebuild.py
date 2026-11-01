@@ -82,8 +82,12 @@ for _t in _lgb.TEAMS:
         _r=_lgb.RID[_t];_avr[_t]=_r
         _av+=f'.av-{_r}{{background-image:url(data:image/webp;base64,'+__import__('base64').b64encode(open(P+'avatars/'+_f,'rb').read()).decode()+')}'
 h=h.replace('</style>',(':root{--ink:#0f1d2e;--deck:#162a3d;--deck-2:#1b3248;--chalk:#ffffff;--label:#d3dfeb;--steel:#a5b6c8;--dim:#7189a2;--hair:#24394f;'
-  '--pylon:#fb637a;--sky:#259fd6;--loss:#ff5a3c;--loss-bg:rgba(255,90,60,.15);--line-strong:#31506c;--nt:'+str(_lgb.N)+'}'
-  'header .fmt{grid-column:1 / -1;font-size:12.5px;color:var(--dim);margin-top:2px}'
+  '--pylon:#fb637a;--sky:#259fd6;--loss:#ff5a3c;--loss-bg:rgba(255,90,60,.15);--line-strong:#31506c;--nt:'+str(_lgb.N)+';--np:'+str(len(_lgb.POS))+'}'
+  'header .fmt{grid-column:1 / -1;font-size:12.5px;color:var(--dim);margin-top:2px}'+
+  ('.pr{grid-template-columns:120px repeat(var(--np),minmax(0,1fr));column-gap:8px;padding:8px 0}.pr>span[role="cell"] b{font-size:15.5px;line-height:19px;height:19px}'
+   '.pr>span[role="rowheader"]{font-size:14px}.pr>span[role="rowheader"] em{font-size:16px;width:22px}.pr .ch{font-size:11px;min-width:36px;height:19px}.pr.ph .pp{width:38px;height:19px;font-size:12.5px}.pr .pgp{font-size:11px}'
+   '@media (max-width:380px){.pr{grid-template-columns:104px repeat(var(--np),minmax(0,1fr));column-gap:5px}.pr>span[role="cell"] b{font-size:14.5px}}' if len(_lgb.POS)<=4 else '')+
+  ('.sxm .sxr{grid-template-columns:70px repeat(var(--nt),minmax(0,1fr));column-gap:2px}.sxm .sxr>span:not(.mxn){font-size:13px;height:24px;border-radius:4px}.sxm .sxr .mxn{font-size:12px}' if _lgb.N>10 else '')+
   '.av{flex:none;display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--deck-2) center/cover no-repeat;box-shadow:0 0 0 1px var(--hair)}'
   +_av+'</style>'),1)
 d_av='const AVR='+json.dumps(_avr,ensure_ascii=False)+';\n'

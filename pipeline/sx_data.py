@@ -87,6 +87,16 @@ def odds(n=20000,seed=7):
                     w=float(W[:,i].mean()),dist=[float((s==k).mean()*100) for k in range(lg.N)])
     return out,dict(n=n,weeks=weeks,lg=float(lgm))
 # ---------- 2. schedule swap
+def everyweek():
+    """record if a played b every week: a's score vs b's score in each week 1..G -> {a:{b:(w,l,t)}}"""
+    E={}
+    for a in TEAMS:
+        E[a]={}
+        for b in TEAMS:
+            if a==b:continue
+            s=[(WK[a][w][2],WK[b][w][2]) for w in range(G)]
+            E[a][b]=(sum(x>y for x,y in s),sum(x<y for x,y in s),sum(x==y for x,y in s))
+    return E
 def schedswap():
     M={}
     for a in TEAMS:

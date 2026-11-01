@@ -120,6 +120,10 @@ def data_view(t):
     o.append(f'<div class="sxm hmx tqgrid" style="--n:{G}"><div class="sxr sxhd"><span></span>{hd}<span>Avg</span></div>'
              f'<div class="sxr"><span class="mxn">Rank</span>{cells}<span class="hav">{avg(HES[t]):.1f}</span></div>'
              f'<div class="sxr tqres"><span class="mxn">Result</span>{res}<span></span></div></div>')
+    # every-week head to head: this team's score against each opponent's score, every week
+    ew=SB.EW[t];ops=[u for u in H if u!=t]
+    o.append(sec('Every-week head to head',f'Record if they had played each team every week · Wk 1–{G}'))
+    o.append('<div class="tqew">'+''.join(f'<div><span>{e(u)}</span><b class="{"up" if ew[u][0]>ew[u][1] else "dn" if ew[u][0]<ew[u][1] else ""}">{SB._rec(ew[u])}</b></div>' for u in ops)+'</div>')
     # stars
     s=STS[t]
     segs=''.join(f'<i class="p-{v[1].lower()}{" s1" if i==0 else ""}" style="width:{v[2]/s["tot"]*100:.2f}%"></i>' for i,v in enumerate(s['top3']))
@@ -325,6 +329,12 @@ css=PKCSS+(''.join(f'#thx-{i}:checked~.tqpk label[for="thx-{i}"]{{background:var
  +'.tsvg{cursor:pointer;touch-action:pan-y;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}'
  +'.twm{display:none}.tcur{stroke:'+TL+';stroke-width:1;opacity:.55}.tsel{fill:'+TL+';stroke:var(--deck);stroke-width:2}.tsel.w{fill:var(--win)}.tsel.l{fill:var(--loss)}')
 open(P+'th_section.html','w',encoding='utf-8').write(sec_)
+css+=('.tqew{display:grid;grid-template-columns:1fr 1fr;column-gap:14px}'
+      '.tqew>div{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--hair);min-width:0}'
+      '.tqew>div:nth-child(-n+2){border-top:0}'
+      '.tqew span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--label)}'
+      '.tqew b{flex:none;font-family:var(--display);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;color:var(--steel)}'
+      '.tqew b.up{color:var(--win)}.tqew b.dn{color:#ff8a9a}')
 open(P+'th_css.css','w',encoding='utf-8').write(css)
 if __name__=='__main__':
     t=H[1];print(t,{k:[round(x,2) if isinstance(x,float) else x for x in v] for k,v in SER[t].items()})

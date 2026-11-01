@@ -198,7 +198,7 @@ h1{grid-column:1;margin:0;font-family:var(--display);font-weight:700;font-size:5
 .posh{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;font-family:var(--display);text-transform:uppercase}
 .posh b{font-weight:700;font-size:22px;letter-spacing:.05em;color:var(--chalk);line-height:1}
 .posh span{font-weight:600;font-size:12px;letter-spacing:.1em;color:var(--dim)}
-.pr{display:grid;grid-template-columns:98px repeat(6,minmax(0,1fr));align-items:center;column-gap:4px;padding:6px 0;border-top:1px solid var(--hair)}
+.pr{display:grid;grid-template-columns:98px repeat(var(--np,6),minmax(0,1fr));align-items:center;column-gap:4px;padding:6px 0;border-top:1px solid var(--hair)}
 .pr.ph{border-top:0;padding:2px 0 4px}
 .pr.ph span{font-family:var(--display);font-weight:600;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--label);text-align:center}
 .pr.ph span:first-child{text-align:left}
@@ -209,7 +209,7 @@ h1{grid-column:1;margin:0;font-family:var(--display);font-weight:700;font-size:5
 .pr>span[role="cell"]{display:flex;flex-direction:column;align-items:center;gap:2px;font-variant-numeric:tabular-nums}
 .pr>span[role="cell"] b{font-weight:500;font-size:12.5px;color:var(--chalk)}
 .pr .ch{margin:0;font-style:normal;font-size:10px;padding:0 4px}
-@media (max-width:380px){ .pr{column-gap:2px;grid-template-columns:86px repeat(6,minmax(0,1fr))} .pr>span[role="cell"] b{font-size:11.5px} .pr>span[role="rowheader"]{font-size:11.5px} .pr>span[role="rowheader"] em{width:15px} }
+@media (max-width:380px){ .pr{column-gap:2px;grid-template-columns:86px repeat(var(--np,6),minmax(0,1fr))} .pr>span[role="cell"] b{font-size:11.5px} .pr>span[role="rowheader"]{font-size:11.5px} .pr>span[role="rowheader"] em{width:15px} }
 
 .posh{justify-content:space-between;align-items:center}
 .pseg{display:flex;background:var(--ink);border:1px solid var(--hair);border-radius:8px;padding:2px}
@@ -252,6 +252,7 @@ h1{grid-column:1;margin:0;font-family:var(--display);font-weight:700;font-size:5
 @media (max-width:380px){.stx.spl .dt{margin:0 3px}.stx.spl .pu{margin-right:3px !important}.stx.spl .v+.pw{margin-left:2px}}
 .ch{vertical-align:middle;padding-top:0 !important;padding-bottom:0 !important;text-box:trim-both cap alphabetic}
 .pr>span[role="cell"] b{line-height:16px;height:16px}
+.pr .pgp{display:block;font-style:normal;font-size:10.5px;line-height:13px;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
 .pr .ch{padding:0 4px !important}
 
 /* Optical centring: the inner text box is trimmed to cap height and baseline,
@@ -755,7 +756,7 @@ CMP_CSS
 .sxv{font-family:var(--display);font-weight:600;font-size:16px;color:var(--label);font-variant-numeric:tabular-nums;white-space:nowrap}
 .sxv.b{font-weight:700;color:var(--chalk)}
 .sxv.up{color:#5fd3a5}.sxv.dn{color:#f08a98}
-.sxsd{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;max-width:150px;align-self:center}
+.sxsd{display:grid;grid-template-columns:repeat(var(--nt,10),1fr);gap:2px;max-width:150px;align-self:center}
 .odr{padding:9px 0;border-bottom:1px solid var(--hair)}
 .odt{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
 .odt .sxsd{flex:none;width:118px;max-width:none}
@@ -767,7 +768,7 @@ CMP_CSS
 .sxsd i{height:6px;border-radius:2px;background:rgba(238,240,244,var(--a));box-shadow:inset 0 0 0 1px rgba(98,107,124,.35)}
 .sxsd i.po{background:rgba(127,166,255,var(--a))}
 /* matrices */
-.sxm .sxr{display:grid;grid-template-columns:78px repeat(10,minmax(0,1fr));align-items:center;column-gap:3px;padding:2px 0}
+.sxm .sxr{display:grid;grid-template-columns:78px repeat(var(--nt,10),minmax(0,1fr));align-items:center;column-gap:3px;padding:2px 0}
 .sxm .sxhd span{text-align:center;font-size:11px;letter-spacing:.04em;background:none!important;height:auto!important}
 .mxn{font-size:12.5px;font-weight:500;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sxm .sxr>span:not(.mxn){display:grid;place-items:center;height:26px;border-radius:5px;font-family:var(--display);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums;color:var(--label);background:var(--ink)}
