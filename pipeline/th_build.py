@@ -14,7 +14,7 @@ e=html.escape
 T,WK,FUT,G,TEAMS=D.T,D.WK,D.FUT,D.G,D.TEAMS
 H=D._g('H');POSH=D._g('POS')['H']
 N=len(TEAMS);SHORT0=D.SHORT0;FS=D.FROM_SHORT
-ORD=['QB','RB','WR','TE','K','DEF']
+ORD=list(lg.POS)
 tone=lg.tone
 def ordn(n):return f'{n}{"th" if 10<=n%100<=20 else {1:"st",2:"nd",3:"rd"}.get(n%10,"th")}'
 def crank(vals,t,low=False):
@@ -83,16 +83,7 @@ for r in csv.DictReader(open(P+'pos/pos.csv',encoding='utf-8')):
     PROWS[D.RN[int(r['roster_id'])]]=r
 EF={t:v for t,v in json.load(open(P+'eff.json')).items()}
 EFR={t:EF[t][0] for t in TEAMS}
-DP={}
-for t in TEAMS:
-    a={k:0.0 for k in ORD}
-    for w in range(1,G+1):
-        s_,b_=D.lineup(t,w);op=D.optimal(s_+b_);ids={q['pid'] for q in s_};oi={q['pid'] for q in op}
-        ins=sorted([q for q in op if q['pid'] not in ids],key=lambda q:-q['pts']);outs=sorted([q for q in s_ if q['pid'] not in oi],key=lambda q:q['pts'])
-        for i in ins:
-            c=[o for o in outs if o['pos']==i['pos']] or [o for o in outs if i['pos'] in('RB','WR','TE') and o['pos'] in('RB','WR','TE')]
-            o=c[0];outs.remove(o);a[i['pos']]+=i['pts']-o['pts']
-    DP[t]=[a[k]/G for k in ORD]
+DP={t:[D.dropped(t)[k] for k in ORD] for t in TEAMS}
 CLS=SB.CL;STS=SB.ST;YOS=SB.YO;HES=SB.HE;BYS=SB.BY;HRT=SB.HRT
 def avg(v):return sum(v)/len(v) if v else 0
 # ---------------------------------------------------------------- Data view

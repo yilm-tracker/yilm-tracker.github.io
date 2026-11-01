@@ -148,7 +148,7 @@ def depth(a,b):
     cnt=lambda t,k:sum(1 for p in R[t] if p[7]==k)
     body=(row('Bench pts / wk',f'{ba:.1f}',f'{bb:.1f}',ba,bb)+row('Bench share',f'{ba/(ba+T[a][5])*100:.0f}%',f'{bb/(bb+T[b][5])*100:.0f}%')+
       row('Roster pts',f'{tot(a):.0f}',f'{tot(b):.0f}',tot(a),tot(b))+row('10+ pts/g players',str(n10(a)),str(n10(b)),n10(a),n10(b))+
-      row('Active players',str(cnt(a,'')),str(cnt(b,'')))+row('On IR',str(cnt(a,'IR')),str(cnt(b,'IR')))+row('Taxi',str(cnt(a,'TX')),str(cnt(b,'TX'))))
+      row('Active players',str(cnt(a,'')),str(cnt(b,'')))+row('On IR',str(cnt(a,'IR')),str(cnt(b,'IR')))+(row('Taxi',str(cnt(a,'TX')),str(cnt(b,'TX'))) if lg.DYN else ''))
     return f'<div class="cs cs-dp">{sec("Depth",body,f"bench = rostered players not started, Wk 1–{G}")}</div>'
 # ---------- Schedule
 def schedule(a,b):
@@ -220,11 +220,12 @@ def trades(a,b):
     if not items:items='<div class="mprev">No trades between these two teams this season</div>'
     return f'<div class="cs cs-tr">{sec("Activity",body)}<div class="msh">Trades with each other<small>points scored since the trade</small></div>{items}</div>'
 SUBS=[('ov','Overview'),('sc','Scoring'),('po','Positions'),('pl','Players'),('dp','Depth'),('sh','Schedule'),('dy','Dynasty'),('tr','Trades')]
+if not lg.DYN:SUBS=[x for x in SUBS if x[0]!='dy']  # redraft league: no future picks
 def panel(i,j):
     a,b=H[i],H[j]
     side=lambda x,cl:f'<div class="mus {cl}">{chip(seed(x))}<b>{e(x)}</b><span class="mrec">{T[x][0]}-{T[x][1]}</span><span class="mform">{form(x)}</span></div>'
     return (f'<div class="cpn cp-{i}-{j}"><div class="mcard chead"><div class="mvs">{side(a,"msl")}<span class="mv2">vs</span>{side(b,"msr")}</div></div>'
-            +overview(a,b)+scoring(a,b)+positions(a,b)+playersec(a,b)+depth(a,b)+schedule(a,b)+dynasty(a,b)+trades(a,b)+'</div>')
+            +overview(a,b)+scoring(a,b)+positions(a,b)+playersec(a,b)+depth(a,b)+schedule(a,b)+(dynasty(a,b) if lg.DYN else '')+trades(a,b)+'</div>')
 radios=(''.join(f'<input type="radio" name="ca" id="ca-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N))+
         ''.join(f'<input type="radio" name="cb" id="cb-{i}" class="lr"{" checked" if i==1 else ""}>' for i in range(lg.N))+
         ''.join(f'<input type="radio" name="csub" id="ct-{k}" class="lr"{" checked" if k=="ov" else ""}>' for k,_ in SUBS)+

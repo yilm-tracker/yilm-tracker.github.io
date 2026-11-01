@@ -1,10 +1,7 @@
 name: Capture seasons
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [main]
-    paths: ['pipeline/pull_season.mjs', '.github/workflows/capture.yml']
+  workflow_dispatch:   # one-off: re-capture past seasons (the site job captures the current one on every run)
 
 permissions:
   contents: write

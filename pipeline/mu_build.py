@@ -29,7 +29,7 @@ games=[];seen=set()
 for t in ([] if FIN else H):
     if t in seen: continue
     o=FULL[FUT[t][0][1]];assert FULL[FUT[o][0][1]]==t;seen|={t,o};games.append((t,o))
-assert FIN or len(games)==5
+assert FIN or len(games)==lg.N//2
 def card(a,b):
     def side(x,cl):
         bl=byes(x,W)

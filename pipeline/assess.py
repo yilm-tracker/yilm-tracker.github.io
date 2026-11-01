@@ -121,7 +121,7 @@ def assess(t):
     if ir:bad.append((4,'On IR: '+', '.join(pl(p) for p in ir)+'.'))
     # ageing core with / without successor
     core=[p for pos,n in NEED.items() if pos not in('K','DEF') for p in by(t,pos)[:n]]
-    for p in core:
+    for p in (core if lg.DYN else []):  # succession only matters in a dynasty league
         a=age(p[0])
         if a and a>=31:
             succ=sorted([q for q in R[t] if q[2]==p[2] and q is not p and age(q[0]) and age(q[0])<=27.5 and a-age(q[0])>=5],key=lambda q:-q[4])
@@ -135,10 +135,11 @@ def assess(t):
     for b in sorted(bw):
         if len(bw[b])>=2:bad.append((3,f'Week {b} bye crunch: {", ".join(e(x) for x in bw[b])}.'))
     # dynasty
-    if ager<=3:good.append((4,f'Young roster (avg {AGE[t]:.1f}, {ordn(ager)}-youngest).'))
-    if ager>=lg.N-2:bad.append((3,f'Older roster (avg {AGE[t]:.1f}, {ordn(lg.N+1-ager)}-oldest).'))
-    nf=len(FIRSTS[t])
-    if nf>=4:good.append((6,f'Draft capital: {nf} 1sts in {YRS[0]}–{YRS[2][2:]} ('+', '.join(f"{y} {SHORT[X['rn'][str(o)]]}" for y,_,o in FIRSTS[t])+').'))
+    if not lg.DYN:pass
+    elif ager<=3:good.append((4,f'Young roster (avg {AGE[t]:.1f}, {ordn(ager)}-youngest).'))
+    if lg.DYN and ager>=lg.N-2:bad.append((3,f'Older roster (avg {AGE[t]:.1f}, {ordn(lg.N+1-ager)}-oldest).'))
+    nf=len(FIRSTS[t]) if lg.DYN else 1
+    if lg.DYN and nf>=4:good.append((6,f'Draft capital: {nf} 1sts in {YRS[0]}–{YRS[2][2:]} ('+', '.join(f"{y} {SHORT[X['rn'][str(o)]]}" for y,_,o in FIRSTS[t])+').'))
     if nf==0:bad.append((6,f'No 1st-round picks in {YRS[0]}, {YRS[1]} or {YRS[2]}.'))
     # schedule
     hard=min(fut,key=lambda f:f[4]) if fut else None;easy=sum(1 for f in fut if f[4]>=70)

@@ -56,9 +56,9 @@ def m_sched():
 def m_trades():
     out=[head('Trade scorecard',f'Points scored since each trade · through Week {G}')]
     for x in D.trades():
-        a,b=x['sides'];pend=x['eff']>G
-        def side(s,other):
-            win=(not pend) and s['tot']>other['tot']+0.05
+        SD=x['sides'];pend=x['eff']>G
+        def side(s):
+            win=(not pend) and all(s['tot']>o['tot']+0.05 for o in SD if o is not s)
             fp=lambda v:'–' if pend else f'{v:.1f}'
             pl=''.join(f'<div class="tpl"><span class="tpn">{e(p["name"])}<span class="tpb">{pz(p["pos"])}{badge(p["nfl"])}</span></span>{"" if pend else f"<b>{p['pts']:.1f}</b>"}</div>' for p in s['pl'])
             def pkh(k):
@@ -70,7 +70,7 @@ def m_trades():
             return f'<div class="tsd{" win" if win else ""}"><div class="tnm">{e(s["team"])}</div><div class="trc">receives</div>{body}<div class="ttot">{tot}</div></div>'
         when=f'{x["date"]} · counts from Week {x["eff"]}' if not pend else f'{x["date"]} · no games since'
         if x['eff']==1:when=f'{x["date"]} · before Week 1'
-        out.append(f'<div class="trd"><div class="trw">{when}</div><div class="trg">{side(a,b)}{side(b,a)}</div></div>')
+        out.append(f'<div class="trd"><div class="trw">{when}</div><div class="trg"{f' style="grid-template-columns:repeat({len(SD)},minmax(0,1fr))"' if len(SD)>2 else ''}>{''.join(side(s) for s in SD)}</div></div>')
     return ''.join(out)
 # ---------- 4 Lineup calls
 RW,PER=D.decisions()

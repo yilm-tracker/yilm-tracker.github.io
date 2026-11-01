@@ -164,7 +164,7 @@ h1{grid-column:1;margin:0;font-family:var(--display);font-weight:700;font-size:5
 .sb{padding-right:10px}
 
 /* 10-segment rank bars */
-.seg10{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:2px}
+.seg10{display:grid;grid-template-columns:repeat(var(--nt,10),minmax(0,1fr));gap:2px}
 .seg10 i{height:6px;border-radius:1.5px;background:var(--hair)}
 .seg10 i.on{background:var(--neutral-bar)}
 .seg10.g i.on{background:var(--win)} .seg10.b i.on{background:var(--loss)}

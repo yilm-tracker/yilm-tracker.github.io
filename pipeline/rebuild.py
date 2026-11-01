@@ -1,4 +1,4 @@
-import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).removesuffix('/pos')+'/'
+import os as _dt_os;from html import escape as html_esc;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).removesuffix('/pos')+'/'
 # Assemble standings.html from head + data + script, inserting the timeline and position section.
 import subprocess,json
 P=__DTP__+''
@@ -63,6 +63,30 @@ if _dt_os.environ.get('DT_PAST')=='1':  # a finished past season: "Final" in pla
     h=h.replace('<div class="clock"><b>__LEFT__</b><span>weeks left</span></div>','<div class="clock fin"><b>Final</b></div>',1)
     h=h.replace('</style>','.clock.fin b{font-size:34px;letter-spacing:.02em;transform:translateY(1.5px)}</style>',1)
 h=h.replace('__LEFT__',str(14-DONE)).replace('__G__',str(DONE))
+# ---------- league branding: name, format line, palette, manager avatars (all from league.json)
+import lg as _lgb
+_ss=_lgb.L.get('scoring',{})
+_fmt=[f'{_lgb.N} teams',{1:'Full PPR',0.5:'Half PPR',0:'Standard'}.get(_ss.get('rec',0),f"{_ss.get('rec')} PPR")]
+if 'SUPER_FLEX' in _lgb.SLOTS:_fmt.append('Superflex')
+if _ss.get('pass_td') and _ss.get('pass_td')!=4:_fmt.append(f"{_ss['pass_td']:g}-pt pass TD")
+elif _ss.get('pass_td')==4:_fmt.append('4-pt pass TD')
+if _ss.get('bonus_rec_te'):_fmt.append(f"TE +{_ss['bonus_rec_te']:g}")
+h=h.replace('<title>Official Dynasty League</title>',f'<title>{html_esc(_lgb.NAME)}</title>',1)
+h=h.replace('<div class="eyebrow">Official</div>',f'<div class="eyebrow">{html_esc(_lgb.NAME)}</div>',1)
+h=h.replace('<h1>The League</h1>','<h1>Standings</h1>',1)
+h=h.replace('<div class="season" ',f'<div class="fmt">{" · ".join(_fmt)}</div>\n    <div class="season" ',1)
+_av='';_avr={}
+for _t in _lgb.TEAMS:
+    _f=_lgb.AV.get(_t)
+    if _f and _dt_os.path.exists(P+'avatars/'+_f):
+        _r=_lgb.RID[_t];_avr[_t]=_r
+        _av+=f'.av-{_r}{{background-image:url(data:image/webp;base64,'+__import__('base64').b64encode(open(P+'avatars/'+_f,'rb').read()).decode()+')}'
+h=h.replace('</style>',(':root{--ink:#0f1d2e;--deck:#162a3d;--deck-2:#1b3248;--chalk:#ffffff;--label:#d3dfeb;--steel:#a5b6c8;--dim:#7189a2;--hair:#24394f;'
+  '--pylon:#fb637a;--sky:#259fd6;--loss:#ff5a3c;--loss-bg:rgba(255,90,60,.15);--line-strong:#31506c;--nt:'+str(_lgb.N)+'}'
+  'header .fmt{grid-column:1 / -1;font-size:12.5px;color:var(--dim);margin-top:2px}'
+  '.av{flex:none;display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--deck-2) center/cover no-repeat;box-shadow:0 0 0 1px var(--hair)}'
+  +_av+'</style>'),1)
+d_av='const AVR='+json.dumps(_avr,ensure_ascii=False)+';\n'
 h=h.replace('SEGMENTS',segs).replace('POS_SECTION',open(P+'pos/pos_section.html',encoding='utf-8').read())
 import json,subprocess as sp
 EF={t:v[:2] for t,v in json.load(open(P+'eff.json')).items()}
@@ -71,17 +95,11 @@ _sk=json.load(open(P+'skill_opt.json'));_sk.pop('_note',None)
 SK={t:[round(v['act']/v['opt']*100,2),round((v['opt']-v['act'])/DONE,2)] for t,v in _sk.items()}
 d+='// skill-position efficiency: [actual RB/WR/TE/FLEX points as % of the best legal 2RB+2WR+1TE+1FLEX combo from the roster, points per week left on the bench] (Sleeper lineups)\nconst SK='+json.dumps(SK)+';\n'
 import importlib,sys as _sy;_sy.path.insert(0,P);import sx_data as _D
-_DP={}
-for _t in _D.TEAMS:
-    _a={k:0.0 for k in ['QB','RB','WR','TE','K','DEF']}
-    for _w in range(1,_D.G+1):
-        _st,_bn=_D.lineup(_t,_w);_op=_D.optimal(_st+_bn);_ids={q['pid'] for q in _st};_oi={q['pid'] for q in _op}
-        _ins=sorted([q for q in _op if q['pid'] not in _ids],key=lambda q:-q['pts']);_outs=sorted([q for q in _st if q['pid'] not in _oi],key=lambda q:q['pts'])
-        for _i in _ins:
-            _c=[o for o in _outs if o['pos']==_i['pos']] or [o for o in _outs if _i['pos'] in('RB','WR','TE') and o['pos'] in('RB','WR','TE')]
-            _o=_c[0];_outs.remove(_o);_a[_i['pos']]+=_i['pts']-_o['pts']
-    _DP[_t]=[round(_a[k]/_D.G,2) for k in ['QB','RB','WR','TE','K','DEF']]
+_DP={_t:[round(v,2) for v in _D.dropped(_t).values()] for _t in _D.TEAMS}
+import lg as _lg
+d+='// league: teams, playoff teams, byes, positions started\nconst NT='+str(_lg.N)+',PO='+str(_lg.PO)+',BYN='+str(_lg.BYE_N)+',LPOS='+json.dumps(_lg.POS)+';\n'
 d+='// dropped points per week by position [QB,RB,WR,TE,K,DEF]: bench player who should have started minus the starter he replaces, credited to the bench player\'s position\nconst DP='+json.dumps(_DP)+';\n'
+d+=d_av
 import os as _os,base64 as _b64
 _LG='';_MIME={'svg':'image/svg+xml','png':'image/png','webp':'image/webp'}
 if _os.path.isdir(P+'logos'):

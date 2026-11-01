@@ -57,7 +57,7 @@ def panel(i,t):
     pl=sorted(R[t],key=lambda p:(ORD.index(p[2]),-p[4],p[1]))
     act=[p for p in pl if not p[7]];ir=[p for p in pl if p[7]=='IR'];tx=[p for p in pl if p[7]=='TX']
     o=[f'<div class="rop rop-{i}" role="tabpanel" aria-label="{e(t)} roster">',
-       f'<div class="rtop"><b>{e(t)}</b><span><b>{len(act)}</b> active<i>·</i><b>{len(ir)}</b> IR<i>·</i><b>{len(tx)}</b> taxi</span></div>',
+       f'<div class="rtop"><b>{e(t)}</b><span><b>{len(act)}</b> active<i>·</i><b>{len(ir)}</b> IR'+(f'<i>·</i><b>{len(tx)}</b> taxi' if 'TAXI' in lg.L['slots'] or tx else '')+'</span></div>',
        '<div class="rcol"><span>Player</span><span>Pts</span><span>/g</span></div>']
     pgk=lambda p:p[4]/p[6] if p[6] else -1
     for sk in ('p','g'):

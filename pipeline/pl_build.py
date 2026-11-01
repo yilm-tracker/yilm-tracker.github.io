@@ -14,7 +14,7 @@ import lg
 BYE=json.load(open(P+'ro_ranks.json',encoding='utf-8')).get('_bye',{})
 RN={int(k):v for k,v in json.load(open(P+'cmp_extra.json',encoding='utf-8'))['rn'].items()}
 SHORT0=dict(lg.SHORT)
-ORD=['QB','RB','WR','TE','K','DEF'];TOP=50
+ORD=list(lg.POS);TOP=50
 NAMES={'QB':'Quarterbacks','RB':'Running backs','WR':'Wide receivers','TE':'Tight ends','K':'Kickers','DEF':'Defenses'}
 def nmh(name,pos):
     parts=name.split(' ',1)

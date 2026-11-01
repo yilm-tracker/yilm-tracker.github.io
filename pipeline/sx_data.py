@@ -37,6 +37,20 @@ def parse(sx):
 def lineup(t,w):
     d=HI['w'][str(w)][str(RID[t])];return parse(d[2]),parse(d[3])
 def optimal(pool):return [q for q in lg.optimal(pool) if q is not None]
+def dropped(t):
+    """points per week left on the bench, by position: each optimal-lineup player who didn't start is paired with the
+    starter he replaces (same position first, then a flex-eligible one, else an empty slot) and credited to his position"""
+    a={k:0.0 for k in ('QB','RB','WR','TE','K','DEF')}
+    for w in range(1,G+1):
+        st,bn=lineup(t,w);op=optimal(st+bn);ids={q['pid'] for q in st};oi={q['pid'] for q in op}
+        ins=sorted([q for q in op if q['pid'] not in ids],key=lambda q:-q['pts']);outs=sorted([q for q in st if q['pid'] not in oi],key=lambda q:q['pts'])
+        fx=lambda p:any(p in v for v in lg.FLEXES.values())
+        for i in ins:
+            c=[o for o in outs if o['pos']==i['pos']] or [o for o in outs if any(i['pos'] in v and o['pos'] in v for v in lg.FLEXES.values())] or outs
+            o=c[0] if c else None
+            if o:outs.remove(o)
+            a[i['pos']]+=i['pts']-(o['pts'] if o else 0)
+    return {k:v/G for k,v in a.items()}
 def result(t,w):
     x=WK[t][w-1];return x[2],x[3],FROM_SHORT[x[1]]
 # integrity: starters sum to recorded score
@@ -97,8 +111,8 @@ RD={1:'1st',2:'2nd',3:'3rd',4:'4th'}
 def trades():
     out=[]
     for x in sorted(X['tx'],key=lambda x:-x['ts']):
-        k=eff_week(x['ts']);a,b=x['rids']
-        side={a:dict(pl=[],pk=[],faab=0),b:dict(pl=[],pk=[],faab=0)}
+        k=eff_week(x['ts']);rids=list(x['rids'])  # two or more teams
+        side={r:dict(pl=[],pk=[],faab=0) for r in rids}
         for pid,to in (x['adds'] or {}).items():
             nm,pos,nfl=X['txp'][pid];wk=X['txw'][pid];pts=sum(wk[k-1:G]) if k<=G else 0.0
             side[to]['pl'].append(dict(name=nm,pos=pos,nfl=nfl,pts=round(pts,2)))
@@ -106,7 +120,7 @@ def trades():
             side[new]['pk'].append(f'{y} {RD[r]} ({SHORT[RN[o]]})')
         for f in x['faab']:side[f['receiver']]['faab']+=f['amount']
         out.append(dict(ts=x['ts'],date=datetime.fromtimestamp(x['ts']/1000,timezone.utc).strftime('%b %-d'),eff=k,
-            sides=[dict(team=RN[r],**side[r],tot=round(sum(p['pts'] for p in side[r]['pl']),2)) for r in (a,b)]))
+            sides=[dict(team=RN[r],**side[r],tot=round(sum(p['pts'] for p in side[r]['pl']),2)) for r in rids]))
     return out
 # ---------- 4. lineup decisions
 FLEX={'RB','WR','TE'}

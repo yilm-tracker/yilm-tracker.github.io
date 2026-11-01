@@ -41,6 +41,3 @@ else:
     build()
 if os.path.exists(P+'history/log.json') and os.path.isdir(P+'../site'):
     import shutil;shutil.copy(P+'history/log.json',P+'../site/history_log.json')
-# TeamHub: standalone page at site/teamhub/ (own Sleeper pull; final weeks only). Never fatal to the main build.
-if os.path.isdir(P+'../site'):
-    subprocess.run(['python3',P+'teamhub/build.py']+(['--refresh-players'] if mode in('weekly','history','selftest') else []),cwd=P)

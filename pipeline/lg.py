@@ -22,6 +22,7 @@ SLAB={'FLEX':'FLEX','SUPER_FLEX':'SFLX','WRRB_FLEX':'W/R','REC_FLEX':'W/T'}
 POS=[p for p in ('QB','RB','WR','TE','K','DEF') if p in SLOTS]  # positions the league starts
 NEED={p:SLOTS.count(p) for p in POS}                             # dedicated starters per position
 SKILL=('RB','WR','TE')
+DYN=bool(L.get('dynasty'))   # keeper/dynasty league: draft picks and taxi squads matter
 PO=int(L['po_teams']);BYE_N=int(L.get('po_byes',2));REG=int(L['po_start'])-1;PWEEKS=[REG+1,REG+2,REG+3]
 SKILL_SLOTS=[s for s in SLOTS if s in SKILL or s=='FLEX']        # the RB/WR/TE + FLEX part of the lineup
 def optimal(pool,pos=lambda q:q['pos'],pts=lambda q:q['pts'],slots=None):
