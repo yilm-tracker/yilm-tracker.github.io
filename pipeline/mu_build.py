@@ -329,7 +329,7 @@ def lineups(a,b):
     pool=lambda X:X['st']+[p for p in X['bn'] if _TAG.get(p[0],'') not in('IR','TX') and (p[4]>0 or p[5]!=0)]
     return '<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+optblock(A['st'],B['st'],pool(A),pool(B),ta,tb,True,BH_CUR,keep,'BN')+'</div>'
 def panel(i,a,b):
-    return (f'<div class="mup mup-{i}">{card(a,b)}{lineups(a,b)}'
+    return (f'<div class="mup mup-{i}">{lineups(a,b)}{card(a,b)}'
             f'<input type="radio" name="mt{i}" id="mt{i}a" class="lr msa" checked><input type="radio" name="mt{i}" id="mt{i}b" class="lr msb">'
             f'<div class="msw"><label for="mt{i}a">{e(a)}</label><label for="mt{i}b">{e(b)}</label></div>'
             f'<div class="msch msch-a">{sched(a)}</div><div class="msch msch-b">{sched(b)}</div></div>')
@@ -434,7 +434,7 @@ for w in range(DONE,0,-1):
     hr=''.join(f'<input type="radio" name="hw{w}" id="hw{w}-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N//2))
     _hx=lambda t:WK[t][w-1]
     hc=f'<div class="mpk hwc{w}" role="tablist">'+''.join(prow_(f'hw{w}-{i}',a,b,_hx(a)[4],_hx(b)[4],streak(a,w),streak(b,w),R2[str(RID[a])][1],R2[str(RID[b])][1],True,_rw(a,w),_rw(b,w),None,_hpj(R2[str(RID[a])]),_hpj(R2[str(RID[b])]),_hfm(a,w),_hfm(b,w)) for i,(a,b) in enumerate(gl))+'</div>'
-    hpn=''.join(f'<div class="mup hwp{w}-{i}">{hcard(w,a,b,R2[str(RID[a])],R2[str(RID[b])])}{hlineups(R2[str(RID[a])],R2[str(RID[b])])}</div>' for i,(a,b) in enumerate(gl))
+    hpn=''.join(f'<div class="mup hwp{w}-{i}">{hlineups(R2[str(RID[a])],R2[str(RID[b])])}{hcard(w,a,b,R2[str(RID[a])],R2[str(RID[b])])}</div>' for i,(a,b) in enumerate(gl))
     hist+=f'<div class="mwx mwx-{w}">'+hr+hc+hpn+'</div>'
     css+=''.join(f'#hw{w}-{i}:checked~.hwc{w} label[for="hw{w}-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#hw{w}-{i}:checked~.hwp{w}-{i}{{display:block}}' for i in range(lg.N//2))
 wr=''.join(f'<input type="radio" name="mwk" id="mw-{w}" class="lr"{" checked" if w==WT else ""}>' for w in range(1,WT+1))
@@ -449,7 +449,8 @@ sec+=('<script>(function(){function fit(){document.querySelectorAll(".g4 .gn").f
       'fit();document.addEventListener("change",function(){requestAnimationFrame(fit)});window.addEventListener("resize",function(){requestAnimationFrame(fit)});'
       'if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){document.querySelectorAll(".g4 .gn").forEach(function(el){el.dataset.fw=""});fit()})})()</script>')
 css+=''.join(f'#mw-{w}:checked~.posh .wsv-{w}{{display:inline}}#mw-{w}:checked~.mwx-{w}{{display:block}}#mw-{w}:checked~.posh label[for="mw-{w}"]{{background:var(--chalk);color:var(--ink)}}' for w in range(1,WT+1))
-css+=('.mpk{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:0 0 12px}.mpk label:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 2.5px)}'
+css+=('.mup>.mcard{margin-top:20px}.mup>.lus{margin-top:4px}'
+     '.mpk{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:0 0 12px}.mpk label:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 2.5px)}'
       '.mop .mrc{font-style:normal;flex:none;color:var(--steel);font-size:.86em;font-variant-numeric:tabular-nums;margin-left:6px}'
       '.msc .mdf{font-style:normal;margin-left:8px;font-weight:600;font-variant-numeric:tabular-nums}.msc .mdf.w{color:var(--win)}.msc .mdf.l{color:var(--loss)}'
       '.mpk label{display:flex;flex-direction:column;gap:4px;padding:7px 9px;box-sizing:border-box;border-radius:6px;border:1px solid var(--hair);background:var(--ink);cursor:pointer;'
