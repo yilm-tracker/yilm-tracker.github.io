@@ -173,7 +173,8 @@ def flineup(a,b,w):
     if ba or bb:o+=[MB.BH_HIST]+[MB.lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,'') for k in range(max(len(ba),len(bb)))]
     h='<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+MB.optblock(sa,sb,sa+ba,sb+bb,A_[1],B_[1],False,MB.BH_HIST)+'</div>'
     return h.replace('for="lo-a"','for="blo-a"').replace('for="lo-o"','for="blo-o"').replace('for="lv-p"','for="blv-p"').replace('for="lv-s"','for="blv-s"')
-br,BRCSS,_RH=po_radial.build(S,GAMES,win,winp,PT,SHORT,seed,e,tone,(lambda a,b,w:f'+{abs(PT[(a,w)]-PT[(b,w)]):.1f}') if FINAL else None)
+import po_cols
+br,BRCSS,_RH=po_cols.build(S,GAMES,win,winp,PT,SHORT,seed,e,tone,(lambda a,b,w:f'+{abs(PT[(a,w)]-PT[(b,w)]):.1f}') if FINAL else None)
 bpan=''.join(f'<div class="bkp bkp-{k}">{fcard(a,b,w,f"Week {w} · {lab} · Final")}{flineup(a,b,w)}</div>' if FINAL else f'<div class="bkp bkp-{k}">{card(a,b,w,f"Week {w} · {lab}")}{lineup(a,b,w,'b')}</div>' for k,w,(a,b),lab in GAMES)
 # ---------- build-a-matchup (team A, team B, week)
 def dd(k,lab):
