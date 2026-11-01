@@ -548,3 +548,7 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .mcr.ltot.lsb>span.up .lt-v{color:var(--chalk)}
 .mcr.ltot.lsb small{font-family:var(--body)!important;font-weight:500!important;font-size:13px!important;color:var(--steel)!important;font-variant-numeric:tabular-nums}
 .mcr.ltot.lsb em{font-family:var(--display);font-weight:700;font-size:13px!important;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)!important;font-style:normal}
+
+/* home/road tile: same lift as the opponent logo beside it, so both share one centre line */
+.cnm .gp .gha.ht{position:relative;top:-1.4px}
+.cr.lu .cnm .gp .gha.ht{top:calc(-1.4px*var(--rh))}
