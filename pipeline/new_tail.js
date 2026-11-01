@@ -21,7 +21,7 @@ const pct=x=>(Math.max(0,Math.min(1,x))*100).toFixed(1)+'%';
 
 const star=(cx,cy,R,r)=>Array.from({length:10},(_,k)=>{const a=-Math.PI/2+k*Math.PI/5,q=k%2?r:R;return (cx+q*Math.cos(a)).toFixed(2)+","+(cy+q*Math.sin(a)).toFixed(2)}).join(" ");
 function season(t){
-  // Columns: bar (team score, green win / red loss) + opponent tick, week number, team score rank tile, opponent score rank tile.
+  // Columns: paired bars (team score: green win / red loss; opponent score: muted; gold = week high, burgundy = week low), week number, team score rank tile, opponent score rank tile.
   const N=14,S=25,L=44,bw=13,top=4,base=36,y=v=>base-(base-top)*Math.max(0,Math.min(1,(v-SCLO)/(SCHI-SCLO)));
   const WY=47,R1=61,R2=76,TW=19,TH=13,H=84;
   const bl=(cy,fs)=>(cy+0.349*fs).toFixed(2); // alphabetic baseline that centres cap-height glyphs on cy
@@ -41,9 +41,12 @@ function season(t){
   let s=`<svg class="szn" viewBox="0 0 ${L+N*S} ${H}" role="img" aria-label="Season: ${WK[t].map(g=>`Wk ${g[0]} ${g[2]>g[3]?'W':'L'} ${g[2].toFixed(1)}-${g[3].toFixed(1)}, score rank ${g[4]}, opponent rank ${g[5]}`).join('; ')}">`+
     lab(WY,'WK')+lab(R1,'RANK')+lab(R2,'OPP');
   for(let wk=1;wk<=N;wk++){const cx=L+(wk-.5)*S,x=cx-bw/2,g=played[wk];
-    if(g){const won=g[2]>g[3],c=won?'var(--win)':'var(--loss)',ohi=g[5]===1,olo=g[5]===NT;
-      s+=`<rect x="${x}" y="${y(g[2]).toFixed(1)}" width="${bw}" height="${(base-y(g[2])).toFixed(1)}" rx="1.5" fill="${c}" opacity=".9"/>`+
-         tick(x,y(g[3]),ohi?'hi':olo?'lo':'n')+
+    if(g){const won=g[2]>g[3],LAST=NT,hi=g[4]===1,lo=g[4]===LAST,ohi=g[5]===1,olo=g[5]===LAST,
+      // paired bars: the team (green win / red loss) beside its opponent (muted); week high in gold, week low in burgundy, for either side
+      c=hi?'#e8c15a':lo?'#a24253':won?'var(--win)':'var(--loss)',oc=ohi?'#e8c15a':olo?'#a24253':'var(--steel)',oo=ohi||olo?'.9':'.42',
+      w1=7.5,w2=5,gp=1,xa=cx-(w1+w2+gp)/2,xb=xa+w1+gp;
+      s+=`<rect x="${xa}" y="${y(g[2]).toFixed(1)}" width="${w1}" height="${(base-y(g[2])).toFixed(1)}" rx="1.2" fill="${c}"/>`+
+         `<rect x="${xb}" y="${y(g[3]).toFixed(1)}" width="${w2}" height="${(base-y(g[3])).toFixed(1)}" rx="1.2" fill="${oc}" opacity="${oo}"/>`+
          `<text x="${cx}" y="${bl(WY,12)}" text-anchor="middle" font-size="12" fill="var(--steel)">${wk}</text>`+
          tile(cx,R1,g[4],'me')+tile(cx,R2,g[5],'opp');
     }else{
