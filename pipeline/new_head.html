@@ -244,11 +244,15 @@ h1{grid-column:1;margin:0;font-family:var(--display);font-weight:700;font-size:5
 .stx.spl .brk+.v{margin-left:0}
 .dpg{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));column-gap:4px;width:100%;margin-top:3px}
 /* dropped points and the season sim side by side when both fit, the sim on its own line below otherwise */
-.stx.spl.dps{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;column-gap:14px;row-gap:9px}
-.dps .dpb{display:flex;flex-direction:column;min-width:0}.dps .dph{display:flex;align-items:center;height:16px;white-space:nowrap}.dps .dph .pw{margin-left:4px}
-.dps .dpd{flex:0 0 auto}.dps .dpd .dpg{display:flex;column-gap:12px;width:auto}.dps .dpd .dpc{min-width:24px}
-.dps .dso{flex:0 0 auto}.dps .dso .dpg{display:flex;column-gap:11px;width:auto}
-.dpc.so b{color:var(--label);text-transform:uppercase}
+.stx.spl.dps{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;column-gap:12px;row-gap:9px}
+.dps .dpb{display:flex;flex-direction:column;min-width:0}.dps .dph{display:flex;align-items:center;height:16px;white-space:nowrap}.dps .dph .pw{margin-left:2px}
+.dps .dpd{flex:0 0 auto}.dps .dpd .dpg{display:flex;column-gap:9px;width:auto}.dps .dpd .dpc{min-width:22px}
+.dps .dso{flex:0 0 auto}.sog{display:grid;grid-template-columns:auto auto;column-gap:12px;row-gap:3px;margin-top:3px}
+.sop{display:flex;align-items:baseline;gap:5px;line-height:1.1}.sop b{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--label)}
+.sop span{font-family:var(--display);font-weight:600;font-size:14px;color:var(--chalk);font-variant-numeric:tabular-nums}.sop span.z{color:var(--dim)}
+.dps .dpd .dpg{column-gap:9px!important}
+@media(max-width:400px){.dps .dpd .dpg{column-gap:6px!important}.dps .dpd .dpc{min-width:0}.stx.spl.dps{column-gap:10px}.sog{column-gap:8px}.sop{gap:3px}}
+.sop.s1 b{color:#e8c15a}.sop.s2 b{color:#5fd3a5}.sop.s3 b{color:#93b4ff}
 .board .r>.s-sk{grid-column:1 / -1}
 
 .dpc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
