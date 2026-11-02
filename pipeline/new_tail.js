@@ -175,6 +175,14 @@ document.querySelectorAll('.dso .rkb').forEach(k=>{if(!k.offsetParent)return;con
  const m=c.measureText(k.textContent),H=c.measureText('H').actualBoundingBoxAscent;const s=k.style;
  const gl=-m.actualBoundingBoxLeft,gr=m.width-m.actualBoundingBoxRight,gt=H-m.actualBoundingBoxAscent,gb=-m.actualBoundingBoxDescent;
  s.setProperty('letter-spacing','0','important');s.setProperty('font-variant-numeric','normal','important');s.setProperty('font-feature-settings','normal','important');s.setProperty('padding',`${(P-gt).toFixed(2)}px ${(P-gr).toFixed(2)}px ${(P-Math.min(gb,P)).toFixed(2)}px ${(P-gl).toFixed(2)}px`,'important')})}
+// matchup points bar: pinned under the tabs while you scroll the lineups, and slimmed down once pinned
+(function(){const nav=document.querySelector('nav.tabs');let h0=new WeakMap(),raf=0;
+function navh(){const v=nav&&getComputedStyle(nav).position==='sticky'?Math.round(nav.getBoundingClientRect().height):0;document.documentElement.style.setProperty('--navh',v+'px');return v}
+function upd(){raf=0;const nh=navh();document.querySelectorAll('.ltot').forEach(b=>{if(!b.offsetParent)return;const top=b.getBoundingClientRect().top;const pr=b.parentElement.getBoundingClientRect();
+ const on=top<=nh+6.5&&pr.top<nh;if(on===b.classList.contains('stk'))return;
+ if(on){const H=b.getBoundingClientRect().height;b.classList.add('stk');b.style.marginBottom=(parseFloat(getComputedStyle(b).marginBottom)||0)+(H-b.getBoundingClientRect().height)+'px'}
+ else{b.classList.remove('stk');b.style.marginBottom=''}})}
+const go=()=>{if(!raf)raf=requestAnimationFrame(upd)};addEventListener('scroll',go,{passive:true});addEventListener('resize',go);document.addEventListener('change',go);go()})();
 let q=0;function sched(){if(q)return;q=requestAnimationFrame(()=>{q=0;fit();finFit()})}
 window.tileFit=fit;window.finFit=finFit;sched();addEventListener('resize',sched);document.addEventListener('change',()=>setTimeout(sched,0));document.addEventListener('click',()=>setTimeout(sched,0));
 if(document.fonts){document.fonts.ready.then(()=>{for(const k in FM)delete FM[k];sched()});document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',()=>{for(const k in FM)delete FM[k];sched()})}

@@ -585,3 +585,7 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .dso .rkb{position:relative;top:-1.2px;font-size:inherit!important;line-height:1!important;padding:2px 4px!important;font-family:inherit!important;font-weight:inherit!important}
 .cr.lu.wa .cv.a.act,.cr.lu.wb .cv.b.act,.cr.lu .cv.act .fs{color:var(--chalk)!important}
 .dso .rkb{top:0!important;display:inline-block!important;text-box:trim-both cap alphabetic;padding:5px 6px!important;min-width:0!important;line-height:1!important;vertical-align:baseline}.dso .dpc.s0{display:flex!important;flex-direction:column;align-items:center}
+.ltot{position:sticky;top:calc(var(--navh,0px) + 6px);z-index:6;box-shadow:0 6px 14px -6px rgba(0,0,0,.6)}
+.ltot .lt-v,.ltot small,.ltot em{transition:font-size .15s ease}.ltot{transition:padding .15s ease}
+.ltot.stk{padding-top:6px!important;padding-bottom:6px!important}.ltot.stk .lt-v{font-size:20px!important;line-height:1.05}.ltot.stk small{font-size:11px!important}.ltot.stk em{font-size:10px!important}
+.ltot.stk>span{display:flex!important;flex-direction:row!important;align-items:baseline;gap:7px}.ltot.stk>span:last-child{justify-content:flex-end;flex-direction:row-reverse!important}.ltot.stk .lt-v{font-size:21px!important}

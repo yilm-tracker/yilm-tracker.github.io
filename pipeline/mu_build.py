@@ -38,7 +38,7 @@ def card(a,b):
         return (f'<div class="mus {cl}">{chip(seed(x))}<b>{e(x)}</b><span class="mrec">{rec(x)}</span><span class="mform">{form(x)}</span></div>',
                 f'<div class="mbl {cl}">{lst}</div>')
     sa,ba=side(a,'msl');sb,bb=side(b,'msr')
-    ma,mb,pw=_sg(a,b);pa=round(pw*100);pb=100-pa
+    ma,mb,pw=_pre(a,b);pa=round(pw*100);pb=100-pa
     rows=[('Sim pts',f'{ma:.1f}',f'{mb:.1f}',ma,mb),('Sim win',f'{pa}%',f'{pb}%',pa,pb),
           ('PF / wk',f'{T[a][5]:.1f}',f'{T[b][5]:.1f}',T[a][5],T[b][5]),
           ('PF rank',f'#{T[a][4]}',f'#{T[b][4]}',-T[a][4],-T[b][4]),
@@ -367,18 +367,23 @@ def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=No
                 f'<span class="g4w"><span class="g4p {cls}">{lab}</span><span class="g4b"><i class="{cls}" style="width:{wd}%"></i></span></span>'
                 f'<b class="gn">{e(SHORT[t])}</b>'
                 f'<span class="gb"><span class="grc">{rc}</span><i class="stk {tg[:1].lower()}">{tg}</i><span class="gfm">{fm}</span></span></span>')
-    return (f'<label for="{fr}" class="g4{" fin" if fz else ""}">{half(a,ra,ta,va,ua,ca,ja,fa,"gl",pa,ua,oa)}<span class="g4m"><i class="g4vs">vs</i>{f'<span class="g4sim" title="Average simulated score"><small>Sim</small><b>{sm[0]:.0f}<i>–</i>{sm[1]:.0f}</b></span>' if sm else ''}</span>'
+    return (f'<label for="{fr}" class="g4{" fin" if fz else ""}">{half(a,ra,ta,va,ua,ca,ja,fa,"gl",pa,ua,oa)}<span class="g4m"><i class="g4vs">vs</i>{f'<span class="g4sim" title="Pre-game sim: average score over 20,000 simulated games"><small>Sim</small><b>{sm[0]:.0f}<i>–</i>{sm[1]:.0f}</b></span>' if sm else ''}</span>'
             f'{half(b,rb,tb,vb,ub,cb,jb,fb,"gr",None if pa is None else 100-pa,ub,ob)}</label>')
 # In-week projection and win chance, the way Sleeper does them: finished players count their points, live players their
 # points plus the projection for the share of their game still to play (game clock), the rest their projection. Each team's
 # uncertainty is a 27-point spread for a full week (actual minus projected starter totals, this league), shrinking as games end.
 _LEFT=LW.get('left',{});TSD=27.0
 import psim as _PSM
-_PG={}
-for _a,_b,_ma,_mb,_pa in _PSM.run()['games']:_PG[(_a,_b)]=(_ma,_mb,_pa/100);_PG[(_b,_a)]=(_mb,_ma,1-_pa/100)
+_PSG={}
+for _a,_b,_ma,_mb,_pa in _PSM.run()['games']:_PSG[(_a,_b)]=(_ma,_mb,_pa/100);_PSG[(_b,_a)]=(_mb,_ma,1-_pa/100)
+_PRE={}
+for _a,_b,_ma,_mb,_pa in _PSM.run().get('pre',[]):_PRE[(_a,_b)]=(_ma,_mb,_pa/100);_PRE[(_b,_a)]=(_mb,_ma,1-_pa/100)
+def _pre(a,b):
+    """the pre-game sim score for this week's game (the 20,000-run sim before kickoff); stays fixed through the week"""
+    return _PRE.get((a,b)) or _sg(a,b)
 def _sg(a,b):
     """this week's game in the player-level sim (live): mean points each side and a's win chance; the team model otherwise"""
-    return _PG.get((a,b)) or _SD.simgame(a,b)
+    return _PSG.get((a,b)) or _SD.simgame(a,b)
 def _lx(p):
     if lval(p)[1]:return p[5],0.0
     if p[3] in LIVEG:f=float(_LEFT.get(p[3],0.5));return p[5]+p[4]*f,f
@@ -387,7 +392,7 @@ def _lp(t):
     st=[p for p in LW['out'][str(RID[t])]['st'] if p];x=[_lx(p) for p in st];s2=sum(p[4]**2 for p in st)
     return sum(e for e,_ in x),(TSD**2*sum(w*p[4]**2 for (_,w),p in zip(x,st))/s2 if s2 else 0.0)
 def _lwin(a,b):
-    if (a,b) in _PG:return max(1,min(99,round(_PG[(a,b)][2]*100))) if 0<_PG[(a,b)][2]<1 else round(_PG[(a,b)][2]*100)
+    if (a,b) in _PSG:return max(1,min(99,round(_PSG[(a,b)][2]*100))) if 0<_PSG[(a,b)][2]<1 else round(_PSG[(a,b)][2]*100)
     from math import erf,sqrt
     (ea,va),(eb,vb)=_lp(a),_lp(b)
     if va+vb<1e-6:return 100 if ea>eb else 0 if eb>ea else 50
@@ -396,7 +401,7 @@ _pj=lambda t:round(_lp(t)[0],1)   # live projected total (Sleeper's figure under
 _pg=lambda t:round(sum(p[4] for p in LW['out'][str(RID[t])]['st'] if p),1)   # pre-game projection
 _mdone=lambda a,b:all(lval(p)[1] for t in (a,b) for p in LW['out'][str(RID[t])]['st'] if p)
 _cur=lambda t:round(sum(p[5] for p in LW['out'][str(RID[t])]['st'] if p),2)  # points scored so far
-chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b),_lwin(a,b),_pj(a),_pj(b),form(a),form(b),_sg(a,b)[:2],_pg(a),_pg(b),_mdone(a,b)) for i,(a,b) in enumerate(games))+'</div>'
+chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b),_lwin(a,b),_pj(a),_pj(b),form(a),form(b),_pre(a,b)[:2],_pg(a),_pg(b),_mdone(a,b)) for i,(a,b) in enumerate(games))+'</div>'
 cur='' if FIN else f'<div class="mwx mwx-{W}">'+radios+chips+''.join(panel(i,a,b) for i,(a,b) in enumerate(games))+'</div>'
 css=''.join(f'#mu-{i}:checked~.muc2 label[for="mu-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#mu-{i}:checked~.mup-{i}{{display:block}}' for i in range(lg.N//2))
 # ---------- historical weeks

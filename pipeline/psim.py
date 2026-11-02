@@ -30,7 +30,7 @@ MISS={'Questionable':.15,'Doubtful':.7,'Out':1.0,'IR':1.0,'PUP':1.0,'Sus':1.0,'N
 INPUTS=['data_block.js','rosters.json','fut_proj.json','pull8.json','ro_ranks.json']
 def _wk():return f'wk{D.NOW}.json'
 def _key():
-    h=hashlib.sha1(b'psim-v1')
+    h=hashlib.sha1(b'psim-v2')
     for f in INPUTS+[_wk()]:
         if os.path.exists(P+f):h.update(open(P+f,'rb').read())
     return h.hexdigest()
@@ -97,6 +97,19 @@ def run():
             if mu:x=x*(rng.random(x.shape)>=np.array(miss)[None,:])
             out[:,IDX[t]]=fixed+x.sum(1)
         return out
+    def pregame():
+        """this week's games as simulated before kickoff: every starter in the set lineup drawn in full from his projection
+        (no live points); own random stream, so it does not move as the games are played"""
+        r2=np.random.default_rng(12);Z2=r2.standard_normal((n,len(nflteams)));out=np.zeros((n,N))
+        for t in TEAMS:
+            st=[p for p in LW['out'][str(D.RID[t])]['st'] if p and p[4]>0]
+            mu=[p[4] for p in st];pos=[p[1] for p in st]
+            if not mu:continue
+            x=_draw(mu,[float(_sd(q,m)) for q,m in zip(pos,mu)],pos,[p[3] for p in st],r2,n,Z2,NT)
+            x=x*(r2.random(x.shape)>=np.array([MISS.get(inj(p[0]),0.0) for p in st])[None,:])
+            out[:,IDX[t]]=x.sum(1)
+        return out
+    PRE=pregame() if LW else None;pre=[]
     W=np.tile(np.array([D.T[t][0] for t in TEAMS],float),(n,1));PF=np.tile(np.array([D.T[t][3] for t in TEAMS],float),(n,1))
     games=[]
     for w in weeks:
@@ -108,7 +121,9 @@ def run():
             if not f or t in seen:continue
             o=D.FROM_SHORT[f[0][1]];seen|={t,o};a,b=IDX[t],IDX[o]
             W[:,a]+=S[:,a]>S[:,b];W[:,b]+=S[:,b]>S[:,a]
-            if w==D.NOW:games.append([t,o,float(S[:,a].mean()),float(S[:,b].mean()),float((S[:,a]>S[:,b]).mean()*100)])
+            if w==D.NOW:
+                games.append([t,o,float(S[:,a].mean()),float(S[:,b].mean()),float((S[:,a]>S[:,b]).mean()*100)])
+                if PRE is not None:pre.append([t,o,float(PRE[:,a].mean()),float(PRE[:,b].mean()),float((PRE[:,a]>PRE[:,b]).mean()*100)])
     order=np.argsort(-(W*10000+PF),axis=1)            # order[:,k] = team index seeded k+1
     seed_of=np.empty_like(order);rows=np.arange(n)[:,None];seed_of[rows,order]=np.arange(N)[None,:]
     # playoffs: fixed bracket (Sleeper default). 6 teams, 2 byes: 3v6 and 4v5, then 1 plays the 4/5 winner and 2 the 3/6
@@ -139,7 +154,7 @@ def run():
         pair(lA,lB,base+(4 if PO==6 else 2));put(ru,N-1);put(ch,N)
         title=np.zeros(N);final=np.zeros(N)
         for i in range(N):title[i]=(ch==i).mean()*100;final[i]=((ch==i)|(ru==i)).mean()*100
-    out={'key':k,'n':n,'weeks':weeks,'now':D.NOW,'teams':{},'games':games}
+    out={'key':k,'n':n,'weeks':weeks,'now':D.NOW,'teams':{},'games':games,'pre':pre}
     for t in TEAMS:
         i=IDX[t];sd_=seed_of[:,i]
         r={'po':float((sd_<PO).mean()*100),'bye':float((sd_<BYE_N).mean()*100),'top':float((sd_==0).mean()*100),
