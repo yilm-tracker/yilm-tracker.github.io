@@ -279,8 +279,9 @@ def ptsrow(sa,sb,big=True,ra=None,rb=None):
     ua=big and (a_ or b_) and va>vb;ub=big and (a_ or b_) and vb>va
     da=f' data-r="{ra}"' if ra else '';db=f' data-r="{rb}"' if rb else ''
     if big:  # scoreboard band: live points large, the pre-game projection under each
-        return (f'<div class="mcr ltot lsb"><span class="{"up" if ua else ""}"{da}><b class="lt-v">{fa}</b><small>Proj {pa:.1f}</small></span>'
-                f'<em>Points</em><span class="{"up" if ub else ""}"{db}><b class="lt-v">{fb}</b><small>Proj {pb:.1f}</small></span></div>')
+        la,lb=sum(_lx(p)[0] for p in sa),sum(_lx(p)[0] for p in sb)   # live projection: points so far plus what is left to play
+        return (f'<div class="mcr ltot lsb"><span class="{"up" if ua else ""}"{da}><span class="ltr"><small class="lpg" title="Pre-game projection">({pa:.1f})</small><b class="lt-v">{fa}</b></span><small class="llv" title="Live projection">{la:.1f}</small></span>'
+                f'<em>Points</em><span class="{"up" if ub else ""}"{db}><span class="ltr"><b class="lt-v">{fb}</b><small class="lpg" title="Pre-game projection">({pb:.1f})</small></span><small class="llv" title="Live projection">{lb:.1f}</small></span></div>')
     return (f'<div class="mcr {"ltot" if big else "ltot2"}"><span class="{"up" if ua else ""}"{da}><b class="lt-v">{fa}</b> <small>({pa:.1f})</small></span>'
             f'<em>Points <i class=pj>(projected)</i></em><span class="{"up" if ub else ""}"{db}><small>({pb:.1f})</small> <b class="lt-v">{fb}</b></span></div>')
 BH_CUR='<div class="msh lbh">Bench<small>active players with a game</small></div>'
