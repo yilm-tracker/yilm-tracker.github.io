@@ -394,7 +394,7 @@ css=PKCSS+(''.join(f'#thx-{i}:checked~.tqpk label[for="thx-{i}"]{{background:var
  +'.tch{padding:10px 12px 6px;border-radius:10px;background:var(--deck);border:1px solid var(--hair)}'
  +'.tchh{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}.tchh>span:first-child{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--label);white-space:nowrap}'
  +'.tleg{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--steel);white-space:nowrap}.tleg i{width:14px;border-top:1.5px dashed var(--steel)}'
- +'.tro{display:none;margin-left:auto;font-family:var(--display);font-weight:700;font-size:17px;color:var(--chalk);white-space:nowrap;font-variant-numeric:tabular-nums}.tro small{font-size:12px;font-weight:600;color:var(--steel);margin-left:2px}.tro small.w{color:var(--win)}.tro small.l{color:var(--loss)}'
+ +'.tro{display:none;margin-left:auto;font-family:var(--display);font-weight:700;font-size:17px;color:var(--chalk);white-space:nowrap;font-variant-numeric:tabular-nums}.tro small{font-size:12px;font-weight:600;color:var(--steel);margin-left:2px}.tro small.w{color:var(--win)}.tro small.l{color:var(--loss)}.tro small.w,.tro small.l{display:inline-block;width:1.1em;text-align:center}'
  +'.tsvg{display:block;width:100%;height:auto;overflow:visible}'
  +'.tgl{stroke:var(--hair);stroke-width:1}.tzero{stroke:var(--line-strong,rgba(255,255,255,.2));stroke-width:1}'
  +'.tax{font-family:var(--display);font-weight:600;font-size:10px;fill:var(--steel);font-variant-numeric:tabular-nums}'

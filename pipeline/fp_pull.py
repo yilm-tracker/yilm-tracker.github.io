@@ -41,20 +41,24 @@ IDX={}
 for pid,m in META.items():
     if not m or not m[0]:continue
     IDX.setdefault((norm(m[0]),m[1]),[]).append((pid,m[2]))
-# FantasyPros stat names -> Sleeper scoring keys (used when the response carries stat lines; else its points for SC)
-SMAP={'pass_yds':'pass_yd','pass_tds':'pass_td','pass_ints':'pass_int','rush_yds':'rush_yd','rush_tds':'rush_td','rec':'rec',
-      'rec_rec':'rec','rec_yds':'rec_yd','rec_tds':'rec_td','fumbles':'fum_lost','fum_lost':'fum_lost','fg':'fgm','fga':'fga','xpt':'xpm',
-      'def_sack':'sack','def_int':'int','def_fr':'fum_rec','def_td':'def_td','def_safety':'safe'}
-def pts(row):
-    st=row.get('stats') if isinstance(row.get('stats'),dict) else row
-    calc=[(ss[SMAP[k]],float(v)) for k,v in st.items() if k in SMAP and SMAP[k] in ss and isinstance(v,(int,float,str)) and re.match(r'^-?[\d.]+$',str(v))]
-    for k in ('points','fpts','proj_pts','fantasy_points','pts'):
-        for src in (row,st):
-            if k in src:
-                try:fp=float(src[k])
-                except Exception:continue
-                return (sum(a*b for a,b in calc) if len(calc)>=2 else fp)
-    return sum(a*b for a,b in calc) if calc else None
+# FantasyPros stat names -> Sleeper scoring keys. Offense is scored from the stat line with the league's own settings
+# (TD values, bonuses, TE premium); kickers and defenses use FantasyPros' points for the matching format, since their
+# lines have no kick distances or points-allowed tiers.
+SMAP={'pass_yds':'pass_yd','pass_tds':'pass_td','pass_ints':'pass_int','pass_att':'pass_att','pass_cmp':'pass_cmp',
+      'rush_yds':'rush_yd','rush_tds':'rush_td','rush_att':'rush_att','rec_rec':'rec','rec_yds':'rec_yd','rec_tds':'rec_td',
+      'fumbles':'fum_lost','2pt_tds':'rec_2pt','pass_yds_300':'bonus_pass_yd_300','pass_yds_400':'bonus_pass_yd_400',
+      'rush_yds_100':'bonus_rush_yd_100','rush_yds_200':'bonus_rush_yd_200','rec_yds_100':'bonus_rec_yd_100','rec_yds_200':'bonus_rec_yd_200'}
+PKEY={'PPR':'points_ppr','HALF':'points_half','STD':'points'}[SC]
+def num(v):
+    try:return float(v)
+    except Exception:return None
+def pts(row,pos):
+    st=row.get('stats') if isinstance(row.get('stats'),dict) else {}
+    if pos in ('K','DST'):return num(st.get(PKEY,st.get('points')))
+    v=sum(ss.get(SMAP[k],0)*(num(x) or 0) for k,x in st.items() if k in SMAP)
+    rec=num(st.get('rec_rec')) or 0
+    v+=rec*ss.get({'TE':'bonus_rec_te','RB':'bonus_rec_rb','WR':'bonus_rec_wr'}.get(pos,''),0)
+    return v if st else None
 def rows(d):
     if isinstance(d,list):return d
     for k in ('players','data','projections','results'):
@@ -62,17 +66,17 @@ def rows(d):
     return []
 f=f'{P}fp/{SEASON}_w{week}.json'
 old=json.load(open(f)) if os.path.exists(f) else {'pts':{}}
-out={'week':week,'pulled':now.isoformat(timespec='minutes'),'scoring':SC,'pts':dict(old.get('pts',{})),'unmatched':[]}
+if old.get('v')!=2:old={'pts':{}}   # earlier scoring method: start over
+out={'v':2,'week':week,'pulled':now.isoformat(timespec='minutes'),'scoring':SC,'pts':dict(old.get('pts',{})),'unmatched':[]}
 raw={}
 for pos in ('QB','RB','WR','TE','K','DST'):
     q=urllib.parse.urlencode({'week':week,'position':pos,'scoring':SC,'type':'weekly'})
     try:d=get(f'{BASE}/nfl/{SEASON}/projections?{q}',{'x-api-key':KEY})
     except Exception as ex:print('fp_pull:',pos,ex);continue
     raw[pos]=d
-    r0=(rows(d) or [{}])[0];print('fp_pull:',pos,'fields',sorted(r0)[:40],'stats',sorted(r0.get('stats',{}) if isinstance(r0.get('stats'),dict) else [])[:40])   # names only, no data
     for r in rows(d):
         nm=r.get('player_name') or r.get('name') or r.get('full_name') or '';tm=r.get('player_team_id') or r.get('team') or r.get('team_id') or ''
-        tm=TM.get(tm,tm);sp='DEF' if pos=='DST' else pos;v=pts(r)
+        tm=TM.get(tm,tm);sp='DEF' if pos=='DST' else pos;v=pts(r,pos)
         if v is None:continue
         if sp=='DEF':pid=tm if tm in META else None
         else:
