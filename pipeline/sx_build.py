@@ -184,27 +184,43 @@ def m_cons():
     for t in TEAMS:
         a=[g[2] for g in D.WK[t]];m=sum(a)/len(a);sd=_st.pstdev(a)
         S[t]=dict(m=m,sd=sd,cv=sd/m*100,lo=min(a),hi=max(a),top=sum(1 for g in D.WK[t] if g[4]<=3),bot=sum(1 for g in D.WK[t] if g[4]>N-3),g=D.WK[t])
-    rk={t:i+1 for i,t in enumerate(sorted(TEAMS,key=lambda t:S[t]['cv']))}
-    for i,t in enumerate(sorted(TEAMS,key=lambda t:S[t]['cv'])):
+    order=sorted(TEAMS,key=lambda t:S[t]['cv'])
+    X=lambda v:2+(v-lo)/(hi-lo)*96
+    def rnk(k,t):v=S[t][k];return 1+sum(1 for u in TEAMS if S[u][k]>v+1e-9)
+    tn=lambda r:'gold' if r==1 else 'g' if r<=3 else 'b' if r>N-3 else ''
+    chip=lambda r:f'<i class="ch {tn(r)}"><span class="ct">#{r}</span></i>'
+    for i,t in enumerate(order):
         x=S[t]
-        dots=''.join(f'<circle cx="{X(g[2]):.1f}" cy="13" r="4" class="{"w" if g[2]>g[3] else "l"}"/>' for g in x['g'])
-        svg=(f'<svg class="csv" viewBox="0 0 300 26" preserveAspectRatio="none" aria-hidden="true"><line x1="6" x2="294" y1="13" y2="13" class="ax"/>'
-             f'<rect x="{X(x["m"]-x["sd"]):.1f}" y="5" width="{X(x["m"]+x["sd"])-X(x["m"]-x["sd"]):.1f}" height="16" rx="3" class="bd"/>'
-             f'<line x1="{X(x["m"]):.1f}" x2="{X(x["m"]):.1f}" y1="3" y2="23" class="mn"/>{dots}</svg>')
-        rows.append(f'<div class="csr"><div class="cst"><span class="csl"><em class="csi">{i+1}</em>{nm(t)}</span><span class="csn"><b>±{x["sd"]:.1f}</b><i>{x["cv"]:.0f}%</i></span></div>{svg}'
-                    f'<div class="csm"><span>Avg<b>{x["m"]:.1f}</b></span><span>Low<b>{x["lo"]:.1f}</b></span><span>High<b>{x["hi"]:.1f}</b></span>'
-                    f'<span>Top-3<b>{x["top"]}</b></span><span>Bottom-3<b>{x["bot"]}</b></span></div></div>')
-    css=('<style>.csr{padding:10px 0;border-bottom:1px solid var(--hair)}.sxc .cst{display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:center;gap:10px}'
-         '.csl{display:inline-flex;align-items:center;gap:8px;min-width:0}.csi{font-style:normal;font-family:var(--display);font-weight:700;font-size:13px;color:var(--dim);min-width:14px;text-align:right}'
-         '.csn{display:inline-flex;align-items:baseline;gap:7px;font-family:var(--display);font-size:16px;color:var(--chalk);white-space:nowrap}.csn i{font-style:normal;font-size:13px;color:var(--steel)}'
-         '.csv{display:block;width:100%;height:26px;margin:6px 0 4px}.csv .ax{stroke:var(--hair);stroke-width:1}.csv .bd{fill:rgba(238,240,244,.07);stroke:rgba(238,240,244,.18)}'
-         '.csv .mn{stroke:var(--label);stroke-width:1.5}.csv circle.w{fill:var(--win)}.csv circle.l{fill:var(--loss)}.csv circle{stroke:var(--deck);stroke-width:1}'
-         '.sxc .csm{display:flex!important;flex-direction:row!important;justify-content:space-between!important;flex-wrap:nowrap;gap:6px;font-size:11.5px;color:var(--steel);text-align:left}'
-         '.csm span{white-space:nowrap}.csm b{font-family:var(--display);font-weight:600;color:var(--label);margin-left:4px}'
-         '.cssc{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin:2px 0 4px}'
-         '.cskey{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--steel);margin:2px 0 8px}.cskey b{font-family:var(--display);font-weight:600;color:var(--label);margin-right:4px}</style>')
-    scale=f'<div class="cssc"><span>{lo}</span><span>weekly points</span><span>{hi}</span></div>'
-    key=('<div class="cskey"><span><b>±</b>spread (1 SD)</span><span><b>%</b>swing = spread ÷ avg, steadiest first</span>'
+        dots=''.join(f'<i class="cd {"w" if g[2]>g[3] else "l"}" style="left:{X(g[2]):.2f}%"></i>' for g in x['g'])
+        l,r_=X(x['m']-x['sd']),X(x['m']+x['sd'])
+        svg=(f'<div class="csv" aria-hidden="true"><i class="cax"></i><i class="cbd" style="left:{l:.2f}%;width:{r_-l:.2f}%"></i>'
+             f'<i class="cmn" style="left:{X(x["m"]):.2f}%"></i>{dots}</div>')
+        stat=lambda lab,val,c='':f'<span><b{c}>{val}</b><em>{lab}</em></span>'
+        rows.append(f'<div class="cnsr"><div class="cst"><span class="csl"><em class="csi">{i+1}</em>{nm(t)}</span><span class="csn"><b>±{x["sd"]:.1f}</b><i class="{tn(i+1)}">{x["cv"]:.0f}%</i></span></div>{svg}'
+                    f'<div class="csm">{stat("Avg",f"{x[chr(109)]:.1f}{chip(rnk(chr(109),t))}")}{stat("Low",f"{x[chr(108)+chr(111)]:.1f}{chip(rnk(chr(108)+chr(111),t))}")}'
+                    f'{stat("High",f"{x[chr(104)+chr(105)]:.1f}{chip(rnk(chr(104)+chr(105),t))}")}{stat("Top-3",x["top"]," class=\"up\"" if x["top"] else "")}{stat("Bot-3",x["bot"]," class=\"dn\"" if x["bot"] else "")}</div></div>')
+    css=('<style>.cnsr{padding:12px 0 12px;border-bottom:1px solid var(--hair)}.sxc .cst{display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:center;gap:10px}'
+         '.csl{display:inline-flex;align-items:center;gap:8px;min-width:0}.csl .sxn{font-size:16px;color:var(--chalk);font-weight:600}.csi{font-style:normal;font-family:var(--display);font-weight:700;font-size:14px;color:var(--label);min-width:16px;text-align:right}'
+         '.csn{display:inline-flex;align-items:baseline;gap:8px;font-family:var(--display);font-size:19px;font-weight:700;color:var(--chalk);white-space:nowrap}.csn i{font-style:normal;font-size:14px;font-weight:600;color:var(--label)}'
+         '.csn i.g,.csn i.gold{color:var(--win)}.csn i.b{color:var(--loss)}'
+         '.csv{position:relative;height:24px;margin:8px 0 8px}.csv i{position:absolute;display:block}'
+         '.cax{left:0;right:0;top:11.5px;height:1px;background:var(--hair)}'
+         '.cbd{top:3px;height:18px;border-radius:5px;background:rgba(238,240,244,.08);box-shadow:inset 0 0 0 1px rgba(238,240,244,.22)}'
+         '.cmn{top:0;width:2.5px;height:24px;margin-left:-1.25px;border-radius:1px;background:var(--chalk)}'
+         '.cd{top:7px;width:10px;height:10px;margin-left:-5px;border-radius:50%;box-shadow:0 0 0 1.5px var(--deck)}.cd.w{background:var(--win)}.cd.l{background:var(--loss)}'
+         '.sxc .csm{display:grid!important;grid-template-columns:1fr 1fr 1fr auto auto;column-gap:8px;text-align:left}'
+         '.csm span{display:flex;flex-direction:column;gap:3px;white-space:nowrap;min-width:0}.csm span:nth-child(n+4){align-items:flex-end}'
+         '.csm b{display:inline-flex;align-items:center;font-family:var(--display);font-weight:700;font-size:16px;color:var(--chalk);font-variant-numeric:tabular-nums;line-height:1}'
+         '.csm b .ch{margin-left:5px;font-size:11px;font-style:normal}.csm .ch.gold{background:rgba(244,196,81,.16);color:#f4c451}.csn i.gold{color:#f4c451}.csm b.up{color:var(--win)}.csm b.dn{color:var(--loss)}'
+         '.csm em{font-style:normal;font-size:11px;color:var(--steel);letter-spacing:.02em}'
+         '@media (max-width:380px){.csm b{font-size:14.5px}.csm b .ch{margin-left:3px;font-size:10px;min-width:20px}.sxc .csm{column-gap:6px}}'
+         '@media (min-width:1100px){.cnsr{display:grid;grid-template-columns:minmax(300px,1fr) 2fr minmax(400px,1fr);column-gap:32px;align-items:center;padding:14px 0}'
+         '.csv{margin:0}.sxc .csm{column-gap:16px}}'
+         '.cssc{display:flex;justify-content:space-between;font-size:11px;color:var(--steel);margin:2px 0 4px}.cssc>i,.cssc>.csx{display:none}.csx{font-weight:400}'
+         '.cskey{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--steel);margin:2px 0 8px}.cskey b{font-family:var(--display);font-weight:600;color:var(--label);margin-right:4px}'
+         '@media (min-width:1100px){.cssc{display:grid;grid-template-columns:minmax(300px,1fr) 2fr minmax(400px,1fr);column-gap:32px}.cssc>span{display:none}.cssc>i{display:block}.cssc .csx{display:flex;justify-content:space-between}}</style>')
+    scale=f'<div class="cssc"><span>{lo}</span><span>weekly points</span><span>{hi}</span><i></i><b class="csx"><span>{lo}</span><span>weekly points</span><span>{hi}</span></b></div>'
+    key=('<div class="cskey"><span><b>±</b>spread (1 SD)</span><span><b>%</b>swing = spread ÷ avg, steadiest first</span><span><b>#</b>league rank</span>'
          '<span><b>▭</b>avg ± spread</span><span><b>●</b>weeks, green W · red L</span></div>')
     return head('Consistency',f'Weekly score swings · Weeks 1–{D.G}')+css+key+scale+''.join(rows)
 # ---------- 7 Stars
