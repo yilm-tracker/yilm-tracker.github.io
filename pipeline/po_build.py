@@ -181,7 +181,14 @@ def _plive(t,w):
         return sum(p[5] for p in st),MB._lp(t)[0],on
     if (t,w) in AW:return AW[(t,w)],PT[(t,w)],True
     return 0.0,PT[(t,w)],False
-br,BRCSS,_RH=po_cols.build(S,GAMES,win,winp,PT,SHORT,seed,e,tone,(lambda a,b,w:f'+{abs(PT[(a,w)]-PT[(b,w)]):.1f}') if FINAL else None,
+# bracket names: the league's short names where it has them; otherwise long names cut to two words, or initial + last word
+def _bn(t):
+    if SHORT0.get(t,t)!=t:return SHORT0[t]
+    if len(t)<=15:return t
+    w=t.replace(',','').split();two=' '.join(w[:2])
+    return two if len(two)<=15 else f'{w[0][0]}. {w[-1]}'
+_BN={t:_bn(t) for t in H}
+br,BRCSS,_RH=po_cols.build(S,GAMES,win,winp,PT,_BN,seed,e,tone,(lambda a,b,w:f'+{abs(PT[(a,w)]-PT[(b,w)]):.1f}') if FINAL else None,
                            av=lambda t:f'av-{MB._AVR[t]}' if t in MB._AVR else '',live=_plive)
 bpan=''.join(f'<div class="bkp bkp-{k}">{fcard(a,b,w,f"Week {w} · {lab} · Final")}{flineup(a,b,w)}</div>' if FINAL else f'<div class="bkp bkp-{k}">{card(a,b,w,f"Week {w} · {lab}")}{lineup(a,b,w,'b')}</div>' for k,w,(a,b),lab in GAMES)
 # ---------- build-a-matchup (team A, team B, week)
