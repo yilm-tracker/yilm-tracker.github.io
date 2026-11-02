@@ -151,7 +151,11 @@ for w in range(1,DONE+1):
     log('week',w,'ok')
 if DONE<REG:
     W=DONE+1;node('live',W);py('score.py','live.json','--no-build');log('week',W,'live')
-node('detail',f'1-{min(DONE+1,REG)}');node('top',max(DONE,1));node('playoffs');py('po_write.py')
+node('detail',f'1-{min(DONE+1,REG)}');node('top',max(DONE,1));
+try:
+    if Y==CUR:node('wire',max(DONE,1))  # THE WIRE, current season only; never fatal (needs this week's projections in the capture)
+except Exception as ex:print('wire pull skipped:',ex)
+node('playoffs');py('po_write.py')
 # ---------- playoff results in hist.json's week format: {week: {rid: [mid, pts, starters, bench], ...}} (completed weeks only)
 PO=J('pull_po.json');HM=J('hist.json')['m'];A8=J('pull_pts.json');M8=J('pull8.json')['META']
 POA={'bracket':C[f'{L}/winners_bracket'],'losers':C[f'{L}/losers_bracket'],'w':{},'m':{}}
