@@ -5,7 +5,8 @@
 def build(S,GAMES,win,winp,PT,SHORT,seed,e,tone,final=None,av=lambda t:'',live=None):
     G={k:(w,pair) for k,w,pair,_ in GAMES}
     CG=10                                # gap between columns (px); column width --cw = a third of the width less the gaps
-    HD,TB,GAP,HALF=62,70,12,26           # header height, team row height, gap inside a half, gap between the halves
+    LW=2.5                               # connector line width
+    HD,TB,GAP,HALF=62,70,24,30           # header height, team row height, gap inside a half, gap between the halves
     MH=2*TB+1
     y=[HD,HD+MH+GAP,HD+2*MH+GAP+HALF,HD+3*MH+2*GAP+HALF]
     c=[v+MH/2 for v in y]
@@ -35,11 +36,13 @@ def build(S,GAMES,win,winp,PT,SHORT,seed,e,tone,final=None,av=lambda t:'',live=N
         box.append(f'<div class="pbm pby" style="left:{X[0]};top:{top:.1f}px;width:{CW};height:{MH}px">'
                    f'{team(t,15,True,bye=True)}<i class="pbd"></i><span class="pbt pbe">Bye</span></div>')
     def elbow(col,ya,yb,on_a,on_b,yn):
-        x0=f'calc({X[col]} + var(--cw))';h2=CG/2
+        """Sleeper-style: from the right edge of each feeder game across to the middle of the next column, then
+        down (or up) into the top (or bottom) of the next game; the winner's line is lit"""
+        x0=f'calc({X[col]} + var(--cw))';xc=f'calc({X[col+1][5:-1] if X[col+1].startswith("calc(") else X[col+1]} + var(--cw)/2)'
+        ntop,nbot=yn-MH/2,yn+MH/2
         for yy,on,up in ((ya,on_a,True),(yb,on_b,False)):
-            t,h=(yy,yn-yy) if up else (yn,yy-yn)
-            ln.append(f'<i class="pbc{" on" if on else ""} {"up" if up else "dn"}" style="left:{x0};width:{h2}px;top:{t:.1f}px;height:{h:.1f}px"></i>')
-        ln.append(f'<i class="pbc st{" on" if (on_a or on_b) else ""}" style="left:calc({x0[5:-1]} + {h2}px);width:{h2}px;top:{yn-.75:.1f}px;height:0"></i>')
+            t,h=(yy-LW/2,ntop-yy+LW/2) if up else (nbot,yy-nbot+LW/2)
+            ln.append(f'<i class="pbc{" on" if on else ""} {"up" if up else "dn"}" style="left:{x0};width:calc(({xc[5:-1]}) - ({x0[5:-1]}) + {LW/2}px);top:{t:.1f}px;height:{h:.1f}px"></i>')
     bye(S[0],y[0]);q2=match('qf2',0,y[1]);bye(S[1],y[2]);q1=match('qf1',0,y[3])
     s1=match('sf1',1,sfc[0]-MH/2);s2=match('sf2',1,sfc[1]-MH/2)
     fw=match('fin',2,fc-MH/2)
@@ -73,8 +76,8 @@ def build(S,GAMES,win,winp,PT,SHORT,seed,e,tone,final=None,av=lambda t:'',live=N
          '.pbw .bn{color:var(--chalk);font-weight:600}.pbw .pbs{color:var(--chalk)}.pbl{opacity:.62}'
          '.pbe{align-items:center;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}'
          '.pbc{position:absolute;box-sizing:border-box;border:0 solid var(--line-strong);pointer-events:none}'
-         '.pbc.up{border-top-width:1.5px;border-right-width:1.5px;border-top-right-radius:8px}'
-         '.pbc.dn{border-bottom-width:1.5px;border-right-width:1.5px;border-bottom-right-radius:8px}'
-         '.rkey{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 14px;margin-top:10px;font-size:11.5px;color:var(--steel)}.rkey span{display:inline-flex;align-items:center;white-space:nowrap}.rk-l{display:inline-block;width:16px;height:1.5px;background:var(--label);margin-right:6px}'
-         '.pbc.st{border-top-width:1.5px}.pbc.on{border-color:var(--label);z-index:1}.pbm .pbs.pbz{color:var(--dim);font-weight:600}')
+         '.pbc.up{border-top-width:2.5px;border-right-width:2.5px;border-top-right-radius:10px}'
+         '.pbc.dn{border-bottom-width:2.5px;border-right-width:2.5px;border-bottom-right-radius:10px}'
+         '.rkey{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 14px;margin-top:10px;font-size:11.5px;color:var(--steel)}.rkey span{display:inline-flex;align-items:center;white-space:nowrap}.rk-l{display:inline-block;width:16px;height:2.5px;border-radius:1px;background:var(--chalk);margin-right:6px}'
+         '.pbc.on{border-color:var(--chalk)}.pbm .pbs.pbz{color:var(--dim);font-weight:600}')
     return html,css,H
