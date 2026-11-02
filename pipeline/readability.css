@@ -608,3 +608,6 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .mcr.ltot.lsb.stk>em{font-size:10px!important;width:auto}
 .mcr.ltot.lsb.stk .ltr{gap:4px}
 @media (max-width:440px){.mcr.ltot.lsb:not(.stk){column-gap:14px;padding-left:12px!important;padding-right:12px!important}.mcr.ltot.lsb:not(.stk) .lt-v{font-size:29px!important}.mcr.ltot.lsb:not(.stk) .lpg{font-size:12px!important}}@media (max-width:380px){.mcr.ltot.lsb:not(.stk){column-gap:10px}.mcr.ltot.lsb:not(.stk) .lt-v{font-size:25px!important}.mcr.ltot.lsb:not(.stk) .lpg{font-size:11px!important}.mcr.ltot.lsb:not(.stk)>em{font-size:12px!important}}
+.yh{white-space:nowrap;min-width:0;max-width:100%;font-style:italic;font-weight:800;letter-spacing:0}.yh .y1{color:#4f9fe8}.yh .y2{color:#ec5f70}.yh .y3{color:var(--chalk)}
+header{grid-template-columns:minmax(0,1fr) auto!important}
+header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h1.yh{grid-column:1 / -1;margin-top:6px}
