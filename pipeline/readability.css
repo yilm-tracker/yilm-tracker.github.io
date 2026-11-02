@@ -592,3 +592,19 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .mcr.ltot.lsb .ltr{display:flex;align-items:baseline;gap:7px}.mcr.ltot.lsb .lpg{color:var(--dim)!important}.mcr.ltot.lsb .llv{color:var(--steel)!important}
 @media (max-width:400px){.mcr.ltot.lsb .lt-v{font-size:28px}.mcr.ltot.lsb .ltr{gap:5px}.mcr.ltot.lsb small{font-size:12px!important}.mcr.ltot.lsb{padding-left:12px;padding-right:12px}.ltot.stk>span{gap:5px}.ltot.stk .lt-v{font-size:18px!important}.ltot.stk small{font-size:10.5px!important}.ltot.stk>em{font-size:0!important;width:6px}}
 .tqdp>div>.tqmini{order:2}.tqdp>div>.tqdr{order:3}
+/* points bar laid out like the matchup card: each side hugs the centre, (pre-game) beside the score, live projection under the score */
+.mcr.ltot.lsb{column-gap:22px}
+.mcr.ltot.lsb>span{display:flex!important;flex-direction:column!important;gap:4px}
+.mcr.ltot.lsb>span:first-child{align-items:flex-end!important;text-align:right}
+.mcr.ltot.lsb>span:last-child{align-items:flex-start!important;text-align:left}
+.mcr.ltot.lsb .ltr{display:flex;align-items:baseline;gap:6px}
+.mcr.ltot.lsb>span .llv{order:0!important}
+.mcr.ltot.lsb .llv.fz{font-family:var(--display)!important;font-weight:700!important;letter-spacing:.1em;text-transform:uppercase;color:var(--steel)!important}
+.mcr.ltot.lsb.stk{padding-top:6px!important;padding-bottom:6px!important}
+.mcr.ltot.lsb.stk>span{gap:2px}
+.mcr.ltot.lsb.stk .lt-v{font-size:19px!important;line-height:1}
+.mcr.ltot.lsb.stk .lpg{font-size:11.5px!important}
+.mcr.ltot.lsb.stk .llv{font-family:var(--display)!important;font-weight:700!important;font-size:10.5px!important;letter-spacing:.1em}
+.mcr.ltot.lsb.stk>em{font-size:10px!important;width:auto}
+.mcr.ltot.lsb.stk .ltr{gap:4px}
+@media (max-width:440px){.mcr.ltot.lsb:not(.stk){column-gap:14px;padding-left:12px!important;padding-right:12px!important}.mcr.ltot.lsb:not(.stk) .lt-v{font-size:29px!important}.mcr.ltot.lsb:not(.stk) .lpg{font-size:12px!important}}@media (max-width:380px){.mcr.ltot.lsb:not(.stk){column-gap:10px}.mcr.ltot.lsb:not(.stk) .lt-v{font-size:25px!important}.mcr.ltot.lsb:not(.stk) .lpg{font-size:11px!important}.mcr.ltot.lsb:not(.stk)>em{font-size:12px!important}}

@@ -280,8 +280,11 @@ def ptsrow(sa,sb,big=True,ra=None,rb=None):
     da=f' data-r="{ra}"' if ra else '';db=f' data-r="{rb}"' if rb else ''
     if big:  # scoreboard band: live points large, the pre-game projection under each
         la,lb=sum(_lx(p)[0] for p in sa),sum(_lx(p)[0] for p in sb)   # live projection: points so far plus what is left to play
-        return (f'<div class="mcr ltot lsb"><span class="{"up" if ua else ""}"{da}><span class="ltr"><small class="lpg" title="Pre-game projection">({pa:.1f})</small><b class="lt-v">{fa}</b></span><small class="llv" title="Live projection">{la:.1f}</small></span>'
-                f'<em>Points</em><span class="{"up" if ub else ""}"{db}><span class="ltr"><b class="lt-v">{fb}</b><small class="lpg" title="Pre-game projection">({pb:.1f})</small></span><small class="llv" title="Live projection">{lb:.1f}</small></span></div>')
+        fin=lambda X:bool(X) and all(lval(p)[1] for p in X)   # every starter on that side has finished
+        lva=('<small class="llv fz">Final</small>' if fin(sa) else f'<small class="llv" title="Live projection">{la:.1f}</small>')
+        lvb=('<small class="llv fz">Final</small>' if fin(sb) else f'<small class="llv" title="Live projection">{lb:.1f}</small>')
+        return (f'<div class="mcr ltot lsb"><span class="{"up" if ua else ""}"{da}><span class="ltr"><small class="lpg" title="Pre-game projection">({pa:.1f})</small><b class="lt-v">{fa}</b></span>{lva}</span>'
+                f'<em>Points</em><span class="{"up" if ub else ""}"{db}><span class="ltr"><b class="lt-v">{fb}</b><small class="lpg" title="Pre-game projection">({pb:.1f})</small></span>{lvb}</span></div>')
     return (f'<div class="mcr {"ltot" if big else "ltot2"}"><span class="{"up" if ua else ""}"{da}><b class="lt-v">{fa}</b> <small>({pa:.1f})</small></span>'
             f'<em>Points <i class=pj>(projected)</i></em><span class="{"up" if ub else ""}"{db}><small>({pb:.1f})</small> <b class="lt-v">{fb}</b></span></div>')
 BH_CUR='<div class="msh lbh">Bench<small>active players with a game</small></div>'
@@ -357,7 +360,7 @@ def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=No
     3) the full team name   4) record, streak, last 5, seed"""
     fz=final or done;ua,ub=(va>vb,vb>va) if fz else (False,False)
     def half(t,r,tg,v,hi,rc,pj,fm,cl,pw,won,og):
-        og,low=(pj,'Final') if final else (og,'Final' if done else '' if pj is None else f'{pj:.1f}')
+        og,low=(pj,'Final') if final else (og,'Final' if (done or _tdone(t)) else '' if pj is None else f'{pj:.1f}')
         if fz:lab,cls,wd=('Won','w',100) if won else ('Lost','l',100)
         else:lab,cls,wd=(f'{pw}% win','w' if pw>50 else 'l' if pw<50 else 'e',pw)
         av=f'<i class="av g4a av-{_AVR[t]}" aria-hidden="true"></i>' if t in _AVR else ''
@@ -400,6 +403,7 @@ def _lwin(a,b):
     return max(1,min(99,round(50*(1+erf((ea-eb)/sqrt(2*(va+vb)))))))
 _pj=lambda t:round(_lp(t)[0],1)   # live projected total (Sleeper's figure under the score)
 _pg=lambda t:round(sum(p[4] for p in LW['out'][str(RID[t])]['st'] if p),1)   # pre-game projection
+_tdone=lambda t:all(lval(p)[1] for p in LW['out'][str(RID[t])]['st'] if p)   # every starter on this team has finished
 _mdone=lambda a,b:all(lval(p)[1] for t in (a,b) for p in LW['out'][str(RID[t])]['st'] if p)
 _cur=lambda t:round(sum(p[5] for p in LW['out'][str(RID[t])]['st'] if p),2)  # points scored so far
 chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b),_lwin(a,b),_pj(a),_pj(b),form(a),form(b),_pre(a,b)[:2],_pg(a),_pg(b),_mdone(a,b)) for i,(a,b) in enumerate(games))+'</div>'
