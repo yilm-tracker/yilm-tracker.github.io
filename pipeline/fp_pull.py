@@ -69,7 +69,7 @@ for pos in ('QB','RB','WR','TE','K','DST'):
     try:d=get(f'{BASE}/nfl/{SEASON}/projections?{q}',{'x-api-key':KEY})
     except Exception as ex:print('fp_pull:',pos,ex);continue
     raw[pos]=d
-    if pos=='QB':print('fp_pull: response fields',list(d)[:8] if isinstance(d,dict) else 'list',sorted((rows(d) or [{}])[0])[:40])   # names only, no data
+    r0=(rows(d) or [{}])[0];print('fp_pull:',pos,'fields',sorted(r0)[:40],'stats',sorted(r0.get('stats',{}) if isinstance(r0.get('stats'),dict) else [])[:40])   # names only, no data
     for r in rows(d):
         nm=r.get('player_name') or r.get('name') or r.get('full_name') or '';tm=r.get('player_team_id') or r.get('team') or r.get('team_id') or ''
         tm=TM.get(tm,tm);sp='DEF' if pos=='DST' else pos;v=pts(r)
