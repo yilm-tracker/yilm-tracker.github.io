@@ -139,9 +139,9 @@ def data_view(t):
              f'<div class="stb tqstb"><div class="stt"><span><b class="ay">{p_[0]:.0f}%</b> · <b class="ap">{p_[1]:.0f}%</b> · <b class="ao">{p_[2]:.0f}%</b></span><span>youth share {rk(crank(yr,t))}</span></div>'
              f'<div class="bar ybar"><i class="y0" style="width:{p_[0]:.2f}%"></i><i class="y1" style="width:{p_[1]:.2f}%"></i><i class="y2" style="width:{p_[2]:.2f}%"></i><i class="y3" style="width:{p_[3]:.2f}%"></i></div></div>')
     # lineups: dropped points by position
-    dmax=max(max(DP[u]) for u in TEAMS) or 1
+    dmax=max(max(v for v,p in zip(DP[u],ORD) if p not in ('K','DEF')) for u in TEAMS) or 1
     o.append(sec('Dropped points','Per week: bench points that should have started, by position'))
-    o.append('<div class="tqdp">'+''.join(f'<div><i class="pz p-{p.lower()}">{p}</i><b class="tqv{" z" if DP[t][i]<0.05 else ""}">{DP[t][i]:.1f}</b>{(lambda r,tie:f'<i class="ch tqdr {tone(r)}"><span class="ct">{"T" if tie else ""}{r}</span></i>')(crank({u:DP[u][i] for u in TEAMS},t,True),sum(1 for u in TEAMS if u!=t and abs(DP[u][i]-DP[t][i])<1e-9)>0)}<span class="tqmini"><i class="p-{p.lower()}" style="height:{100*DP[t][i]/dmax:.1f}%"></i></span></div>' for i,p in enumerate(ORD))+'</div>')
+    o.append('<div class="tqdp">'+''.join(f'<div><i class="pz p-{p.lower()}">{p}</i><b class="tqv{" z" if DP[t][i]<0.05 else ""}">{DP[t][i]:.1f}</b>{(lambda r,tie:f'<i class="ch tqdr {tone(r)}"><span class="ct">{"T" if tie else ""}{r}</span></i>')(crank({u:DP[u][i] for u in TEAMS},t,True),sum(1 for u in TEAMS if u!=t and abs(DP[u][i]-DP[t][i])<1e-9)>0)}<span class="tqmini"><i class="p-{p.lower()}" style="height:{100*DP[t][i]/dmax:.1f}%"></i></span></div>' for i,p in enumerate(ORD) if p not in ('K','DEF'))+'</div>')
     # margins
     c=CLS[t];am={u:CLS[u]['avgm'] for u in TEAMS}
     o.append(sec('Margins','Close = under 10 pts · blowout = 30+ pts'))
