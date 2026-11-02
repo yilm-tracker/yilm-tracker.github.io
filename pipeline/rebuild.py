@@ -13,7 +13,9 @@ LTOT=[sum(_WK[t][w][2] for t in _WK) for w in range(DONE)]
 _lo,_hi=800,max(LTOT)
 # weekly rank of each played week's league total (1 = highest-scoring week so far), shown inside the bar
 _WRK={k:1+sum(1 for x in LTOT if x>LTOT[k-1]) for k in range(1,DONE+1)}
-# playoff weeks: average score per team in championship-bracket games (round 1 = week 15 ...), averaged over past seasons
+# playoff weeks: total points in the championship-bracket games of each round (week 15 wild cards, week 16 semifinals,
+# week 17 final + 3rd-place game; two games a round). A finished season's own page shows that season; the current season
+# shows the average of past seasons
 # (history/raw/<year>/core.json.gz from Sleeper; history/po_extra.json = {"year": {"15": [scores...], ...}} for MFL seasons);
 # the highest of the three averages fills its bar, the others fill relative to it
 def _po_ref():
@@ -22,22 +24,22 @@ def _po_ref():
     _cur=_dt_os.environ.get('DT_SEASON','2026');_seen=set()
     for fz in sorted(_gl.glob(P+'history/raw/*/core.json.gz')+_gl.glob(P+'../../../pipeline/history/raw/*/core.json.gz')):
         yr=fz.split('/')[-2]
-        if yr in _seen or (yr==_cur and _dt_os.environ.get('DT_PAST')!='1'):continue
+        if yr in _seen or (yr==_cur)!=(_dt_os.environ.get('DT_PAST')=='1'):continue
         _seen.add(yr)
         try:
             dd=json.load(_gz.open(fz));base=[q for q in dd if q.endswith('/winners_bracket')][0][:-len('/winners_bracket')]
             ps=dd[base]['settings'].get('playoff_week_start',15)
             for g in dd[base+'/winners_bracket']:
-                if g.get('p') not in (None,1):continue
+                if g.get('p') not in (None,1,3):continue
                 M=dd.get(f"{base}/matchups/{ps+g['r']-1}") or []
                 pts={m['roster_id']:m.get('points') for m in M}
                 for tt in (g.get('t1'),g.get('t2')):
                     if isinstance(tt,int) and pts.get(tt) is not None:acc.setdefault(14+g['r'],{}).setdefault(yr,[]).append(pts[tt])
         except Exception as ex:print('po ref',fz,ex)
-    if _dt_os.path.exists(P+'history/po_extra.json'):
+    if _dt_os.path.exists(P+'history/po_extra.json') and _dt_os.environ.get('DT_PAST')!='1':
         for yr,wk in json.load(open(P+'history/po_extra.json')).items():
             for w,v in wk.items():acc.setdefault(int(w),{})[yr]=v
-    return {w:(sum(sum(v)/len(v) for v in ys.values())/len(ys),sorted(ys)) for w,ys in acc.items() if ys}
+    return {w:(sum(sum(v) for v in ys.values())/len(ys),sorted(ys)) for w,ys in acc.items() if ys}
 _POR=_po_ref();_pomx=max([v[0] for v in _POR.values()] or [1])
 def _seg(k):
     if k<=DONE:
@@ -45,10 +47,10 @@ def _seg(k):
         bar=f'<i class="done" style="height:{hp:.1f}%" title="Week {k}: {v:.1f} league points, #{_WRK[k]} of {DONE} weeks"><em class="wrk">{_WRK[k]}</em></i>'
     elif k>=15 and k in _POR:
         av,yrs=_POR[k];hp=100*av/_pomx
-        bar=f'<i class="po"></i><i class="por" style="height:{hp:.1f}%" title="Week {k}: {av:.1f} points per team in championship-bracket games, average of {", ".join(yrs)}"></i>'
+        bar=f'<i class="po"></i><i class="por" style="height:{hp:.1f}%" title="Week {k}: {av:.1f} points across the two championship-bracket games{" in "+yrs[0] if _dt_os.environ.get('DT_PAST')=='1' else ", average of "+", ".join(yrs)}"></i>'
     else:
         bar=f'<i class="{"po" if k>=15 else "fut"}"></i>'
-    lab=f'<b class="wv">{LTOT[k-1]:.0f}<small>pts</small></b>' if k<=DONE else (f'<b class="wv pov">{_POR[k][0]:.0f}<small>avg</small></b>' if k>=15 and k in _POR else '<b class="wv"></b>')
+    lab=f'<b class="wv">{LTOT[k-1]:.0f}<small>pts</small></b>' if k<=DONE else (f'<b class="wv pov">{_POR[k][0]:.0f}<small>pts</small></b>' if k>=15 and k in _POR else '<b class="wv"></b>')
     return f'<div class="wkc{" bye" if k in BYES else ""}">{lab}<span class="wb">{bar}</span><span>{k}</span></div>'
 segs=''.join(_seg(k) for k in range(1,18))
 d=open(P+'data_block.js',encoding='utf-8').read().replace('// remaining schedule: [week, opp, projScore, oppProj, winPct] (app projections as of Oct 15)','// remaining schedule: [week, opp, ...] (only week and opponent are shown)')
@@ -178,6 +180,17 @@ if _os.path.isdir(P+'logos'):
                 _bb=_io.BytesIO();_im.save(_bb,format='WEBP',quality=90,method=6)
                 _u='data:image/webp;base64,'+_b64.b64encode(_bb.getvalue()).decode()
             except Exception:pass
-            _LG+=f'.thr .nfl.tm.n-{_t},.cnm b .nfl.tm.n-{_t},.rn>b .nfl.tm.n-{_t},.cnm small .nfl.opp.n-{_t},.tpb .nfl.n-{_t},.ppl .nfl.n-{_t}{{background:url("{_u}") center/contain no-repeat!important;box-shadow:none!important;border-radius:0!important;width:22px!important;height:20px!important}}.nfl.tm.n-{_t} .ct,.nfl.opp.n-{_t} .ct,.tpb .nfl.n-{_t} .ct,.ppl .nfl.n-{_t} .ct{{visibility:hidden}}'
-_i=h.rindex('</style>');h=h[:_i]+open(P+'readability.css',encoding='utf-8').read()+_LG+(_PLCSS if _PL else '')+('.tabs label.tpo{grid-column:1 / -1!important}' if _TH_OFF and not _PL else '.tabs label.tpo{grid-column:span 2!important}' if not _TH_OFF and _PL else '')+h[_i:]
+            _LG+=f'.thr .nfl.tm.n-{_t},.cnm b .nfl.tm.n-{_t},.rn>b .nfl.tm.n-{_t},.cnm small .nfl.opp.n-{_t},.tpb .nfl.n-{_t},.ppl .nfl.n-{_t},.wrx .nfl.n-{_t}{{background:url("{_u}") center/contain no-repeat!important;box-shadow:none!important;border-radius:0!important;width:22px!important;height:20px!important}}.nfl.tm.n-{_t} .ct,.nfl.opp.n-{_t} .ct,.tpb .nfl.n-{_t} .ct,.ppl .nfl.n-{_t} .ct,.wrx .nfl.n-{_t} .ct{{visibility:hidden}}'
+# THE WIRE tab (best available players), after Players; needs pull_wire.json
+_WR=_dt_os.path.exists(P+'pull_wire.json') and _PL
+_WRCSS=''
+if _WR:
+    sp0.run(['python3',P+'wire_build.py'],check=True,stdout=sp0.DEVNULL)
+    h=h.replace('<input type="radio" name="tab" id="tab-pl" class="lr tabr">','<input type="radio" name="tab" id="tab-pl" class="lr tabr"><input type="radio" name="tab" id="tab-wr" class="lr tabr">',1)
+    h=h.replace('<label for="tab-pl" class="tpo">Players</label>','<label for="tab-pl" class="tpo">Players</label><label for="tab-wr" class="tpo">The Wire</label>',1)
+    h=h.replace('  <div class="pane pane-pl">','  <div class="pane pane-wr">\n  '+open(P+'wire_section.html',encoding='utf-8').read()+'\n  </div>\n  <div class="pane pane-pl">',1)
+    # 10 tabs: phones 3 + 3 + 2 + 2 (the last four span half the row), desktop one row of 10
+    _WRCSS=(open(P+'wire_css.css',encoding='utf-8').read()+'#tab-wr:checked~.tabs label[for="tab-wr"]{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}#tab-wr:checked~.pane-wr{display:block}'
+      '@media(max-width:1099px){nav.tabs>label.tpo{grid-column:span 3!important}}@media(min-width:1100px){nav.tabs{grid-template-columns:repeat(10,minmax(0,1fr))!important}nav.tabs>label,nav.tabs>label.tpo{grid-column:auto / span 1!important}}')
+_i=h.rindex('</style>');h=h[:_i]+open(P+'readability.css',encoding='utf-8').read()+_LG+(_PLCSS if _PL else '')+_WRCSS+('.tabs label.tpo{grid-column:1 / -1!important}' if _TH_OFF and not _PL else '.tabs label.tpo{grid-column:span 2!important}' if not _TH_OFF and _PL else '')+h[_i:]
 open(P+'standings.html','w',encoding='utf-8').write(h+d+t)

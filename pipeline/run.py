@@ -28,6 +28,7 @@ if mode=='weekly':
     sh('node',P+'pull.mjs','playoffs');sh('python3',P+'po_write.py')
     if D<=have and not force:  # mid-week rebuild (e.g. a code push): keep the current week's live scores instead of resetting them
         if subprocess.run(['node',P+'pull.mjs','live',str(G()+1)],cwd=P).returncode==0:subprocess.run(['python3',P+'score.py',P+'live.json','--no-build'],cwd=P)
+    subprocess.run(['node',P+'pull.mjs','wire',str(G())],cwd=P)  # THE WIRE (never fatal)
     subprocess.run(['node',P+'pull.mjs','top',str(G())],cwd=P)  # Players tab: top players by position (never fatal)
     sh('node',P+'pull.mjs','detail',f'1-{G()+1}')  # full stat lines for the Detailed view (all played weeks + current)
     build()
@@ -35,6 +36,14 @@ elif mode=='live':
     W=G()+1
     sh('node',P+'pull.mjs','live',str(W))
     subprocess.run(['node',P+'pull.mjs','detail',str(W)],cwd=P)  # Detailed view; never fatal
+    # THE WIRE between weekly runs (waivers, injuries): re-pull when the last pull is over 2 hours old; never fatal
+    import datetime as _dtw
+    try:
+        _pw=json.load(open(P+'pull_wire.json'))['pulled'] if os.path.exists(P+'pull_wire.json') else None
+        _old=not _pw or (_dtw.datetime.now(_dtw.timezone.utc)-_dtw.datetime.fromisoformat(_pw.replace('Z','+00:00'))).total_seconds()>7200
+    except Exception:_old=True
+    # live runs do not save data, so the committed pull stays old: limit re-pulls to the first 10 minutes of each hour
+    if _old and _dtw.datetime.now().minute<10:subprocess.run(['node',P+'pull.mjs','wire',str(G())],cwd=P)
     sh('python3',P+'score.py',P+'live.json')  # applies scores and runs rebuild/gen/build_static
     sh('python3',P+'build_site.py')
 else:

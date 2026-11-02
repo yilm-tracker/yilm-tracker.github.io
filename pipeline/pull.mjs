@@ -3,12 +3,13 @@
 //   node pull.mjs weekly D         -> pull_m7.json pull_pts.json pull8.json pull8a.json
 //   node pull.mjs playoffs         -> pull_po.json
 //   node pull.mjs live W           -> live.json (in-week scores for week W)
+//   node pull.mjs wire D           -> pull_wire.json (THE WIRE: unrostered players, week D+1 projections)
 //   node pull.mjs top D            -> pull_top.json (top players by position through week D, all NFL players)
 //   node pull.mjs detail a-b       -> stats_detail.json (full stat lines for lineup players, weeks a..b)
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { lastCompleteWeek, pullWeekly, pullPlayoffs, pullLive, pullDetail, pullTop } from './sleeper.mjs';
+import { lastCompleteWeek, pullWeekly, pullPlayoffs, pullLive, pullDetail, pullTop, pullWire } from './sleeper.mjs';
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const out = (f, o) => fs.writeFileSync(path.join(DIR, f), JSON.stringify(o));
 // Offline replay of a captured season (pull_season.mjs): DT_CACHE=history/raw/2025 answers every request from the capture
@@ -41,6 +42,8 @@ if (cmd === 'state') {
   const x = await pullWeekly(get, +arg);
   for (const k of ['pull_m7', 'pull_pts', 'pull8', 'pull8a']) out(k + '.json', x[k]);
   console.log('weekly pull ok for week', arg);
+} else if (cmd === 'wire') {
+  out('pull_wire.json', await pullWire(get, +process.argv[3]));
 } else if (cmd === 'top') {
   const x = await pullTop(get, +arg);
   out('pull_top.json', x);

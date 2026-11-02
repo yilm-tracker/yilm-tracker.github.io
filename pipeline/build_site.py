@@ -45,25 +45,31 @@ if len(YEARS)>1:
     CH=_jc.load(open(P+'champions.json',encoding='utf-8')) if os.path.exists(P+'champions.json') else {}
     # seasons without a page here (e.g. MFL years) still get a button and their champion, not clickable
     _ALL=sorted(set(YEARS)|set(CH))
+    # owner first names for the champion line on phones, where six buttons share a row (owners.json: {"team": "owner"})
+    OWN=_jc.load(open(P+'owners.json',encoding='utf-8')) if os.path.exists(P+'owners.json') else {}
     def _yb(y):
-        cap=f'<small>{_hc.escape(CH[y]) if y in CH else ("In progress" if y==CUR else "")}</small>'
+        _t=CH.get(y);_o=OWN.get(_t) if _t else None
+        cap=(f'<small><span class="cf">{_hc.escape(_t)}</span><span class="cs">{_hc.escape(_o or _t)}</span></small>' if _t else (f'<small><span class="cf">In progress</span><span class="cs">Now</span></small>' if y==CUR else '<small></small>'))
         if y in YEARS:return f'<a class="yb{" on" if y==Y else ""}" href="{href(y)}"'+(' aria-current="page"' if y==Y else '')+f'><b>{y}</b>{cap}</a>'
         return f'<span class="yb na" title="{y}: before this site (MyFantasyLeague)"><b>{y}</b>{cap}</span>'
     sw=f'<nav class="yrs n{len(_ALL)}" aria-label="Season">'+''.join(_yb(y) for y in _ALL)+'</nav>'
     s=s.replace('<header>',sw+'<header>',1)  # its own row above the header, so it never sits on the title or the countdown
-    s=s.replace('</style>','.yrs{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px 10px;align-items:flex-start;margin:0 0 8px}'
-      '.yrs .yb{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:66px;text-decoration:none}'
+    s=s.replace('</style>',
+      # every button the same width (the widest caption sets it), right-aligned; phones: one row across the full width
+      '.yrs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px 12px;width:max-content;max-width:100%;margin:0 0 8px auto;align-items:start}'
+      '.yrs .yb{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;text-decoration:none}'
       # raised button, BDGE-style: a solid dark under-edge offset down-right plus a soft drop, pressed in on tap
-      '.yrs .yb b{display:block;width:100%;box-sizing:border-box;padding:7px 0;text-indent:.06em;text-align:center;border-radius:9px;border:1px solid rgba(0,0,0,.55);background:var(--deck-2);'
+      '.yrs .yb b{display:block;box-sizing:border-box;padding:7px 0;text-indent:.06em;text-align:center;border-radius:9px;border:1px solid rgba(0,0,0,.55);background:var(--deck-2);'
       'box-shadow:3px 4px 0 rgba(0,0,0,.6),0 8px 14px -4px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);'
       'font:700 13px/1 var(--display);letter-spacing:.06em;color:var(--label);font-variant-numeric:tabular-nums;text-box:trim-both cap alphabetic;transition:transform .08s,box-shadow .08s}'
       '.yrs a.yb:active b{transform:translate(2px,3px);box-shadow:1px 1px 0 rgba(0,0,0,.6),0 3px 6px -2px rgba(0,0,0,.5)}'
       '.yrs .yb.on b{background:var(--chalk);color:var(--ink)}.yrs a.yb:not(.on):hover b{color:var(--chalk)}'
       '.yrs .yb.na{cursor:default}.yrs .yb.na b{color:var(--steel)}'
-      '.yrs .yb small{display:block;white-space:nowrap;font:600 10.5px/1.15 var(--body);color:#c9a15a;text-align:center}'
-      '.yrs .yb.on small{color:var(--steel)}.yrs .yb small:empty{display:none}'
+      '.yrs .yb small{display:block;padding:0 4px;white-space:nowrap;font:600 10.5px/1.15 var(--body);color:#c9a15a;text-align:center}'
+      '.yrs .yb.on small{color:var(--steel)}.yrs .yb small:empty{display:none}.yrs .cs{display:none}'
       '@supports not (text-box:trim-both cap alphabetic){.yrs .yb b{padding:6px 0 5px}}'
-      '@media(max-width:640px){.yrs.n5,.yrs.n6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 10px}.yrs.n5 .yb,.yrs.n6 .yb{min-width:0}}</style>',1)
+      '@media(max-width:640px){.yrs.n4,.yrs.n5,.yrs.n6,.yrs.n7,.yrs.n8{width:100%;gap:8px 7px}.yrs.n4 .cf,.yrs.n5 .cf,.yrs.n6 .cf,.yrs.n7 .cf,.yrs.n8 .cf{display:none}'
+      '.yrs.n4 .cs,.yrs.n5 .cs,.yrs.n6 .cs,.yrs.n7 .cs,.yrs.n8 .cs{display:inline}.yrs .yb small{padding:0;font-size:10px}.yrs .yb b{font-size:12.5px;letter-spacing:.04em;text-indent:.04em;padding:6.83px 0 7.17px}}</style>',1)
 open(os.path.join(OUT,'index.html'),'w',encoding='utf-8').write(s)
 shutil.copy(P+'DynastyStandings.html',os.path.join(OUT,'DynastyStandings.html'))
 open(os.path.join(OUT,'.nojekyll'),'w').close()

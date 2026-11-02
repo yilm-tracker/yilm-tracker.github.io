@@ -218,3 +218,38 @@ export async function pullTop(get, D, keep = 60) {
   }
   return { D, minGp, P };
 }
+
+// THE WIRE: every unrostered player with season points or a projection this week. Week N = D + 1.
+// Row: [id, name, pos, team, injury, seasonPts, gp, posRank (season points among all players at the position),
+//       projN (league scoring), opp, home (1/0), kickoff ISO, adds48h (Sleeper-wide trending adds)]
+export async function pullWire(get, D) {
+  const N = D + 1, L = `${A}/league/${LEAGUE}`;
+  const [lg, ro, players, pj, sch, K] = await Promise.all([get(L), get(`${L}/rosters`), get(`${A}/players/nfl`), get(projURL(N)),
+    get(`${S}/schedule/nfl/regular/${SEASON}`), kickoffs(get, N).catch(() => ({}))]);
+  let tr = [];
+  try { tr = await get(`${A}/players/nfl/trending/add?lookback_hours=48&limit=300`); } catch (e) { }
+  const ss = lg.scoring_settings;
+  const weeks = await Promise.all(Array.from({ length: D }, (_, i) => get(`${S}/stats/nfl/${SEASON}/${i + 1}?season_type=regular`)));
+  const X = {};
+  weeks.forEach(rows => { for (const r of rows) { const pos = r.player && r.player.position, s = r.stats || {};
+    if (!FPOS.has(pos) || !(s.gp > 0)) continue; const e = X[r.player_id] || (X[r.player_id] = { pos, pts: 0, gp: 0 }); e.pts = r2(e.pts + leagueScore(s, ss)); e.gp++; } });
+  const rk = {};
+  for (const pos of FPOS) Object.entries(X).filter(([, e]) => e.pos === pos).sort((a, b) => b[1].pts - a[1].pts).forEach(([id], i) => rk[id] = i + 1);
+  const own = new Set(ro.flatMap(r => r.players || []));
+  const PJ = {}; for (const r of pj) PJ[r.player_id] = r2(leagueScore(r.stats || {}, ss));
+  const OPP = {}; for (const g of sch.filter(x => x.week == N)) { OPP[g.home] = [g.away, 1]; OPP[g.away] = [g.home, 0]; }
+  const AD = {}; for (const t of tr) AD[t.player_id] = t.count;
+  const out = [];
+  for (const id of new Set([...Object.keys(X), ...Object.keys(PJ)])) {
+    if (own.has(id)) continue;
+    const p = players[id] || {}, pos = (X[id] && X[id].pos) || p.position;
+    if (!FPOS.has(pos)) continue;
+    const pts = X[id] ? X[id].pts : 0, pr = PJ[id] || 0;
+    if (pts <= 0 && pr < 1) continue;
+    const team = pos === 'DEF' ? id : (p.team || null); if (!team) continue;
+    const name = pos === 'DEF' ? `${p.first_name || id} ${p.last_name || ''}`.trim() : (p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim());
+    const o = OPP[team] || [null, 0];
+    out.push([id, name, pos, team, p.injury_status || null, pts, X[id] ? X[id].gp : 0, rk[id] || null, pr, o[0], o[1], (K[team] || [null])[0], AD[id] || 0]);
+  }
+  return { D, N, pulled: new Date().toISOString(), W: out };
+}
