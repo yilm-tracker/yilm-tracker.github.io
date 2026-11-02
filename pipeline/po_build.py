@@ -203,7 +203,9 @@ def bpanel(i,j):
         return ''.join(f'<div class="ppn pp-{i}-{j}-{w}">{card(a,b,w,f"Week {w} · {RND[w]}")}{lineup(a,b,w)}</div>' for w in WEEKS)
     lab=''.join(f'<span class="pwl pwl-{w}">Week {w} · {RND[w]}</span>' for w in WEEKS)
     return f'<div class="ppn pp-{i}-{j}">{card(a,b,15,lab)}{lineup(a,b,15)}</div>'
-radios=('<input type="radio" name="pview" id="pv-b" class="lr" checked><input type="radio" name="pview" id="pv-c" class="lr">'+''.join(f'<input type="radio" name="bk" id="bk-{k}" class="lr"{" checked" if n==0 else ""}>' for n,(k,*_) in enumerate(GAMES))+
+import po_sched
+_SR,_SPICK,_SPAN,_SCSS=po_sched.build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd)
+radios=('<input type="radio" name="pview" id="pv-b" class="lr" checked><input type="radio" name="pview" id="pv-c" class="lr"><input type="radio" name="pview" id="pv-s" class="lr">'+_SR+''.join(f'<input type="radio" name="bk" id="bk-{k}" class="lr"{" checked" if n==0 else ""}>' for n,(k,*_) in enumerate(GAMES))+
         ''.join(f'<input type="radio" name="pa" id="pa-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N))+
         ''.join(f'<input type="radio" name="pb" id="pb-{i}" class="lr"{" checked" if i==1 else ""}>' for i in range(lg.N))+
         ''.join(f'<input type="radio" name="pw" id="pw-{w}" class="lr"{" checked" if w==17 else ""}>' for w in WEEKS)+
@@ -244,19 +246,21 @@ if FINAL:
 else:
     sec=('<section class="pox" aria-labelledby="poh">'+radios+
      '<div class="posh"><b id="poh">Playoffs</b></div><div class="prsub">If the season ended today · seeds by record, then points for</div>'
-     '<div class="pseg pvw" role="group" aria-label="Playoff view"><label for="pv-b">Bracket</label><label for="pv-c">Custom</label></div>'+br+
+     '<div class="pseg pvw" role="group" aria-label="Playoff view"><label for="pv-b">Bracket</label><label for="pv-c">Matchup</label><label for="pv-s">Schedule</label></div>'+br+
      '<div class="bkx">'+bpan+'</div>'
      '<div class="cpk ppk">'+dd('a','A')+dd('b','B')+'</div>'+wk+
-     '<div class="psame">Pick two different teams.</div>'+PPX+'</section>')
+     '<div class="psame">Pick two different teams.</div>'+PPX+_SPICK+_SPAN+'</section>')
 def _lc(k,sc):
     q=lambda r,t:','.join(f'#{k}{r}:checked~{c} {t}' for c in sc)
     return (q('lo-a',f'.lsw label[for="{k}lo-a"]')+','+q('lo-o',f'.lsw label[for="{k}lo-o"]')+','+q('lv-p',f'.lvw label[for="{k}lv-p"]')+','+q('lv-s',f'.lvw label[for="{k}lv-s"]')+'{background:var(--chalk);color:var(--ink)}'
             +q('lo-o','.hrv-a')+'{display:none}'+q('lo-o','.hrv-o')+'{display:inline}'+q('lo-o','.lus-a')+'{display:none}'+q('lo-o','.lus-o')+'{display:block}'+q('lv-s','.lsv')+'{display:block}'+q('lv-s','.lpv')+'{display:none}')
 css=_lc('b',['.bkx'])+_lc('p',['.ppx','.ppn'])
-css+=('.pvw{display:inline-flex;margin:0 0 14px}#pv-b:checked~.pvw label[for="pv-b"],#pv-c:checked~.pvw label[for="pv-c"]{background:var(--chalk);color:var(--ink)}'
+css+=('.pvw{display:inline-flex;margin:0 0 14px}#pv-b:checked~.pvw label[for="pv-b"],#pv-c:checked~.pvw label[for="pv-c"],#pv-s:checked~.pvw label[for="pv-s"]{background:var(--chalk);color:var(--ink)}'
+      '#pv-s:checked~.prd,#pv-s:checked~.rkey,#pv-s:checked~.bkx,#pv-s:checked~.ppk,#pv-s:checked~.pwk,#pv-s:checked~.psame,#pv-s:checked~.ppx,#pv-s:checked~.ppn,'
+      '#pv-b:checked~.psk,#pv-b:checked~.psx,#pv-c:checked~.psk,#pv-c:checked~.psx,'
       '#pv-c:checked~.prd,#pv-c:checked~.rkey,#pv-c:checked~.bkx,'
       '#pv-b:checked~.ppk,#pv-b:checked~.pwk,#pv-b:checked~.psame,#pv-b:checked~.ppx,#pv-b:checked~.ppn{display:none!important}')
-css+=BRCSS+''.join(f'#bk-{k}:checked~.pbr label[for="bk-{k}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#bk-{k}:checked~.prd label[for="bk-{k}"]{{border-color:var(--chalk);background:var(--deck-2)}}#bk-{k}:checked~.bkx .bkp-{k}{{display:block}}' for k,*_ in GAMES)
+css+=_SCSS+BRCSS+''.join(f'#bk-{k}:checked~.pbr label[for="bk-{k}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#bk-{k}:checked~.prd label[for="bk-{k}"]{{border-color:var(--chalk);background:var(--deck-2)}}#bk-{k}:checked~.bkx .bkp-{k}{{display:block}}' for k,*_ in GAMES)
 css+=''.join(f'#pa-{i}:checked~.ppk .dd-a .sv-{i},#pb-{i}:checked~.ppk .dd-b .sv-{i}{{display:inline}}#pa-{i}:checked~.ppk .dd-a label[for="pa-{i}"],#pb-{i}:checked~.ppk .dd-b label[for="pb-{i}"]{{background:var(--chalk);color:var(--ink)}}#pa-{i}:checked~#pb-{i}:checked~.psame{{display:block}}' for i in range(lg.N))
 css+=''.join(f'#pw-{w}:checked~.pwk label[for="pw-{w}"]{{background:var(--chalk);color:var(--ink)}}' for w in WEEKS)
 if WSP:
