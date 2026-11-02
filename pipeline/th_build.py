@@ -141,7 +141,7 @@ def data_view(t):
     # lineups: dropped points by position
     dmax=max(max(DP[u]) for u in TEAMS) or 1
     o.append(sec('Dropped points','Per week: bench points that should have started, by position'))
-    o.append('<div class="tqdp">'+''.join(f'<div><i class="pz p-{p.lower()}">{p}</i><b class="tqv{" z" if DP[t][i]<0.05 else ""}">{DP[t][i]:.1f}</b><span class="tqmini"><i class="p-{p.lower()}" style="height:{100*DP[t][i]/dmax:.1f}%"></i></span></div>' for i,p in enumerate(ORD))+'</div>')
+    o.append('<div class="tqdp">'+''.join(f'<div><i class="pz p-{p.lower()}">{p}</i><b class="tqv{" z" if DP[t][i]<0.05 else ""}">{DP[t][i]:.1f}</b>{(lambda r,tie:f'<i class="ch tqdr {tone(r)}"><span class="ct">{"T" if tie else ""}{r}</span></i>')(crank({u:DP[u][i] for u in TEAMS},t,True),sum(1 for u in TEAMS if u!=t and abs(DP[u][i]-DP[t][i])<1e-9)>0)}<span class="tqmini"><i class="p-{p.lower()}" style="height:{100*DP[t][i]/dmax:.1f}%"></i></span></div>' for i,p in enumerate(ORD))+'</div>')
     # margins
     c=CLS[t];am={u:CLS[u]['avgm'] for u in TEAMS}
     o.append(sec('Margins','Close = under 10 pts · blowout = 30+ pts'))

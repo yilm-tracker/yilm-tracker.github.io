@@ -576,3 +576,7 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 @media (max-width:380px){.tnm{font-size:13.5px}}
 .pt-start .pcr .ch{min-width:20px!important;padding:0 2px!important}
 @media (max-width:380px){.pr{grid-template-columns:100px repeat(var(--np,6),minmax(0,1fr))!important}.pr>span[role="rowheader"]{gap:4px}}
+.tqdp .pz,.tqdp .ch{margin:0!important}.tqdp .ch.tqdr{font-size:10.5px}
+.dpc .ch{font-size:10px!important;font-weight:600!important;height:14px!important;min-width:18px!important;padding:0 3px!important;margin:3px 0 0!important;align-self:flex-start;letter-spacing:0}
+.r .sb .dpc .ch,.r .sb .dpc .ch .ct{font-size:10px!important;font-weight:600!important;line-height:1!important;font-family:var(--body,inherit)}.r .sb .dpc .ch{height:14px!important;min-width:18px!important;padding:0 3px!important}.r .sb .dpc .ch .ct{color:inherit!important;height:auto!important;display:inline!important}
+.tqdp .ch{font-style:normal}.tqdp:not(:has(>div:nth-child(5))){grid-template-columns:repeat(4,minmax(0,1fr))}
