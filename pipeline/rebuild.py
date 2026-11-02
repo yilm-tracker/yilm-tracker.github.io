@@ -81,6 +81,13 @@ for _t in _lgb.TEAMS:
     if _f and _dt_os.path.exists(P+'avatars/'+_f):
         _r=_lgb.RID[_t];_avr[_t]=_r
         _av+=f'.av-{_r}{{background-image:url(data:image/webp;base64,'+__import__('base64').b64encode(open(P+'avatars/'+_f,'rb').read()).decode()+')}'
+        try:   # cut-out face for the Rosters bar: the flat background flood-filled to transparent from the edges
+            from PIL import Image as _I,ImageDraw as _ID;import io as _io
+            _im=_I.open(P+'avatars/'+_f).convert('RGBA');_w,_h=_im.size
+            for _xy in ((0,0),(_w-1,0),(0,_h-1),(_w-1,_h-1),(_w//2,0),(0,_h//2),(_w-1,_h//2)):_ID.floodfill(_im,_xy,(0,0,0,0),thresh=28)
+            _b=_io.BytesIO();_im.save(_b,'WEBP',lossless=True)
+            _av+=f'.rox .rofb .rfi.av-{_r}{{background-image:url(data:image/webp;base64,'+__import__('base64').b64encode(_b.getvalue()).decode()+')!important}'
+        except Exception as _ex:print('avatar cut-out skipped',_ex)
 h=h.replace('</style>',(':root{--ink:#0f1d2e;--deck:#162a3d;--deck-2:#1b3248;--chalk:#ffffff;--label:#d3dfeb;--steel:#a5b6c8;--dim:#7189a2;--hair:#24394f;'
   '--pylon:#fb637a;--sky:#259fd6;--loss:#ff5a3c;--loss-bg:rgba(255,90,60,.15);--line-strong:#31506c;--nt:'+str(_lgb.N)+';--np:'+str(len(_lgb.POS))+'}'
   'header .fmt{grid-column:1 / -1;font-size:12.5px;color:var(--dim);margin-top:2px}'+

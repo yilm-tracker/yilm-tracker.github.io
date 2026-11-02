@@ -112,7 +112,7 @@ css+=(sel(['rv-pos','rv-pts','rs-p','rs-g','rc-p','rc-t','rq-all','rq-noqb'])+'{
             '.rox .rofb .rfi{display:block;width:48px;height:48px;border-radius:50%;background-color:var(--deck);background-position:center;background-size:cover;background-repeat:no-repeat;filter:grayscale(1);opacity:.55;transition:filter .15s,opacity .15s}'
       '.rox .rofb .rfi.nl{visibility:hidden}'
       '.rox .rofb span{max-width:100%;overflow:hidden;text-overflow:clip;white-space:nowrap;font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.02em;color:var(--steel);line-height:1.1}'
-      '.rox .rofb label:hover .rfi{opacity:.8}'
+      '.rox .rofb label:hover .rfi{filter:none;opacity:1}.rox .rofb label:hover span{color:var(--label)}'
       '@media(max-width:1099px){.rox .rofb{grid-template-columns:repeat(var(--n2),minmax(0,1fr))}.rox .rofb .rfi{width:40px;height:40px}.rox .rofb span{font-size:13.5px}}@media(max-width:380px){.rox .rofb span{font-size:12px;letter-spacing:0}.rox .rofb .rfi{width:36px;height:36px}}'
       +''.join(f'#ro-{i}:checked~.rofb label[for="ro-{i}"]{{background:var(--ink)!important}}#ro-{i}:checked~.rofb label[for="ro-{i}"] .rfi{{filter:none;opacity:1}}#ro-{i}:checked~.rofb label[for="ro-{i}"] span{{color:var(--chalk)}}' for i in range(lg.N))
       +team_tiles('#rc-t:checked~.rop'))
