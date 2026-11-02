@@ -80,7 +80,7 @@ function draw(med){
       <div class="rk">${i+1}</div>
       ${AVR[t]?`<i class="av rav av-${AVR[t]}" aria-hidden="true"></i>`:""}<div class="nm"><span class="tn">${esc(t)}</span>${mv}</div>
       <span class="hl">${NIK[t]?`<em class="mgr">${esc(NIK[t])}</em> · `:""}<em class="lb">Hi</em><b>${Math.min(...a)}</b> · <em class="lb">Lo</em><b>${Math.max(...a)}</b> · <em class="lb">Avg</em><b>${(a.reduce((x,y)=>x+y,0)/a.length).toFixed(1)}</b></span>
-      <div class="sb s-pf"><div class="stx"><em class="lb">PF</em><span class="pf">${d[3].toFixed(2)}</span>${chip(d[4])} <i class="pw">· ${d[5].toFixed(1)}/wk</i></div>${seg(d[4])}</div>
+      <div class="sb s-pf"><div class="stx"><em class="lb">PF</em><span class="pf">${d[3].toFixed(2)}</span>${chip(d[4])} <i class="pw">· ${d[5].toFixed(1)} <b class="psd" title="Weekly spread: standard deviation of the team's weekly scores">±${SDV(t).toFixed(0)}</b></i></div>${seg(d[4])}</div>
       <div class="sb s-pa"><div class="stx"><em class="lb">PA</em><span class="v">${d[6].toFixed(2)}</span>${chip(d[7])} <i class="pw">· ${d[8].toFixed(1)}/wk</i></div>${seg(d[7])}</div>
       <div class="sb s-lk"><div class="stx"><em class="lb">Luck</em><span class="v">${luck(d[12])}</span>${chip(rankOf(d[12],12,false),tied(d[12],12))} <i class="pw">· ${(d[10]/(d[10]+d[11])*G).toFixed(2)} xW</i></div><div class="trk div"><i class="${d[12]>=0?'g pos':'b neg'}" style="left:${d[12]>=0?'50%':pct(.5+d[12]/MAXLUCK/2)};width:${pct(Math.abs(d[12])/MAXLUCK/2)}"></i></div></div>
       <div class="sb s-lu"><div class="stx"><em class="lb">Tot Eff</em><span class="v">${EF[t][0].toFixed(0)}%</span>${chip(rankEf(t),tiedEf(t))} <i class="pw">· <b class="lw">${EF[t][1].toFixed(1)}</b>/wk</i></div>${seg(rankEf(t))}</div>
@@ -92,6 +92,8 @@ function draw(med){
 }
 // sim odds as shown: whole percent, '<1%' / '>99%' instead of a rounded 0 or 100 that the sim did not actually reach
 function pctS(x){return x<=0?'0%':x>=100?'100%':x<1?'<1%':x>99?'>99%':Math.round(x)+'%'}
+// weekly spread: standard deviation of a team's weekly scores (completed weeks)
+function SDV(t){const a=WK[t].map(g=>g[2]),m=a.reduce((x,y)=>x+y,0)/a.length;return Math.sqrt(a.reduce((x,y)=>x+(y-m)*(y-m),0)/a.length)}
 const list=document.getElementById('list');
 function toggle(row){const t=row.dataset.t;OPEN.has(t)?OPEN.delete(t):OPEN.add(t);const op=OPEN.has(t);row.classList.toggle('open',op);row.setAttribute('aria-expanded',op);row.querySelector('.strip').hidden=!op}
 list.addEventListener('click',e=>{if(e.target.closest('.strip'))return;const r=e.target.closest('.r');if(r)toggle(r)});

@@ -174,6 +174,39 @@ def m_close():
     def gl(gs,cls):return ''.join(f'<div class="gml"><span class="gwk">Wk {g["w"]}</span><span class="gtm"><span><b class="gln"><i class="wl w">W</i>{e(g["win"])}</b><em>{g["ws"]:.2f}</em></span><span><span class="gln"><i class="wl l">L</i>{e(g["lose"])}</span><em>{g["ls"]:.2f}</em></span></span><b class="gmv {cls}">{g["m"]:.2f}</b></div>' for g in gs)
     return (head('Margins',f'Close = under 10 pts · blowout = 30+ pts')+table([('Team',''),('Close','46px'),('Blowout','56px'),('Avg','46px')],rows)+
             head('Closest games','Winner on top · margin on the right')+gl(CLG,'cl')+head('Biggest blowouts','Winner on top · margin on the right')+gl(BLG,'bo'))
+# ---------- Consistency: how much each team's weekly score swings
+import statistics as _st
+def m_cons():
+    N=len(TEAMS);rows=[]
+    allp=[g[2] for t in TEAMS for g in D.WK[t]];lo=10*int(min(allp)//10);hi=10*int(-(-max(allp)//10))
+    X=lambda v:6+(v-lo)/(hi-lo)*288
+    S={}
+    for t in TEAMS:
+        a=[g[2] for g in D.WK[t]];m=sum(a)/len(a);sd=_st.pstdev(a)
+        S[t]=dict(m=m,sd=sd,cv=sd/m*100,lo=min(a),hi=max(a),top=sum(1 for g in D.WK[t] if g[4]<=3),bot=sum(1 for g in D.WK[t] if g[4]>N-3),g=D.WK[t])
+    rk={t:i+1 for i,t in enumerate(sorted(TEAMS,key=lambda t:S[t]['cv']))}
+    for i,t in enumerate(sorted(TEAMS,key=lambda t:S[t]['cv'])):
+        x=S[t]
+        dots=''.join(f'<circle cx="{X(g[2]):.1f}" cy="13" r="4" class="{"w" if g[2]>g[3] else "l"}"/>' for g in x['g'])
+        svg=(f'<svg class="csv" viewBox="0 0 300 26" preserveAspectRatio="none" aria-hidden="true"><line x1="6" x2="294" y1="13" y2="13" class="ax"/>'
+             f'<rect x="{X(x["m"]-x["sd"]):.1f}" y="5" width="{X(x["m"]+x["sd"])-X(x["m"]-x["sd"]):.1f}" height="16" rx="3" class="bd"/>'
+             f'<line x1="{X(x["m"]):.1f}" x2="{X(x["m"]):.1f}" y1="3" y2="23" class="mn"/>{dots}</svg>')
+        rows.append(f'<div class="csr"><div class="cst"><span class="csl"><em class="csi">{i+1}</em>{nm(t)}</span><span class="csn"><b>±{x["sd"]:.1f}</b><i>{x["cv"]:.0f}%</i></span></div>{svg}'
+                    f'<div class="csm"><span>Avg<b>{x["m"]:.1f}</b></span><span>Low<b>{x["lo"]:.1f}</b></span><span>High<b>{x["hi"]:.1f}</b></span>'
+                    f'<span>Top-3<b>{x["top"]}</b></span><span>Bottom-3<b>{x["bot"]}</b></span></div></div>')
+    css=('<style>.csr{padding:10px 0;border-bottom:1px solid var(--hair)}.sxc .cst{display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:center;gap:10px}'
+         '.csl{display:inline-flex;align-items:center;gap:8px;min-width:0}.csi{font-style:normal;font-family:var(--display);font-weight:700;font-size:13px;color:var(--dim);min-width:14px;text-align:right}'
+         '.csn{display:inline-flex;align-items:baseline;gap:7px;font-family:var(--display);font-size:16px;color:var(--chalk);white-space:nowrap}.csn i{font-style:normal;font-size:13px;color:var(--steel)}'
+         '.csv{display:block;width:100%;height:26px;margin:6px 0 4px}.csv .ax{stroke:var(--hair);stroke-width:1}.csv .bd{fill:rgba(238,240,244,.07);stroke:rgba(238,240,244,.18)}'
+         '.csv .mn{stroke:var(--label);stroke-width:1.5}.csv circle.w{fill:var(--win)}.csv circle.l{fill:var(--loss)}.csv circle{stroke:var(--deck);stroke-width:1}'
+         '.sxc .csm{display:flex!important;flex-direction:row!important;justify-content:space-between!important;flex-wrap:nowrap;gap:6px;font-size:11.5px;color:var(--steel);text-align:left}'
+         '.csm span{white-space:nowrap}.csm b{font-family:var(--display);font-weight:600;color:var(--label);margin-left:4px}'
+         '.cssc{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin:2px 0 4px}'
+         '.cskey{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--steel);margin:2px 0 8px}.cskey b{font-family:var(--display);font-weight:600;color:var(--label);margin-right:4px}</style>')
+    scale=f'<div class="cssc"><span>{lo}</span><span>weekly points</span><span>{hi}</span></div>'
+    key=('<div class="cskey"><span><b>±</b>spread (1 SD)</span><span><b>%</b>swing = spread ÷ avg, steadiest first</span>'
+         '<span><b>▭</b>avg ± spread</span><span><b>●</b>weeks, green W · red L</span></div>')
+    return head('Consistency',f'Weekly score swings · Weeks 1–{D.G}')+css+key+scale+''.join(rows)
 # ---------- 7 Stars
 ST=D.stars()
 def m_stars():
@@ -330,7 +363,7 @@ def m_homeroad():
     o.append(table([('Team',''),(HT,'56px'),(RT,'56px'),('Diff','52px')],rows,'hx-tb'))
     return ''.join(o)
 MODS=[('pos','Positions',None),('odds','Odds',m_odds),*([('drf','Draft',m_draft)] if 'pick' in next(iter(PS['teams'].values())) else []),('sch','Schedules',m_sched),('ew','Every week',m_everyweek),('trd','Trades',m_trades),('lu','Lineups',m_lineups),('prj','Projections',m_proj),
-      ('mg','Margins',m_close),('st','Stars',m_stars),('yo','Age',m_youth),('rk','Ranks',m_heat),('by','Byes',m_byes),('hr','Home / Road',m_homeroad)]
+      ('mg','Margins',m_close),('cs','Consistency',m_cons),('st','Stars',m_stars),('yo','Age',m_youth),('rk','Ranks',m_heat),('by','Byes',m_byes),('hr','Home / Road',m_homeroad)]
 if NOW>14:MODS=[m for m in MODS if m[0]!='by']  # regular season over: no byes ahead
 def build():
     radios=''.join(f'<input type="radio" name="sxs" id="sx-{k}" class="lr"{" checked" if i==0 else ""}>' for i,(k,_,_) in enumerate(MODS))
