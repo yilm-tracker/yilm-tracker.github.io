@@ -36,7 +36,9 @@ def _dvp():
     for pos in ('QB','RB','WR','TE','K','DEF'):
         r=sorted(((tot.get((pos,t),0.0)/gm[t],t) for t in gm),key=lambda x:(-x[0],x[1]))
         out[pos]={t:(v,i+1) for i,(v,t) in enumerate(r)}
+        AVG[pos]=sum(v for v,_ in r)/len(r) if r else 0.0
     return out,G
+AVG={}   # league average allowed per game, by position
 DVP,DVPG=_dvp()
 def _who(p):
     """the player half of a lineup row, with the game line swapped for the player's age"""
@@ -54,7 +56,7 @@ def _game(p,bye=False):
     if d:
         v,r=d;n=len(DVP[p[1]]);tn='g' if r<=10 else 'b' if r>n-10 else ''
         dv=(f'<span class="psv"><i class="ch psk2 {tn}" title="Points allowed to {p[1]}: rank {r} of {n} (1 = most)"><span class="ct">{r}</span></i>'
-            f'<b class="psa" title="{p[1]} points allowed per game, Weeks 1-{DVPG}">{v:.1f}</b></span>')
+            f'<b class="psa" title="{v:.1f} {p[1]} points a game allowed (all {p[1]}s combined), league average {AVG[p[1]]:.1f}">{"+" if v-AVG[p[1]]>=0.05 else "−" if v-AVG[p[1]]<=-0.05 else ""}{abs(v-AVG[p[1]]):.1f}</b></span>')
     else:dv='<span class="psv"></span>'
     # same markup as a Matchups game line (.cnm small .gp): the HOME / ROAD tile and the opponent's logo
     return (f'<span class="psg cnm{cl}"><small><span class="gp psl">{MB._gline(p[9],p[6])}</span></small>{dv}'
@@ -79,7 +81,7 @@ def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2):
         pan.append(f'<div class="psp psp-{i}">{body}</div>')
     pick=('<div class="cpk psk">'+dd('s','')+'</div>'
           f'<div class="pskey"><span><i class="ch g"><span class="ct">1</span></i>most allowed to position<i class="ch b"><span class="ct">32</span></i>fewest</span>'
-          f'<span><b>24.5</b>pts allowed / gm · Wks 1–{DVPG}</span></div>' if DVP else '')
+          f'<span><b>+4.2</b>points a game allowed to the position vs the league average · Wks 1–{DVPG}</span></div>' if DVP else '')
     css=(''.join(f'#ps-{i}:checked~.psk .dd-s .sv-{i}{{display:inline}}#ps-{i}:checked~.psk .dd-s label[for="ps-{i}"]{{background:var(--chalk);color:var(--ink)}}#ps-{i}:checked~.psx .psp-{i}{{display:block}}' for i in range(n))+
          '.psk{grid-template-columns:minmax(0,1fr)!important}.psp{display:none}'
          '.psr{display:grid;grid-template-columns:minmax(0,1.35fr) repeat(3,minmax(0,1fr))!important;grid-template-areas:none!important;column-gap:0;align-items:center;padding-right:0!important}'
@@ -98,6 +100,15 @@ def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2):
          '.psb{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}'
          '.psg.psy{background:rgba(0,0,0,.18)}.psg.psy>*{opacity:.28}'
          '.psbh{margin-top:18px}'
+         # one 2-column grid per week: tiles in the left column (home/road over the matchup rank, same size, same left
+         # edge), the opponent's logo and the points-allowed figure beside them, the kickoff under both
+         '.psg.cnm{display:grid!important;grid-template-columns:20px minmax(0,1fr);align-content:center;column-gap:7px;row-gap:5px;padding:8px 0 8px 9px!important;box-sizing:border-box}'
+         '.psg.cnm>small,.psg.cnm .gp.psl,.psg.cnm .psv{display:contents!important}'
+         '.psg .gp .gha.ht{grid-column:1;top:0!important;margin:0!important}.psg .gp .nfl.opp{grid-column:2;justify-self:start;margin:0!important;top:0!important}'
+         '.psg .gp .gsep,.psg .gp .gwhen{display:none}'
+         '.psg .psv .psk2{grid-column:1;width:20px;min-width:0;height:17px;padding:0;border-radius:4px;font-size:11.5px}.psg .psv .psk2:not(.g):not(.b){background:rgba(238,240,244,.11);color:var(--label)}'
+         '.psg .psa{grid-column:2;justify-self:start;font-size:20px;line-height:17px;height:17px;display:flex;align-items:center;white-space:nowrap}'
+         '.psg .pst{grid-column:1 / -1;justify-self:start;margin-top:1px}.cr.lu.psr{min-height:84px}'
          '.pskey{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;margin:2px 0 4px;font-size:11.5px;color:var(--steel)}.pskey .ch{margin:0 0 0 0;min-width:21px;height:15px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-style:normal;font-weight:700}.pskey .ch.b{margin-left:6px}.pskey>span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.pskey b{font-family:var(--display);font-weight:700;color:var(--chalk)}'
          '')
     return radios,pick,'<div class="psx">'+''.join(pan)+'</div>',css
