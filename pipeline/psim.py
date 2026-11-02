@@ -1,6 +1,7 @@
 # Player-level season sim. Every simulated week each team starts its best lineup by Sleeper projection, and every
 # starter's score is drawn separately:
-#   * mean = the player's league-scored Sleeper projection for that week (0 on a bye or when ruled out)
+#   * mean = the player's league-scored Sleeper projection for that week (0 on a bye or when ruled out); in the
+#     pre-game sim for this week, blended 50/50 with FantasyPros (fp_pull.py) where FantasyPros has a line
 #   * spread by position, fitted on actual-vs-projected scores in this league's scoring (2025 season + 2026 so far,
 #     about 8,000 player-weeks): sd = k * projection^b
 #   * right-skewed (lognormal), never negative
@@ -29,10 +30,17 @@ LOAD={'QB':.6,'WR':.5,'TE':.45,'RB':.3,'K':.25,'DEF':0.0}
 MISS={'Questionable':.15,'Doubtful':.7,'Out':1.0,'IR':1.0,'PUP':1.0,'Sus':1.0,'NA':1.0}
 INPUTS=['data_block.js','rosters.json','fut_proj.json','pull8.json','ro_ranks.json']
 def _wk():return f'wk{D.NOW}.json'
+FP_W=0.5   # weight on FantasyPros in the pre-game sim
+def _fpf():return f"{P}fp/{os.environ.get('DT_SEASON','2026')}_w{D.NOW}.json"
+def _fp():
+    f=_fpf()
+    try:return {k:float(v) for k,v in json.load(open(f)).get('pts',{}).items()} if os.path.exists(f) else {}
+    except Exception:return {}
 def _key():
     h=hashlib.sha1(b'psim-v2')
     for f in INPUTS+[_wk()]:
         if os.path.exists(P+f):h.update(open(P+f,'rb').read())
+    if os.path.exists(_fpf()):h.update(open(_fpf(),'rb').read())
     return h.hexdigest()
 def _sd(pos,mu):
     k,b=SDK.get(pos,(3.0,.35));return k*np.power(np.maximum(mu,0.5),b)
@@ -97,13 +105,17 @@ def run():
             if mu:x=x*(rng.random(x.shape)>=np.array(miss)[None,:])
             out[:,IDX[t]]=fixed+x.sum(1)
         return out
+    FPW=_fp()   # FantasyPros projections for this week (league scoring), {} without a key
+    def _blend(p):
+        # second opinion: Sleeper and FantasyPros blended (FP_W on FantasyPros); Sleeper alone where FantasyPros has no line
+        f=FPW.get(p[0]);return p[4] if f is None else (1-FP_W)*p[4]+FP_W*f
     def pregame():
         """this week's games as simulated before kickoff: every starter in the set lineup drawn in full from his projection
         (no live points); own random stream, so it does not move as the games are played"""
         r2=np.random.default_rng(12);Z2=r2.standard_normal((n,len(nflteams)));out=np.zeros((n,N))
         for t in TEAMS:
             st=[p for p in LW['out'][str(D.RID[t])]['st'] if p and p[4]>0]
-            mu=[p[4] for p in st];pos=[p[1] for p in st]
+            mu=[_blend(p) for p in st];pos=[p[1] for p in st]
             if not mu:continue
             x=_draw(mu,[float(_sd(q,m)) for q,m in zip(pos,mu)],pos,[p[3] for p in st],r2,n,Z2,NT)
             x=x*(r2.random(x.shape)>=np.array([MISS.get(inj(p[0]),0.0) for p in st])[None,:])

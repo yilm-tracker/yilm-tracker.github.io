@@ -55,6 +55,19 @@ jobs:
         run: |
           CUR=$(python3 -c "import json;c=json.load(open('seasons.json'));print(c['current'],c['leagues'][c['current']])")
           node pull_season.mjs $CUR
+      - name: FantasyPros cache
+        uses: actions/cache@v4
+        with:
+          path: pipeline/fp
+          key: fp-${{ github.run_id }}
+          restore-keys: fp-
+      - name: FantasyPros projections (second opinion for the pre-game sim; skipped without FP_API_KEY)
+        continue-on-error: true
+        env:
+          FP_API_KEY: ${{ secrets.FP_API_KEY }}
+        run: |
+          export DT_SEASON=$(python3 -c "import json;print(json.load(open('pipeline/seasons.json'))['current'])") DT_LEAGUE=$(python3 -c "import json;c=json.load(open('pipeline/seasons.json'));print(c['leagues'][c['current']])")
+          python3 pipeline/fp_pull.py
       - name: Build the current season
         run: |
           CUR=$(python3 -c "import json;print(json.load(open('pipeline/seasons.json'))['current'])")

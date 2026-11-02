@@ -12,3 +12,4 @@ pipeline/lists.json
 pipeline/live.json
 .cache/
 pipeline/psim.json
+pipeline/fp/

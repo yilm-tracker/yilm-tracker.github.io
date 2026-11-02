@@ -371,7 +371,7 @@ def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=No
                 f'<span class="g4w"><span class="g4p {cls}">{lab}</span><span class="g4b"><i class="{cls}" style="width:{wd}%"></i></span></span>'
                 f'<b class="gn">{e(SHORT[t])}</b>'
                 f'<span class="gb"><span class="grc">{rc}</span><i class="stk {tg[:1].lower()}">{tg}</i><span class="gfm">{fm}</span></span></span>')
-    return (f'<label for="{fr}" class="g4{" fin" if fz else ""}">{half(a,ra,ta,va,ua,ca,ja,fa,"gl",pa,ua,oa)}<span class="g4m"><i class="g4vs">vs</i>{f'<span class="g4sim" title="Pre-game sim: average score over 20,000 simulated games"><small>Sim</small><b>{sm[0]:.0f}<i>–</i>{sm[1]:.0f}</b></span>' if sm else ''}</span>'
+    return (f'<label for="{fr}" class="g4{" fin" if fz else ""}">{half(a,ra,ta,va,ua,ca,ja,fa,"gl",pa,ua,oa)}<span class="g4m"><i class="g4vs">vs</i>{f'<span class="g4sim" title="Pre-game sim: average score over 20,000 simulated games (Sleeper and FantasyPros projections blended)"><small>Sim</small><b>{sm[0]:.0f}<i>–</i>{sm[1]:.0f}</b></span>' if sm else ''}</span>'
             f'{half(b,rb,tb,vb,ub,cb,jb,fb,"gr",None if pa is None else 100-pa,ub,ob)}</label>')
 # In-week projection and win chance, the way Sleeper does them: finished players count their points, live players their
 # points plus the projection for the share of their game still to play (game clock), the rest their projection. Each team's
