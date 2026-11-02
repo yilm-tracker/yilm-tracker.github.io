@@ -638,14 +638,14 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .wkc i.po+i.por{position:absolute;left:0;right:0;bottom:0;border-radius:3px 3px 3px 3px;background:var(--pylon);opacity:.38}
 .wkc .wv.pov{color:var(--pylon);opacity:.9}
 /* standings controls: bigger, with a Mode label beside H2H / Median */
-.pane-st .tgl{align-self:center;margin-right:8px;font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--steel)}
+.pane-st .tgl{align-self:center;margin-left:8px;margin-right:auto;font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--steel)}
 .pane-st .tg button,.pane-st .tg .tb{font-size:15px!important;padding:9px 15px!important;border-radius:8px!important}
 .dens .pseg label{font-size:15px!important;padding:9px 15px!important;border-radius:8px!important}
 .dens>span{font-size:13px!important}
 /* no jump between Dumb and Nerd: the first row keeps its natural height in both */
 #dn-lean:checked~.board .r{grid-template-rows:auto min-content min-content min-content min-content 1fr!important}
 /* rank bars as dots: a short fixed run at the right, so the stat text gets the width (and a bigger size) */
-.sb{grid-template-columns:minmax(0,1fr) var(--dotw,97px)!important}
+.sb{grid-template-columns:minmax(0,var(--stw2,1fr)) var(--dotw,97px)!important;justify-content:start}
 .seg10{display:flex!important;gap:3px!important;justify-content:flex-end}
 .seg10 i{flex:none;width:7px!important;height:7px!important;border-radius:50%!important}
 .sb .trk{width:var(--dotw,97px);justify-self:end}
@@ -656,3 +656,19 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 @media(max-width:420px){.sb{--dotw:73px}.seg10{gap:1.8px!important}.seg10 i{width:5.6px!important;height:5.6px!important}}
 @media(max-width:380px){.sb{--dotw:58px;gap:5px!important}.seg10{gap:1.4px!important}.seg10 i{width:4.5px!important;height:4.5px!important}}
 /* sbFit (new_tail.js) lowers --sbs on the board until every stat line fits */
+@media(max-width:430px){.pane-st .tg button,.pane-st .tg .tb,.dens .pseg label{font-size:14px!important;padding:8px 10px!important}.pane-st .tgl,.dens>span{font-size:11.5px!important;letter-spacing:.08em!important}.pane-st .tgl{margin-left:6px}.dens{gap:6px!important}}
+@media(max-width:380px){.pane-st .tg button,.pane-st .tg .tb,.dens .pseg label{font-size:13px!important;padding:7px 8px!important}.pane-st .tgl,.dens>span{font-size:10.5px!important;letter-spacing:.05em!important}}
+/* dots fill a fixed run whatever the team count (10 or 12): equal round dots */
+.seg10{width:var(--dotw,97px);justify-self:start}
+.seg10 i{flex:1 1 0!important;width:auto!important;height:auto!important;aspect-ratio:1;min-width:0}
+.sb .trk{justify-self:start}
+.pane-st .tgl{align-self:center!important;line-height:1}
+/* Luck sits on the Opp rk / All-play line (its bar lives in Stats), so the card keeps only dot bars */
+.board .r>.st.s2{overflow:hidden}
+.board .r>.s-lu{grid-row:6!important}.board .r>.s-sk{grid-row:7!important}
+#dn-lean:checked~.board .r{grid-template-rows:auto min-content min-content min-content min-content 1fr!important}
+.board .r>.st.s2 .lb{font-size:calc(15px*var(--s2s,1))!important}.board .r>.st.s2 .v{font-size:calc(15px*var(--s2s,1))!important}
+.board .r>.st.s2.wrp{flex-wrap:wrap;row-gap:6px;overflow:visible}
+.lrk{font-style:normal}@media(max-width:600px){.board .r>.st.s2 .lrk{display:none}}
+.board .r>.st.s2{gap:0 7px!important}
+.sb.s-sk{grid-template-columns:minmax(0,1fr)!important}

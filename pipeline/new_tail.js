@@ -84,10 +84,9 @@ function draw(med){
       <span class="hl">${NIK[t]?`<em class="mgr">${esc(NIK[t])}</em> · `:""}<em class="lb">Hi</em>${rkt(Math.min(...a))}<em class="lb">Lo</em>${rkt(Math.max(...a))}<em class="lb">Avg</em>${rkt(a.reduce((x,y)=>x+y,0)/a.length,1)}</span>
       <div class="sb s-pf"><div class="stx"><em class="lb">PF</em><span class="pf">${d[3].toFixed(2)}</span>${chip(d[4])} <i class="pw">· ${d[5].toFixed(1)} <b class="psd" title="Weekly spread: standard deviation of the team's weekly scores">±${SDV(t).toFixed(0)}</b></i></div>${seg(d[4])}</div>
       <div class="sb s-pa"><div class="stx"><em class="lb">PA</em><span class="v">${d[6].toFixed(2)}</span>${chip(d[7])} <i class="pw">· ${d[8].toFixed(1)}/wk</i></div>${seg(d[7])}</div>
-      <div class="sb s-lk"><div class="stx"><em class="lb">Luck</em><span class="v">${luck(d[12])}</span>${chip(rankOf(d[12],12,false),tied(d[12],12))} <i class="pw">· ${(d[10]/(d[10]+d[11])*G).toFixed(2)} xW</i></div><div class="trk div"><i class="${d[12]>=0?'g pos':'b neg'}" style="left:${d[12]>=0?'50%':pct(.5+d[12]/MAXLUCK/2)};width:${pct(Math.abs(d[12])/MAXLUCK/2)}"></i></div></div>
       <div class="sb s-lu"><div class="stx"><em class="lb">Tot Eff</em><span class="v">${EF[t][0].toFixed(0)}%</span>${chip(rankEf(t),tiedEf(t))} <i class="pw">· <b class="lw">${EF[t][1].toFixed(1)}</b>/wk</i></div>${seg(rankEf(t))}</div>
       <div class="sb s-sk"><div class="stx spl dps"><span class="dpb dpd"><span class="dph"><em class="lb dpl">Dropped pts</em><i class="pw pu">/wk</i></span><span class="dpg">${['QB','RB','WR','TE'].map((k,i)=>LPOS.includes(k)?`<span class="dpc p-${k.toLowerCase()}"><b>${k}</b><span class="${DP[t][i]>=0.05?'':'z'}">${DP[t][i].toFixed(1)}</span>${chip(dpR(i,t),dpT(i,t))}</span>`:'').join('')}</span></span><span class="dpb dso"><span class="dph"><em class="lb dpl">Season sim</em></span><span class="dpg sog">${[['Finish',SO[t][0].toFixed(1)],['#1',pctS(SO[t][1])],['Bye',pctS(SO[t][2])],['Playoffs',pctS(SO[t][3])]].map(([k,v],i)=>`<span class="dpc so s${i}"><b>${k}</b><span class="${i&&v==='0%'?'z':''}">${i?v:`<span class="sof ${tone(Math.round(SO[t][0]))}">${v}</span>`}</span></span>`).join('')}</span></span></div></div>
-      <div class="st s2"><span><em class="lb">Opp rk</em><span class="v">${d[9].toFixed(1)}</span>${chip(rankOf(d[9],9,true),tied(d[9],9))}</span><span><em class="lb">All-play</em><span class="v">${d[10]}-${d[11]}</span>${chip(rankOf(d[10],10,false),tied(d[10],10))}</span></div>
+      <div class="st s2"><span><em class="lb">Opp<i class="lrk"> rk</i></em><span class="v">${d[9].toFixed(1)}</span>${chip(rankOf(d[9],9,true),tied(d[9],9))}</span><span><em class="lb">All-play</em><span class="v">${d[10]}-${d[11]}</span>${chip(rankOf(d[10],10,false),tied(d[10],10))}</span><span><em class="lb">Luck</em><span class="v">${luck(d[12])}</span>${chip(rankOf(d[12],12,false),tied(d[12],12))}</span></div>
       <div class="side"><div class="rr${(String(rw0)+String(rl0)).length>2?" rr4":""}"><span class="sk ${lastR==='W'?'w':'l'}"><span class="ct">${lastR}${n}</span></span><b>${rw0}-${rl0}</b></div><span class="l5d" aria-label="Last 5 results">${WK[t].slice(-5).map(g=>`<i class="${g[2]>g[3]?'w':'l'}"></i>`).join('')}</span>${gbH}<div class="subw">${sub}</div></div>
       <div class="szw">${season(t)}</div>
       <div class="strip"${op?'':' hidden'}>${strip}</div></div>`}).join('');
@@ -156,7 +155,15 @@ function ravFit(){let mx=0;const bd=document.querySelector('.board');document.qu
   a.style.width=a.style.height=H.toFixed(2)+'px';const at=a.getBoundingClientRect().top;a.style.transform='translateY('+((top-at)/z).toFixed(2)+'px)'});if(bd&&mx)document.querySelectorAll('.board').forEach(b=>b.style.setProperty('--ravc',mx.toFixed(2)+'px'))}
 // standings stat lines: one shared text scale (1 = 15px), lowered in small steps until no line is clipped
 function sbFit(){document.querySelectorAll('.board').forEach(bd=>{bd.style.setProperty('--sbs','1');const L=[...bd.querySelectorAll('.sb .stx:not(.spl)')].filter(x=>x.offsetParent);let k=1;
-  while(k>.78&&L.some(x=>x.scrollWidth>x.clientWidth+.5)){k-=.02;bd.style.setProperty('--sbs',k.toFixed(2))}})}
+  bd.style.removeProperty('--stw2');while(k>.78&&L.some(x=>x.scrollWidth>x.clientWidth+.5)){k-=.02;bd.style.setProperty('--sbs',k.toFixed(2))}
+  // then the text column shrinks to the longest line, so the dots sit just after the text (all lines aligned)
+  const mw=Math.max(0,...L.filter(x=>x.closest('.sb')).map(x=>{const rg=document.createRange();rg.selectNodeContents(x);const a=rg.getBoundingClientRect(),b=x.getBoundingClientRect();return a.right-b.left}));
+  if(mw)bd.style.setProperty('--stw2',Math.ceil(mw+2)+'px')});if(typeof tileFit==='function')tileFit()}
+// Opp rk · All-play · Luck line: its own scale (down to 86%); if it still does not fit, Luck wraps to a second line
+function s2Fit(){document.querySelectorAll('.board').forEach(bd=>{const L=[...bd.querySelectorAll('.r>.st.s2')].filter(x=>x.offsetParent);bd.style.setProperty('--s2s','1');L.forEach(x=>x.classList.remove('wrp'));let k=1;
+  const over=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);while(k>.81&&over()){k-=.02;bd.style.setProperty('--s2s',k.toFixed(2))}
+  if(over()){bd.style.setProperty('--s2s','1');L.forEach(x=>x.classList.add('wrp'))}});if(typeof tileFit==='function')tileFit()}
+s2Fit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(s2Fit);addEventListener('resize',()=>requestAnimationFrame(s2Fit));document.addEventListener('change',()=>requestAnimationFrame(s2Fit));document.fonts&&document.fonts.addEventListener('loadingdone',s2Fit);
 sbFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(sbFit);addEventListener('resize',()=>requestAnimationFrame(sbFit));document.addEventListener('change',()=>requestAnimationFrame(sbFit));document.fonts&&document.fonts.addEventListener('loadingdone',sbFit);
 ravFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(ravFit);addEventListener('resize',()=>requestAnimationFrame(ravFit));document.addEventListener('change',()=>requestAnimationFrame(ravFit));document.fonts&&document.fonts.addEventListener('loadingdone',ravFit);
 tnFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(tnFit);addEventListener('resize',()=>requestAnimationFrame(tnFit));document.addEventListener('change',()=>requestAnimationFrame(tnFit));
@@ -178,7 +185,9 @@ function fit(){
     if(r.tn){const g=document.createRange();g.selectNodeContents(r.tn);const rr=g.getBoundingClientRect(),tr=t.getBoundingClientRect();zz=rr.height>0?rr.height/(m.asc+m.desc):z;const base=rr.top+m.asc*zz;mid=base-m.cap*z/2;inline=tr.bottom>rr.top&&tr.top<rr.bottom}
     if(!inline)continue;jobs.push({t,cap:m.cap,mid,inline,z:(r.tn&&mid!=null)?zz:z})}
   for(const j of jobs){const oh=+j.t.dataset.oh,H=Math.round(((j.cap+Math.max(oh,j.cap))/2)*2)/2;inkTile(j.t,H)}
-  for(const j of jobs){const tr=j.t.getBoundingClientRect(),d=(j.mid-(tr.top+tr.bottom)/2)/j.z;if(Math.abs(d)>0.1)j.t.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important')}
+  for(const j of jobs)j.t.style.removeProperty('transform');  // measure from the untransformed spot, so a re-run never stacks offsets
+  for(const j of jobs){if(j.t.closest('.sb .stx,.st.s2'))continue;  // stat-line chips: the flex row centres them
+    const tr=j.t.getBoundingClientRect(),d=(j.mid-(tr.top+tr.bottom)/2)/j.z;if(Math.abs(d)>0.1)j.t.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important')}
 }
 // size one rank tile from the digits' ink: outer height H, the same gap from ink to edge on top and bottom, the same on
 // left and right, never closer than 2px to the frame (the number shrinks to make room); width fixed for two digits so a column lines up
