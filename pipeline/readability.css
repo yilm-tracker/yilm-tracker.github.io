@@ -584,3 +584,4 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .dtt td .ch{position:relative;top:-.125em!important;height:.73em!important}
 .dso .rkb{position:relative;top:-1.2px;font-size:inherit!important;line-height:1!important;padding:2px 4px!important;font-family:inherit!important;font-weight:inherit!important}
 .cr.lu.wa .cv.a.act,.cr.lu.wb .cv.b.act,.cr.lu .cv.act .fs{color:var(--chalk)!important}
+.dso .rkb{top:0!important;display:inline-block!important;text-box:trim-both cap alphabetic;padding:5px 6px!important;min-width:0!important;line-height:1!important;vertical-align:baseline}.dso .dpc.s0{display:flex!important;flex-direction:column;align-items:center}

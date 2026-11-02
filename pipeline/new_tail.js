@@ -169,8 +169,14 @@ function fit(){
   for(const j of jobs){if(!j.inline||j.mid==null)continue;const tr=j.t.getBoundingClientRect();moves.push([j.t,(j.mid-(tr.top+tr.bottom)/2)/j.z])}
   for(const [t,d] of moves)if(Math.abs(d)>0.2)t.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important');
 }
-let q=0;function sched(){if(q)return;q=requestAnimationFrame(()=>{q=0;fit()})}
-window.tileFit=fit;sched();addEventListener('resize',sched);document.addEventListener('change',()=>setTimeout(sched,0));document.addEventListener('click',()=>setTimeout(sched,0));
+// sim Finish tile: equal space from the digits' ink to the tile edge on all four sides
+function finFit(){if(!(window.CSS&&CSS.supports('text-box','trim-both cap alphabetic')))return;const P=5;
+document.querySelectorAll('.dso .rkb').forEach(k=>{if(!k.offsetParent)return;const cs=getComputedStyle(k);const c=document.createElement('canvas').getContext('2d');c.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;
+ const m=c.measureText(k.textContent),H=c.measureText('H').actualBoundingBoxAscent;const s=k.style;
+ const gl=-m.actualBoundingBoxLeft,gr=m.width-m.actualBoundingBoxRight,gt=H-m.actualBoundingBoxAscent,gb=-m.actualBoundingBoxDescent;
+ s.setProperty('letter-spacing','0','important');s.setProperty('font-variant-numeric','normal','important');s.setProperty('font-feature-settings','normal','important');s.setProperty('padding',`${(P-gt).toFixed(2)}px ${(P-gr).toFixed(2)}px ${(P-Math.min(gb,P)).toFixed(2)}px ${(P-gl).toFixed(2)}px`,'important')})}
+let q=0;function sched(){if(q)return;q=requestAnimationFrame(()=>{q=0;fit();finFit()})}
+window.tileFit=fit;window.finFit=finFit;sched();addEventListener('resize',sched);document.addEventListener('change',()=>setTimeout(sched,0));document.addEventListener('click',()=>setTimeout(sched,0));
 if(document.fonts){document.fonts.ready.then(()=>{for(const k in FM)delete FM[k];sched()});document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',()=>{for(const k in FM)delete FM[k];sched()})}
 })();
 addEventListener('resize',()=>requestAnimationFrame(pfit));document.addEventListener('click',()=>requestAnimationFrame(pfit));
