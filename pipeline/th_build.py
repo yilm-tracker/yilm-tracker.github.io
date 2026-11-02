@@ -314,7 +314,15 @@ def trends_view(t):
                 f'<b class="trs">{pts[k-1]:.1f} – {SC[o][k]:.1f}</b><span class="tro2"><em>vs</em><i class="pav" data-avt="{e(o)}" aria-hidden="true"></i><b>{e(SHORT0.get(o,o))}</b></span></div>')
     return f'<div class="trd">{"".join(rc(k) for k in range(1,G+1))}</div>',f'<div class="tcs">{"".join(ch)}</div>'
 # ---------------------------------------------------------------- assemble
-picker='<div class="tqpk" role="tablist" aria-label="Team">'+''.join(f'<label for="thx-{i}"><em class="rrk">{i+1}</em><span>{e(t)}</span></label>' for i,t in enumerate(H))+'</div>'
+# team picker: the same face + owner-name strip as Rosters (standings order; one row on desktop, two on phones)
+try:
+    import lg as _lgo;_OWN=dict(getattr(_lgo,'NICK',{}) or {})
+except Exception:_OWN={}
+if not _OWN:
+    try:_OWN=json.load(open(P+'owners.json',encoding='utf-8'))
+    except Exception:_OWN={}
+picker=('<div class="tqpk rofb" role="tablist" aria-label="Team" style="--n:'+str(len(H))+';--n2:'+str((len(H)+1)//2)+'">'
+        +''.join(f'<label for="thx-{i}" title="{e(t)}"><i class="pav rfi" data-avt="{e(t)}" aria-hidden="true"></i><span>{e(_OWN.get(t) or SHORT0.get(t,t))}</span></label>' for i,t in enumerate(H))+'</div>')
 wks='<div class="tqwk" role="group" aria-label="Week"><span>Week</span>'+''.join(f'<label for="thw-{k}">{k}</label>' for k in range(1,G+1))+'</div>'
 radios=(''.join(f'<input type="radio" name="thx" id="thx-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(N))
         +'<input type="radio" name="tqv" id="thv-d" class="lr" checked><input type="radio" name="tqv" id="thv-t" class="lr">'
@@ -330,14 +338,16 @@ JS=('<script>(function(){var VW=%d,PL=%d,PR=%d,G=%d;function pick(sv,x){var r=sv
 sec_=(f'<section class="thx2" aria-labelledby="thh2">{radios}<div class="posh"><b id="thh2">Team Hub</b></div>'
       f'<div class="rsub">One team at a time · Wk 1–{G}</div>{picker}{ctl}{pans}</section>'+JS)
 TL='#efd38a'
-PKCSS=('.thx2 .tqpk{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:2px 0 12px}'
- '.thx2 .tqpk label{display:flex;align-items:center;gap:7px;min-height:36px;padding:6px 10px;box-sizing:border-box;border-radius:6px;border:1px solid var(--hair);background:var(--ink);cursor:pointer;'
- 'font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--label);white-space:nowrap;min-width:0}'
- '.thx2 .tqpk label span{overflow:hidden;text-overflow:ellipsis;min-width:0}'
- '.thx2 .tqpk .rrk{font-style:normal;flex:none;min-width:1.2em;text-align:right;color:var(--steel);font-variant-numeric:tabular-nums}'
- '@media(max-width:429px){.thx2 .tqpk label{font-size:12.5px;letter-spacing:.02em;padding:6px 8px;gap:6px}}@media(max-width:374px){.thx2 .tqpk label{font-size:11.5px;letter-spacing:.01em;padding:6px 6px;gap:5px}}'
+PKCSS=('.thx2 .tqpk{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:1px;margin:2px 0 12px;border-radius:12px;overflow:hidden;background:var(--hair);border:1px solid var(--hair);box-shadow:var(--dsh)}'
+ '.thx2 .tqpk label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-width:0;padding:10px 2px 9px;box-sizing:border-box;cursor:pointer;background:var(--deck-2);-webkit-tap-highlight-color:transparent}'
+ '.thx2 .tqpk .rfi{display:block;width:48px;height:48px;border-radius:50%;background-color:var(--deck);background-position:center;background-size:cover;background-repeat:no-repeat;filter:grayscale(1);opacity:.55;transition:filter .15s,opacity .15s}'
+ '.thx2 .tqpk .rfi.nl{visibility:hidden}'
+ '.thx2 .tqpk span{max-width:100%;overflow:hidden;white-space:nowrap;font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.02em;color:var(--steel);line-height:1.1}'
+ '.thx2 .tqpk label:hover .rfi{filter:none;opacity:1}.thx2 .tqpk label:hover span{color:var(--label)}'
+ '@media(max-width:1099px){.thx2 .tqpk{grid-template-columns:repeat(var(--n2),minmax(0,1fr))}.thx2 .tqpk .rfi{width:40px;height:40px}.thx2 .tqpk span{font-size:13.5px}}'
+ '@media(max-width:380px){.thx2 .tqpk span{font-size:12px;letter-spacing:0}.thx2 .tqpk .rfi{width:36px;height:36px}}'
  '.tqkn{font-size:10.5px;color:var(--dim)}')
-css=PKCSS+(''.join(f'#thx-{i}:checked~.tqpk label[for="thx-{i}"]{{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}}#thx-{i}:checked~.tqpk label[for="thx-{i}"] .rrk{{color:var(--ink);opacity:.55}}#thx-{i}:checked~.tqp-{i}{{display:block}}' for i in range(N))
+css=PKCSS+(''.join(f'#thx-{i}:checked~.tqpk label[for="thx-{i}"]{{background:var(--ink)}}#thx-{i}:checked~.tqpk label[for="thx-{i}"] .rfi{{filter:none;opacity:1}}#thx-{i}:checked~.tqpk label[for="thx-{i}"] span{{color:var(--chalk)}}#thx-{i}:checked~.tqp-{i}{{display:block}}' for i in range(N))
  +''.join(f'#thw-{k}:checked~.tqp .tqwk label[for="thw-{k}"]{{background:var(--chalk);color:var(--ink)}}#thw-{k}:checked~.tqp .twm-{k},#thw-{k}:checked~.tqp .tro-{k}{{display:inline}}#thw-{k}:checked~.tqp .trc-{k}{{display:grid}}' for k in range(1,G+1))
  +'#thv-d:checked~.tqctl label[for="thv-d"],#thv-t:checked~.tqctl label[for="thv-t"]{background:var(--chalk);color:var(--ink)}'
  +'.thx2 .tqp,.thx2 .tqtv{display:none}#thv-t:checked~.tqp .tqdv{display:none}#thv-t:checked~.tqp .tqtv{display:block}'
@@ -385,7 +395,7 @@ css=PKCSS+(''.join(f'#thx-{i}:checked~.tqpk label[for="thx-{i}"]{{background:var
  '.thx2 .bnl .bnt em.gold{color:#e8c15a;background:rgba(232,193,90,.14)}.thx2 .bnl .bnt em.g{color:var(--win);background:rgba(63,214,155,.12)}.thx2 .bnl .bnt em.b{color:#ff8a9a;background:rgba(255,93,115,.12)}'
  +'.tqnone{padding:10px 0;font-size:12.5px;color:var(--steel)}'
  # trends
- +'.tqsk{position:sticky;top:var(--navh,0px);z-index:5;background:var(--ink);padding-bottom:8px;margin-bottom:2px}.tqwk{display:grid;grid-template-columns:auto repeat('+str(G)+',minmax(0,1fr));align-items:center;gap:4px;padding:8px 0;margin:0 0 8px;background:var(--ink)}'
+ +'.tqsk{position:sticky;top:var(--navh,0px);z-index:5;background:var(--pg,var(--ink));padding-bottom:8px;margin-bottom:2px}.tqwk{display:grid;grid-template-columns:auto repeat('+str(G)+',minmax(0,1fr));align-items:center;gap:4px;padding:8px 0;margin:0 0 8px;background:var(--ink)}'
  +'.tqwk>span{font-family:var(--display);font-weight:600;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--steel);margin-right:4px}'
  +'.tqwk label{display:grid;place-items:center;height:32px;border-radius:8px;border:1px solid var(--hair);background:var(--deck);font-family:var(--display);font-weight:700;font-size:15px;color:var(--label);cursor:pointer}'
  +'.trd{margin:0}.trc{display:none;grid-template-columns:auto 26px auto minmax(0,1fr);justify-content:start;justify-items:start;align-items:center;column-gap:10px;padding:10px 12px;border-radius:10px;background:var(--deck);border:1px solid var(--hair)}'

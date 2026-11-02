@@ -1161,7 +1161,20 @@ RO_CSS
   <div class="glw"><span>Glossary</span><div class="pseg glc" role="group" aria-label="Glossary"><label for="gl-h">Hide</label><label for="gl-s">Show</label></div></div>
   <div class="key">
     <div><b>Team Hub</b> one team at a time, in two views. <b>Data</b>: the team's row from every league table: odds, season numbers with league rank (1st = best; for Left on bench, 1st = fewest), points per start by position (bar = share of the league best), weekly score rank, star dependence, age, dropped points, margins, home / road and bye exposure. Same figures as the Stats tab.</div>
-    <div><b>Trends</b>: week-by-week lines for points (dashed = league median, dot colour = result), standings, points-for rank, all-play win %, luck (wins minus expected wins, green above zero, red below), playoff / bye / #1 seed odds and projected finish (average finishing place across the simulations, 1st at the top). Tap a week number, or tap / drag along any chart, to move every chart to that week. Dashed lines on Standings and Projected finish mark the bye line (2nd, blue) and the playoff line (6th). Past-week playoff odds re-run the simulation with only the scores known then (early-season averages pulled toward the league average); the latest week shows the same odds as Stats &gt; Odds.</div>
+    <div><b>Trends</b> one chart per measure, week by week. Tap a week number, or tap / drag along any chart, to move every chart to that week; the figure at the top right of each chart is that week's value. Dashed lines marked BYE and PLAYOFFS are the last bye seed and the last playoff seed.</div>
+    <div><b>Week card</b> the selected week's result: W or L, the team's score against the opponent's, and the opponent.</div>
+    <div><b>Points scored</b> the team's score each week. Dot colour is the result (green win, red loss); the dashed line is the league median score that week, so dots above it beat half the league.</div>
+    <div><b>Weekly score rank</b> where the team's score finished among all teams that week (1st = the week's highest score).</div>
+    <div><b>Standings</b> the team's seed after each week (wins, then points for), 1st at the top.</div>
+    <div><b>Power rank vs seed</b> two lines. <b>Power</b> ranks teams on how often they would have won if they played everyone every week: 60% from the season so far, 40% from the last three weeks. <b>Seed</b> is the actual standings. Power above seed means the team has played better than its record; below means the record flatters it.</div>
+    <div><b>Points-for and against rank</b> two lines. <b>PF</b> is the rank of the team's total points scored to date (1st = most). <b>PA</b> is the rank of total points scored against it (1st = most against, the toughest luck of the schedule).</div>
+    <div><b>All-play win %</b> the share of games the team would have won to date if it played every other team every week.</div>
+    <div><b>Luck · wins minus expected</b> actual wins minus expected wins (each week's expected win = the share of the league the team outscored that week). Above zero (green) the schedule has helped; below zero (red) it has hurt.</div>
+    <div><b>Projected vs actual</b> two lines: <b>Actual</b> points and the <b>Projected</b> total of the starting lineup before kickoff (Sleeper). The readout shows the difference.</div>
+    <div><b>Lineup efficiency</b> points from the players started as a share of the best possible lineup from the same roster that week. 100% = the best lineup was started; the dashed line is the league average.</div>
+    <div><b>Position strength</b> one line per position: the team's points from starters at that position minus the league average for that position that week. Above zero = an edge at that position.</div>
+    <div><b>Playoff odds</b> three nested bands from the season simulation as of each week (named in the legend): the lowest band is the chance of the #1 seed, the middle band a bye, the top band the playoffs; the blank space above is the chance of missing them. Past weeks re-run the simulation with only the scores known then (early-season averages pulled toward the league average); the latest week matches Stats &gt; Odds.</div>
+    <div><b>Projected finish</b> the average finishing seed across the simulations as of each week, 1st at the top.</div>
   </div>
   </div>
   <div class="pane pane-po">
