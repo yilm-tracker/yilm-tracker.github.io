@@ -76,17 +76,34 @@ h=h.replace('<div class="eyebrow">Official</div>','<div class="eyebrow">In-offic
 h=h.replace('<h1>The League</h1>','<h1 class="yh"><span class="y1">Your</span> <span class="y2">Idiot</span> <span class="y3">Leaguemates</span></h1>',1)
 h=h.replace('<div class="season" ',f'<div class="fmt">{" · ".join(_fmt)}</div>\n    <div class="season" ',1)
 _av='';_avr={}
+import base64 as _b64x,io as _io
+def _hd(_t,px=160):
+    """the league's own high-res face (pipeline/faces/<nickname>.png, transparent) as webp, or None"""
+    _n=(_lgb.NICK.get(_t) or '').lower();_fp=P+'faces/'+_n+'.png'
+    if not _n or not _dt_os.path.exists(_fp):return None
+    try:
+        from PIL import Image as _I
+        _im=_I.open(_fp).convert('RGBA');_bb=_im.getbbox() or (0,0,*_im.size)
+        # square crop around the face with a small margin, then scale
+        _cx,_cy=(_bb[0]+_bb[2])/2,(_bb[1]+_bb[3])/2;_sd=max(_bb[2]-_bb[0],_bb[3]-_bb[1])*1.06/2
+        _im=_im.crop((int(_cx-_sd),int(_cy-_sd),int(_cx+_sd),int(_cy+_sd))).resize((px,px),_I.LANCZOS)
+        _b=_io.BytesIO();_im.save(_b,'WEBP',quality=88);return _b64x.b64encode(_b.getvalue()).decode()
+    except Exception as _ex:print('face skipped',_t,_ex);return None
 for _t in _lgb.TEAMS:
-    _f=_lgb.AV.get(_t)
+    _f=_lgb.AV.get(_t);_r=_lgb.RID[_t];_h64=_hd(_t)
+    if _h64:   # high-res cut-out face: everywhere a logo shows, and in the Rosters bar
+        _avr[_t]=_r
+        _av+=f':root .av-{_r}{{background-image:url(data:image/webp;base64,{_h64})!important}}.rox .rofb .rfi.av-{_r}{{background-image:url(data:image/webp;base64,{_h64})!important}}'
+        continue
     if _f and _dt_os.path.exists(P+'avatars/'+_f):
-        _r=_lgb.RID[_t];_avr[_t]=_r
-        _av+=f'.av-{_r}{{background-image:url(data:image/webp;base64,'+__import__('base64').b64encode(open(P+'avatars/'+_f,'rb').read()).decode()+')}'
+        _avr[_t]=_r
+        _av+=f'.av-{_r}{{background-image:url(data:image/webp;base64,'+_b64x.b64encode(open(P+'avatars/'+_f,'rb').read()).decode()+')}'
         try:   # cut-out face for the Rosters bar: the flat background flood-filled to transparent from the edges
-            from PIL import Image as _I,ImageDraw as _ID;import io as _io
+            from PIL import Image as _I,ImageDraw as _ID
             _im=_I.open(P+'avatars/'+_f).convert('RGBA');_w,_h=_im.size
             for _xy in ((0,0),(_w-1,0),(0,_h-1),(_w-1,_h-1),(_w//2,0),(0,_h//2),(_w-1,_h//2)):_ID.floodfill(_im,_xy,(0,0,0,0),thresh=28)
             _b=_io.BytesIO();_im.save(_b,'WEBP',lossless=True)
-            _av+=f'.rox .rofb .rfi.av-{_r}{{background-image:url(data:image/webp;base64,'+__import__('base64').b64encode(_b.getvalue()).decode()+')!important}'
+            _av+=f'.rox .rofb .rfi.av-{_r}{{background-image:url(data:image/webp;base64,'+_b64x.b64encode(_b.getvalue()).decode()+')!important}'
         except Exception as _ex:print('avatar cut-out skipped',_ex)
 h=h.replace('</style>',(':root{--ink:#0f1d2e;--deck:#162a3d;--deck-2:#1b3248;--chalk:#ffffff;--label:#d3dfeb;--steel:#a5b6c8;--dim:#7189a2;--hair:#24394f;'
   '--pylon:#fb637a;--sky:#259fd6;--loss:#ff5a3c;--loss-bg:rgba(255,90,60,.15);--line-strong:#31506c;--nt:'+str(_lgb.N)+';--np:'+str(len(_lgb.POS))+'}'
