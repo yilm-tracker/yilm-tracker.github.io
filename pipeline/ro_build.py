@@ -82,7 +82,10 @@ def panel(i,t):
             o.append('</div>')
     o.append(_AS(t)+'</div>');return ''.join(o)
 radios='<input type="radio" name="rcol" id="rc-p" class="lr" checked><input type="radio" name="rcol" id="rc-t" class="lr"><input type="radio" name="rview" id="rv-pos" class="lr" checked><input type="radio" name="rview" id="rv-pts" class="lr"><input type="radio" name="rq" id="rq-all" class="lr" checked><input type="radio" name="rq" id="rq-noqb" class="lr"><input type="radio" name="rsort" id="rs-p" class="lr" checked><input type="radio" name="rsort" id="rs-g" class="lr">'+''.join(f'<input type="radio" name="ros" id="ro-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N))
-chips='<div class="roc rogd" role="tablist" aria-label="Team">'+''.join(f'<label for="ro-{i}"><em class="rrk">{i+1}</em><span>{e(SHORT[t])}</span></label>' for i,t in enumerate(H))+'</div>'
+# team picker: a bar of team logos with the owner's name under each (owner names are short where team names are long)
+try:OWN=lg.NICK
+except Exception:OWN={}
+chips='<div class="roc rofb" role="tablist" aria-label="Team" style="--n:'+str(len(H))+';--n2:'+str((len(H)+1)//2)+'">'+''.join(f'<label for="ro-{i}" title="{e(t)}"><i class="pav rfi" data-avt="{e(t)}" aria-hidden="true"></i><span>{e(OWN.get(t) or SHORT[t])}</span></label>' for i,t in enumerate(H))+'</div>'
 CTRL=('<div class="rctl lctl lgrid">'
       '<div class="pseg rcseg" role="group" aria-label="Tile colors"><label for="rc-p">Position</label><label for="rc-t">Team</label></div><i class="lt">Colors</i>'
       '<i class="lt ltr">Order</i><div class="pseg rseg" role="group" aria-label="Roster view"><label for="rv-pos">Position</label><label for="rv-pts">Points</label></div>'
@@ -104,6 +107,14 @@ css+=(sel(['rv-pos','rv-pts','rs-p','rs-g','rc-p','rc-t','rq-all','rq-noqb'])+'{
       '@media(max-width:429px){.rox .rogd label{font-size:12.5px;letter-spacing:.02em;padding:6px 8px;gap:6px}}@media(max-width:374px){.rox .rogd label{font-size:11.5px;letter-spacing:.01em;padding:6px 6px;gap:5px}}'
       '.rox .rogd .rrk{font-style:normal;flex:none;min-width:1.2em;text-align:right;color:var(--steel);font-variant-numeric:tabular-nums}'
       +''.join(f'#ro-{i}:checked~.roc label[for="ro-{i}"] .rrk{{color:var(--ink);opacity:.55}}' for i in range(lg.N))
+      +'.rox .rofb{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:1px;margin:2px 0 12px;border-radius:12px;overflow:hidden;background:var(--hair);border:1px solid var(--hair)}'
+      '.rox .rofb label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-width:0;padding:10px 2px 9px;box-sizing:border-box;cursor:pointer;border:0!important;border-radius:0!important;background:var(--deck-2)!important;-webkit-tap-highlight-color:transparent}'
+            '.rox .rofb .rfi{display:block;width:48px;height:48px;border-radius:50%;background-color:var(--deck);background-position:center;background-size:cover;background-repeat:no-repeat;filter:grayscale(1);opacity:.55;transition:filter .15s,opacity .15s}'
+      '.rox .rofb .rfi.nl{visibility:hidden}'
+      '.rox .rofb span{max-width:100%;overflow:hidden;text-overflow:clip;white-space:nowrap;font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.02em;color:var(--steel);line-height:1.1}'
+      '.rox .rofb label:hover .rfi{opacity:.8}'
+      '@media(max-width:1099px){.rox .rofb{grid-template-columns:repeat(var(--n2),minmax(0,1fr))}.rox .rofb .rfi{width:40px;height:40px}.rox .rofb span{font-size:13.5px}}@media(max-width:380px){.rox .rofb span{font-size:12px;letter-spacing:0}.rox .rofb .rfi{width:36px;height:36px}}'
+      +''.join(f'#ro-{i}:checked~.rofb label[for="ro-{i}"]{{background:var(--ink)!important}}#ro-{i}:checked~.rofb label[for="ro-{i}"] .rfi{{filter:none;opacity:1}}#ro-{i}:checked~.rofb label[for="ro-{i}"] span{{color:var(--chalk)}}' for i in range(lg.N))
       +team_tiles('#rc-t:checked~.rop'))
 open(P+'ro_section.html','w',encoding='utf-8').write(sec)
 open(P+'ro_css.css','w',encoding='utf-8').write(css)
