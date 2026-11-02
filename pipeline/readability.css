@@ -580,3 +580,5 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .dpc .ch{font-size:10px!important;font-weight:600!important;height:14px!important;min-width:18px!important;padding:0 3px!important;margin:3px 0 0!important;align-self:flex-start;letter-spacing:0}
 .r .sb .dpc .ch,.r .sb .dpc .ch .ct{font-size:10px!important;font-weight:600!important;line-height:1!important;font-family:var(--body,inherit)}.r .sb .dpc .ch{height:14px!important;min-width:18px!important;padding:0 3px!important}.r .sb .dpc .ch .ct{color:inherit!important;height:auto!important;display:inline!important}
 .tqdp .ch{font-style:normal}.tqdp:not(:has(>div:nth-child(5))){grid-template-columns:repeat(4,minmax(0,1fr))}
+.dtt td .ch{display:inline-flex!important;align-items:center;justify-content:center;overflow:hidden;font-size:inherit!important;height:.7em!important;min-width:1.25em!important;padding:0 .2em!important;line-height:1!important;vertical-align:baseline!important;box-sizing:border-box}.dtt td .ch .ct{font-size:9.5px!important;line-height:1!important;display:block!important}
+.dtt td .ch{position:relative;top:-.125em!important;height:.73em!important}
