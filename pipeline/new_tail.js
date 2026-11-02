@@ -143,7 +143,7 @@ pfit();document.addEventListener('change',()=>requestAnimationFrame(pfit));
 // rank tiles never taller than the figure they rank: tile top = the figure's digit top, tile bottom = its baseline
 (function(){
 const FM={};
-function fm(cs){const k=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;if(FM[k])return FM[k];const c=document.createElement('canvas').getContext('2d');c.font=k;const m=c.measureText('0123456789');return FM[k]={cap:m.actualBoundingBoxAscent,asc:m.fontBoundingBoxAscent}}
+function fm(cs){const k=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;if(FM[k])return FM[k];const c=document.createElement('canvas').getContext('2d');c.font=k;const m=c.measureText('0123456789');return FM[k]={cap:m.actualBoundingBoxAscent,asc:m.fontBoundingBoxAscent,desc:m.fontBoundingBoxDescent}}
 function txt(n){if(n.nodeType===3)return n;const w=document.createTreeWalker(n,NodeFilter.SHOW_TEXT,{acceptNode:x=>x.textContent.trim()?1:3});let l=null,x;while(x=w.nextNode())l=x;return l}
 function ref(t){let n=t.previousSibling;while(n&&n.nodeType===3&&!n.textContent.trim())n=n.previousSibling;
   if(n&&n.nodeType===1&&n.matches('.ch,.rkt,svg,.av,.pav,.pz,.nfl,.pba,img'))return null;
@@ -152,20 +152,21 @@ function ref(t){let n=t.previousSibling;while(n&&n.nodeType===3&&!n.textContent.
 function fit(){
   const tiles=[...document.querySelectorAll('.ch,.rkt')].filter(t=>t.offsetParent&&!t.closest('.gm,.sxm,.lbr,.hmx,.tqgrid,.mx,.bym'));
   const jobs=[];
-  for(const t of tiles){const r=ref(t);if(!r)continue;const cs=getComputedStyle(r.el),m=fm(cs);
-    let base=null,inline=false;
-    if(r.tn){const g=document.createRange();g.selectNodeContents(r.tn);const rr=g.getBoundingClientRect(),tr=t.getBoundingClientRect();base=rr.top+m.asc;inline=tr.bottom>rr.top&&tr.top<rr.bottom}
-    jobs.push({t,cap:m.cap,base,inline,own:r.own})}
-  for(const j of jobs){const s=j.t.style,c=Math.round(j.cap*2)/2;
+  for(const t of tiles){const r=ref(t);if(!r)continue;const cs=getComputedStyle(r.el),m=fm(cs),z=t.currentCSSZoom||1;
+    if(!t.dataset.oh){const ct0=t.querySelector('.ct')||t;t.dataset.oh=t.getBoundingClientRect().height/z;t.dataset.of=parseFloat(getComputedStyle(ct0).fontSize)}
+    let mid=null,inline=false,zz=z;
+    if(r.tn){const g=document.createRange();g.selectNodeContents(r.tn);const rr=g.getBoundingClientRect(),tr=t.getBoundingClientRect();zz=rr.height>0?rr.height/(m.asc+m.desc):z;const base=rr.top+m.asc*zz;mid=base-m.cap*z/2;inline=tr.bottom>rr.top&&tr.top<rr.bottom}
+    jobs.push({t,cap:m.cap,mid,inline,z:(r.tn&&mid!=null)?zz:z})}
+  for(const j of jobs){const s=j.t.style,oh=+j.t.dataset.oh,of=+j.t.dataset.of,c=Math.round(((j.cap+Math.max(oh,j.cap))/2)*2)/2;
     s.setProperty('display','inline-flex','important');s.setProperty('align-items','center');s.setProperty('justify-content','center');
     s.setProperty('height',c+'px','important');s.setProperty('min-height','0','important');s.setProperty('padding-top','0','important');s.setProperty('padding-bottom','0','important');
     s.setProperty('line-height','1','important');s.setProperty('box-sizing','border-box','important');s.setProperty('transform','none','important');s.setProperty('top','0','important');
-    s.setProperty('min-width',Math.round(c*1.55)+'px','important');s.setProperty('padding-left','2px','important');s.setProperty('padding-right','2px','important');s.setProperty('vertical-align','baseline','important');
-    const ct=j.t.querySelector('.ct')||j.t,fs=Math.max(7,Math.min(11,c*1.02));
+    s.setProperty('min-width',Math.round(c*1.45)+'px','important');s.setProperty('padding-left','3px','important');s.setProperty('padding-right','3px','important');s.setProperty('vertical-align','baseline','important');
+    const ct=j.t.querySelector('.ct')||j.t,fs=Math.round(((of||c)+Math.min(11,j.cap*1.02))/2*2)/2;
     if(ct!==j.t){ct.style.setProperty('font-size',fs+'px','important');ct.style.setProperty('line-height','1','important');ct.style.setProperty('display','block','important');ct.style.setProperty('height','auto','important')}
     else s.setProperty('font-size',fs+'px','important')}
   const moves=[];
-  for(const j of jobs){if(!j.inline||j.base==null)continue;const tr=j.t.getBoundingClientRect();moves.push([j.t,j.base-tr.bottom])}
+  for(const j of jobs){if(!j.inline||j.mid==null)continue;const tr=j.t.getBoundingClientRect();moves.push([j.t,(j.mid-(tr.top+tr.bottom)/2)/j.z])}
   for(const [t,d] of moves)if(Math.abs(d)>0.2)t.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important');
 }
 let q=0;function sched(){if(q)return;q=requestAnimationFrame(()=>{q=0;fit()})}
