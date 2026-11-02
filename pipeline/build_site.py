@@ -40,7 +40,7 @@ if False:  # (dynasty tracker only) TeamHub link
 # year switch in the top-right corner, above the countdown; absolutely placed, so the header grid is unchanged
 if len(YEARS)>1:
     href=lambda y:('./' if not PAST else '../') if y==CUR else (('' if not PAST else '../')+y+'/')
-    sw='<nav class="yrs" aria-label="Season">'+''.join(f'<a href="{href(y)}"'+(' class="on" aria-current="page"' if y==Y else '')+f'>{y}</a>' for y in YEARS)+'</nav>'
+    sw='<nav class="yrs" aria-label="Season">'+''.join(f'<a href="{href(y)}"'+(' class="on" aria-current="page"' if y==Y else '')+f'>{y}</a>' for y in sorted(YEARS))+'</nav>'
     s=s.replace('<h1>',sw+'<h1>',1)
     s=s.replace('</style>','header{position:relative}.yrs{position:absolute;top:-17px;right:0;display:inline-flex;gap:2px;padding:2px;border:1px solid var(--hair);border-radius:999px;background:var(--ink)}'
       '.yrs a{position:relative;display:block;padding:4px 8px 3px;border-radius:999px;font:700 11.5px/1 var(--display);letter-spacing:.06em;color:var(--steel);text-decoration:none;font-variant-numeric:tabular-nums}'
