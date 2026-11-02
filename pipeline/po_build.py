@@ -204,7 +204,7 @@ def bpanel(i,j):
     lab=''.join(f'<span class="pwl pwl-{w}">Week {w} · {RND[w]}</span>' for w in WEEKS)
     return f'<div class="ppn pp-{i}-{j}">{card(a,b,15,lab)}{lineup(a,b,15)}</div>'
 import po_sched
-_SR,_SPICK,_SPAN,_SCSS=po_sched.build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=lg.BYE_N)
+_SR,_SPICK,_SPAN,_SCSS=po_sched.build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,opt=lambda t,w:{q['pid'] for q in BEST[(t,w)] if q},byes=lg.BYE_N)
 radios=('<input type="radio" name="pview" id="pv-b" class="lr" checked><input type="radio" name="pview" id="pv-c" class="lr"><input type="radio" name="pview" id="pv-s" class="lr">'+_SR+''.join(f'<input type="radio" name="bk" id="bk-{k}" class="lr"{" checked" if n==0 else ""}>' for n,(k,*_) in enumerate(GAMES))+
         ''.join(f'<input type="radio" name="pa" id="pa-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N))+
         ''.join(f'<input type="radio" name="pb" id="pb-{i}" class="lr"{" checked" if i==1 else ""}>' for i in range(lg.N))+
