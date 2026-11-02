@@ -189,7 +189,7 @@ def _bn(t):
     return two if len(two)<=15 else f'{w[0][0]}. {w[-1]}'
 _BN={t:_bn(t) for t in H}
 br,BRCSS,_RH=po_cols.build(S,GAMES,win,winp,PT,_BN,seed,e,tone,(lambda a,b,w:f'+{abs(PT[(a,w)]-PT[(b,w)]):.1f}') if FINAL else None,
-                           av=lambda t:f'av-{MB._AVR[t]}' if t in MB._AVR else '',live=_plive)
+                           av=lambda t:f'av-{MB._AVR[t]}' if t in MB._AVR else '',live=_plive,done=lambda a,b,w:(a,w) in AW and (b,w) in AW)
 bpan=''.join(f'<div class="bkp bkp-{k}">{fcard(a,b,w,f"Week {w} · {lab} · Final")}{flineup(a,b,w)}</div>' if FINAL else f'<div class="bkp bkp-{k}">{card(a,b,w,f"Week {w} · {lab}")}{lineup(a,b,w,'b')}</div>' for k,w,(a,b),lab in GAMES)
 # ---------- build-a-matchup (team A, team B, week)
 def dd(k,lab):
