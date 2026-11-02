@@ -139,6 +139,39 @@ bh.onclick=()=>set(false);bm.onclick=()=>set(true);
 draw(false);dtab(false);
 if(typeof AVR!=='undefined')document.querySelectorAll('.pav[data-avt]').forEach(e=>{const r=AVR[e.dataset.avt];if(r)e.classList.add('av','av-'+r);else e.classList.add('nl')});
 function pfit(){document.querySelectorAll('.pr .pav.av+.psn').forEach(el=>{if(!el.offsetParent)return;el.style.fontSize='';let f=parseFloat(getComputedStyle(el).fontSize);while((el.scrollHeight>el.clientHeight+1||el.scrollWidth>el.clientWidth+1)&&f>9){f-=0.5;el.style.fontSize=f+'px'}})}
-pfit();document.addEventListener('change',()=>requestAnimationFrame(pfit));addEventListener('resize',()=>requestAnimationFrame(pfit));document.addEventListener('click',()=>requestAnimationFrame(pfit));
+pfit();document.addEventListener('change',()=>requestAnimationFrame(pfit));
+// rank tiles never taller than the figure they rank: tile top = the figure's digit top, tile bottom = its baseline
+(function(){
+const FM={};
+function fm(cs){const k=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;if(FM[k])return FM[k];const c=document.createElement('canvas').getContext('2d');c.font=k;const m=c.measureText('0123456789');return FM[k]={cap:m.actualBoundingBoxAscent,asc:m.fontBoundingBoxAscent}}
+function txt(n){if(n.nodeType===3)return n;const w=document.createTreeWalker(n,NodeFilter.SHOW_TEXT,{acceptNode:x=>x.textContent.trim()?1:3});let l=null,x;while(x=w.nextNode())l=x;return l}
+function ref(t){let n=t.previousSibling;while(n&&n.nodeType===3&&!n.textContent.trim())n=n.previousSibling;
+  if(n&&n.nodeType===1&&n.matches('.ch,.rkt,svg,.av,.pav,.pz,.nfl,.pba,img'))return null;
+  if(!n){if(t.classList.contains('rkt'))return {own:true,el:t.parentElement};const ps=t.parentElement.previousElementSibling;if(ps&&!t.previousElementSibling){const tn=txt(ps);if(tn&&/[0-9]/.test(tn.textContent))return {tn,el:tn.parentElement}}return null}
+  const tn=txt(n);if(!tn||!/[0-9A-Za-z%]/.test(tn.textContent))return null;return {tn,el:tn.parentElement}}
+function fit(){
+  const tiles=[...document.querySelectorAll('.ch,.rkt')].filter(t=>t.offsetParent&&!t.closest('.gm,.sxm,.lbr,.hmx,.tqgrid,.mx,.bym'));
+  const jobs=[];
+  for(const t of tiles){const r=ref(t);if(!r)continue;const cs=getComputedStyle(r.el),m=fm(cs);
+    let base=null,inline=false;
+    if(r.tn){const g=document.createRange();g.selectNodeContents(r.tn);const rr=g.getBoundingClientRect(),tr=t.getBoundingClientRect();base=rr.top+m.asc;inline=tr.bottom>rr.top&&tr.top<rr.bottom}
+    jobs.push({t,cap:m.cap,base,inline,own:r.own})}
+  for(const j of jobs){const s=j.t.style,c=Math.round(j.cap*2)/2;
+    s.setProperty('display','inline-flex','important');s.setProperty('align-items','center');s.setProperty('justify-content','center');
+    s.setProperty('height',c+'px','important');s.setProperty('min-height','0','important');s.setProperty('padding-top','0','important');s.setProperty('padding-bottom','0','important');
+    s.setProperty('line-height','1','important');s.setProperty('box-sizing','border-box','important');s.setProperty('transform','none','important');s.setProperty('top','0','important');
+    s.setProperty('min-width',Math.round(c*1.55)+'px','important');s.setProperty('padding-left','2px','important');s.setProperty('padding-right','2px','important');s.setProperty('vertical-align','baseline','important');
+    const ct=j.t.querySelector('.ct')||j.t,fs=Math.max(7,Math.min(11,c*1.02));
+    if(ct!==j.t){ct.style.setProperty('font-size',fs+'px','important');ct.style.setProperty('line-height','1','important');ct.style.setProperty('display','block','important');ct.style.setProperty('height','auto','important')}
+    else s.setProperty('font-size',fs+'px','important')}
+  const moves=[];
+  for(const j of jobs){if(!j.inline||j.base==null)continue;const tr=j.t.getBoundingClientRect();moves.push([j.t,j.base-tr.bottom])}
+  for(const [t,d] of moves)if(Math.abs(d)>0.2)t.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important');
+}
+let q=0;function sched(){if(q)return;q=requestAnimationFrame(()=>{q=0;fit()})}
+window.tileFit=fit;sched();addEventListener('resize',sched);document.addEventListener('change',()=>setTimeout(sched,0));document.addEventListener('click',()=>setTimeout(sched,0));
+if(document.fonts){document.fonts.ready.then(()=>{for(const k in FM)delete FM[k];sched()});document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',()=>{for(const k in FM)delete FM[k];sched()})}
+})();
+addEventListener('resize',()=>requestAnimationFrame(pfit));document.addEventListener('click',()=>requestAnimationFrame(pfit));
 document.addEventListener('click',e=>{const l=e.target.closest('.ddm label');if(l)setTimeout(()=>{l.closest('details').open=false},0);const o=document.querySelectorAll('details.dd[open]');o.forEach(d=>{if(!d.contains(e.target))d.open=false})});
 </script>
