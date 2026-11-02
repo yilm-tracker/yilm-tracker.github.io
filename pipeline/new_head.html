@@ -613,7 +613,7 @@ CMP_CSS
 .side{min-width:0}
 /* Scoring + detail: one quiet row */
 #tab-st:checked~.pane-st{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:8px}
-.pane-st>*:not(.tg):not(.dens){flex:0 0 100%}
+.pane-st>*:not(.tg):not(.dens):not(.tgl){flex:0 0 100%}
 .pane-st>.lr,.pane-st>.vr{flex:0 0 0 !important}
 .tg{display:inline-flex !important;grid-template-columns:none;background:var(--ink);border-radius:10px;padding:3px;gap:2px;margin:0 0 12px !important}
 .tg button,.tg .tb{flex:none !important;font-size:12.5px !important;font-weight:600;padding:6px 11px !important;border-radius:7px;line-height:1.15}
@@ -1098,19 +1098,20 @@ RO_CSS
   <nav class="tabs" aria-label="Sections"><label for="tab-st">Standings</label><label for="tab-lb">Leaderboards</label><label for="tab-sx">Stats</label><label for="tab-ro">Rosters</label><label for="tab-mu">Matchups</label><label for="tab-cm">Compare</label><label for="tab-po" class="tpo">Playoffs</label><label for="tab-th" class="tpo">Team Hub</label></nav>
   <div class="pane pane-st">
   <input type="radio" name="dens" id="dn-full" class="lr" checked><input type="radio" name="dens" id="dn-lean" class="lr">
+    <span class="tgl">Mode</span>
     <div class="tg" role="group" aria-label="Scoring format">
     <button id="bh" aria-pressed="true">H2H</button>
     <button id="bm" aria-pressed="false">Median</button>
   </div>
 
 
-  <div class="dens"><span>Detail</span><div class="pseg" role="group" aria-label="Detail level"><label for="dn-lean">Lean</label><label for="dn-full">Full</label></div></div>
+  <div class="dens"><span>Detail</span><div class="pseg" role="group" aria-label="Detail level"><label for="dn-lean">Dumb</label><label for="dn-full">Nerd</label></div></div>
   <div class="hint"></div>
   <div class="board" id="list"></div>
   <div class="glw"><span>Glossary</span><div class="pseg glc" role="group" aria-label="Glossary"><label for="gl-h">Hide</label><label for="gl-s">Show</label></div></div>
   <div class="key">
     <div><b>Tap a team</b> for weekly results and the remaining schedule.</div>
-    <div><b>Lean / Full</b> Lean keeps each team to its seed, record, streak, standings range, games back and the PF and PA lines; Full adds the rest of the stat lines and the season chart.</div>
+    <div><b>Mode: H2H / Median</b> standings by head-to-head record, or with the median win added (an extra win for the week's top-five scorers). <b>Detail: Dumb / Nerd</b> Dumb keeps each team to its seed, record, streak, standings range, games back and the PF and PA lines; Nerd adds the rest of the stat lines and the season chart.</div>
     <div><b>Season chart</b> one column per regular-season week. The bar is the team's score (green win, red loss) and the white tick is the opponent's score. When the opponent had the week's highest score its tick is gold with a white frame, and for the week's lowest burgundy with a white frame, matching the #1 and #10 tiles. <b>RANK</b> is where the team's score finished that week out of 10 (#1 gold, 2–3 green, 8–9 red, #10 red with an outline). <b>OPP</b> is where the opponent's score finished, in the same colours (so green there means your opponent scored well). Dashed columns are weeks still to play. <b>W / L chip</b> is the current streak.</div>
     <div><b>PF and PA bars</b> 10 segments, one per league rank: #1 fills all 10, #10 fills 1. Green ranks 1–3, red 8–10, grey otherwise (for PA, #1 is the most points against). <b>Luck bar</b> runs from a centre line: right is lucky, left is unlucky.</div>
     <div><b>Games back</b> how many games behind each line: <b>1st</b> place, <b>Bye</b> (2nd, the last bye spot) and <b>Play-Off</b> (6th, the last playoff spot). Only the lines a team is behind are shown.</div>

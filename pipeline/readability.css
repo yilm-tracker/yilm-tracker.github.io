@@ -637,3 +637,22 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .wkc .wb{position:relative}
 .wkc i.po+i.por{position:absolute;left:0;right:0;bottom:0;border-radius:3px 3px 3px 3px;background:var(--pylon);opacity:.38}
 .wkc .wv.pov{color:var(--pylon);opacity:.9}
+/* standings controls: bigger, with a Mode label beside H2H / Median */
+.pane-st .tgl{align-self:center;margin-right:8px;font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--steel)}
+.pane-st .tg button,.pane-st .tg .tb{font-size:15px!important;padding:9px 15px!important;border-radius:8px!important}
+.dens .pseg label{font-size:15px!important;padding:9px 15px!important;border-radius:8px!important}
+.dens>span{font-size:13px!important}
+/* no jump between Dumb and Nerd: the first row keeps its natural height in both */
+#dn-lean:checked~.board .r{grid-template-rows:auto min-content min-content min-content min-content 1fr!important}
+/* rank bars as dots: a short fixed run at the right, so the stat text gets the width (and a bigger size) */
+.sb{grid-template-columns:minmax(0,1fr) var(--dotw,97px)!important}
+.seg10{display:flex!important;gap:3px!important;justify-content:flex-end}
+.seg10 i{flex:none;width:7px!important;height:7px!important;border-radius:50%!important}
+.sb .trk{width:var(--dotw,97px);justify-self:end}
+.sb .stx .lb,.st .lb{font-size:calc(15px*var(--sbs,1))!important}
+.sb .stx .v,.sb .stx .pf,.st .v{font-size:calc(15px*var(--sbs,1))!important}
+.sb .stx .pw{font-size:calc(14px*var(--sbs,1))!important}
+.sb .stx:not(.spl){height:21px!important}
+@media(max-width:420px){.sb{--dotw:73px}.seg10{gap:1.8px!important}.seg10 i{width:5.6px!important;height:5.6px!important}}
+@media(max-width:380px){.sb{--dotw:58px;gap:5px!important}.seg10{gap:1.4px!important}.seg10 i{width:4.5px!important;height:4.5px!important}}
+/* sbFit (new_tail.js) lowers --sbs on the board until every stat line fits */
