@@ -157,24 +157,30 @@ function fit(){
     let mid=null,inline=false,zz=z;
     if(r.tn){const g=document.createRange();g.selectNodeContents(r.tn);const rr=g.getBoundingClientRect(),tr=t.getBoundingClientRect();zz=rr.height>0?rr.height/(m.asc+m.desc):z;const base=rr.top+m.asc*zz;mid=base-m.cap*z/2;inline=tr.bottom>rr.top&&tr.top<rr.bottom}
     if(!inline)continue;jobs.push({t,cap:m.cap,mid,inline,z:(r.tn&&mid!=null)?zz:z})}
-  for(const j of jobs){const s=j.t.style,oh=+j.t.dataset.oh,of=+j.t.dataset.of,c=Math.round(((j.cap+Math.max(oh,j.cap))/2)*2)/2;
-    s.setProperty('display','inline-flex','important');s.setProperty('align-items','center');s.setProperty('justify-content','center');
-    s.setProperty('height',c+'px','important');s.setProperty('min-height','0','important');s.setProperty('padding-top','0','important');s.setProperty('padding-bottom','0','important');
-    s.setProperty('line-height','1','important');s.setProperty('box-sizing','border-box','important');s.setProperty('transform','none','important');s.setProperty('top','0','important');
-    s.setProperty('min-width',Math.round(c*1.45)+'px','important');s.setProperty('padding-left','3px','important');s.setProperty('padding-right','3px','important');s.setProperty('vertical-align','baseline','important');
-    const ct=j.t.querySelector('.ct')||j.t,fs=Math.round(((of||c)+Math.min(11,j.cap*1.02))/2*2)/2;
-    if(ct!==j.t){ct.style.setProperty('font-size',fs+'px','important');ct.style.setProperty('line-height','1','important');ct.style.setProperty('display','block','important');ct.style.setProperty('height','auto','important')}
-    else s.setProperty('font-size',fs+'px','important')}
-  const moves=[];
-  for(const j of jobs){if(!j.inline||j.mid==null)continue;const tr=j.t.getBoundingClientRect();moves.push([j.t,(j.mid-(tr.top+tr.bottom)/2)/j.z])}
-  for(const [t,d] of moves)if(Math.abs(d)>0.2)t.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important');
+  for(const j of jobs){const oh=+j.t.dataset.oh,H=Math.round(((j.cap+Math.max(oh,j.cap))/2)*2)/2;inkTile(j.t,H)}
+  for(const j of jobs){const tr=j.t.getBoundingClientRect(),d=(j.mid-(tr.top+tr.bottom)/2)/j.z;if(Math.abs(d)>0.1)j.t.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important')}
 }
-// sim Finish tile: equal space from the digits' ink to the tile edge on all four sides
-function finFit(){if(!(window.CSS&&CSS.supports('text-box','trim-both cap alphabetic')))return;const P=5;
-document.querySelectorAll('.dso .rkb').forEach(k=>{if(!k.offsetParent)return;const cs=getComputedStyle(k);const c=document.createElement('canvas').getContext('2d');c.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;
- const m=c.measureText(k.textContent),H=c.measureText('H').actualBoundingBoxAscent;const s=k.style;
- const gl=-m.actualBoundingBoxLeft,gr=m.width-m.actualBoundingBoxRight,gt=H-m.actualBoundingBoxAscent,gb=-m.actualBoundingBoxDescent;
- s.setProperty('letter-spacing','0','important');s.setProperty('font-variant-numeric','normal','important');s.setProperty('font-feature-settings','normal','important');s.setProperty('padding',`${(P-gt).toFixed(2)}px ${(P-gr).toFixed(2)}px ${(P-Math.min(gb,P)).toFixed(2)}px ${(P-gl).toFixed(2)}px`,'important')})}
+// size one rank tile from the digits' ink: outer height H, the same gap from ink to edge on top and bottom, the same on
+// left and right, never closer than 2px to the frame (the number shrinks to make room); width fixed for two digits so a column lines up
+const INK=document.createElement('canvas').getContext('2d');
+function inkTile(t,H){if(!(window.CSS&&CSS.supports('text-box','trim-both cap alphabetic')))return false;
+  const txt=t.textContent.trim();if(!txt)return false;const cs=getComputedStyle(t.querySelector('.ct')||t),fam=cs.fontFamily,wt=cs.fontWeight;
+  const P=Math.max(2.5,Math.min(3.5,(H-6)/2)),cap=H-2*P;
+  INK.font=`${wt} 100px ${fam}`;const fs=Math.round(cap/(INK.measureText('H').actualBoundingBoxAscent/100)*4)/4;
+  INK.font=`${wt} ${fs}px ${fam}`;const m=INK.measureText(txt),m2=INK.measureText('88'),Hc=INK.measureText('H').actualBoundingBoxAscent;
+  const iw=m.actualBoundingBoxLeft+m.actualBoundingBoxRight,iw2=m2.actualBoundingBoxLeft+m2.actualBoundingBoxRight,W=Math.max(iw,iw2)+2*(P+0.5);
+  const gl=m.actualBoundingBoxLeft*-1,gr=m.width-m.actualBoundingBoxRight,gt=Hc-m.actualBoundingBoxAscent,gb=-m.actualBoundingBoxDescent;
+  const s=t.style,set=(k,v)=>s.setProperty(k,v,'important');
+  set('display','inline-block');set('text-box','trim-both cap alphabetic');set('line-height','1');set('height','auto');set('min-height','0');set('min-width','0');set('width','auto');
+  set('box-sizing','content-box');set('font-size',fs+'px');set('letter-spacing','0');set('font-variant-numeric','normal');set('font-feature-settings','normal');set('top','0');set('transform','none');set('vertical-align','baseline');
+  set('padding',`${(P-gt).toFixed(2)}px ${((W-iw)/2-gr).toFixed(2)}px ${(P-gb).toFixed(2)}px ${((W-iw)/2-gl).toFixed(2)}px`);
+  const ct=t.querySelector('.ct');if(ct){for(const [k,v] of [['font-size','inherit'],['line-height','1'],['display','inline'],['height','auto'],['letter-spacing','0'],['font-variant-numeric','normal'],['text-box','none']])ct.style.setProperty(k,v,'important')}
+  return true}
+// sim Finish tile: as tall as the projection figures beside it (the 2%), sitting level with them
+function finFit(){document.querySelectorAll('.dso .rkb').forEach(k=>{if(!k.offsetParent)return;const v=k.closest('.dpc').nextElementSibling;const vs=v&&v.querySelector('span');if(!vs)return;
+  const cs=getComputedStyle(vs),fm0=fm(cs),z=k.currentCSSZoom||1;if(!inkTile(k,Math.round(fm0.cap*2)/2))return;
+  const g=document.createRange();g.selectNodeContents(vs);const rr=g.getBoundingClientRect(),zz=rr.height/(fm0.asc+fm0.desc),base=rr.top+fm0.asc*zz,mid=base-fm0.cap*zz/2;
+  const kr=k.getBoundingClientRect(),d=(mid-(kr.top+kr.bottom)/2)/zz;k.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important')})}
 // matchup points bar: pinned under the tabs while you scroll the lineups, and slimmed down once pinned
 (function(){const nav=document.querySelector('nav.tabs');let h0=new WeakMap(),raf=0;
 function navh(){const v=nav&&getComputedStyle(nav).position==='sticky'?Math.round(nav.getBoundingClientRect().height):0;document.documentElement.style.setProperty('--navh',v+'px');return v}
