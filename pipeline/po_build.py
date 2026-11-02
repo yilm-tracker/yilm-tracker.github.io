@@ -28,7 +28,7 @@ SHORT0=dict(SHORT);SHORT={k:k for k in SHORT}  # full team names everywhere; SHO
 FULL=dict(lg.FULL)
 WEEKS=[15,16,17];RND={15:'Wild Card',16:'Semi Finals',17:'Championship'}
 tone=lg.tone
-chip=lambda r:f'<i class="ch {tone(r)}"><span class="ct">#{r}</span></i>'
+chip=lambda r:f'<i class="ch {tone(r)}"><span class="ct">{r}</span></i>'
 seed=lambda t:H.index(t)+1
 def age(pid):
     b=AGE.get(pid)
@@ -158,7 +158,7 @@ import po_radial
 def fcard(a,b,w,label):
     xa,xb=AW[(a,w)],AW[(b,w)];wa=xa>xb
     side=lambda x,v,cl,won:(f'<div class="mus {cl}"><span class="hres {"w" if won else "l"}">{"WON" if won else "LOST"}</span><b>{e(x)}</b>'
-        f'<span class="hsc">{v:.1f}</span><span class="hrk">Seed <i class="ch {tone(seed(x))}"><span class="ct">#{seed(x)}</span></i></span></div>')
+        f'<span class="hsc">{v:.1f}</span><span class="hrk">Seed <i class="ch {tone(seed(x))}"><span class="ct">{seed(x)}</span></i></span></div>')
     return (f'<div class="mcard"><div class="mch"><span>{label}</span></div>'
             f'<div class="mvs">{side(a,xa,"msl",wa)}<span class="mv2">vs</span>{side(b,xb,"msr",not wa)}</div>'
             f'<div class="hmar">Margin <b>{abs(xa-xb):.1f}</b></div></div>')

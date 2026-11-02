@@ -35,7 +35,7 @@ for k,lab,f,disp,low in STATS:
     order=sorted(teams,key=lambda t:(vals[t] if low else -vals[t],-T[t][3]))
     rk=lambda t:1+sum((vals[x]<vals[t]-1e-9) if low else (vals[x]>vals[t]+1e-9) for x in teams)
     tie=lambda t:sum(abs(vals[x]-vals[t])<1e-9 for x in teams)>1
-    rws=''.join(f'<div class="lbr"><i class="ch {tone(rk(t))}"><span class="ct">{"T" if tie(t) else "#"}{rk(t)}</span></i><span class="lbn">{t}</span><span class="lbv">{disp(t)}</span></div>' for t in order)
+    rws=''.join(f'<div class="lbr"><i class="ch {tone(rk(t))}"><span class="ct">{"T" if tie(t) else ""}{rk(t)}</span></i><span class="lbn">{t}</span><span class="lbv">{disp(t)}</span></div>' for t in order)
     out.append(f'<div class="lbt lbt-{k}"><div class="lbd">{DESC[k]}</div>{rws}</div>')
     css.append(f'#lb-{k}:checked~.lbc label[for="lb-{k}"]{{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}}#lb-{k}:checked~.lbt-{k}{{display:block}}')
 out.append('</section>')

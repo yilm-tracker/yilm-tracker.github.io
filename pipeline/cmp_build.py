@@ -29,7 +29,7 @@ _K=json.load(open(P+'kick.json')).get('1',{})
 OPEN=min((int(_dtm.fromisoformat(v[0]).timestamp()*1000) for v in _K.values() if v and v[0]),default=1788800000000)-86400000
 seed=lambda t:H.index(t)+1
 tone=lg.tone
-chip=lambda r:f'<i class="ch {tone(r)}"><span class="ct">#{r}</span></i>'
+chip=lambda r:f'<i class="ch {tone(r)}"><span class="ct">{r}</span></i>'
 form=lambda t:''.join(f'<i class="fm {"w" if x[2]>x[3] else "l"}"></i>' for x in WK[t][-5:])
 SUF={'Jr.','Sr.','II','III','IV','V'}
 def last(n):

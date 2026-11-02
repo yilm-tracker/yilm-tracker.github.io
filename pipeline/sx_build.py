@@ -189,7 +189,7 @@ def m_cons():
     X=lambda v:2+(v-lo)/(hi-lo)*96
     def rnk(k,t):v=S[t][k];return 1+sum(1 for u in TEAMS if S[u][k]>v+1e-9)
     tn=lambda r:'gold' if r==1 else 'g' if r<=3 else 'b last' if r==N else 'b' if r>N-3 else ''
-    chip=lambda r:f'<i class="ch {tn(r)}"><span class="ct">#{r}</span></i>'
+    chip=lambda r:f'<i class="ch {tn(r)}"><span class="ct">{r}</span></i>'
     for i,t in enumerate(order):
         x=S[t]
         dots=''.join(f'<i class="cd {"w" if g[2]>g[3] else "l"}" style="left:{X(g[2]):.2f}%"></i>' for g in x['g'])

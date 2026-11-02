@@ -11,7 +11,7 @@ const rankOf=(v,i,low)=>1+V.filter(d=>low?d[i]<v-1e-9:d[i]>v+1e-9).length;
 const tied=(v,i)=>V.filter(d=>Math.abs(d[i]-v)<1e-9).length>1;
 const tone=r=>r==1?'gold':r<=3?'g':r>=NT?'b last':r>NT-3?'b':'';
 const rkt=(v,dp)=>`<b class="rkt ${tone(Math.round(v))}">${dp?v.toFixed(dp):v}</b>`;
-const chip=(r,t)=>`<span class="ch ${tone(r)}"><span class="ct">${t?'T':'#'}${r}</span></span>`;
+const chip=(r,t)=>`<span class="ch ${tone(r)}"><span class="ct">${t?'T':''}${r}</span></span>`;
 const luck=v=>`${v>0?'+':v<0?'−':''}${Math.abs(v).toFixed(2)}`;
 const seg=r=>`<div class="seg10 ${tone(r)}" role="img" aria-label="Rank ${r} of ${NT}">${Array.from({length:NT},(_,k)=>`<i${k<NT+1-r?' class="on"':''}></i>`).join('')}</div>`;
 const rankSk=t=>1+Object.values(SK).filter(v=>v[0]>SK[t][0]+1e-9).length;

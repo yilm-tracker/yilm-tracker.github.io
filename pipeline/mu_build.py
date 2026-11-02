@@ -17,7 +17,7 @@ FULL=dict(lg.FULL)
 e=html.escape;DONE=len(WK[H[0]]);W=DONE+1
 seed=lambda t:H.index(t)+1
 tone=lg.tone
-chip=lambda r:f'<i class="ch {tone(r)}"><span class="ct">#{r}</span></i>'
+chip=lambda r:f'<i class="ch {tone(r)}"><span class="ct">{r}</span></i>'
 def rec(t):return f'{T[t][0]}-{T[t][1]}'
 ORD=['QB','RB','WR','TE','K','DEF']
 def byes(t,w):return sorted([p for p in R[t] if not p[7] and BYE.get(p[3])==w],key=lambda p:(ORD.index(p[2]),-p[4]))
@@ -361,7 +361,7 @@ def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=No
         else:lab,cls,wd=(f'{pw}% win','w' if pw>50 else 'l' if pw<50 else 'e',pw)
         av=f'<i class="av g4a av-{_AVR[t]}" aria-hidden="true"></i>' if t in _AVR else ''
         return (f'<span class="gs {cl}">'
-                f'<span class="g4t">{av}<i class="gsd {tone(r) if not final else ""}" title="{"Week score rank" if final else "Seed"}">#{r}</i><span class="g4o" title="Pre-game projection">{"" if og is None else f"({og:.1f})"}</span>'
+                f'<span class="g4t">{av}<i class="gsd {tone(r) if not final else ""}" title="{"Week score rank" if final else "Seed"}">{r}</i><span class="g4o" title="Pre-game projection">{"" if og is None else f"({og:.1f})"}</span>'
                 f'<span class="sc{" hi" if hi else ""}" data-r="{RID[t]}">{v:.1f}</span>'
                 f'<span class="gpj{" fz" if low=="Final" else ""}" title="{"" if low=="Final" else "Live projection"}">{low}</span></span>'
                 f'<span class="g4w"><span class="g4p {cls}">{lab}</span><span class="g4b"><i class="{cls}" style="width:{wd}%"></i></span></span>'
@@ -419,7 +419,7 @@ def hlineups(A,B):
 def hcard(w,a,b,A,B):
     xa=WK[a][w-1];xb=WK[b][w-1]
     side=lambda x,X,cl,won:(f'<div class="mus {cl}"><span class="hres {"w" if won else "l"}">{"WON" if won else "LOST"}</span><b>{e(x)}</b>'
-        f'<span class="hsc">{X[1]:.1f}</span><span class="hrk">Week rank <i class="ch {tone(xa[4] if x==a else xb[4])}"><span class="ct">#{xa[4] if x==a else xb[4]}</span></i></span></div>')
+        f'<span class="hsc">{X[1]:.1f}</span><span class="hrk">Week rank <i class="ch {tone(xa[4] if x==a else xb[4])}"><span class="ct">{xa[4] if x==a else xb[4]}</span></i></span></div>')
     wa=A[1]>B[1]
     return (f'<div class="mcard"><div class="mch"><span>Week {w} · Final</span></div>'
             f'<div class="mvs">{side(a,A,"msl",wa)}<span class="mv2">vs</span>{side(b,B,"msr",not wa)}</div>'
