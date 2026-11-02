@@ -74,7 +74,6 @@ if _ss.get('bonus_rec_te'):_fmt.append(f"TE +{_ss['bonus_rec_te']:g}")
 h=h.replace('<title>Official Dynasty League</title>',f'<title>{html_esc(_lgb.NAME)}</title>',1)
 h=h.replace('<div class="eyebrow">Official</div>','<div class="eyebrow">In-office fantasy league</div>',1)
 h=h.replace('<h1>The League</h1>','<h1 class="yh"><span class="y1">Your</span> <span class="y2">Idiot</span> <span class="y3">Leaguemates</span></h1>',1)
-h=h.replace('<div class="season" ',f'<div class="fmt">{" · ".join(_fmt)}</div>\n    <div class="season" ',1)
 _av='';_avr={}
 import base64 as _b64x,io as _io
 def _hd(_t,px=160):

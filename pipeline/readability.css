@@ -619,3 +619,8 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .mpk label.g4{box-shadow:var(--dsh2)}
 :root{--pg:#122437}body{background:var(--pg)}.rox .rofb .rfi{background-color:transparent!important;border-radius:0!important;background-size:contain!important;box-shadow:none!important;outline:0!important}
 .tabs{background:var(--pg,var(--ink))!important}nav.tabs label{box-shadow:var(--dsh2)}
+
+/* season-sim Finish: plain coloured figure, same size as the odds beside it */
+.dpc.so .sof.gold{color:#f4c451!important}.dpc.so .sof.g{color:var(--win)!important}.dpc.so .sof.b{color:var(--loss)!important}
+/* palette B: dark navy page, lifted blue panels so the shadows read */
+:root{--pg:#101d2b;--ink:#15263a;--deck:#203a55;--deck-2:#274462;--hair:#30506f;--line-strong:#3f6385}
