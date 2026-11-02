@@ -156,7 +156,7 @@ function fit(){
     if(!t.dataset.oh){const ct0=t.querySelector('.ct')||t;t.dataset.oh=t.getBoundingClientRect().height/z;t.dataset.of=parseFloat(getComputedStyle(ct0).fontSize)}
     let mid=null,inline=false,zz=z;
     if(r.tn){const g=document.createRange();g.selectNodeContents(r.tn);const rr=g.getBoundingClientRect(),tr=t.getBoundingClientRect();zz=rr.height>0?rr.height/(m.asc+m.desc):z;const base=rr.top+m.asc*zz;mid=base-m.cap*z/2;inline=tr.bottom>rr.top&&tr.top<rr.bottom}
-    jobs.push({t,cap:m.cap,mid,inline,z:(r.tn&&mid!=null)?zz:z})}
+    if(!inline)continue;jobs.push({t,cap:m.cap,mid,inline,z:(r.tn&&mid!=null)?zz:z})}
   for(const j of jobs){const s=j.t.style,oh=+j.t.dataset.oh,of=+j.t.dataset.of,c=Math.round(((j.cap+Math.max(oh,j.cap))/2)*2)/2;
     s.setProperty('display','inline-flex','important');s.setProperty('align-items','center');s.setProperty('justify-content','center');
     s.setProperty('height',c+'px','important');s.setProperty('min-height','0','important');s.setProperty('padding-top','0','important');s.setProperty('padding-bottom','0','important');

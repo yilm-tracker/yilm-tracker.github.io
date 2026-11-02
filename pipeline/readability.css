@@ -582,3 +582,4 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .tqdp .ch{font-style:normal}.tqdp:not(:has(>div:nth-child(5))){grid-template-columns:repeat(4,minmax(0,1fr))}
 .dtt td .ch{display:inline-flex!important;align-items:center;justify-content:center;overflow:hidden;font-size:inherit!important;height:.7em!important;min-width:1.25em!important;padding:0 .2em!important;line-height:1!important;vertical-align:baseline!important;box-sizing:border-box}.dtt td .ch .ct{font-size:9.5px!important;line-height:1!important;display:block!important}
 .dtt td .ch{position:relative;top:-.125em!important;height:.73em!important}
+.dso .rkt{font-size:inherit!important;line-height:1.1!important;padding:1px 4px!important}
