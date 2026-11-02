@@ -566,3 +566,5 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .dtt td .ch{min-width:23px!important;padding:0 3px!important;margin-left:4px;font-size:9px!important;line-height:1.15!important;border-radius:2.5px}
 .ch{min-width:20px!important}.pr .ch{min-width:22px!important}
 .dtt td .ch{min-width:19px!important;padding:2px 3px!important;font-size:10px!important;line-height:10px!important;border-radius:3px}
+@media (max-width:1099px){.pr{grid-template-columns:54px repeat(var(--np,6),minmax(0,1fr))!important}.pr>span[role="rowheader"]{display:flex;align-items:center;gap:6px;overflow:visible}.pr>span[role="rowheader"] em{width:auto;min-width:14px;text-align:center}.pr .pav{display:block;flex:none;width:28px;height:28px;border-radius:50%;background-color:var(--deck-2);background-position:center;background-size:cover;background-repeat:no-repeat;box-shadow:0 0 0 1px var(--hair)}.pr .psn{display:none}.pr .pav.nl{display:none}.pr .pav.nl+.psn{display:inline;overflow:hidden;text-overflow:ellipsis}}
+@media (max-width:380px){.pr .pav{width:24px;height:24px}.pr{grid-template-columns:48px repeat(var(--np,6),minmax(0,1fr))!important}}
