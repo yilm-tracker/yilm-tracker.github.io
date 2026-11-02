@@ -122,6 +122,10 @@ def run():
             out[:,IDX[t]]=x.sum(1)
         return out
     PRE=pregame() if LW else None;pre=[]
+    if LW and FPW:
+        st_=[p for o in LW['out'].values() for p in o['st'] if p and p[4]>0];hit=[p for p in st_ if p[0] in FPW]
+        sys.stderr.write(f"psim pregame: FantasyPros lines for {len(hit)}/{len(st_)} starters; FantasyPros minus Sleeper per starter {sum(FPW[p[0]]-p[4] for p in hit)/max(1,len(hit)):+.2f}, "
+                         f"per team {', '.join(f'{t[:10]} {sum(_blend(p) for p in LW['out'][str(D.RID[t])]['st'] if p and p[4]>0)-sum(p[4] for p in LW['out'][str(D.RID[t])]['st'] if p and p[4]>0):+.1f}' for t in TEAMS)}\n")
     W=np.tile(np.array([D.T[t][0] for t in TEAMS],float),(n,1));PF=np.tile(np.array([D.T[t][3] for t in TEAMS],float),(n,1))
     games=[]
     for w in weeks:
