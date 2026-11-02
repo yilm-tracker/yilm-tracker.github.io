@@ -40,11 +40,18 @@ if False:  # (dynasty tracker only) TeamHub link
 # year switch in the top-right corner, above the countdown; absolutely placed, so the header grid is unchanged
 if len(YEARS)>1:
     href=lambda y:('./' if not PAST else '../') if y==CUR else (('' if not PAST else '../')+y+'/')
-    sw='<nav class="yrs" aria-label="Season">'+''.join(f'<a href="{href(y)}"'+(' class="on" aria-current="page"' if y==Y else '')+f'>{y}</a>' for y in sorted(YEARS))+'</nav>'
-    s=s.replace('<h1',sw+'<h1',1)
-    s=s.replace('</style>','header{position:relative}.yrs{position:absolute;top:-17px;right:0;display:inline-flex;gap:2px;padding:2px;border:1px solid var(--hair);border-radius:999px;background:var(--ink)}'
-      '.yrs a{position:relative;display:block;padding:4px 8px 3px;border-radius:999px;font:700 11.5px/1 var(--display);letter-spacing:.06em;color:var(--steel);text-decoration:none;font-variant-numeric:tabular-nums}'
-      '.yrs a.on{background:var(--chalk);color:var(--ink)}.yrs a:not(.on):hover{color:var(--chalk)}.yrs a::after{content:"";position:absolute;inset:-8px -2px}</style>',1)
+    # one button per season; a finished season shows its champion underneath (pipeline/champions.json: {"year": "team"})
+    import json as _jc,html as _hc
+    CH=_jc.load(open(P+'champions.json',encoding='utf-8')) if os.path.exists(P+'champions.json') else {}
+    sw='<nav class="yrs" aria-label="Season">'+''.join(f'<a class="yb{" on" if y==Y else ""}" href="{href(y)}"'+(' aria-current="page"' if y==Y else '')+f'><b>{y}</b><small>{_hc.escape(CH[y]) if y in CH else ("In progress" if y==CUR else "")}</small></a>' for y in sorted(YEARS))+'</nav>'
+    s=s.replace('<header>',sw+'<header>',1)  # its own row above the header, so it never sits on the title or the countdown
+    s=s.replace('</style>','.yrs{display:flex;justify-content:flex-end;gap:8px;align-items:flex-start;margin:0 0 6px}'
+      '.yrs .yb{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;text-decoration:none}'
+      '.yrs .yb b{display:block;width:100%;box-sizing:border-box;padding:5px 0 4px;text-align:center;border-radius:8px;border:1px solid var(--hair);background:var(--deck);box-shadow:var(--dsh2);'
+      'font:700 12.5px/1 var(--display);letter-spacing:.06em;color:var(--label);font-variant-numeric:tabular-nums}'
+      '.yrs .yb.on b{background:var(--chalk);border-color:var(--chalk);color:var(--ink)}.yrs .yb:not(.on):hover b{color:var(--chalk);border-color:var(--line-strong)}'
+      '.yrs .yb small{display:block;white-space:nowrap;font:600 10.5px/1.15 var(--body);color:var(--steel);text-align:center}'
+      '.yrs .yb small:empty{display:none}.yrs .yb:not(.on) small{color:#c9a15a}</style>',1)
 open(os.path.join(OUT,'index.html'),'w',encoding='utf-8').write(s)
 shutil.copy(P+'DynastyStandings.html',os.path.join(OUT,'DynastyStandings.html'))
 open(os.path.join(OUT,'.nojekyll'),'w').close()

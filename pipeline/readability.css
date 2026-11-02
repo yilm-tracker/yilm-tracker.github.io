@@ -624,3 +624,7 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .dpc.so .sof.gold{color:#f4c451!important}.dpc.so .sof.g{color:var(--win)!important}.dpc.so .sof.b{color:var(--loss)!important}
 /* palette B: dark navy page, lifted blue panels so the shadows read */
 :root{--pg:#101d2b;--ink:#15263a;--deck:#203a55;--deck-2:#274462;--hair:#30506f;--line-strong:#3f6385}
+/* matchup card: no rule under the slate summary; the next player tile has its own frame */
+.mcr.sltw{border-bottom:0!important}
+/* standings face sized to the name cap line → Hi/Lo baseline (ravFit sets --ravh); text keeps a 9px gap to it */
+.board .r.hav>.nm,.board .r.hav>.hl{padding-left:calc(var(--ravh,40px) + 9px)!important}
