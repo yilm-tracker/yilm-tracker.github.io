@@ -27,6 +27,9 @@ OPP={t:{x[0]:FS.get(x[1],x[1]) for x in WK[t]} for t in TEAMS}
 for t in TEAMS:
     for f in FUT[t]:OPP[t][f[0]]=FS.get(f[1],f[1])
 REG=14
+try:
+    import lg as _lgx;PON_,BYN_=_lgx.PO,_lgx.BYE_N
+except Exception:PON_,BYN_=6,2
 SER={t:dict(pts=[],res=[],stand=[],pfr=[],ap=[],luck=[],wins=[],xw=[]) for t in TEAMS}
 for t in TEAMS:
     w_=xw=apw=apl=0
@@ -216,21 +219,100 @@ def odds_chart(s):
     leg='<span class="tlg3">'+''.join(f'<span class="{c}"><i></i>{lab}</span>' for _,lab,c in L)+'</span>'
     return (f'<div class="tch"><div class="tchh"><span>Playoff odds</span>{ro}</div>{leg}'
             f'<svg viewBox="0 0 {VW} {VH}" class="tsvg" role="img" aria-label="Playoff, bye and number one seed odds by week">{"".join(g)}</svg></div>')
+# ---------------------------------------------------------------- extra weekly series for Trends
+POS4=['QB','RB','WR','TE']
+for t in TEAMS:
+    s=SER[t];s['srk']=[];s['par']=[];s['eff']=[];s['proj']=[];s['pos']={p_:[] for p_ in POS4}
+for k in range(1,G+1):
+    cpa={t:sum(SC[OPP[t][j]][j] for j in range(1,k+1)) for t in TEAMS}
+    lu={t:D.lineup(t,k) for t in TEAMS}
+    pp={t:{p_:sum(q['pts'] for q in lu[t][0] if q and q['pos']==p_) for p_ in POS4} for t in TEAMS}
+    for t in TEAMS:
+        s=SER[t];me=SC[t][k]
+        s['srk'].append(1+sum(1 for o in TEAMS if SC[o][k]>me+1e-9));s['par'].append(crank(cpa,t))
+        st_,bn_=lu[t];best=sum(q['pts'] for q in D.optimal([q for q in st_+bn_ if q]) if q)
+        s['eff'].append(100*sum(q['pts'] for q in st_ if q)/best if best else 100.0)
+        s['proj'].append(sum(q.get('proj',0) or 0 for q in st_ if q))
+        for p_ in POS4:s['pos'][p_].append(pp[t][p_]-st.mean(pp[u][p_] for u in TEAMS))
+LGEFF=[st.mean(SER[t]['eff'][k] for t in TEAMS) for k in range(G)]
+# power score: all-play win % to date (60%) and the last three weeks' all-play win % (40%); ranked each week
+for k in range(1,G+1):
+    pw={}
+    for t in TEAMS:
+        rec=[(sum(1 for o in TEAMS if o!=t and SC[o][j]<SC[t][j]))/(N-1) for j in range(1,k+1)]
+        pw[t]=0.6*sum(rec)/len(rec)+0.4*sum(rec[-3:])/len(rec[-3:])
+    for t in TEAMS:SER[t].setdefault('pwr',[]).append(crank(pw,t))
+def rtile(txt,cls=''):
+    """a rank readout as a tile (sized from the digits by inkTile on the page)"""
+    return f'<i class="tqt {cls}" data-h="20"><span class="ct">{txt}</span></i>'
+def stier(r):return 'tby' if r<=BYN_ else 'tpo' if r<=PON_ else ''
+def multi_chart(key,title,series,lo,hi,ticks,tickfmt,readout,zero=None,ref=None,refl=''):
+    """several lines on one chart (series = [(label, values, css class)])"""
+    Y=lambda v:VH-PB-(VH-PT-PB)*(v-lo)/(hi-lo)
+    g=[f'<line class="tgl" x1="{PL}" x2="{VW-PR}" y1="{Y(tv):.1f}" y2="{Y(tv):.1f}"/><text class="tax" x="{PL-6}" y="{Y(tv)+3.5:.1f}" text-anchor="end">{tickfmt(tv)}</text>' for tv in ticks]
+    if zero is not None:g.append(f'<line class="tzero" x1="{PL}" x2="{VW-PR}" y1="{Y(zero):.1f}" y2="{Y(zero):.1f}"/>')
+    g+=[f'<text class="tax" x="{xs(k):.1f}" y="{VH-4}" text-anchor="middle">{k}</text>' for k in range(1,G+1)]
+    if ref:g.append('<path class="tref" d="M'+' L'.join(f'{xs(k):.1f} {Y(v):.1f}' for k,v in enumerate(ref,1))+'"/>')
+    for _,vals,c in series:
+        g.append(f'<path class="tline {c}" d="M'+' L'.join(f'{xs(k):.1f} {Y(v):.1f}' for k,v in enumerate(vals,1))+'"/>')
+    for k in range(1,G+1):
+        g.append(f'<g class="twm twm-{k}"><line class="tcur" x1="{xs(k):.1f}" x2="{xs(k):.1f}" y1="{PT-4}" y2="{VH-PB}"/>'
+                 +''.join(f'<circle class="tsel {c}" cx="{xs(k):.1f}" cy="{Y(vals[k-1]):.1f}" r="4.5"/>' for _,vals,c in series)+'</g>')
+    ro=''.join(f'<span class="tro tro-{k} trm">{readout(k)}</span>' for k in range(1,G+1))
+    leg='<span class="tlg3">'+''.join(f'<span class="{c}"><i></i>{lab}</span>' for lab,_,c in series)+(f'<span class="tref"><i></i>{refl}</span>' if refl else '')+'</span>'
+    return (f'<div class="tch"><div class="tchh"><span>{title}</span>{ro}</div>{leg}'
+            f'<svg viewBox="0 0 {VW} {VH}" class="tsvg" role="img" aria-label="{e(title)} by week">{"".join(g)}</svg></div>')
+def bands_chart(s):
+    """playoff / bye / #1 odds as nested bands: every #1 seed has a bye and every bye team is in the playoffs, so each band
+    is the chance to finish in exactly that tier; blank above = out"""
+    Y=lambda v:VH-PB-(VH-PT-PB)*v/100
+    L=[('po','Playoffs','b1'),('bye','Bye','b2'),('top','#1 seed','b3')]
+    g=[f'<line class="tgl" x1="{PL}" x2="{VW-PR}" y1="{Y(tv):.1f}" y2="{Y(tv):.1f}"/><text class="tax" x="{PL-6}" y="{Y(tv)+3.5:.1f}" text-anchor="end">{tv}%</text>' for tv in (0,50,100)]
+    g+=[f'<text class="tax" x="{xs(k):.1f}" y="{VH-4}" text-anchor="middle">{k}</text>' for k in range(1,G+1)]
+    for key,_,c in L:
+        pts_=' '.join(f'{xs(k):.1f},{Y(v):.1f}' for k,v in enumerate(s[key],1))
+        g.append(f'<polygon class="tband {c}" points="{xs(1):.1f},{Y(0):.1f} {pts_} {xs(G):.1f},{Y(0):.1f}"/>')
+        g.append(f'<path class="tline {c}" d="M'+' L'.join(f'{xs(k):.1f} {Y(v):.1f}' for k,v in enumerate(s[key],1))+'"/>')
+    for k in range(1,G+1):
+        g.append(f'<g class="twm twm-{k}"><line class="tcur" x1="{xs(k):.1f}" x2="{xs(k):.1f}" y1="{PT-4}" y2="{VH-PB}"/>'
+                 +''.join(f'<circle class="tsel {c}" cx="{xs(k):.1f}" cy="{Y(s[key][k-1]):.1f}" r="4.5"/>' for key,_,c in L)+'</g>')
+    pc=lambda v:('>99' if 99<v<99.95 else '<1' if 0.05<v<1 else f'{v:.0f}')
+    ro=''.join(f'<span class="tro tro-{k} trm">'+''.join(f'<b class="{c}">{pc(s[key][k-1])}<small>%</small></b>' for key,_,c in L)+'</span>' for k in range(1,G+1))
+    leg='<span class="tlg3">'+''.join(f'<span class="{c}"><i></i>{lab}</span>' for _,lab,c in L)+'</span>'
+    return (f'<div class="tch"><div class="tchh"><span>Playoff odds</span>{ro}</div>{leg}'
+            f'<svg viewBox="0 0 {VW} {VH}" class="tsvg" role="img" aria-label="Playoff, bye and number one seed odds by week">{"".join(g)}</svg></div>')
 def trends_view(t):
     s=SER[t]
-    pts=s['pts'];lo=math.floor(min(pts+LGMED)/20)*20;hi=math.ceil(max(pts+LGMED)/20)*20
-    ch=[chart('pts','Points scored',pts,lo,hi,None,list(range(lo,hi+1,20 if hi-lo<=100 else 40)),ref=LGMED,refl='league median',
+    pts=s['pts'];lo=math.floor(min(pts+LGMED+s['proj'])/20)*20;hi=math.ceil(max(pts+LGMED+s['proj'])/20)*20
+    rt=lambda v:list(range(lo,hi+1,20 if hi-lo<=100 else 40))
+    rk_ticks=sorted({1,4,7,10,N})
+    ch=[chart('pts','Points scored',pts,lo,hi,None,rt(0),ref=LGMED,refl='league median',
               dots=[r.lower() for r in s['res']],readout=lambda k:f'{pts[k-1]:.1f} <small class="{s["res"][k-1].lower()}">{s["res"][k-1]}</small>'),
-        chart('st','Standings',s['stand'],1,N,None,[1,4,7,10],inv=True,seeds=True,readout=lambda k:ordn(s['stand'][k-1]),tickfmt=lambda v:ordn(v)),
-        chart('pfr','Points-for rank',s['pfr'],1,N,None,[1,4,7,10],inv=True,readout=lambda k:ordn(s['pfr'][k-1]),tickfmt=lambda v:ordn(v)),
+        chart('srk','Weekly score rank',s['srk'],1,N,None,rk_ticks,inv=True,readout=lambda k:rtile(s['srk'][k-1],tone(s['srk'][k-1])),tickfmt=lambda v:ordn(v)),
+        chart('st','Standings',s['stand'],1,N,None,rk_ticks,inv=True,seeds=True,readout=lambda k:rtile(ordn(s['stand'][k-1]),stier(s['stand'][k-1])),tickfmt=lambda v:ordn(v)),
+        multi_chart('pwr','Power rank vs seed',[('Power',s['pwr'],'c1'),('Seed',s['stand'],'c4')],N,1,rk_ticks,lambda v:ordn(v),
+              lambda k:f'{rtile(ordn(s["pwr"][k-1]),tone(s["pwr"][k-1]))}<small>power</small> {rtile(ordn(s["stand"][k-1]),stier(s["stand"][k-1]))}<small>seed</small>'),
+        multi_chart('pfpa','Points-for and against rank',[('PF',s['pfr'],'c1'),('PA',s['par'],'c5')],N,1,rk_ticks,lambda v:ordn(v),
+              lambda k:f'{rtile(ordn(s["pfr"][k-1]),tone(s["pfr"][k-1]))}<small>PF</small> {rtile(ordn(s["par"][k-1]),tone(s["par"][k-1]))}<small>PA</small>'),
         chart('ap','All-play win %',s['ap'],0,100,None,[0,50,100],readout=lambda k:f'{s["ap"][k-1]:.0f}<small>%</small>',tickfmt=lambda v:f'{v}%'),
         chart('lk','Luck · wins minus expected',s['luck'],min(-2,math.floor(min(s['luck']))),max(2,math.ceil(max(s['luck']))),None,
               sorted({min(-2,math.floor(min(s['luck']))),0,max(2,math.ceil(max(s['luck'])))}),zero=0,area=True,
               readout=lambda k:f'{sg(s["luck"][k-1],2)} <small>{s["wins"][k-1]} W · {s["xw"][k-1]:.2f} xW</small>',tickfmt=lambda v:sg(v,0) if v else '0'),
-        odds_chart(s),
-        chart('fin','Projected finish',s['fin'],1,N,None,[1,4,7,10],inv=True,seeds=True,readout=lambda k:f'{s["fin"][k-1]:.1f} <small>avg finish</small>',tickfmt=lambda v:ordn(v))]
-    rc=''.join(f'<div class="trc trc-{k}"><span>Week {k}</span><b>{s["res"][k-1]} {pts[k-1]:.1f}–{SC[OPP[t][k]][k]:.1f}</b><em>vs {e(SHORT0.get(OPP[t][k],OPP[t][k]))}</em></div>' for k in range(1,G+1))
-    return f'<div class="trd">{rc}</div><div class="tcs">{"".join(ch)}</div>'
+        multi_chart('pva','Projected vs actual',[('Actual',pts,'c1'),('Projected',s['proj'],'c4')],lo,hi,rt(0),str,
+              lambda k:f'<b class="c1">{pts[k-1]:.1f}</b><b class="c4">{s["proj"][k-1]:.1f}</b><small>{sg(pts[k-1]-s["proj"][k-1])}</small>'),
+        chart('eff','Lineup efficiency',s['eff'],min(70,math.floor(min(s['eff']+LGEFF)/10)*10),100,None,
+              sorted({min(70,math.floor(min(s['eff']+LGEFF)/10)*10),85,100}),ref=LGEFF,refl='league avg',readout=lambda k:f'{s["eff"][k-1]:.0f}<small>%</small>',tickfmt=lambda v:f'{v}%'),
+        multi_chart('pos','Position strength',[(p_,s['pos'][p_],'p-'+p_.lower()) for p_ in POS4],
+              min(-20,5*math.floor(min(min(v) for v in s['pos'].values())/5)),max(20,5*math.ceil(max(max(v) for v in s['pos'].values())/5)),
+              sorted({min(-20,5*math.floor(min(min(v) for v in s['pos'].values())/5)),0,max(20,5*math.ceil(max(max(v) for v in s['pos'].values())/5))}),
+              lambda v:sg(v,0) if v else '0',lambda k:''.join(f'<b class="p-{p_.lower()}">{sg(s["pos"][p_][k-1],0) if abs(s["pos"][p_][k-1])>=0.5 else "0"}</b>' for p_ in POS4),zero=0),
+        bands_chart(s),
+        chart('fin','Projected finish',s['fin'],1,N,None,rk_ticks,inv=True,seeds=True,readout=lambda k:f'{s["fin"][k-1]:.1f} <small>avg finish</small>',tickfmt=lambda v:ordn(v))]
+    def rc(k):
+        o=OPP[t][k];r=s['res'][k-1]
+        return (f'<div class="trc trc-{k}"><span class="trw">Week {k}</span>{rtile(r,("w" if r=="W" else "l")+'" data-ref="W')}'
+                f'<b class="trs">{pts[k-1]:.1f} – {SC[o][k]:.1f}</b><span class="tro2"><em>vs</em><i class="pav" data-avt="{e(o)}" aria-hidden="true"></i><b>{e(SHORT0.get(o,o))}</b></span></div>')
+    return f'<div class="trd">{"".join(rc(k) for k in range(1,G+1))}</div>',f'<div class="tcs">{"".join(ch)}</div>'
 # ---------------------------------------------------------------- assemble
 picker='<div class="tqpk" role="tablist" aria-label="Team">'+''.join(f'<label for="thx-{i}"><em class="rrk">{i+1}</em><span>{e(t)}</span></label>' for i,t in enumerate(H))+'</div>'
 wks='<div class="tqwk" role="group" aria-label="Week"><span>Week</span>'+''.join(f'<label for="thw-{k}">{k}</label>' for k in range(1,G+1))+'</div>'
@@ -238,7 +320,7 @@ radios=(''.join(f'<input type="radio" name="thx" id="thx-{i}" class="lr"{" check
         +'<input type="radio" name="tqv" id="thv-d" class="lr" checked><input type="radio" name="tqv" id="thv-t" class="lr">'
         +''.join(f'<input type="radio" name="thw" id="thw-{k}" class="lr"{" checked" if k==G else ""}>' for k in range(1,G+1)))
 ctl=('<div class="tqctl"><div class="pseg tqvs" role="group" aria-label="View"><label for="thv-d">Data</label><label for="thv-t">Trends</label></div></div>')
-pans=''.join(f'<div class="tqp tqp-{i}"><div class="tqdv">{data_view(t)}</div><div class="tqtv">{wks}{trends_view(t)}</div></div>' for i,t in enumerate(H))
+pans=''.join((lambda tr:f'<div class="tqp tqp-{i}"><div class="tqdv">{data_view(t)}</div><div class="tqtv"><div class="tqsk">{wks}{tr[0]}</div>{tr[1]}</div></div>')(trends_view(t)) for i,t in enumerate(H))
 JS=('<script>(function(){var VW=%d,PL=%d,PR=%d,G=%d;function pick(sv,x){var r=sv.getBoundingClientRect();var vx=(x-r.left)*VW/r.width;'
     'var k=Math.round((vx-PL)/((VW-PL-PR)/(G-1)))+1;k=Math.max(1,Math.min(G,k));var el=document.getElementById("thw-"+k);'
     'if(el&&!el.checked){el.checked=true;el.dispatchEvent(new Event("change",{bubbles:true}))}}'
@@ -303,10 +385,10 @@ css=PKCSS+(''.join(f'#thx-{i}:checked~.tqpk label[for="thx-{i}"]{{background:var
  '.thx2 .bnl .bnt em.gold{color:#e8c15a;background:rgba(232,193,90,.14)}.thx2 .bnl .bnt em.g{color:var(--win);background:rgba(63,214,155,.12)}.thx2 .bnl .bnt em.b{color:#ff8a9a;background:rgba(255,93,115,.12)}'
  +'.tqnone{padding:10px 0;font-size:12.5px;color:var(--steel)}'
  # trends
- +'.tqwk{position:sticky;top:var(--tabsh,0px);z-index:5;display:grid;grid-template-columns:auto repeat('+str(G)+',minmax(0,1fr));align-items:center;gap:4px;padding:8px 0;margin:0 0 8px;background:var(--ink)}'
+ +'.tqsk{position:sticky;top:var(--navh,0px);z-index:5;background:var(--ink);padding-bottom:8px;margin-bottom:2px}.tqwk{display:grid;grid-template-columns:auto repeat('+str(G)+',minmax(0,1fr));align-items:center;gap:4px;padding:8px 0;margin:0 0 8px;background:var(--ink)}'
  +'.tqwk>span{font-family:var(--display);font-weight:600;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--steel);margin-right:4px}'
  +'.tqwk label{display:grid;place-items:center;height:32px;border-radius:8px;border:1px solid var(--hair);background:var(--deck);font-family:var(--display);font-weight:700;font-size:15px;color:var(--label);cursor:pointer}'
- +'.trd{margin:0 0 6px}.trc{display:none;grid-template-columns:auto 1fr auto;align-items:baseline;gap:10px;padding:10px 12px;border-radius:10px;background:var(--deck);border:1px solid var(--hair)}'
+ +'.trd{margin:0}.trc{display:none;grid-template-columns:auto 26px auto minmax(0,1fr);justify-content:start;justify-items:start;align-items:center;column-gap:10px;padding:10px 12px;border-radius:10px;background:var(--deck);border:1px solid var(--hair)}'
  +'.trc span{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--steel)}.trc b{font-family:var(--display);font-weight:700;font-size:18px;color:var(--chalk);font-variant-numeric:tabular-nums}.trc em{font-style:normal;font-size:12.5px;color:var(--label);text-align:right}'
  +'.tcs{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}@media(min-width:760px){.tcs{grid-template-columns:repeat(2,minmax(0,1fr))}}'
  +'.tch{padding:10px 12px 6px;border-radius:10px;background:var(--deck);border:1px solid var(--hair)}'
@@ -327,6 +409,8 @@ css=PKCSS+(''.join(f'#thx-{i}:checked~.tqpk label[for="thx-{i}"]{{background:var
  +'.tqby{stroke:#8ec5ff;stroke-width:1;opacity:.55;stroke-dasharray:4 3}.tqpo{stroke:var(--chalk);stroke-width:1;opacity:.4;stroke-dasharray:4 3}'
  +'.tqbyt{font-family:var(--display);font-weight:600;font-size:9px;letter-spacing:.06em;text-transform:uppercase;fill:#8ec5ff;opacity:.8}.tqpot{font-family:var(--display);font-weight:600;font-size:9px;letter-spacing:.06em;text-transform:uppercase;fill:var(--chalk);opacity:.6}'
  +'.tsvg{cursor:pointer;touch-action:pan-y;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}'
+ +'@media (max-width:440px){.trc .trw{display:none}.trc{column-gap:9px;grid-template-columns:26px auto minmax(0,1fr)!important}}.trc>.tqt{justify-self:center}.trc .tro2 b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal!important;line-height:1.15}'
+ +'.trc .trw{min-width:5.2em;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--label);white-space:nowrap}' +'.trc .trs{font-family:var(--display);font-weight:700;font-size:20px;color:var(--chalk);font-variant-numeric:tabular-nums;white-space:pre;min-width:11.7ch}' +'.trc .tro2{display:inline-flex;align-items:center;gap:7px;min-width:0;font-family:var(--body);font-weight:600;font-size:14.5px;letter-spacing:0;text-transform:none;color:var(--chalk)}.trc .tro2 em{font-style:normal;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--steel)}' +'.trc .tro2 b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.trc .pav{display:block;flex:none;width:24px;height:24px;border-radius:50%;background-color:var(--deck-2);background-position:center;background-size:cover;box-shadow:0 0 0 1px var(--hair)}.trc .pav.nl{display:none}' +'.tqt{display:inline-block;border-radius:4px;background:var(--hair);color:var(--label);font-family:var(--display);font-weight:700;font-style:normal;line-height:1;vertical-align:middle}' +'.tqt.gold{background:rgba(244,196,81,.16);color:#f4c451;box-shadow:inset 0 0 0 1px rgba(244,196,81,.45)}.tqt.g,.tqt.w{background:var(--win-bg);color:var(--win)}.tqt.b,.tqt.l{background:var(--loss-bg);color:var(--loss)}.tqt.last{box-shadow:inset 0 0 0 1px rgba(255,93,115,.55)}' +'.tqt.tby{background:rgba(255,122,26,.16);color:var(--pylon)}.tqt.tpo{background:rgba(142,197,255,.14);color:var(--sky)}' +'.trm small{font-family:var(--body);font-size:10.5px;font-weight:500;color:var(--steel);margin:0 8px 0 4px}.trm small:last-child{margin-right:0}' +'.tline.c4{stroke:var(--steel);stroke-dasharray:4 3}.tsel.c4{fill:var(--steel)}.tline.c5{stroke:#ff8a9a}.tsel.c5{fill:#ff8a9a}.tlg3 .c4 i{background:var(--steel)}.tlg3 .c5 i{background:#ff8a9a}.trm b.c4{color:var(--steel)}' +'.tline.p-qb{stroke:#ff6f9c}.tline.p-rb{stroke:#3fd6b5}.tline.p-wr{stroke:#5cc0ff}.tline.p-te{stroke:#ffa95c}.tsel.p-qb{fill:#ff6f9c}.tsel.p-rb{fill:#3fd6b5}.tsel.p-wr{fill:#5cc0ff}.tsel.p-te{fill:#ffa95c}' +'.tlg3 .p-qb i{background:#ff6f9c}.tlg3 .p-rb i{background:#3fd6b5}.tlg3 .p-wr i{background:#5cc0ff}.tlg3 .p-te i{background:#ffa95c}.trm b.p-qb{color:#ff6f9c}.trm b.p-rb{color:#3fd6b5}.trm b.p-wr{color:#5cc0ff}.trm b.p-te{color:#ffa95c}' +'.tband{stroke:none}.tband.b1{fill:rgba(127,166,255,.34)}.tband.b2{fill:rgba(255,138,61,.42)}.tband.b3{fill:rgba(244,196,81,.55)}.tline.b1{stroke:#7fa6ff}.tline.b2{stroke:#ff8a3d}.tline.b3{stroke:#f4c451}.tsel.b1{fill:#7fa6ff}.tsel.b2{fill:#ff8a3d}.tsel.b3{fill:#f4c451}' +'.tlg3 .b1 i{background:#7fa6ff}.tlg3 .b2 i{background:#ff8a3d}.tlg3 .b3 i{background:#f4c451}.trm b.b1{color:#7fa6ff}.trm b.b2{color:#ff8a3d}.trm b.b3{color:#f4c451}.tlg3 .tref i{background:none;border-top:1.5px dashed var(--steel);height:0}'
  +'.twm{display:none}.tcur{stroke:'+TL+';stroke-width:1;opacity:.55}.tsel{fill:'+TL+';stroke:var(--deck);stroke-width:2}.tsel.w{fill:var(--win)}.tsel.l{fill:var(--loss)}')
 open(P+'th_section.html','w',encoding='utf-8').write(sec_)
 css+=('.tqew{display:grid;grid-template-columns:1fr 1fr;column-gap:14px}'

@@ -168,7 +168,7 @@ function inkTile(t,H){if(!(window.CSS&&CSS.supports('text-box','trim-both cap al
   const P=Math.max(2.5,Math.min(3.5,(H-6)/2)),cap=H-2*P;
   INK.font=`${wt} 100px ${fam}`;const fs=Math.round(cap/(INK.measureText('H').actualBoundingBoxAscent/100)*4)/4;
   INK.font=`${wt} ${fs}px ${fam}`;const m=INK.measureText(txt),m2=INK.measureText('88'),Hc=INK.measureText('H').actualBoundingBoxAscent;
-  const iw=m.actualBoundingBoxLeft+m.actualBoundingBoxRight,iw2=m2.actualBoundingBoxLeft+m2.actualBoundingBoxRight,W=Math.max(iw,iw2)+2*(P+0.5);
+  const m3=INK.measureText(t.dataset.ref||'88');const iw=m.actualBoundingBoxLeft+m.actualBoundingBoxRight,iw2=Math.max(m2.actualBoundingBoxLeft+m2.actualBoundingBoxRight,m3.actualBoundingBoxLeft+m3.actualBoundingBoxRight),W=Math.max(iw,iw2)+2*(P+0.5);
   const gl=m.actualBoundingBoxLeft*-1,gr=m.width-m.actualBoundingBoxRight,gt=Hc-m.actualBoundingBoxAscent,gb=-m.actualBoundingBoxDescent;
   const s=t.style,set=(k,v)=>s.setProperty(k,v,'important');
   set('display','inline-block');set('text-box','trim-both cap alphabetic');set('line-height','1');set('height','auto');set('min-height','0');set('min-width','0');set('width','auto');
@@ -189,9 +189,9 @@ function upd(){raf=0;const nh=navh();document.querySelectorAll('.ltot').forEach(
  if(on){const H=b.getBoundingClientRect().height;b.classList.add('stk');b.style.marginBottom=(parseFloat(getComputedStyle(b).marginBottom)||0)+(H-b.getBoundingClientRect().height)+'px'}
  else{b.classList.remove('stk');b.style.marginBottom=''}})}
 const go=()=>{if(!raf)raf=requestAnimationFrame(upd)};addEventListener('scroll',go,{passive:true});addEventListener('resize',go);document.addEventListener('change',go);go()})();
-let q=0;function sched(){if(q)return;q=requestAnimationFrame(()=>{q=0;fit();finFit()})}
+let q=0;function sched(){if(q)return;q=requestAnimationFrame(()=>{q=0;fit();finFit();document.querySelectorAll('.tqt[data-h]:not([data-ok])').forEach(t=>{if(inkTile(t,+t.dataset.h))t.dataset.ok=1});document.querySelectorAll('.trc .tro2 b').forEach(el=>{if(!el.offsetParent)return;el.style.fontSize='';let f=parseFloat(getComputedStyle(el).fontSize);while((el.scrollWidth>el.clientWidth+0.5||el.scrollHeight>el.clientHeight+0.5)&&f>10){f-=0.5;el.style.fontSize=f+'px'}})})}
 window.tileFit=fit;window.finFit=finFit;sched();addEventListener('resize',sched);document.addEventListener('change',()=>setTimeout(sched,0));document.addEventListener('click',()=>setTimeout(sched,0));
-if(document.fonts){document.fonts.ready.then(()=>{for(const k in FM)delete FM[k];sched()});document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',()=>{for(const k in FM)delete FM[k];sched()})}
+if(document.fonts){document.fonts.ready.then(()=>{for(const k in FM)delete FM[k];document.querySelectorAll('.tqt[data-ok]').forEach(t=>delete t.dataset.ok);sched()});document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',()=>{for(const k in FM)delete FM[k];sched()})}
 })();
 addEventListener('resize',()=>requestAnimationFrame(pfit));document.addEventListener('click',()=>requestAnimationFrame(pfit));
 document.addEventListener('click',e=>{const l=e.target.closest('.ddm label');if(l)setTimeout(()=>{l.closest('details').open=false},0);const o=document.querySelectorAll('details.dd[open]');o.forEach(d=>{if(!d.contains(e.target))d.open=false})});
