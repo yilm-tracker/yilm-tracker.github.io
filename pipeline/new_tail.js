@@ -140,6 +140,9 @@ draw(false);dtab(false);
 if(typeof AVR!=='undefined')document.querySelectorAll('.pav[data-avt]').forEach(e=>{const r=AVR[e.dataset.avt];if(r)e.classList.add('av','av-'+r);else e.classList.add('nl')});
 function pfit(){document.querySelectorAll('.pr .pav.av+.psn').forEach(el=>{if(!el.offsetParent)return;el.style.fontSize='';let f=parseFloat(getComputedStyle(el).fontSize);while((el.scrollHeight>el.clientHeight+1||el.scrollWidth>el.clientWidth+1)&&f>9){f-=0.5;el.style.fontSize=f+'px'}})}
 pfit();document.addEventListener('change',()=>requestAnimationFrame(pfit));
+// standings card names: shrink a long name just enough to show in full (never an ellipsis)
+function tnFit(){document.querySelectorAll('.board .r .tn').forEach(e=>{if(!e.offsetParent)return;e.style.fontSize='';e.style.whiteSpace='';let f=parseFloat(getComputedStyle(e).fontSize);while(e.scrollWidth>e.clientWidth+.5&&f>12){f-=.25;e.style.fontSize=f+'px'}if(e.scrollWidth>e.clientWidth+.5){e.style.whiteSpace='normal';e.style.lineHeight='1.1'}})}
+tnFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(tnFit);addEventListener('resize',()=>requestAnimationFrame(tnFit));document.addEventListener('change',()=>requestAnimationFrame(tnFit));
 // rank tiles never taller than the figure they rank: tile top = the figure's digit top, tile bottom = its baseline
 (function(){
 const FM={};
