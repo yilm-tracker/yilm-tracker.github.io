@@ -455,7 +455,7 @@ sec+=('<script>(function(){function fit(){document.querySelectorAll(".g4 .gn").f
       'var rg=document.createRange();rg.selectNodeContents(el);while(rg.getBoundingClientRect().width>el.clientWidth-0.5&&f>11){f-=0.5;el.style.fontSize=f+"px"}})}'
       'fit();document.addEventListener("change",function(){requestAnimationFrame(fit)});window.addEventListener("resize",function(){requestAnimationFrame(fit)});'
       'if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){document.querySelectorAll(".g4 .gn").forEach(function(el){el.dataset.fw=""});fit()})})()</script>')
-css+=''.join(f'#mw-{w}:checked~.posh .wsv-{w}{{display:inline}}#mw-{w}:checked~.mwx-{w}{{display:block}}#mw-{w}:checked~.posh label[for="mw-{w}"]{{background:var(--chalk);color:var(--ink)}}' for w in range(1,WT+1))
+css+=''.join(f'#mw-{w}:checked~.posh .wsv-{w}{{display:inline}}#mw-{w}:checked~.mwx-{w}{{display:block}}@media (min-width:1100px){{#mw-{w}:checked~.mwx-{w}{{display:grid}}}}#mw-{w}:checked~.posh label[for="mw-{w}"]{{background:var(--chalk);color:var(--ink)}}' for w in range(1,WT+1))
 css+=('.mup>.mcard{margin-top:20px}.mup>.lus{margin-top:4px}'
      '.mpk{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:0 0 12px}.mpk label:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 2.5px)}'
       '.mop .mrc{font-style:normal;flex:none;color:var(--steel);font-size:.86em;font-variant-numeric:tabular-nums;margin-left:6px}'
