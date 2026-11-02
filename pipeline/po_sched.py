@@ -86,7 +86,7 @@ def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2,opt=lambda t,w:set()):
           f'<span class="pskw"><b>+4.2</b>pts/game allowed to the position vs league avg · Wks 1–{DVPG}</span></div>' if DVP else '')
     css=(''.join(f'#ps-{i}:checked~.psk .dd-s .sv-{i}{{display:inline}}#ps-{i}:checked~.psk .dd-s label[for="ps-{i}"]{{background:var(--chalk);color:var(--ink)}}#ps-{i}:checked~.psx .psp-{i}{{display:block}}' for i in range(n))+
          '.psk{grid-template-columns:minmax(0,1fr)!important}.psp{display:none}'
-         '.psr{display:grid;grid-template-columns:minmax(0,1.35fr) repeat(3,minmax(0,1fr))!important;grid-template-areas:none!important;column-gap:0;align-items:center;padding-right:0!important}'
+         '.psr{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr))!important;grid-template-areas:none!important;column-gap:0;align-items:center;padding-right:0!important}'
          '.cr.lu.psr.psh{border-color:transparent!important;background:none!important;box-shadow:none!important}.cr.lu.psr::after{display:none!important}'
          '.psr>*{grid-row:1;min-width:0}.psr>.cn{grid-column:1;grid-area:auto;padding-right:6px}.psr>:nth-child(2){grid-column:2}.psr>:nth-child(3){grid-column:3}.psr>:nth-child(4){grid-column:4}'
          '.psr.psh{padding-top:10px!important;padding-bottom:6px!important;min-height:0!important;font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--label)}'
@@ -104,15 +104,21 @@ def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2,opt=lambda t,w:set()):
          '.psbh{margin-top:18px}'
          # one 2-column grid per week: tiles in the left column (home/road over the matchup rank, same size, same left
          # edge), the opponent's logo and the points-allowed figure beside them, the kickoff under both
-         '.psg.cnm{display:grid!important;grid-template-columns:20px minmax(0,1fr);align-content:center;column-gap:7px;row-gap:5px;padding:8px 0 8px 9px!important;box-sizing:border-box}'
+         '.psg.cnm{display:grid!important;grid-template-columns:20px minmax(0,1fr);align-content:center;column-gap:7px;row-gap:6px;padding:8px 4px 8px 9px!important;box-sizing:border-box}@media(max-width:380px){.psg .psa{font-size:16.5px!important}.psg.cnm{column-gap:5px!important;padding-left:7px!important}}'
          '.psg.cnm>small,.psg.cnm .gp.psl,.psg.cnm .psv{display:contents!important}'
-         '.psg .gp .gha.ht{grid-column:1;grid-row:1;top:0!important;margin:0!important}.psg .gp .nfl.opp{grid-column:2;justify-self:start;margin:0!important;top:0!important}'
+         '.psg .gp .gha.ht{grid-column:1;grid-row:2;top:0!important;margin:0!important}.psg .gp .nfl.opp{grid-column:2;grid-row:2;justify-self:start;margin:0!important;top:0!important}'
          '.psg .gp .gsep,.psg .gp .gwhen{display:none}'
-         '.psg .psv .psk2{grid-column:1;width:20px;min-width:0;height:17px;padding:0;border-radius:4px;font-size:11.5px}.psg .psv .psk2:not(.g):not(.b){background:rgba(238,240,244,.11);color:var(--label);box-shadow:inset 0 0 0 1px rgba(238,240,244,.32)}'
+         '.psg .psv .psk2{grid-column:1;grid-row:1;width:20px;min-width:0;height:17px;padding:0;border-radius:4px;font-size:11.5px}.psg .psv .psk2:not(.g):not(.b){background:rgba(238,240,244,.11);color:var(--label);box-shadow:inset 0 0 0 1px rgba(238,240,244,.32)}'
          '.psg .psv .psk2.g{background:rgba(63,214,155,.16);color:#7fdcb6;box-shadow:inset 0 0 0 1px rgba(63,214,155,.55)}.psg .psv .psk2.b{background:rgba(255,93,115,.18);color:#ff9aa8;box-shadow:inset 0 0 0 1px rgba(255,93,115,.6)}'
          '.psg.pso{box-shadow:inset 2px 0 0 var(--ink),inset 0 0 0 1.5px rgba(244,196,81,.75);background:rgba(244,196,81,.07)}.pskey .psof{display:inline-block;width:17px;height:13px;box-sizing:border-box;border-radius:3px;box-shadow:inset 0 0 0 1.5px rgba(244,196,81,.75);background:rgba(244,196,81,.07)}'
-         '.psg .psa{grid-column:2;justify-self:start;font-size:20px;line-height:17px;height:17px;display:flex;align-items:center;white-space:nowrap}'
-         '.psg .pst{grid-column:1 / -1;justify-self:start;margin-top:1px}.cr.lu.psr{min-height:84px}'
+         '.psg .psa{grid-column:2;grid-row:1;justify-self:start;font-size:18px;line-height:17px;height:17px;display:flex;align-items:center;white-space:nowrap}'
+         '.psg .pst{grid-column:1 / -1;grid-row:3;justify-self:start;margin-top:1px}.cr.lu.psr{min-height:84px}'
          '.pskey{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;margin:2px 0 4px;font-size:11.5px;color:var(--steel)}.pskey .ch{margin:0 0 0 0;min-width:21px;height:15px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-style:normal;font-weight:700}.pskey .ch.b{margin-left:6px}.pskey>span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.pskey>span.pskw{white-space:normal;display:inline}.pskw b{margin-right:6px}.pskey b{font-family:var(--display);font-weight:700;color:var(--chalk)}.pskey .ch.g{background:rgba(63,214,155,.16);color:#7fdcb6;box-shadow:inset 0 0 0 1px rgba(63,214,155,.55)}.pskey .ch.b{background:rgba(255,93,115,.18);color:#ff9aa8;box-shadow:inset 0 0 0 1px rgba(255,93,115,.6)}'
          '')
-    return radios,pick,'<div class="psx">'+''.join(pan)+'</div>',css
+    # player names: the largest size (down to 10px) that fits the narrower player column, refitted when a team is picked
+    fit=('<script>(function(){function fit(){document.querySelectorAll(".psr .cnm b>span").forEach(function(el){if(!el.clientWidth||el.dataset.fw==el.clientWidth)return;'
+         'el.dataset.fw=el.clientWidth;el.style.fontSize="";var f=parseFloat(getComputedStyle(el).fontSize);'
+         'while(el.scrollWidth>el.clientWidth+0.5&&f>10){f-=0.5;el.style.fontSize=f+"px"}})}'
+         'document.addEventListener("change",function(){requestAnimationFrame(fit)});window.addEventListener("resize",function(){requestAnimationFrame(fit)});'
+         'if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit)})()</script>')
+    return radios,pick,'<div class="psx">'+''.join(pan)+'</div>'+fit,css
