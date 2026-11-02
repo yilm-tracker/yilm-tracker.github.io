@@ -11,13 +11,44 @@ import re as _re
 _WK=json.loads(_re.search(r'const WK=(\{.*?\});\n',open(P+'data_block.js',encoding='utf-8').read()).group(1))
 LTOT=[sum(_WK[t][w][2] for t in _WK) for w in range(DONE)]
 _lo,_hi=800,max(LTOT)
+# weekly rank of each played week's league total (1 = highest-scoring week so far), shown inside the bar
+_WRK={k:1+sum(1 for x in LTOT if x>LTOT[k-1]) for k in range(1,DONE+1)}
+# playoff weeks: average score per team in championship-bracket games (round 1 = week 15 ...), averaged over past seasons
+# (history/raw/<year>/core.json.gz from Sleeper; history/po_extra.json = {"year": {"15": [scores...], ...}} for MFL seasons);
+# the highest of the three averages fills its bar, the others fill relative to it
+def _po_ref():
+    import gzip as _gz,glob as _gl
+    acc={}
+    _cur=_dt_os.environ.get('DT_SEASON','2026');_seen=set()
+    for fz in sorted(_gl.glob(P+'history/raw/*/core.json.gz')+_gl.glob(P+'../../../pipeline/history/raw/*/core.json.gz')):
+        yr=fz.split('/')[-2]
+        if yr in _seen or (yr==_cur and _dt_os.environ.get('DT_PAST')!='1'):continue
+        _seen.add(yr)
+        try:
+            dd=json.load(_gz.open(fz));base=[q for q in dd if q.endswith('/winners_bracket')][0][:-len('/winners_bracket')]
+            ps=dd[base]['settings'].get('playoff_week_start',15)
+            for g in dd[base+'/winners_bracket']:
+                if g.get('p') not in (None,1):continue
+                M=dd.get(f"{base}/matchups/{ps+g['r']-1}") or []
+                pts={m['roster_id']:m.get('points') for m in M}
+                for tt in (g.get('t1'),g.get('t2')):
+                    if isinstance(tt,int) and pts.get(tt) is not None:acc.setdefault(14+g['r'],{}).setdefault(yr,[]).append(pts[tt])
+        except Exception as ex:print('po ref',fz,ex)
+    if _dt_os.path.exists(P+'history/po_extra.json'):
+        for yr,wk in json.load(open(P+'history/po_extra.json')).items():
+            for w,v in wk.items():acc.setdefault(int(w),{})[yr]=v
+    return {w:(sum(sum(v)/len(v) for v in ys.values())/len(ys),sorted(ys)) for w,ys in acc.items() if ys}
+_POR=_po_ref();_pomx=max([v[0] for v in _POR.values()] or [1])
 def _seg(k):
     if k<=DONE:
         v=LTOT[k-1];hp=12+88*(v-_lo)/(_hi-_lo)
-        bar=f'<i class="done" style="height:{hp:.1f}%" title="Week {k}: {v:.1f} league points"></i>'
+        bar=f'<i class="done" style="height:{hp:.1f}%" title="Week {k}: {v:.1f} league points, #{_WRK[k]} of {DONE} weeks"><em class="wrk">{_WRK[k]}</em></i>'
+    elif k>=15 and k in _POR:
+        av,yrs=_POR[k];hp=100*av/_pomx
+        bar=f'<i class="po"></i><i class="por" style="height:{hp:.1f}%" title="Week {k}: {av:.1f} points per team in championship-bracket games, average of {", ".join(yrs)}"></i>'
     else:
         bar=f'<i class="{"po" if k>=15 else "fut"}"></i>'
-    lab=f'<b class="wv">{LTOT[k-1]:.0f}<small>pts</small></b>' if k<=DONE else '<b class="wv"></b>'
+    lab=f'<b class="wv">{LTOT[k-1]:.0f}<small>pts</small></b>' if k<=DONE else (f'<b class="wv pov">{_POR[k][0]:.0f}<small>avg</small></b>' if k>=15 and k in _POR else '<b class="wv"></b>')
     return f'<div class="wkc{" bye" if k in BYES else ""}">{lab}<span class="wb">{bar}</span><span>{k}</span></div>'
 segs=''.join(_seg(k) for k in range(1,18))
 d=open(P+'data_block.js',encoding='utf-8').read().replace('// remaining schedule: [week, opp, projScore, oppProj, winPct] (app projections as of Oct 15)','// remaining schedule: [week, opp, ...] (only week and opponent are shown)')
