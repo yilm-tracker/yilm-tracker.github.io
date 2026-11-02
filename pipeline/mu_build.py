@@ -408,7 +408,7 @@ _mdone=lambda a,b:all(lval(p)[1] for t in (a,b) for p in LW['out'][str(RID[t])][
 _cur=lambda t:round(sum(p[5] for p in LW['out'][str(RID[t])]['st'] if p),2)  # points scored so far
 chips='<div class="mpk muc2" role="tablist" aria-label="Game">'+''.join(prow_(f'mu-{i}',a,b,seed(a),seed(b),streak(a),streak(b),_cur(a),_cur(b),False,rec(a),rec(b),_lwin(a,b),_pj(a),_pj(b),form(a),form(b),_pre(a,b)[:2],_pg(a),_pg(b),_mdone(a,b)) for i,(a,b) in enumerate(games))+'</div>'
 cur='' if FIN else f'<div class="mwx mwx-{W}">'+radios+chips+''.join(panel(i,a,b) for i,(a,b) in enumerate(games))+'</div>'
-css=''.join(f'#mu-{i}:checked~.muc2 label[for="mu-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#mu-{i}:checked~.mup-{i}{{display:block}}' for i in range(lg.N//2))
+css=''.join(f'#mu-{i}:checked~.muc2 label[for="mu-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk),var(--dsh2)}}#mu-{i}:checked~.mup-{i}{{display:block}}' for i in range(lg.N//2))
 # ---------- historical weeks
 HS=json.load(open(P+'hist.json'));META=HS['m']
 def hp(sp,inj=None):

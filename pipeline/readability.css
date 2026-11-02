@@ -611,3 +611,9 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .yh{white-space:nowrap;min-width:0;max-width:100%;font-style:italic;font-weight:800;letter-spacing:0}.yh .y1{color:#4f9fe8}.yh .y2{color:#ec5f70}.yh .y3{color:var(--chalk)}
 header{grid-template-columns:minmax(0,1fr) auto!important}
 header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h1.yh{grid-column:1 / -1;margin-top:6px}
+/* depth: a soft shadow down and to the right under panels and cards */
+:root{--dsh:4px 5px 12px -2px rgba(0,0,0,.5);--dsh2:2px 3px 7px -1px rgba(0,0,0,.42)}
+.board,.lbx,.rox,.mux,.cmx,.posx,.sxc,.tqhero,.mcard{box-shadow:var(--dsh)}
+.rofb,.ras,.pbm,.pby .pbyt,.tqhr,.tqk,.tqdp>div,.tch,.trc,.cr.lu{box-shadow:var(--dsh2)}
+.mcr.ltot.lsb{box-shadow:inset 0 0 0 1px var(--hair),var(--dsh2)!important}
+.mpk label.g4{box-shadow:var(--dsh2)}
