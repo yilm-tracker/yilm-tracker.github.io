@@ -59,8 +59,8 @@ def _game(p,bye=False,opt=False):
             f'<b class="psa" title="{v:.1f} {p[1]} points a game allowed (all {p[1]}s combined), league average {AVG[p[1]]:.1f}">{"+" if v-AVG[p[1]]>=0.05 else "−" if v-AVG[p[1]]<=-0.05 else ""}{abs(v-AVG[p[1]]):.1f}</b></span>')
     else:dv='<span class="psv"></span>'
     # same markup as a Matchups game line (.cnm small .gp): the HOME / ROAD tile and the opponent's logo
-    if opt:cl+=' pso'   # in the team's best projected lineup that week: gold frame on the week cell
-    return (f'<span class="psg cnm{cl}"{' title="In the best projected lineup this week"' if opt else ''}><small><span class="gp psl">{MB._gline(p[9],p[6])}</span></small>{dv}'
+    o='<svg class="pst8" viewBox="0 0 24 24" aria-label="In the best projected lineup"><path d="M12 2.6l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.4l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>' if opt else ''   # in the team's best projected lineup that week: small gold star
+    return (f'<span class="psg cnm{cl}"{' title="In the best projected lineup this week"' if opt else ''}><small><span class="gp psl">{MB._gline(p[9],p[6])}</span></small>{dv}{o}'
             f'<span class="pst">{_kick(p[10],p[3])}</span></span>')
 def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2,opt=lambda t,w:set()):
     """returns (radios, picker html, panels html, css); dd(k,lab) is the team drop-down used by Matchup"""
@@ -82,7 +82,7 @@ def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2,opt=lambda t,w:set()):
         if bn:body+='<div class="msh lbh psbh">Bench</div>'+hd+''.join(row(q) for q in bn)
         pan.append(f'<div class="psp psp-{i}">{body}</div>')
     pick=('<div class="cpk psk">'+dd('s','')+'</div>'
-          f'<div class="pskey"><span><i class="ch g"><span class="ct">1</span></i>most allowed to position<i class="ch b"><span class="ct">32</span></i>fewest</span><span><i class="psof"></i>in the best projected lineup</span>'
+          f'<div class="pskey"><span><i class="ch g"><span class="ct">1</span></i>most allowed to position<i class="ch b"><span class="ct">32</span></i>fewest</span><span><svg class="pst8 k" viewBox="0 0 24 24" aria-label="In the best projected lineup"><path d="M12 2.6l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.4l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>in the best projected lineup</span>'
           f'<span class="pskw"><b>+4.2</b>pts/game allowed to the position vs league avg · Wks 1–{DVPG}</span></div>' if DVP else '')
     css=(''.join(f'#ps-{i}:checked~.psk .dd-s .sv-{i}{{display:inline}}#ps-{i}:checked~.psk .dd-s label[for="ps-{i}"]{{background:var(--chalk);color:var(--ink)}}#ps-{i}:checked~.psx .psp-{i}{{display:block}}' for i in range(n))+
          '.psk{grid-template-columns:minmax(0,1fr)!important}.psp{display:none}'
@@ -104,14 +104,14 @@ def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2,opt=lambda t,w:set()):
          '.psbh{margin-top:18px}'
          # one 2-column grid per week: tiles in the left column (home/road over the matchup rank, same size, same left
          # edge), the opponent's logo and the points-allowed figure beside them, the kickoff under both
-         '.psg.cnm{display:grid!important;grid-template-columns:20px minmax(0,1fr);align-content:center;column-gap:7px;row-gap:6px;padding:8px 4px 8px 9px!important;box-sizing:border-box}@media(max-width:380px){.psg .psa{font-size:16.5px!important}.psg.cnm{column-gap:5px!important;padding-left:7px!important}}'
+         '.psg.cnm{display:grid!important;grid-template-columns:20px auto minmax(0,1fr);align-content:center;column-gap:7px;row-gap:6px;padding:8px 4px 8px 9px!important;box-sizing:border-box}@media(max-width:380px){.cr.lu .psg.cnm .gp .nfl.opp{width:19px!important;height:18px!important}.psg .psa{font-size:16.5px!important}.psg.cnm{column-gap:5px!important;padding-left:7px!important;padding-right:2px!important}}'
          '.psg.cnm>small,.psg.cnm .gp.psl,.psg.cnm .psv{display:contents!important}'
          '.psg .gp .gha.ht{grid-column:1;grid-row:2;top:0!important;margin:0!important}.psg .gp .nfl.opp{grid-column:2;grid-row:2;justify-self:start;margin:0!important;top:0!important}'
          '.psg .gp .gsep,.psg .gp .gwhen{display:none}'
          '.psg .psv .psk2{grid-column:1;grid-row:1;width:20px;min-width:0;height:17px;padding:0;border-radius:4px;font-size:11.5px}.psg .psv .psk2:not(.g):not(.b){background:rgba(238,240,244,.11);color:var(--label);box-shadow:inset 0 0 0 1px rgba(238,240,244,.32)}'
          '.psg .psv .psk2.g{background:rgba(63,214,155,.16);color:#7fdcb6;box-shadow:inset 0 0 0 1px rgba(63,214,155,.55)}.psg .psv .psk2.b{background:rgba(255,93,115,.18);color:#ff9aa8;box-shadow:inset 0 0 0 1px rgba(255,93,115,.6)}'
-         '.psg.pso{box-shadow:inset 2px 0 0 var(--ink),inset 0 0 0 1.5px rgba(244,196,81,.75);background:rgba(244,196,81,.07)}.pskey .psof{display:inline-block;width:17px;height:13px;box-sizing:border-box;border-radius:3px;box-shadow:inset 0 0 0 1.5px rgba(244,196,81,.75);background:rgba(244,196,81,.07)}'
-         '.psg .psa{grid-column:2;grid-row:1;justify-self:start;font-size:18px;line-height:17px;height:17px;display:flex;align-items:center;white-space:nowrap}'
+         '.pst8{width:11px;height:11px;fill:#f4c451;flex:none}.psg .pst8{grid-column:3;grid-row:2;justify-self:start;align-self:center;width:10px;height:10px;margin-left:-1px}.pskey .pst8{width:12px;height:12px}'
+         '.psg .psa{grid-column:2 / -1;grid-row:1;justify-self:start;font-size:18px;line-height:17px;height:17px;display:flex;align-items:center;white-space:nowrap}'
          '.psg .pst{grid-column:1 / -1;grid-row:3;justify-self:start;margin-top:1px}.cr.lu.psr{min-height:84px}'
          '.pskey{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;margin:2px 0 4px;font-size:11.5px;color:var(--steel)}.pskey .ch{margin:0 0 0 0;min-width:21px;height:15px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-style:normal;font-weight:700}.pskey .ch.b{margin-left:6px}.pskey>span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.pskey>span.pskw{white-space:normal;display:inline}.pskw b{margin-right:6px}.pskey b{font-family:var(--display);font-weight:700;color:var(--chalk)}.pskey .ch.g{background:rgba(63,214,155,.16);color:#7fdcb6;box-shadow:inset 0 0 0 1px rgba(63,214,155,.55)}.pskey .ch.b{background:rgba(255,93,115,.18);color:#ff9aa8;box-shadow:inset 0 0 0 1px rgba(255,93,115,.6)}'
          '')
