@@ -102,9 +102,17 @@ def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2,opt=lambda t,w:set()):
          '.psb{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}'
          '.psg.psy{background:rgba(0,0,0,.18)}.psg.psy>*{opacity:.28}'
          '.psbh{margin-top:18px}'
+         # sizes follow the week cell's width (container units), never smaller than the phone sizes above: wider
+         # screens (or a zoomed-out page) get bigger tiles, logo, figure and star instead of empty space
+         '.psg.cnm{container-type:inline-size}'
+         '.cr.lu .psg.cnm .gp .gha.ht,.psg .psv .psk2{width:clamp(20px,30cqw,32px)!important;height:clamp(17px,25.5cqw,27px)!important;font-size:clamp(11.5px,16cqw,17px)!important;border-radius:clamp(4px,5cqw,6px)!important}'
+         '.cr.lu .psg.cnm b.psa{font-size:clamp(17px,27cqw,30px)!important;height:clamp(17px,25.5cqw,27px);line-height:1}'
+         '.cr.lu .psg.cnm .gp .nfl.opp{width:clamp(19px,34cqw,36px)!important;height:clamp(18px,31cqw,32px)!important}'
+         '.cr.lu .psg.cnm .pst8{width:clamp(10px,13cqw,15px)!important;height:clamp(10px,13cqw,15px)!important}'
+         '.cr.lu .psg.cnm .pst{font-size:clamp(10.5px,13.5cqw,14px)}'
          # one 2-column grid per week: tiles in the left column (home/road over the matchup rank, same size, same left
          # edge), the opponent's logo and the points-allowed figure beside them, the kickoff under both
-         '.psg.cnm{display:grid!important;grid-template-columns:20px auto minmax(0,1fr);align-content:center;column-gap:7px;row-gap:6px;padding:8px 4px 8px 9px!important;box-sizing:border-box}@media(max-width:380px){.cr.lu .psg.cnm .gp .nfl.opp{width:19px!important;height:18px!important}.psg .psa{font-size:16.5px!important}.psg.cnm{column-gap:5px!important;padding-left:7px!important;padding-right:2px!important}}'
+         '.psg.cnm{display:grid!important;grid-template-columns:auto auto minmax(0,1fr);align-content:center;column-gap:7px;row-gap:6px;padding:8px 4px 8px 9px!important;box-sizing:border-box}@media(max-width:380px){.cr.lu .psg.cnm b.psa{font-size:16px!important}.cr.lu .psg.cnm .gp .nfl.opp{width:19px!important;height:18px!important}.psg .psa{font-size:16.5px!important}.psg.cnm{column-gap:5px!important;padding-left:7px!important;padding-right:2px!important}}'
          '.psg.cnm>small,.psg.cnm .gp.psl,.psg.cnm .psv{display:contents!important}'
          '.psg .gp .gha.ht{grid-column:1;grid-row:2;top:0!important;margin:0!important}.psg .gp .nfl.opp{grid-column:2;grid-row:2;justify-self:start;margin:0!important;top:0!important}'
          '.psg .gp .gsep,.psg .gp .gwhen{display:none}'
