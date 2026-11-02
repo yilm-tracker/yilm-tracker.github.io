@@ -10,6 +10,7 @@ const SCHI=Math.max(...ALLSC),SCLO=30;
 const rankOf=(v,i,low)=>1+V.filter(d=>low?d[i]<v-1e-9:d[i]>v+1e-9).length;
 const tied=(v,i)=>V.filter(d=>Math.abs(d[i]-v)<1e-9).length>1;
 const tone=r=>r<=3?'g':r>NT-3?'b':'';
+const rkt=(v,dp)=>`<b class="rkt ${tone(Math.round(v))}">${dp?v.toFixed(dp):v}</b>`;
 const chip=(r,t)=>`<span class="ch ${tone(r)}"><span class="ct">${t?'T':'#'}${r}</span></span>`;
 const luck=v=>`${v>0?'+':v<0?'−':''}${Math.abs(v).toFixed(2)}`;
 const seg=r=>`<div class="seg10 ${tone(r)}" role="img" aria-label="Rank ${r} of ${NT}">${Array.from({length:NT},(_,k)=>`<i${k<NT+1-r?' class="on"':''}></i>`).join('')}</div>`;
@@ -79,12 +80,12 @@ function draw(med){
     return tierHtml+`<div class="r ${tc}${AVR[t]?" hav":""}${i>=PO?' out':''}${op?' open':''}" data-t="${esc(t)}" tabindex="0" role="button" aria-expanded="${op}">
       <div class="rk">${i+1}</div>
       ${AVR[t]?`<i class="av rav av-${AVR[t]}" aria-hidden="true"></i>`:""}<div class="nm"><span class="tn">${esc(t)}</span>${mv}</div>
-      <span class="hl">${NIK[t]?`<em class="mgr">${esc(NIK[t])}</em> · `:""}<em class="lb">Hi</em><b>${Math.min(...a)}</b> · <em class="lb">Lo</em><b>${Math.max(...a)}</b> · <em class="lb">Avg</em><b>${(a.reduce((x,y)=>x+y,0)/a.length).toFixed(1)}</b></span>
+      <span class="hl">${NIK[t]?`<em class="mgr">${esc(NIK[t])}</em> · `:""}<em class="lb">Hi</em>${rkt(Math.min(...a))}<em class="lb">Lo</em>${rkt(Math.max(...a))}<em class="lb">Avg</em>${rkt(a.reduce((x,y)=>x+y,0)/a.length,1)}</span>
       <div class="sb s-pf"><div class="stx"><em class="lb">PF</em><span class="pf">${d[3].toFixed(2)}</span>${chip(d[4])} <i class="pw">· ${d[5].toFixed(1)} <b class="psd" title="Weekly spread: standard deviation of the team's weekly scores">±${SDV(t).toFixed(0)}</b></i></div>${seg(d[4])}</div>
       <div class="sb s-pa"><div class="stx"><em class="lb">PA</em><span class="v">${d[6].toFixed(2)}</span>${chip(d[7])} <i class="pw">· ${d[8].toFixed(1)}/wk</i></div>${seg(d[7])}</div>
       <div class="sb s-lk"><div class="stx"><em class="lb">Luck</em><span class="v">${luck(d[12])}</span>${chip(rankOf(d[12],12,false),tied(d[12],12))} <i class="pw">· ${(d[10]/(d[10]+d[11])*G).toFixed(2)} xW</i></div><div class="trk div"><i class="${d[12]>=0?'g pos':'b neg'}" style="left:${d[12]>=0?'50%':pct(.5+d[12]/MAXLUCK/2)};width:${pct(Math.abs(d[12])/MAXLUCK/2)}"></i></div></div>
       <div class="sb s-lu"><div class="stx"><em class="lb">Tot Eff</em><span class="v">${EF[t][0].toFixed(0)}%</span>${chip(rankEf(t),tiedEf(t))} <i class="pw">· <b class="lw">${EF[t][1].toFixed(1)}</b>/wk</i></div>${seg(rankEf(t))}</div>
-      <div class="sb s-sk"><div class="stx spl dps"><span class="dpb dpd"><span class="dph"><em class="lb dpl">Dropped pts</em><i class="pw pu">/wk</i></span><span class="dpg">${['QB','RB','WR','TE','K','DEF'].map((k,i)=>LPOS.includes(k)?`<span class="dpc p-${k.toLowerCase()}"><b>${k}</b><span class="${DP[t][i]>=0.05?'':'z'}">${DP[t][i].toFixed(1)}</span></span>`:'').join('')}</span></span><span class="dpb dso"><span class="dph"><em class="lb dpl">Season sim</em></span><span class="dpg sog">${[['Finish',SO[t][0].toFixed(1)],['#1',pctS(SO[t][1])],['Bye',pctS(SO[t][2])],['Playoffs',pctS(SO[t][3])]].map(([k,v],i)=>`<span class="dpc so s${i}"><b>${k}</b><span class="${i&&v==='0%'?'z':''}">${v}</span></span>`).join('')}</span></span></div></div>
+      <div class="sb s-sk"><div class="stx spl dps"><span class="dpb dpd"><span class="dph"><em class="lb dpl">Dropped pts</em><i class="pw pu">/wk</i></span><span class="dpg">${['QB','RB','WR','TE','K','DEF'].map((k,i)=>LPOS.includes(k)?`<span class="dpc p-${k.toLowerCase()}"><b>${k}</b><span class="${DP[t][i]>=0.05?'':'z'}">${DP[t][i].toFixed(1)}</span></span>`:'').join('')}</span></span><span class="dpb dso"><span class="dph"><em class="lb dpl">Season sim</em></span><span class="dpg sog">${[['Finish',SO[t][0].toFixed(1)],['#1',pctS(SO[t][1])],['Bye',pctS(SO[t][2])],['Playoffs',pctS(SO[t][3])]].map(([k,v],i)=>`<span class="dpc so s${i}"><b>${k}</b><span class="${i&&v==='0%'?'z':''}">${i?v:rkt(SO[t][0],1)}</span></span>`).join('')}</span></span></div></div>
       <div class="st s2"><span><em class="lb">Opp rk</em><span class="v">${d[9].toFixed(1)}</span>${chip(rankOf(d[9],9,true),tied(d[9],9))}</span><span><em class="lb">All-play</em><span class="v">${d[10]}-${d[11]}</span>${chip(rankOf(d[10],10,false),tied(d[10],10))}</span></div>
       <div class="side"><div class="rr${(String(rw0)+String(rl0)).length>2?" rr4":""}"><span class="sk ${lastR==='W'?'w':'l'}"><span class="ct">${lastR}${n}</span></span><b>${rw0}-${rl0}</b></div><span class="l5d" aria-label="Last 5 results">${WK[t].slice(-5).map(g=>`<i class="${g[2]>g[3]?'w':'l'}"></i>`).join('')}</span>${gbH}<div class="subw">${sub}</div></div>
       <div class="szw">${season(t)}</div>
@@ -113,14 +114,14 @@ function dtab(med){
   const f=cols.find(c=>c[0]===key)[2];
   const sorted=key==='seed'?rows:[...rows].sort((a,b)=>dir*((key==='team'?a.t.localeCompare(b.t):f(b)-f(a))));
   const tcls={bye:'Bye · seeds 1–'+BY,po:'Playoffs · seeds '+(BY+1)+'–'+PN,out:'Chasing · seeds '+(PN+1)+'–'+N};
-  let h='<table class="dtt"><thead><tr>'+cols.map(c=>`<th data-k="${c[0]}"${c[2]?' class="srt'+(c[0]===key?' on':'')+'"':''}>${c[1]}</th>`).join('')+'</tr></thead><tbody>',lt='';
+  let h='<table class="dtt"><thead><tr>'+cols.map(c=>`<th data-k="${c[0]}"${c[2]?' class="srt'+(c[0]===key?' on':'')+(c[0]==='seed'?' rst'+(key!=='seed'?' act':''):'')+'"':''}${c[0]==='seed'?' title="Reset to standings order"':''}>${c[0]==='seed'?'<svg class="rsi" viewBox="0 0 16 16" aria-label="Reset sort"><path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2.6 1.9v3.4H6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>':c[1]}</th>`).join('')+'</tr></thead><tbody>',lt='';
   for(const r of sorted){
     if(key==='seed'&&tier(r.i)!==lt){lt=tier(r.i);h+=`<tr class="dtb ${lt}"><td colspan="${cols.length}">${tcls[lt]}</td></tr>`}
     h+=`<tr class="dtr ${tier(r.i)}" data-t="${esc(r.t)}"><td class="dsd">${r.i+1}</td><td class="dtm"><span>${av(r.t)}${esc(r.t)}</span></td>`+
        `<td><b>${r.w}-${r.l}</b></td><td><i class="dsk ${r.st[0]==='W'?'w':'l'}">${r.st}</i></td><td><span class="dl5">${r.l5.map(x=>`<i class="${x?'w':'l'}"></i>`).join('')}</span></td>`+
        `<td>${r.pf.toFixed(1)}${chip(r.pfr)}</td><td><b>${r.pw.toFixed(1)}</b><small>±${r.sd.toFixed(0)}</small></td><td>${r.pa.toFixed(1)}${chip(r.par)}</td><td><b>${r.paw.toFixed(1)}</b></td>`+
        `<td>${r.apw}-${r.apl}${chip(r.apr)}</td><td><b>${r.xw.toFixed(1)}</b></td><td class="${r.lk>=0.05?'up':r.lk<=-0.05?'dn':''}">${(r.lk>=0?'+':'−')+Math.abs(r.lk).toFixed(2)}</td><td>${r.ef.toFixed(0)}%</td>`+
-       (r.s?`<td>${r.s[0].toFixed(1)}</td><td class="c1">${pc(r.s[1])}</td><td class="c2">${pc(r.s[2])}</td><td class="c3">${pc(r.s[3])}</td>`:'<td></td><td></td><td></td><td></td>')+'</tr>'}
+       (r.s?`<td>${rkt(r.s[0],1)}</td><td class="c1">${pc(r.s[1])}</td><td class="c2">${pc(r.s[2])}</td><td class="c3">${pc(r.s[3])}</td>`:'<td></td><td></td><td></td><td></td>')+'</tr>'}
   box.innerHTML=h+'</tbody></table>';
   if(!box.dataset.w){box.dataset.w=1;box.addEventListener('click',e=>{
     const th=e.target.closest('th.srt');if(th){const k=th.dataset.k;box.dataset.d=box.dataset.k===k?-(+box.dataset.d||1):1;box.dataset.k=k===box.dataset.k&&+box.dataset.d===1?'seed':k;if(box.dataset.k==='seed')box.dataset.d=1;dtab(document.getElementById('bm').getAttribute('aria-pressed')==='true');return}
@@ -135,5 +136,6 @@ const bh=document.getElementById('bh'),bm=document.getElementById('bm');
 function set(med){bh.setAttribute('aria-pressed',!med);bm.setAttribute('aria-pressed',med);draw(med);dtab(med)}
 bh.onclick=()=>set(false);bm.onclick=()=>set(true);
 draw(false);dtab(false);
+if(typeof AVR!=='undefined')document.querySelectorAll('.pav[data-avt]').forEach(e=>{const r=AVR[e.dataset.avt];if(r)e.classList.add('av','av-'+r);else e.classList.add('nl')});
 document.addEventListener('click',e=>{const l=e.target.closest('.ddm label');if(l)setTimeout(()=>{l.closest('details').open=false},0);const o=document.querySelectorAll('details.dd[open]');o.forEach(d=>{if(!d.contains(e.target))d.open=false})});
 </script>

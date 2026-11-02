@@ -25,7 +25,7 @@ def table(D,cls,gp=None):
     for i,t in enumerate(H):
         tc='tier-bye' if i<lg.BYE_N else 'tier-po' if i<lg.PO else 'tier-out'
         cells=''.join((lambda r,tie:f'<span role="cell"><b>{D[t][p]:.1f}</b><i class="ch {tone(r)}"><span class="ct">{"T" if tie else "#"}{r}</span></i>{f'<em class="pgp">{gp[t][p]} GP</em>' if gp else ''}</span>')(*rank(D,p,t)) for p in POS)
-        o.append(f'<div class="pr {tc}" role="row"><span role="rowheader"><em>{i+1}</em>{SHORT[t]}</span>{cells}</div>')
+        o.append(f'<div class="pr {tc}" role="row"><span role="rowheader"><em>{i+1}</em><i class="pav" data-avt="{t.replace(chr(34),'&quot;')}" aria-hidden="true"></i><span class="psn">{SHORT[t]}</span><span class="pfn">{t}</span></span>{cells}</div>')
     o.append('</div>');return '\n'.join(o)
 NG=[(norm(r['team']),p,int(r.get('nogame_'+p) or 0)) for r in rows for p in POS if int(r.get('nogame_'+p) or 0)]
 NOTE=('<p class="ptnote">Per start leaves out starts with no game: '+', '.join(f'{t} {p} ({n} bye start{"s" if n>1 else ""})' for t,p,n in NG)+'.</p>') if NG else ''
