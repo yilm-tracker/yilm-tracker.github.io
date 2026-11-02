@@ -204,7 +204,7 @@ def bpanel(i,j):
     lab=''.join(f'<span class="pwl pwl-{w}">Week {w} · {RND[w]}</span>' for w in WEEKS)
     return f'<div class="ppn pp-{i}-{j}">{card(a,b,15,lab)}{lineup(a,b,15)}</div>'
 import po_sched
-_SR,_SPICK,_SPAN,_SCSS=po_sched.build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd)
+_SR,_SPICK,_SPAN,_SCSS=po_sched.build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=lg.BYE_N)
 radios=('<input type="radio" name="pview" id="pv-b" class="lr" checked><input type="radio" name="pview" id="pv-c" class="lr"><input type="radio" name="pview" id="pv-s" class="lr">'+_SR+''.join(f'<input type="radio" name="bk" id="bk-{k}" class="lr"{" checked" if n==0 else ""}>' for n,(k,*_) in enumerate(GAMES))+
         ''.join(f'<input type="radio" name="pa" id="pa-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N))+
         ''.join(f'<input type="radio" name="pb" id="pb-{i}" class="lr"{" checked" if i==1 else ""}>' for i in range(lg.N))+
@@ -257,7 +257,7 @@ def _lc(k,sc):
 css=_lc('b',['.bkx'])+_lc('p',['.ppx','.ppn'])
 css+=('.pvw{display:inline-flex;margin:0 0 14px}#pv-b:checked~.pvw label[for="pv-b"],#pv-c:checked~.pvw label[for="pv-c"],#pv-s:checked~.pvw label[for="pv-s"]{background:var(--chalk);color:var(--ink)}'
       '#pv-s:checked~.prd,#pv-s:checked~.rkey,#pv-s:checked~.bkx,#pv-s:checked~.ppk,#pv-s:checked~.pwk,#pv-s:checked~.psame,#pv-s:checked~.ppx,#pv-s:checked~.ppn,'
-      '#pv-b:checked~.psk,#pv-b:checked~.psx,#pv-c:checked~.psk,#pv-c:checked~.psx,'
+      '#pv-b:checked~.psk,#pv-b:checked~.psx,#pv-b:checked~.pskey,#pv-c:checked~.psk,#pv-c:checked~.psx,#pv-c:checked~.pskey,'
       '#pv-c:checked~.prd,#pv-c:checked~.rkey,#pv-c:checked~.bkx,'
       '#pv-b:checked~.ppk,#pv-b:checked~.pwk,#pv-b:checked~.psame,#pv-b:checked~.ppx,#pv-b:checked~.ppn{display:none!important}')
 css+=_SCSS+BRCSS+''.join(f'#bk-{k}:checked~.pbr label[for="bk-{k}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#bk-{k}:checked~.prd label[for="bk-{k}"]{{border-color:var(--chalk);background:var(--deck-2)}}#bk-{k}:checked~.bkx .bkp-{k}{{display:block}}' for k,*_ in GAMES)
