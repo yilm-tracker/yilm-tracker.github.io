@@ -1006,3 +1006,48 @@ body *:not(.ch):not(.pp):not(.pz):not(.dfvia):not(.dfcp):not(.nfl):not([class*="
 #list.board{box-shadow:var(--sh-hard)!important}
 .yrs .yb b{box-shadow:var(--sh-hard)!important}.yrs a.yb:active b{box-shadow:none!important}
 html:root{--dim:#90a3b6}  /* 4.5:1 on the panel; was #7189a2, 3.2:1 */
+
+/* 2026-11-03 (Nicklaus) ROW SEPARATION, four steps in one hue, darkest to lightest: outer frame < divider < darker row (panel)
+   < lighter row. Rows keep alternating shades AND get a 1px divider (half the 2px frame): an agreed exception to the
+   "zebra or divider, not both" rule. Same system on the standings cards, the desktop table and the Stats tables.
+   :not(#z) only lifts specificity above the plate-colour border rule. */
+html:root{--row-lt:#2F4B66;--row-divider:#172A3E}
+#list>.tcard>.r:nth-child(even){background:var(--row-lt)}
+#list>.tcard>.r+.r{border-top:1px solid var(--row-divider)!important}
+.dtp .dtt tbody tr.dtr.dra td{background:var(--row-lt)}
+.dtp .dtt tbody tr.dtr+tr.dtr td:not(#z){border-top:1px solid var(--row-divider)!important}
+.pt>.pr:not(.ph):nth-child(even),.sxt>.sxr:not(.sxhd):nth-child(even){background:var(--row-lt)}
+.pt>.pr:not(.ph)+.pr:not(.ph):not(#z),.sxt>.sxr:not(.sxhd)+.sxr:not(.sxhd):not(#z){border-top:1px solid var(--row-divider)!important}
+
+/* 2026-11-03 (Nicklaus) ROW SPACING, identical on both trackers: 16px inset left, right and top (desktop rows are zoomed
+   1.1, so 16px/1.1); bottom (--rpb) sized so the ink gap under the last line equals the top gap */
+.board .r{--rpx:16px;--rpt:16px}
+@media(min-width:1100px){.board .r{--rpx:calc(16px/1.1);--rpt:calc(16px/1.1)}}
+#list>.tcard>.r{padding:var(--rpt) var(--rpx) var(--rpb,var(--rpt))!important}
+/* YILM left column = BBP's: rank in its own 52px column (numeral centred), face after it (8px gap; 7px at <=380, as BBP),
+   name 9px after the face; nickname centred under the face */
+.board .r{grid-template-columns:calc(52px + 8px + 50px) minmax(0,1fr) 84px 78px!important}
+@media(max-width:380px){.board .r{grid-template-columns:calc(52px + 6px + 44px) minmax(0,1fr) 72px 78px!important}}
+@media(min-width:1100px){#list.board>.tcard>.r.r{grid-template-columns:111px 270px 84px 78px minmax(0,1fr)!important}}
+.board .r>.rk{grid-column:1;justify-self:start;align-self:start;width:52px;height:50px;margin-top:0!important;display:flex;align-items:center;justify-content:center}
+@media(max-width:380px){.board .r>.rk{height:44px}}
+.board .r>.rav{left:calc(var(--rpx) + 60px)!important;top:var(--rpt)!important}
+@media(max-width:380px){.board .r>.rav{left:calc(var(--rpx) + 59px)!important}}
+.board .r.hav>.nm,.board .r.hav>.hl{padding-left:0!important}
+.board .r>.hl .mgr{left:calc(var(--rpx) + 85px)!important;top:calc(var(--rpt) + 54px)!important}
+@media(max-width:380px){.board .r>.hl .mgr{left:calc(var(--rpx) + 81px)!important;top:calc(var(--rpt) + 48px)!important}}
+/* bottom inset: the last line's ink sits 16px above the row edge (Dumb ends on PA; Nerd on the season chart) */
+#dn-lean:checked~.board .r{--rpb:8px}
+#dn-full:checked~.board .r{--rpb:17px}
+@media(min-width:1100px){
+ #dn-lean:checked~#list.board>.tcard>.r.r{grid-template-rows:repeat(5,auto) 1fr!important}  /* Dumb: no empty Nerd tracks (their gaps padded the bottom) */
+ #dn-full:checked~.board .r{--rpb:15px}
+}
+/* muted text lifted to 4.5:1 on the new lighter row #2F4B66 (same hue): --dim #90a3b6 -> #aab9c7, --steel #a5b6c8 -> #a9b9ca */
+html:root{--dim:#aab9c7;--steel:#a9b9ca}
+/* the nickname's room comes from the rank cell (rank + face + nickname = one block), not an extra 21px row: a two-line
+   name already clears the nickname, so it no longer leaves a gap above the stat lines; stat lines sit 8px under the
+   nickname, as BBP's sit under the logo */
+.board .r.hav>.hl{min-height:0!important;height:0;overflow:visible}
+.board .r.hav>.rk{box-sizing:content-box;padding-bottom:18px}
+@media(max-width:380px){.board .r.hav>.rk{padding-bottom:17px}}
