@@ -210,7 +210,7 @@ CSS="""
  .dfcn b{font:700 16px/1.1 var(--display);letter-spacing:.01em;white-space:nowrap}
  .dfcr{padding:4px 7px 0;font:600 10px/1 var(--display);letter-spacing:.06em;text-transform:uppercase;opacity:.82;white-space:nowrap}
  .dfcr b{font-size:13px;letter-spacing:0;font-variant-numeric:tabular-nums}
- .dfcs{display:flex;align-items:center;gap:5px;margin-top:auto;padding:5px 5px 5px 7px;background:rgba(0,0,0,.13);font:700 11.5px/1 var(--display);letter-spacing:.03em;white-space:nowrap}
+ .dfcs{display:flex;align-items:center;gap:5px;margin-top:auto;box-sizing:border-box;height:29px;padding:0 5px 0 7px;background:rgba(0,0,0,.13);font:700 11.5px/1 var(--display);letter-spacing:.03em;white-space:nowrap}
  .dfcs>span{opacity:.75}
  .dfcs .nfl{margin-left:auto;flex:none}
 }
