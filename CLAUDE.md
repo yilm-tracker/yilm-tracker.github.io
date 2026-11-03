@@ -76,6 +76,12 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 - Sleeper draft slot owners: derive from `draft_order` when `slot_to_roster_id` is empty; keep only the latest completed draft per season.
 - Playoff orange bars (Week 15): total of both wild-card games, averaged across seasons.
 
+### Local sandbox setup (no network to Sleeper)
+
+- **BBP Team Hub** (`teamhub/build.py`) calls Sleeper even in `build` mode; offline it fails with a 403 tunnel error. It is non-fatal by design: the main site still builds. Ignore it locally.
+- **YILM first build:** `season_replay.py 2026 --build-only` fails (`.season/2026/pipeline/... not found`) until one full offline replay has run: `python3 season_replay.py 2026` (uses the committed capture, no network). After that, `--build-only` works.
+- **YILM Playwright:** do not `npm i` in `pipeline/`. `package.json` pins Playwright 1.47.2, which wants browser build chromium-1134; the sandbox has chromium-1243 only, so `gen.js` fails with "Executable doesn't exist". Without a local `node_modules`, `gen.js` resolves the global Playwright (as BBP does). If one was installed, `rm -rf pipeline/node_modules .season/2026/pipeline/node_modules` and rebuild.
+
 ## Open items / ideas offered, not decided
 
 - At 360 BBP, "Mandingoes" fits only at 16px (with FAAB below the name it is better than before; recheck).
