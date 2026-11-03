@@ -20,6 +20,8 @@ async function get(u, tries = 4) {
 export const nameKey = s => String(s || '').toLowerCase().replace(/[.'’`,]/g, '').replace(/-/g, ' ')
   .replace(/\b(jr|sr|ii|iii|iv|v)\b/g, '').replace(/\s+/g, ' ').trim();
 const POSFIX = { PK: 'K', Def: 'DEF', DST: 'DEF' };
+// draft-time names that Sleeper lists differently today
+const ALIAS = { 'robby anderson|WR': 'robbie chosen|WR', 'cameron ward|QB': 'cam ward|QB', 'nyheim hines|RB': 'nyheim miller hines|RB', 'washington footballteam|DEF': 'washington commanders|DEF', 'washington football team|DEF': 'washington commanders|DEF' };
 try {
   const D = JSON.parse(fs.readFileSync(path.join(P, 'history', 'drafts.json'), 'utf8'));
   const want = new Map();  // key -> [name, pos]
@@ -34,7 +36,7 @@ try {
   const pick = {};  // key -> pid (several players can share a name: the one with the most NFL seasons wins, then the active one)
   let miss = [];
   for (const [k] of want) {
-    const c = byKey.get(k) || [];
+    const c = byKey.get(k) || byKey.get(ALIAS[k]) || [];
     if (!c.length) { miss.push(k); continue; }
     c.sort((a, b) => (PL[b].years_exp || 0) - (PL[a].years_exp || 0) || (PL[b].active ? 1 : 0) - (PL[a].active ? 1 : 0));
     pick[k] = c[0];
