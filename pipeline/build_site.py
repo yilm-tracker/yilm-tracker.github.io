@@ -27,7 +27,12 @@ UPD+=('<script>(function(){var K="dt-radios'+('-'+Y if PAST else '')+'";try{var 
       'document.addEventListener("change",function(ev){var t=ev.target;if(!t||t.type!=="radio")return;'
       'try{var ids=[].map.call(document.querySelectorAll("input[type=radio]:checked"),function(x){return x.id}).filter(Boolean);'
       'sessionStorage.setItem(K,JSON.stringify(ids));if(t.name==="tab")sessionStorage.setItem("dt-tab",t.id)}catch(e){}},true)})()</script>')
-j=s.index('</style>')+len('</style>');s=s[:j]+'\n</head>\n<body>'+s[j:]+UPD+f'\n<!-- built {stamp} -->\n</body>\n</html>\n'
+# no flash of the unstyled page: the final stylesheet sits after ~10 MB of embedded data, so the page stays hidden
+# (page colour only) until that last style block has arrived, then shows fully styled
+import re as _reh
+_pgs=_reh.findall(r'--pg:\s*(#[0-9a-fA-F]{3,8})',open(P+'readability.css',encoding='utf-8').read())
+_HIDE='<style>body>*{visibility:hidden}'+(f'html,body{{background:{_pgs[-1]}}}' if _pgs else '')+'</style>';_SHOW='<style>body>*{visibility:visible}</style>'
+j=s.index('</style>')+len('</style>');s=s[:j]+_HIDE+'\n</head>\n<body>'+s[j:]+_SHOW+UPD+f'\n<!-- built {stamp} -->\n</body>\n</html>\n'
 s=s.replace('</style>','body{margin:0}</style>',1)
 # small TeamHub link on the eyebrow line (live site only; the download file stays as is). Negative margins keep the
 # line box unchanged, so nothing else on the page moves; the ::after pad gives it a 44px tap target.
