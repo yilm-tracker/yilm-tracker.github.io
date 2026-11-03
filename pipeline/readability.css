@@ -890,3 +890,30 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
  .dtt thead tr.dtb td{border-radius:0}
  .dtt tr.dtb td{border-bottom-width:3px!important}
 }
+/* 2026-11-03 (later): desktop table as raised panels, one per tier (dtPanels), 12px apart, shadowed like one big key.
+   The tier band runs across the non-sim columns and stops at the sim columns; the first panel's sim cell carries the
+   "20k simulations" label in the band's row (no extra row). The sim columns are set off by a 4px rule in the page
+   colour (reads as a cut through the panel); no tear line or notches between panels (the gap replaces them). */
+@media (min-width:1100px){
+ .dtab{margin:4px 0 28px}
+ .dtab>.dsv{display:none}
+ .dtp{position:relative;background:var(--deck);border-radius:12px;overflow:hidden;margin:0 0 12px;
+  box-shadow:inset 0 1px 0 rgba(238,240,244,.06),0 1px 0 rgba(0,0,0,.5),0 4px 0 -1px rgba(0,0,0,.28),0 10px 22px -6px rgba(0,0,0,.6)}
+ .dtp:last-child{margin-bottom:0}
+ .dtp .dtt.dtf{table-layout:fixed;width:100%}
+ .dtp .dtt tr.dtb td.dtbb{padding:13px 16px 10px!important;background-image:none!important}
+ .dtp .dtt tr.dtb td::before,.dtp .dtt tr.dtb td::after{content:none!important}
+ .dtp .dtt tr.dtb td.dsc{background:transparent!important;border-bottom:0!important;padding:0 0 4px!important;text-align:center;vertical-align:bottom;border-left:4px solid var(--pg)!important}
+ .dtp .dtt tr.dtb td.dsc span{font:700 11.5px/1 var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--label)}
+ .dtp .dtt th[data-k="fin"],.dtp .dtt td.dfin{border-left:4px solid var(--pg)!important}
+ .dtp .dtt thead tr:last-child th{padding-top:12px;padding-bottom:10px}
+ .dtp .dtt tbody tr:last-child td{border-bottom:0}
+}
+/* 2026-11-03: dots: paint the colour inside the ring only (background under the border showed as a green fringe outside
+   the dark ring on the anti-aliased edge) */
+.seg10 i,.l5d i{background-clip:padding-box!important}
+/* YILM: tier headers squared off (no ticket tear line or notches) */
+#list>.tcard+.tcard>.tier{background-image:none!important}
+#list>.tcard+.tcard>.tier::before,#list>.tcard+.tcard>.tier::after{content:none!important;display:none!important}
+#list>.tcard+.tcard>.tier{padding-top:14px!important}
+#list>.tcard+.tcard>.tier{border-top:3px solid var(--pg)}

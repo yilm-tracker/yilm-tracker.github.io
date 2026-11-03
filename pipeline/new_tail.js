@@ -123,9 +123,7 @@ function dtab(med){
        `<td>${r.pf.toFixed(1)}${chip(r.pfr)}</td><td><b>${r.pw.toFixed(1)}</b><small>±${r.sd.toFixed(0)}</small></td><td>${r.pa.toFixed(1)}${chip(r.par)}</td><td><b>${r.paw.toFixed(1)}</b></td>`+
        `<td>${r.apw}-${r.apl}${chip(r.apr)}</td><td><b>${r.xw.toFixed(2)}</b></td><td class="${r.lk>=0.05?'up':r.lk<=-0.05?'dn':''}">${(r.lk>=0?'+':'−')+Math.abs(r.lk).toFixed(2)}</td><td>${r.ef.toFixed(0)}%</td>`+
        (r.s?`<td class="dfin">${rkt(r.s[0],1)}</td><td class="c1">${pc(r.s[1])}</td><td class="c2">${pc(r.s[2])}</td><td class="c3">${pc(r.s[3])}</td>`:'<td class="dfin"></td><td></td><td></td><td></td>')+'</tr>'}
-  // the first tier band sits above the column headers (band, then the 20k-simulations label, then the headers)
-  if(key==='seed'){const a=h.indexOf('<tr class="dtb'),z=h.indexOf('</tr>',a)+5;if(a>0){const band=h.slice(a,z);h=h.slice(0,a)+h.slice(z);h=h.replace('<thead>','<thead>'+band)}}
-  box.innerHTML=h+'</tbody></table>';simBar(box);
+  box.innerHTML=h+'</tbody></table>';if(key==='seed')dtPanels(box);
   if(!box.dataset.w){box.dataset.w=1;box.addEventListener('click',e=>{
     const th=e.target.closest('th.srt');if(th){const k=th.dataset.k;box.dataset.d=box.dataset.k===k?-(+box.dataset.d||1):1;box.dataset.k=k===box.dataset.k&&+box.dataset.d===1?'seed':k;if(box.dataset.k==='seed')box.dataset.d=1;dtab(document.getElementById('bm').getAttribute('aria-pressed')==='true');return}
     const tr=e.target.closest('tr.dtr');if(!tr)return;const c=document.querySelector('#list .r[data-t="'+CSS.escape(tr.dataset.t)+'"]');
@@ -313,13 +311,22 @@ if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener
  while((p.scrollWidth>p.clientWidth+.5||n.getBoundingClientRect().right>p.getBoundingClientRect().right+.5)&&s>10){s-=.5;n.style.fontSize=s+'px'}})}
  pcnFit();addEventListener('resize',function(){requestAnimationFrame(pcnFit)});document.addEventListener('change',function(){requestAnimationFrame(pcnFit)});document.fonts&&document.fonts.ready.then(pcnFit)})();
 
-/* simBar: one solid rule down the left edge of the four sim columns, from the "20k simulations" label to the foot of the
-   table, through the tier bands (an overlay, so the bands' full-width cells do not break it); the label's underline
-   meets it at the top */
-function simBar(box){if(!box)return;let v=box.querySelector(':scope>.dsv');if(!v){v=document.createElement('i');v.className='dsv';v.setAttribute('aria-hidden','true');box.appendChild(v)}
-  const t=box.querySelector('.dtt'),f=t&&t.querySelector('th[data-k="fin"]'),g=t&&t.querySelector('.dsim');if(!f||!f.offsetParent||!g){v.style.display='none';return}
-  v.style.display='';const z=box.currentCSSZoom||1,b=box.getBoundingClientRect(),fr=f.getBoundingClientRect(),gr=g.getBoundingClientRect(),tr=t.getBoundingClientRect();
-  v.style.left=((fr.left-b.left)/z)+'px';v.style.top=((gr.top-b.top)/z)+'px';v.style.height=((tr.bottom-gr.top)/z)+'px'}
-addEventListener('resize',()=>requestAnimationFrame(()=>simBar(document.getElementById('dtab'))));
-document.fonts&&document.fonts.ready.then(()=>simBar(document.getElementById('dtab')));
+/* dtPanels (desktop table, standings order): each tier becomes its own raised panel. The table is first laid out whole so
+   every column gets one natural width; those widths (visible header cells, CSS zoom removed) become a fixed colgroup on
+   every panel's table, so columns line up across panels. Each panel: tier band across the non-sim columns, the sim
+   columns' cell beside it (the first panel's carries the "20k simulations" label; the others stay plain), then rows; the
+   first panel also carries the column headers under its band. The band's "Line" figure is dropped here. */
+function dtPanels(box){
+  const t=box.querySelector('table.dtt');if(!t)return;
+  const hr=t.querySelector('thead tr:last-child'),hs=[...hr.children].filter(c=>c.offsetParent);if(!hs.length)return;
+  const z=box.currentCSSZoom||1,TW=Math.floor(t.getBoundingClientRect().width/z),W=hs.map(c=>Math.floor(c.getBoundingClientRect().width/z)),NS=hs.length-4;W[1]+=TW-W.reduce((a,b)=>a+b,0);  // whole pixels; the team column takes the remainder, so every panel lays out identically
+  const cg=()=>'<colgroup>'+W.map(w=>`<col style="width:${w}px">`).join('')+'</colgroup>';
+  const hdr=hr.outerHTML,groups=[];
+  for(const tr of t.tBodies[0].rows){if(tr.classList.contains('dtb'))groups.push({band:tr,rows:[]});else if(groups.length)groups[groups.length-1].rows.push(tr)}
+  if(!groups.length)return;
+  box.innerHTML=groups.map((g,i)=>{const b=g.band,bh=b.querySelector('.dtbh'),em=bh&&bh.querySelector('em');if(em)em.remove();
+    const band=`<tr class="${b.className}"><td class="dtbb" colspan="${NS}">${bh?bh.outerHTML:''}</td><td class="dsc" colspan="4">${i?'':'<span>20k simulations</span>'}</td></tr>`;
+    return `<div class="dtp"><table class="dtt dtf" style="width:${TW}px">${cg()}${i?'<tbody>'+band:'<thead>'+band+hdr+'</thead><tbody>'}${g.rows.map(r=>r.outerHTML).join('')}</tbody></table></div>`}).join('')}
+addEventListener('resize',()=>{clearTimeout(window._dtR);window._dtR=setTimeout(()=>{const b=document.getElementById('bm');if(window.innerWidth>=1100&&typeof dtab==='function')dtab(!!b&&b.getAttribute('aria-pressed')==='true')},120)});
+document.fonts&&document.fonts.ready.then(()=>{const b=document.getElementById('bm');if(typeof dtab==='function')dtab(!!b&&b.getAttribute('aria-pressed')==='true')});
 </script>
