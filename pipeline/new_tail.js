@@ -198,12 +198,13 @@ tnFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(tnFit);ad
 (function(){
 const FM={};
 function fm(cs){const k=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;if(FM[k])return FM[k];const c=document.createElement('canvas').getContext('2d');c.font=k;const m=c.measureText('0123456789');return FM[k]={cap:m.actualBoundingBoxAscent,asc:m.fontBoundingBoxAscent,desc:m.fontBoundingBoxDescent}}
-function txt(n){if(n.nodeType===3)return n;const w=document.createTreeWalker(n,NodeFilter.SHOW_TEXT,{acceptNode:x=>x.textContent.trim()?1:3});let l=null,x;while(x=w.nextNode())l=x;return l}
+function txt(n){if(n.nodeType===3)return n;const w=document.createTreeWalker(n,NodeFilter.SHOW_TEXT,{acceptNode:x=>x.textContent.trim()&&!x.parentElement.closest('.lku')?1:3});let l=null,x;while(x=w.nextNode())l=x;return l}
 function ref(t){let n=t.previousSibling;while(n&&n.nodeType===3&&!n.textContent.trim())n=n.previousSibling;
   if(n&&n.nodeType===1&&n.matches('.ch,.rkb,svg,.av,.pav,.pz,.nfl,.pba,img'))return null;
   if(!n){if(t.classList.contains('rkb'))return {own:true,el:t.parentElement};const ps=t.parentElement.previousElementSibling;if(ps&&!t.previousElementSibling){const tn=txt(ps);if(tn&&/[0-9]/.test(tn.textContent))return {tn,el:tn.parentElement}}return null}
   const tn=txt(n);if(!tn||!/[0-9A-Za-z%]/.test(tn.textContent))return null;return {tn,el:tn.parentElement}}
 function fit(){
+  for(const k in FM)delete FM[k];  // font metrics are re-read each run: a run before the web fonts load must not leave the fallback font's metrics cached
   const tiles=[...document.querySelectorAll('.ch,.rkb')].filter(t=>t.offsetParent&&!t.closest('.gm,.sxm,.lbr,.hmx,.tqgrid,.mx,.bym'));
   const jobs=[];
   for(const t of tiles){const r=ref(t);if(!r)continue;const cs=getComputedStyle(r.el),m=fm(cs),z=t.currentCSSZoom||1;
@@ -211,9 +212,9 @@ function fit(){
     let mid=null,inline=false,zz=z;
     if(r.tn){const g=document.createRange();g.selectNodeContents(r.tn);const rr=g.getBoundingClientRect(),tr=t.getBoundingClientRect();zz=rr.height>0?rr.height/(m.asc+m.desc):z;const base=rr.top+m.asc*zz;mid=base-m.cap*z/2;inline=tr.bottom>rr.top&&tr.top<rr.bottom}
     if(!inline)continue;jobs.push({t,cap:m.cap,mid,inline,z:(r.tn&&mid!=null)?zz:z})}
-  for(const j of jobs){const oh=+j.t.dataset.oh,H=Math.round(((j.cap+Math.max(oh,j.cap))/2)*2)/2;inkTile(j.t,H)}
+  for(const j of jobs){const H=Math.floor(j.cap*2)/2;inkTile(j.t,H)}  // never taller than the figure beside it: tile height = its cap height
   for(const j of jobs)j.t.style.removeProperty('transform');  // measure from the untransformed spot, so a re-run never stacks offsets
-  for(const j of jobs){if(j.t.closest('.sb .stx,.st.s2'))continue;  // stat-line chips: the flex row centres them
+  for(const j of jobs){  // centre every tile on the figure's cap height (a flex row centres on the line box, which sits lower)
     const tr=j.t.getBoundingClientRect(),d=(j.mid-(tr.top+tr.bottom)/2)/j.z;if(Math.abs(d)>0.1)j.t.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important')}
 }
 // size one rank tile from the digits' ink: outer height H, the same gap from ink to edge on top and bottom, the same on
@@ -221,8 +222,9 @@ function fit(){
 const INK=document.createElement('canvas').getContext('2d');
 function inkTile(t,H){if(!(window.CSS&&CSS.supports('text-box','trim-both cap alphabetic')))return false;
   const txt=t.textContent.trim();if(!txt)return false;const cs=getComputedStyle(t.querySelector('.ct')||t),fam=cs.fontFamily,wt=cs.fontWeight;
+  {const b=getComputedStyle(t);H-=(parseFloat(b.borderTopWidth)||0)+(parseFloat(b.borderBottomWidth)||0)}  // H is the outer height: a bordered (outlined) tile loses its border from it
   const P=Math.max(2.5,Math.min(3.5,(H-6)/2)),cap=H-2*P;
-  INK.font=`${wt} 100px ${fam}`;const fs=Math.round(cap/(INK.measureText('H').actualBoundingBoxAscent/100)*4)/4;
+  INK.font=`${wt} 100px ${fam}`;const _d=INK.measureText('0123456789');const fs=Math.floor(cap/((_d.actualBoundingBoxAscent+_d.actualBoundingBoxDescent)/100)*4)/4;  // sized on the digits' ink (they can rise above the H cap), so the outer height never exceeds H
   INK.font=`${wt} ${fs}px ${fam}`;const m=INK.measureText(txt),m2=INK.measureText('88'),Hc=INK.measureText('H').actualBoundingBoxAscent;
   const m3=INK.measureText(t.dataset.ref||'88');const iw=m.actualBoundingBoxLeft+m.actualBoundingBoxRight,iw2=Math.max(m2.actualBoundingBoxLeft+m2.actualBoundingBoxRight,m3.actualBoundingBoxLeft+m3.actualBoundingBoxRight),W=Math.max(iw,iw2)+2*(P+0.5);
   const gl=m.actualBoundingBoxLeft*-1,gr=m.width-m.actualBoundingBoxRight,gt=Hc-m.actualBoundingBoxAscent,gb=-m.actualBoundingBoxDescent;
