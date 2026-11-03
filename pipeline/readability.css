@@ -724,3 +724,17 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 /* bigger manager face (the seed number is unchanged) */
 .board .r>.rav{width:50px!important;height:50px!important;top:9px!important}.board .r.hav>.nm,.board .r.hav>.hl{padding-left:59px!important}
 @media(max-width:380px){.board .r>.rav{width:44px!important;height:44px!important}.board .r.hav>.nm,.board .r.hav>.hl{padding-left:52px!important}}
+/* standings name line: position change scaled to the 22px names, on the cap centre of the name's last line (mvAl);
+   FAAB balance at the right end of the name line: raised tile like the year buttons, "FAAB" caption under it, tile centred on the name (mvAl); opens The Wire */
+.board .r .nm{align-items:flex-end;column-gap:6px}
+.board .r .nm .tn .mv{display:inline-flex;align-items:baseline;gap:.14em;font-size:.68em;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.board .r .nm .tn .mv .tri{width:.78em;height:.7em;flex:none}
+.board .r .nm .fab{flex:none;margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.board .r .nm .fab b{display:block;box-sizing:border-box;text-align:center;padding:5px 7px;border-radius:7px;border:1px solid rgba(0,0,0,.55);background:var(--deck-2);
+  box-shadow:2px 3px 0 rgba(0,0,0,.6),0 6px 10px -4px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);
+  font:700 14px/1 var(--display);letter-spacing:.03em;color:var(--chalk);font-variant-numeric:tabular-nums;text-box:trim-both cap alphabetic;transition:transform .08s,box-shadow .08s}
+.board .r .nm .fab:active b{transform:translate(2px,3px);box-shadow:0 0 0 rgba(0,0,0,.6),0 2px 4px -2px rgba(0,0,0,.5)}
+.board .r .nm .fab small{display:block;font:700 9px/1 var(--display);letter-spacing:.1em;text-indent:.1em;color:var(--dim);text-box:trim-both cap alphabetic}
+@supports not (text-box:trim-both cap alphabetic){.board .r .nm .fab b{padding:4px 7px 3px}}
+@media(max-width:420px){.board .r .nm .fab b{font-size:13px;padding:5px 6px}}
+.board .r .nm .tn{text-overflow:clip}

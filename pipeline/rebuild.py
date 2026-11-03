@@ -167,6 +167,14 @@ _SO0=_PSM.run()['teams']
 _SO={_t:[round(sum((k+1)*q for k,q in enumerate(_o['dist']))/100,1),_o['top'],_o['bye'],_o['po']] for _t,_o in _SO0.items()}
 d+='// season-end sim (player-level sim, 20,000 runs): [average finishing seed, % 1st, % bye, % playoffs]\nconst SO='+json.dumps({_t:[round(x,2) for x in v] for _t,v in _SO.items()})+';\n'
 d+=d_av
+# FAAB balances (standings card tiles): pull_faab.json from node pull.mjs faab; current season only (the page refreshes them from Sleeper on load)
+try:
+    _FB=json.load(open(P+'pull_faab.json',encoding='utf-8')) if _dt_os.path.exists(P+'pull_faab.json') and _dt_os.environ.get('DT_PAST')!='1' else None
+    try:_RNF={int(k):v for k,v in json.load(open(P+'cmp_extra.json',encoding='utf-8'))['rn'].items()}
+    except Exception:import lg as _lgf;_RNF=dict(_lgf.RN)
+    if _FB and _FB.get('budget'):
+        d+='// FAAB: budget, league id, roster id -> team, dollars left per team\nconst FAABB='+str(int(_FB['budget']))+',FAABL='+json.dumps(str(_FB['league']))+',FAABR='+json.dumps({k:v for k,v in _RNF.items()},ensure_ascii=False)+',FAAB='+json.dumps({_RNF[int(k)]:int(v) for k,v in _FB['left'].items() if int(k) in _RNF},ensure_ascii=False)+';\n'
+except Exception as _e:print('faab skipped:',_e)
 import os as _os,base64 as _b64
 _LG='';_MIME={'svg':'image/svg+xml','png':'image/png','webp':'image/webp'}
 if _os.path.isdir(P+'logos'):

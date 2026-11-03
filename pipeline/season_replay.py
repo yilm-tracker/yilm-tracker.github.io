@@ -55,6 +55,9 @@ LG=C[L];PL=C[f'{A}/players/nfl'];SCH=C[f'{S}/schedule/nfl/regular/{Y}']
 REG=int(LG['settings'].get('playoff_week_start') or 15)-1
 # ---------- league.json: teams (names as they were that season), managers, avatars, lineup, playoff format
 US={u['user_id']:u for u in C[f'{L}/users']};ROS=C[f'{L}/rosters']
+# FAAB balances for the standings card (current season; the page also refreshes them from Sleeper on load)
+_FBB=int(LG['settings'].get('waiver_budget') or 0)
+if not PAST and _FBB:W_('pull_faab.json',{'league':str(LID),'budget':_FBB,'left':{str(r['roster_id']):_FBB-int((r.get('settings') or {}).get('waiver_budget_used') or 0) for r in ROS}})
 AVS=json.load(gzip.open(os.path.join(RAW,'avatars.json.gz'))) if os.path.exists(os.path.join(RAW,'avatars.json.gz')) else {}
 if not BO and AVS:os.makedirs(os.path.join(WS,'avatars'),exist_ok=True)
 teams=[]

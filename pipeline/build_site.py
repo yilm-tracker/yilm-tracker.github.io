@@ -18,7 +18,7 @@ head=('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta 
       '<meta name="robots" content="noindex">\n')
 s=head+s.replace('<meta charset="utf-8">\n','',1)
 if PAST:UPD=''  # a finished season never changes: no update poller, no live scores
-else:UPD+='<script>'+open(P+'live.js',encoding='utf-8').read()+'</script>'  # in-page live scores (Matchups)
+else:UPD+='<script>'+open(P+'live.js',encoding='utf-8').read().replace("L='1335450123487961088'","L='"+os.environ.get('DT_LEAGUE',_j.load(open(P+'seasons.json'))['leagues'][CUR])+"'").replace("Y='2026'","Y='"+str(Y)+"'")+'</script>'  # this league's id and season (live.js came from the BBP tracker)  # in-page live scores (Matchups)
 # remember the selected tab / switches (per season; the tab itself is shared, so switching year keeps the section) across reloads (radio state), so a refresh comes back to the same view and
 # Safari's restored scroll position lands where it was instead of in the middle of Standings
 UPD+=('<script>(function(){var K="dt-radios'+('-'+Y if PAST else '')+'";try{var s=JSON.parse(sessionStorage.getItem(K)||"[]");'

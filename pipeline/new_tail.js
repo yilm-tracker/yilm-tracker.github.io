@@ -80,7 +80,7 @@ function draw(med){
       +FUT[t].map(g=>`<div class="gm fut"><div class="h"><span>Wk ${g[0]}</span></div><div class="up">Upcoming</div><div class="vs">vs ${esc(fn(g[1]))}</div></div>`).join('');
     return tierHtml+`<div class="r ${tc}${AVR[t]?" hav":""}${i>=PO?' out':''}${op?' open':''}" data-t="${esc(t)}" tabindex="0" role="button" aria-expanded="${op}">
       <div class="rk">${i+1}</div>
-      ${AVR[t]?`<i class="av rav av-${AVR[t]}" aria-hidden="true"></i>`:""}<div class="nm"><span class="tn">${esc(t)}</span>${mv}</div>
+      ${AVR[t]?`<i class="av rav av-${AVR[t]}" aria-hidden="true"></i>`:""}<div class="nm"><span class="tn">${esc(t)} ${mv}</span>${typeof FAAB!=='undefined'&&FAAB[t]!=null?`<label for="tab-wr" class="fab" title="FAAB left: $${FAAB[t]} of $${FAABB} (opens The Wire)"><b>$${FAAB[t]}</b><small>FAAB</small></label>`:''}</div>
       <span class="hl">${NIK[t]?`<em class="mgr">${esc(NIK[t])}</em>`:""}</span>
       <div class="sb s-pf"><div class="stx"><em class="lb">PF</em><span class="pf">${d[3].toFixed(2)}</span>${chip(d[4])} <i class="pw">· <b class="pwv">${d[5].toFixed(1)}</b>/wk <b class="psd" title="Weekly spread: standard deviation of the team's weekly scores">±${SDV(t).toFixed(0)}</b></i></div>${seg(d[4])}</div>
       <div class="sb s-pa"><div class="stx"><em class="lb">PA</em><span class="v">${d[6].toFixed(2)}</span>${chip(d[7])} <i class="pw">· <b class="pwv">${d[8].toFixed(1)}</b>/wk</i></div>${seg(d[7])}</div>
@@ -130,7 +130,7 @@ function dtab(med){
 }
 const list=document.getElementById('list');
 function toggle(row){const t=row.dataset.t;OPEN.has(t)?OPEN.delete(t):OPEN.add(t);const op=OPEN.has(t);row.classList.toggle('open',op);row.setAttribute('aria-expanded',op);row.querySelector('.strip').hidden=!op}
-list.addEventListener('click',e=>{if(e.target.closest('.strip'))return;const r=e.target.closest('.r');if(r)toggle(r)});
+list.addEventListener('click',e=>{if(e.target.closest('.strip'))return;if(e.target.closest('.fab')){setTimeout(()=>{const n=document.querySelector('nav.tabs');n&&n.scrollIntoView({block:'start'})},0);return}const r=e.target.closest('.r');if(r)toggle(r)});
 list.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('r')){e.preventDefault();toggle(e.target)}});
 const bh=document.getElementById('bh'),bm=document.getElementById('bm');
 function set(med){bh.setAttribute('aria-pressed',!med);bm.setAttribute('aria-pressed',med);draw(med);dtab(med)}
@@ -140,10 +140,26 @@ if(typeof AVR!=='undefined')document.querySelectorAll('.pav[data-avt]').forEach(
 function pfit(){document.querySelectorAll('.pr .pav.av+.psn').forEach(el=>{if(!el.offsetParent)return;el.style.fontSize='';let f=parseFloat(getComputedStyle(el).fontSize);while((el.scrollHeight>el.clientHeight+1||el.scrollWidth>el.clientWidth+1)&&f>9){f-=0.5;el.style.fontSize=f+'px'}})}
 pfit();document.addEventListener('change',()=>requestAnimationFrame(pfit));
 // standings card names: shrink a long name just enough to show in full (never an ellipsis)
-function tnFit(){document.querySelectorAll('.board .r .tn').forEach(e=>{if(!e.offsetParent)return;e.style.fontSize='';e.style.whiteSpace='';e.style.lineHeight='';
-  // one line first, down to 85% of full size; a name that still does not fit takes two lines at full size (shrinking only if a word is too wide)
-  const f0=parseFloat(getComputedStyle(e).fontSize);let f=f0;while(e.scrollWidth>e.clientWidth+.5&&f>f0*.85){f-=.5;e.style.fontSize=f+'px'}
-  if(e.scrollWidth>e.clientWidth+.5){e.style.whiteSpace='normal';e.style.lineHeight='1.12';f=f0;e.style.fontSize='';while(e.scrollWidth>e.clientWidth+.5&&f>12){f-=.5;e.style.fontSize=f+'px'}}});if(typeof ravFit==='function')ravFit()}
+// cap-height centre of a text box's line, measured from the bottom of the line box (font metrics via canvas)
+function capC(e){const c=getComputedStyle(e),fs=parseFloat(c.fontSize);_cv.font=`${c.fontWeight} ${fs}px ${c.fontFamily}`;const m=_cv.measureText('H'),a=m.fontBoundingBoxAscent,d=m.fontBoundingBoxDescent,lh=c.lineHeight==='normal'?a+d:parseFloat(c.lineHeight);
+  return {lh,c:(lh-a-d)/2+d+m.actualBoundingBoxAscent/2}}
+function mvAl(){
+  document.querySelectorAll('.board .r .nm').forEach(n=>{if(!n.offsetParent)return;const t=n.querySelector('.tn'),v=n.querySelector('.mv'),f=n.querySelector('.fab');if(!t)return;
+  const cap=e=>{const c=getComputedStyle(e);_cv.font=`${c.fontWeight} ${c.fontSize} ${c.fontFamily}`;return _cv.measureText('H').actualBoundingBoxAscent};
+  if(v)v.style.verticalAlign=((cap(t)-cap(v))/2)+'px';
+  const T=capC(t),H=t.getBoundingClientRect().height;
+  if(f){f.style.marginBottom='0px';const fr=f.getBoundingClientRect(),br=f.querySelector('b').getBoundingClientRect();f.style.marginBottom=((H-T.lh)/2+T.c-(fr.bottom-(br.top+br.height/2)))+'px'}})}
+function tnFit(){
+  // FAAB tiles: one width (the widest balance), so they share a left edge down the board
+  const fb=[...document.querySelectorAll('.board .r .nm .fab b')].filter(b=>b.offsetParent);fb.forEach(b=>b.style.width='');const fw=Math.max(0,...fb.map(b=>b.getBoundingClientRect().width));fb.forEach(b=>b.style.width=fw+'px');
+  // name line ends 6px short of the widest record tile (W3 4-3) on the board, the same on every row, so the FAAB tiles line up
+  const R=[...document.querySelectorAll('.board .r')].map(r=>[r.querySelector(':scope>.nm'),r.querySelector('.side .rr')]).filter(([n,k])=>n&&k&&n.offsetParent);
+  R.forEach(([n])=>n.style.paddingRight='');const pr=Math.max(0,...R.map(([n,k])=>n.getBoundingClientRect().right-Math.min(...[...k.children].map(c=>c.getBoundingClientRect().left))+6));R.forEach(([n])=>n.style.paddingRight=pr+'px');
+  document.querySelectorAll('.board .r .tn').forEach(e=>{if(!e.offsetParent)return;e.style.fontSize='';e.style.whiteSpace='nowrap';e.style.lineHeight='';
+  const f0=parseFloat(getComputedStyle(e).fontSize),ov=()=>e.scrollWidth>e.clientWidth+.5;let f=f0;while(ov()&&f>f0*.85){f-=.5;e.style.fontSize=f+'px'}
+  if(ov()){e.style.whiteSpace='normal';e.style.lineHeight='1.12';f=f0;e.style.fontSize=f+'px';
+    const fit=n=>{let g=f0;const bad=()=>ov()||e.getBoundingClientRect().height>n*1.12*g+1||(n>2&&n*1.12*g>52);e.style.fontSize=g+'px';while(bad()&&g>10){g-=.5;e.style.fontSize=g+'px'}return g};
+    f=fit(2);if(f<15){const g=fit(3);if(g<=f)e.style.fontSize=(f=fit(2))+'px'}}});if(typeof ravFit==='function')ravFit();mvAl()}
 // tabs: one shared font size, shrunk just enough that the longest label keeps at least 8px from its frame on each side
 function tabFit(){const L=[...document.querySelectorAll('nav.tabs label')].filter(l=>l.offsetParent);if(!L.length)return;L.forEach(l=>l.style.fontSize='');
 let k=1;L.forEach(l=>{const rg=document.createRange();rg.selectNodeContents(l);const tw=rg.getBoundingClientRect().width;const ls=parseFloat(getComputedStyle(l).letterSpacing)||0;const room=l.getBoundingClientRect().width-2-16;const w=tw-ls;if(w>room)k=Math.min(k,room/w)});
@@ -236,4 +252,9 @@ if(document.fonts){document.fonts.ready.then(()=>{for(const k in FM)delete FM[k]
 })();
 addEventListener('resize',()=>requestAnimationFrame(pfit));document.addEventListener('click',()=>requestAnimationFrame(pfit));
 document.addEventListener('click',e=>{const l=e.target.closest('.ddm label');if(l)setTimeout(()=>{l.closest('details').open=false},0);const o=document.querySelectorAll('details.dd[open]');o.forEach(d=>{if(!d.contains(e.target))d.open=false})});
+// FAAB tiles: the build's balances, then a fresh read from Sleeper (it allows any origin) so a balance spent since the last build shows at once
+if(typeof FAABL!=='undefined'&&window.fetch)fetch('https://api.sleeper.app/v1/league/'+FAABL+'/rosters',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(ro=>{if(!Array.isArray(ro))return;let ch=0;
+  for(const x of ro){const t=FAABR[x.roster_id];if(!t||!(t in FAAB))continue;const v=FAABB-(+((x.settings||{}).waiver_budget_used)||0);if(v!==FAAB[t]){FAAB[t]=v;ch=1}}
+  if(!ch)return;document.querySelectorAll('.board .r').forEach(r=>{const t=r.dataset.t,f=r.querySelector('.fab');if(f&&t in FAAB){f.querySelector('b').textContent='$'+FAAB[t];f.title=`FAAB left: $${FAAB[t]} of $${FAABB} (opens The Wire)`}});tnFit()}).catch(()=>{});
+
 </script>

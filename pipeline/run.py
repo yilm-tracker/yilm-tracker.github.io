@@ -28,6 +28,7 @@ if mode=='weekly':
     sh('node',P+'pull.mjs','playoffs');sh('python3',P+'po_write.py')
     if D<=have and not force:  # mid-week rebuild (e.g. a code push): keep the current week's live scores instead of resetting them
         if subprocess.run(['node',P+'pull.mjs','live',str(G()+1)],cwd=P).returncode==0:subprocess.run(['python3',P+'score.py',P+'live.json','--no-build'],cwd=P)
+    subprocess.run(['node',P+'pull.mjs','faab'],cwd=P)  # FAAB balances (never fatal)
     subprocess.run(['node',P+'pull.mjs','wire',str(G())],cwd=P)  # THE WIRE (never fatal)
     subprocess.run(['node',P+'pull.mjs','top',str(G())],cwd=P)  # Players tab: top players by position (never fatal)
     sh('node',P+'pull.mjs','detail',f'1-{G()+1}')  # full stat lines for the Detailed view (all played weeks + current)
@@ -36,6 +37,7 @@ elif mode=='live':
     W=G()+1
     sh('node',P+'pull.mjs','live',str(W))
     subprocess.run(['node',P+'pull.mjs','detail',str(W)],cwd=P)  # Detailed view; never fatal
+    subprocess.run(['node',P+'pull.mjs','faab'],cwd=P)  # FAAB balances; never fatal
     # THE WIRE between weekly runs (waivers, injuries): re-pull when the last pull is over 2 hours old; never fatal
     import datetime as _dtw
     try:

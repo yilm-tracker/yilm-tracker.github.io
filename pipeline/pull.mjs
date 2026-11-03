@@ -3,6 +3,7 @@
 //   node pull.mjs weekly D         -> pull_m7.json pull_pts.json pull8.json pull8a.json
 //   node pull.mjs playoffs         -> pull_po.json
 //   node pull.mjs live W           -> live.json (in-week scores for week W)
+//   node pull.mjs faab           -> pull_faab.json (FAAB budget and each roster's balance)
 //   node pull.mjs wire D           -> pull_wire.json (THE WIRE: unrostered players, week D+1 projections)
 //   node pull.mjs top D            -> pull_top.json (top players by position through week D, all NFL players)
 //   node pull.mjs detail a-b       -> stats_detail.json (full stat lines for lineup players, weeks a..b)
@@ -42,6 +43,13 @@ if (cmd === 'state') {
   const x = await pullWeekly(get, +arg);
   for (const k of ['pull_m7', 'pull_pts', 'pull8', 'pull8a']) out(k + '.json', x[k]);
   console.log('weekly pull ok for week', arg);
+} else if (cmd === 'faab') {
+  // FAAB balances (standings card): league budget and each roster's amount left
+  const { LEAGUE } = await import('./sleeper.mjs');
+  const L = `https://api.sleeper.app/v1/league/${LEAGUE}`, [lg, ro] = await Promise.all([get(L), get(`${L}/rosters`)]);
+  const B = +((lg.settings || {}).waiver_budget) || 0;
+  out('pull_faab.json', { league: LEAGUE, budget: B, pulled: new Date().toISOString(), left: Object.fromEntries(ro.map(r => [r.roster_id, B - (+((r.settings || {}).waiver_budget_used) || 0)])) });
+  console.log('faab pull ok, budget', B);
 } else if (cmd === 'wire') {
   out('pull_wire.json', await pullWire(get, +process.argv[3]));
 } else if (cmd === 'top') {
