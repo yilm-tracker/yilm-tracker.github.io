@@ -26,6 +26,21 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 7. **Secrets/licensing:** never enter API keys (the user adds `FP_API_KEY` in GitHub settings). FantasyPros data is personal-use: keep it out of the public repos (Actions cache only), show team totals only.
 8. Commit attribution lines as the session's system reminder specifies.
 
+## Design rules (Nicklaus, 2026-11-03; permanent, every UI change)
+
+- **Tokens only.** No new colour, shadow, radius or font size inline; if one is needed, add a token and say so.
+- **Surfaces, darkest to lightest:** plate (`--frame`/`--plate`) < page (`--pg`) < panel (`--deck`) < zebra row (one step above panel). Nothing nested is lighter than its container (text, chips and data excepted).
+- **One job per colour:** tier colours mean tiers; green/red mean results only.
+- **Flat:** no gradients, glows, blurred shadows, top highlights, accent rails, or cards inside cards. Depth only as a hard plate shadow, `--sh-hard` (`1px 3px 0 0 var(--frame)`).
+- **Rows** inside a panel: no radius, border or shadow; separated by zebra OR a 1px plate divider, never both (currently zebra on the standings cards, desktop table and Stats tables).
+- **Corners:** outer panels `--r-panel` (6px); inside, only chips/pills and avatars are rounded.
+- **Borders** only where they separate content, in the plate colour (chips and position pills keep their coded outlines).
+- **Avatars:** flat circle, 2px plate ring, no shadow (BBP logos; YILM faces stay bare cut-outs, by earlier request).
+- **Process:** before coding, list every colour/border/shadow/radius/spacing used and the existing component it matches; reuse components; check 402/440/360 (nothing clipped/wrapped/ellipsised, no sideways scroll, optically centred, equal spacing); contrast >= 4.5:1 small text, 3:1 large text and graphics; report what changed and any rule not followed. When unsure, choose the plainer option and mention the alternative.
+- `--dim` raised to 4.5:1 on the lightest surface (BBP `#969dac` vs zebra, YILM `#90a3b6` vs panel); it was 2.3-3.3:1.
+- The 2026-11-03 cleanup block at the end of both `readability.css` files enforces most of this (`--sh-hard`, `--r-panel`, plate borders via a `body *` rule with chip exclusions).
+- **BBP surfaces are green-teal, not blue** (hue ~178, never above 190): `--pg #0F1C1B`, panel `#1A2D2C`, row-alt `#223938`, line `#2D4B4A`, plate `#060E0E`. `build_site.py` maps every dark blue-grey neutral in the finished page (`TEAL` table: surfaces, borders, bar tracks, rings, ink) to hue ~178 with relative luminance kept, so contrast ratios are unchanged; text, tier, win/loss, chart and NFL colours are not mapped. Source CSS still holds the old hex values; the map converts them, so add any new dark neutral to `TEAL` (or better, use a token).
+
 ## Build and deploy
 
 - Static GitHub Pages site. `.github/workflows/site.yml` runs on push to `pipeline/**`, weekly (Tue 10:17 and 15:17 UTC) and every 10 min in game windows (`live`).

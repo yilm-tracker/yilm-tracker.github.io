@@ -979,3 +979,30 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .obar i,.hbr i{box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)!important}
 :root{--frame:#08111a}
 .sxnb>.sxnl+*{margin-left:12px!important;margin-right:12px!important}
+/* ===== 2026-11-03 Visual cleanup (Nicklaus's design rules): flat surfaces, plate-colour borders, hard shadows only =====
+   Surfaces, darkest to lightest: plate (--frame) < page (--pg) < panel (--deck) < zebra row. */
+:root{--plate:var(--frame);--sh-hard:1px 3px 0 0 var(--frame);--dsh:var(--sh-hard);--dsh2:var(--sh-hard);--r-panel:6px}
+/* panels and cards: 6px radius, hard plate shadow, no blur, no top highlight */
+.board,.cmx,.lbx,.mux,.posx,.rox,.sxc,.dfr,.dfo,.dfg,.dtp,.tch,.trc,.tqhero,.tqhr,.tqk,.tqpk,.wpb,.wq,.wrt,.thk,.mcard,.mtg,.ras,.roc,.pbyt,.ddm,.cr.lu,.mcr.ltot,nav.tabs label,.tabs label,label.tpo,label.pbm{box-shadow:var(--sh-hard)!important}
+.board,.cmx,.lbx,.mux,.posx,.rox,.sxc,.dfr,.dfo,.dfg,.dtp,.tch,.trc,.tqhero,.tqk,.tqpk,.wrt,.thk,.mcard,.mtg,.ras,.roc,.ddm{border-radius:var(--r-panel)!important}
+#list>.tcard:first-child>.r:first-child{border-radius:calc(var(--r-panel) - 2px) calc(var(--r-panel) - 2px) 0 0!important}
+#list>.tcard:last-child>.r:last-child{border-radius:0 0 calc(var(--r-panel) - 2px) calc(var(--r-panel) - 2px)!important}
+/* rows inside panels are not cards: no radius, no border, no shadow */
+.cr.lu,.rr2,.ral,.mcr,.pbyt,.tqhr,.sxr,.pr,.dfp{border-radius:0!important}
+/* row separation = zebra only where rows alternate (standings cards, desktop table, Stats tables): no divider lines */
+#list>.tcard>.r+.r{border-top:0!important}
+.dtp .dtt tbody tr.dtr td{border-bottom:0!important}
+.sxt>.sxr,.pt>.pr{border-bottom:0!important;border-top:0!important}
+/* borders: plate colour only (chips and position pills keep their coded outlines) */
+body *:not(.ch):not(.pp):not(.pz):not(.dfvia):not(.dfcp):not(.nfl):not([class*=" p-"]):not([class^="p-"]){border-color:var(--frame)!important}
+/* bars: no white highlight or bottom shade (data keeps a 1px darker edge only) */
+.ybar i,.obar i,.sbar i,.hbr i,.dvb i:not(.up):not(.dn),.y0,.y1,.y2,.y3{box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)!important}
+/* raised controls (FAAB tile, draft points chip): hard plate shadow, no blur, no highlight */
+.board .r .nm .fab b{box-shadow:var(--sh-hard)!important}
+.board .r .nm .fab:active b{box-shadow:none!important}
+.dfcp{box-shadow:none!important}
+/* no gradients on surfaces */
+.board,.tcard,.r,.dtp,.sxc,.posx,.lbx,.rox,.mux,.cmx,.wrt,.mcard{background-image:none!important}
+#list.board{box-shadow:var(--sh-hard)!important}
+.yrs .yb b{box-shadow:var(--sh-hard)!important}.yrs a.yb:active b{box-shadow:none!important}
+html:root{--dim:#90a3b6}  /* 4.5:1 on the panel; was #7189a2, 3.2:1 */
