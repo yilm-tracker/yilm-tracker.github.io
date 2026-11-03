@@ -705,3 +705,13 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 @media(max-width:380px){.mts{font-size:19px}.mtw{font-size:11px}}
 /* Rosters: no panel behind the picker and switches, like Team Hub */
 .rox{background:none!important;border:0!important;box-shadow:none!important;padding-left:0!important;padding-right:0!important}
+/* PF / PA per-week figures in alabaster, units grey; Season sim title on the right edge */
+.sb .pw .pwv{color:var(--chalk);font-weight:500}
+.sb .pw .psd{margin-left:2px}
+.dps .dpb.dso{display:flex!important;flex-direction:column;align-items:stretch}.dps .dso .dph{display:flex!important;justify-content:flex-end!important;width:auto!important}
+.dps .dso .dph{margin-right:-4px}
+/* room for the PF /wk: shorter dot runs and tighter separators */
+.sb{--dotw:86px}
+@media(max-width:420px){.sb{--dotw:68px}}
+@media(max-width:380px){.sb{--dotw:54px}}
+.sb .stx .pw{margin-left:3px!important}
