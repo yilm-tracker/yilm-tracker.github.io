@@ -123,7 +123,9 @@ function dtab(med){
        `<td>${r.pf.toFixed(1)}${chip(r.pfr)}</td><td><b>${r.pw.toFixed(1)}</b><small>±${r.sd.toFixed(0)}</small></td><td>${r.pa.toFixed(1)}${chip(r.par)}</td><td><b>${r.paw.toFixed(1)}</b></td>`+
        `<td>${r.apw}-${r.apl}${chip(r.apr)}</td><td><b>${r.xw.toFixed(2)}</b></td><td class="${r.lk>=0.05?'up':r.lk<=-0.05?'dn':''}">${(r.lk>=0?'+':'−')+Math.abs(r.lk).toFixed(2)}</td><td>${r.ef.toFixed(0)}%</td>`+
        (r.s?`<td class="dfin">${rkt(r.s[0],1)}</td><td class="c1">${pc(r.s[1])}</td><td class="c2">${pc(r.s[2])}</td><td class="c3">${pc(r.s[3])}</td>`:'<td class="dfin"></td><td></td><td></td><td></td>')+'</tr>'}
-  box.innerHTML=h+'</tbody></table>';
+  // the first tier band sits above the column headers (band, then the 20k-simulations label, then the headers)
+  if(key==='seed'){const a=h.indexOf('<tr class="dtb'),z=h.indexOf('</tr>',a)+5;if(a>0){const band=h.slice(a,z);h=h.slice(0,a)+h.slice(z);h=h.replace('<thead>','<thead>'+band)}}
+  box.innerHTML=h+'</tbody></table>';simBar(box);
   if(!box.dataset.w){box.dataset.w=1;box.addEventListener('click',e=>{
     const th=e.target.closest('th.srt');if(th){const k=th.dataset.k;box.dataset.d=box.dataset.k===k?-(+box.dataset.d||1):1;box.dataset.k=k===box.dataset.k&&+box.dataset.d===1?'seed':k;if(box.dataset.k==='seed')box.dataset.d=1;dtab(document.getElementById('bm').getAttribute('aria-pressed')==='true');return}
     const tr=e.target.closest('tr.dtr');if(!tr)return;const c=document.querySelector('#list .r[data-t="'+CSS.escape(tr.dataset.t)+'"]');
@@ -310,4 +312,14 @@ if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener
 (function(){function pcnFit(){document.querySelectorAll('.sxm .mxn .pcn').forEach(function(n){if(!n.offsetParent)return;n.style.fontSize='';var p=n.parentElement,s=parseFloat(getComputedStyle(n).fontSize);
  while((p.scrollWidth>p.clientWidth+.5||n.getBoundingClientRect().right>p.getBoundingClientRect().right+.5)&&s>10){s-=.5;n.style.fontSize=s+'px'}})}
  pcnFit();addEventListener('resize',function(){requestAnimationFrame(pcnFit)});document.addEventListener('change',function(){requestAnimationFrame(pcnFit)});document.fonts&&document.fonts.ready.then(pcnFit)})();
+
+/* simBar: one solid rule down the left edge of the four sim columns, from the "20k simulations" label to the foot of the
+   table, through the tier bands (an overlay, so the bands' full-width cells do not break it); the label's underline
+   meets it at the top */
+function simBar(box){if(!box)return;let v=box.querySelector(':scope>.dsv');if(!v){v=document.createElement('i');v.className='dsv';v.setAttribute('aria-hidden','true');box.appendChild(v)}
+  const t=box.querySelector('.dtt'),f=t&&t.querySelector('th[data-k="fin"]'),g=t&&t.querySelector('.dsim');if(!f||!f.offsetParent||!g){v.style.display='none';return}
+  v.style.display='';const z=box.currentCSSZoom||1,b=box.getBoundingClientRect(),fr=f.getBoundingClientRect(),gr=g.getBoundingClientRect(),tr=t.getBoundingClientRect();
+  v.style.left=((fr.left-b.left)/z)+'px';v.style.top=((gr.top-b.top)/z)+'px';v.style.height=((tr.bottom-gr.top)/z)+'px'}
+addEventListener('resize',()=>requestAnimationFrame(()=>simBar(document.getElementById('dtab'))));
+document.fonts&&document.fonts.ready.then(()=>simBar(document.getElementById('dtab')));
 </script>

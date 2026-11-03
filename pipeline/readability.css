@@ -878,3 +878,15 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 @media (min-width:1100px){
  #list.board>.tcard>.r.r{grid-template-columns:30px 351px 84px 78px minmax(0,1fr)!important}
 }
+/* 2026-11-03: desktop table: the first tier band sits above the column headers; the four sim columns are boxed off by a
+   solid 3px rule (simBar overlay) running from the "20k simulations" label to the foot of the table, met at the top by
+   the label's 3px underline; tier bands close with a 3px rule */
+@media (min-width:1100px){
+ .dtab{position:relative}
+ .dtab>.dsv{position:absolute;width:3px;margin-left:-1.5px;background:var(--line-strong);border-radius:2px;pointer-events:none;z-index:2}
+ .dtt th[data-k="fin"],.dtt td.dfin{border-left:0!important}
+ .dtt tr.dtg th.dsim{padding:12px 0 0!important}
+ .dtt tr.dtg th.dsim span{padding:0 0 7px 14px;border-bottom:3px solid var(--line-strong);font-size:11.5px;color:var(--label)}
+ .dtt thead tr.dtb td{border-radius:0}
+ .dtt tr.dtb td{border-bottom-width:3px!important}
+}
