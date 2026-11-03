@@ -35,11 +35,11 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 - **Rows** inside a panel: no radius, border or shadow; separated by zebra OR a 1px plate divider, never both (currently zebra on the standings cards, desktop table and Stats tables).
 - **Corners:** outer panels `--r-panel` (6px); inside, only chips/pills and avatars are rounded.
 - **Borders** only where they separate content, in the plate colour (chips and position pills keep their coded outlines).
-- **Avatars:** flat circle, 2px plate ring, no shadow (BBP logos; YILM faces stay bare cut-outs, by earlier request).
+- **Avatars:** flat circle, no shadow by default; exceptions agreed: BBP logos keep their original ring + shadow (Stats halved), YILM faces stay bare cut-outs.
 - **Process:** before coding, list every colour/border/shadow/radius/spacing used and the existing component it matches; reuse components; check 402/440/360 (nothing clipped/wrapped/ellipsised, no sideways scroll, optically centred, equal spacing); contrast >= 4.5:1 small text, 3:1 large text and graphics; report what changed and any rule not followed. When unsure, choose the plainer option and mention the alternative.
 - `--dim` raised to 4.5:1 on the lightest surface (BBP `#969dac` vs zebra, YILM `#90a3b6` vs panel); it was 2.3-3.3:1.
 - The 2026-11-03 cleanup block at the end of both `readability.css` files enforces most of this (`--sh-hard`, `--r-panel`, plate borders via a `body *` rule with chip exclusions).
-- **BBP surfaces are green-teal, not blue** (hue ~178, never above 190): `--pg #0F1C1B`, panel `#1A2D2C`, row-alt `#223938`, line `#2D4B4A`, plate `#060E0E`. `build_site.py` maps every dark blue-grey neutral in the finished page (`TEAL` table: surfaces, borders, bar tracks, rings, ink) to hue ~178 with relative luminance kept, so contrast ratios are unchanged; text, tier, win/loss, chart and NFL colours are not mapped. Source CSS still holds the old hex values; the map converts them, so add any new dark neutral to `TEAL` (or better, use a token).
+- BBP colour history: a build-time green-teal map (hue 178) was tried on 2026-11-03 and reverted the same day at Nicklaus's request; surfaces use their source values again (`--pg #101b1f`, `--deck #1a2c33`, `--row-alt #203841`). Kept from it: plate `--frame`/`--plate` `#060E0E` (1.11:1 darker than the page). BBP logo rings are back to their pre-cleanup values (1px `--line-strong` ring + 2px/2px hard and 6px soft shadow; Stats tab halved), an agreed exception to the flat-avatar rule.
 
 ## Build and deploy
 
