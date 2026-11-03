@@ -51,7 +51,7 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 - `ravFit`: legacy logo sizing (early-returns on BBP since the Hi/Lo line is gone).
 - `sbFit`: stat lines PF/PA/Tot Eff share scale `--sbs` and text column `--stw2`; `.sbm` measures all rows so dots don't move between modes.
 - `s2Fit`: Opp/All-play/Luck line scale `--s2s` down to 0.81, else `.wrp` (Luck on its own line, all rows together).
-- `fit` (= `window.tileFit`) + `inkTile`: rank tiles. Tile height = the figure's digit cap height (borders included), digits sized on their ink, centred on the figure's cap height on every line. Font metrics cache (`FM`) is cleared each run. Transform reset before measuring (re-runs never stack). Luck tile references the luck value, not the grey xW text (`.lku` skipped).
+- `fit` (= `window.tileFit`) + `inkTile`: rank tiles. Tile height = the figure's digit cap height to 0.25px (frames are inset shadows, inside that height; outer height trimmed to it exactly after sizing), digit-ink-to-frame gap 1.75-3.5px so the digits fill the tile, centred on the figure's cap height using its real baseline (a zero-size marker on it, read after sizing), on every line. Old transforms are cleared before the on-line check. Font metrics cache (`FM`) is cleared each run. Transform reset before measuring (re-runs never stack). Luck tile references the luck value, not the grey xW text (`.lku` skipped).
 - `rniSnap`: snaps numeral art to whole pixels. `finFit`: sim Finish tile height = projection figures.
 
 ## Standings card (current design)
@@ -70,6 +70,8 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 - Measuring only visible rows changes widths between modes: measure all (`.sbm`).
 - Canvas font metrics read before web fonts load are wrong: never cache across runs.
 - Digit ink can rise above the H cap: size tiles on digit ink.
+- Baselines estimated from canvas font metrics are off by up to ~0.9px at zoomed widths (1440 has `zoom` 1.1; layout rounds ascent/descent differently): measure with a zero-size inline-block on the baseline. `tilechk.py`'s 0.6px allowance hides this; the strict check is in the 2026-11-02 session (probe baseline, expect <=0.05px).
+- A tile's stale `translateY` once made `fit` think it was off its line, so it was skipped forever (360: PF/PA tiles missing, 3.75px digits). Fixed by clearing transforms before the check.
 - `new_tail.js` ends with `</script>`: append new JS before it.
 - `const _cv` canvas already exists in new_tail.js: reuse, don't redeclare.
 - YILM `live.js` is copied from BBP; `build_site.py` substitutes the YILM league id and season (was polling BBP's league before 2026-11-02).

@@ -207,23 +207,27 @@ function fit(){
   for(const k in FM)delete FM[k];  // font metrics are re-read each run: a run before the web fonts load must not leave the fallback font's metrics cached
   const tiles=[...document.querySelectorAll('.ch,.rkb')].filter(t=>t.offsetParent&&!t.closest('.gm,.sxm,.lbr,.hmx,.tqgrid,.mx,.bym'));
   const jobs=[];
+  for(const t of tiles)t.style.removeProperty('transform');  // clear old offsets first: a stale one makes a tile look off its line and it would be skipped for good
   for(const t of tiles){const r=ref(t);if(!r)continue;const cs=getComputedStyle(r.el),m=fm(cs),z=t.currentCSSZoom||1;
     if(!t.dataset.oh){const ct0=t.querySelector('.ct')||t;t.dataset.oh=t.getBoundingClientRect().height/z;t.dataset.of=parseFloat(getComputedStyle(ct0).fontSize)}
-    let mid=null,inline=false,zz=z;
-    if(r.tn){const g=document.createRange();g.selectNodeContents(r.tn);const rr=g.getBoundingClientRect(),tr=t.getBoundingClientRect();zz=rr.height>0?rr.height/(m.asc+m.desc):z;const base=rr.top+m.asc*zz;mid=base-m.cap*z/2;inline=tr.bottom>rr.top&&tr.top<rr.bottom}
-    if(!inline)continue;jobs.push({t,cap:m.cap,mid,inline,z:(r.tn&&mid!=null)?zz:z})}
-  for(const j of jobs){const H=Math.floor(j.cap*2)/2;inkTile(j.t,H)}  // never taller than the figure beside it: tile height = its cap height
+    let inline=false;
+    if(r.tn){const g=document.createRange();g.selectNodeContents(r.tn);const rr=g.getBoundingClientRect(),tr=t.getBoundingClientRect();inline=tr.bottom>rr.top&&tr.top<rr.bottom}
+    if(!inline)continue;const zz=r.el.currentCSSZoom||z;const pb=document.createElement('i');pb.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';r.tn.after(pb);
+    jobs.push({t,cap:m.cap,pb,zc:zz,z})}
+  for(const j of jobs){const H=Math.floor(j.cap*4)/4;inkTile(j.t,H)}  // as tall as the figure beside it and never taller: tile height = its cap height (to 0.25px)
   for(const j of jobs)j.t.style.removeProperty('transform');  // measure from the untransformed spot, so a re-run never stacks offsets
+  for(const j of jobs){j.mid=j.pb.getBoundingClientRect().bottom-j.cap*j.zc/2}  // read after sizing, so the line has settled: the figure's real baseline (a zero-size marker on it), not one estimated from font metrics: those are rounded differently by layout
+  for(const j of jobs)j.pb.remove();
   for(const j of jobs){  // centre every tile on the figure's cap height (a flex row centres on the line box, which sits lower)
     const tr=j.t.getBoundingClientRect(),d=(j.mid-(tr.top+tr.bottom)/2)/j.z;if(Math.abs(d)>0.1)j.t.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important')}
 }
 // size one rank tile from the digits' ink: outer height H, the same gap from ink to edge on top and bottom, the same on
-// left and right, never closer than 2px to the frame (the number shrinks to make room); width fixed for two digits so a column lines up
+// left and right, never closer than 1.75px to the frame (the number shrinks to make room); width fixed for two digits so a column lines up
 const INK=document.createElement('canvas').getContext('2d');
 function inkTile(t,H){if(!(window.CSS&&CSS.supports('text-box','trim-both cap alphabetic')))return false;
   const txt=t.textContent.trim();if(!txt)return false;const cs=getComputedStyle(t.querySelector('.ct')||t),fam=cs.fontFamily,wt=cs.fontWeight;
   {const b=getComputedStyle(t);H-=(parseFloat(b.borderTopWidth)||0)+(parseFloat(b.borderBottomWidth)||0)}  // H is the outer height: a bordered (outlined) tile loses its border from it
-  const P=Math.max(2.5,Math.min(3.5,(H-6)/2)),cap=H-2*P;
+  const P=Math.max(1.75,Math.min(3.5,(H-6)/2-1)),cap=H-2*P;  // gap from digit ink to frame: 1.75-3.5px, so the digits fill the tile
   INK.font=`${wt} 100px ${fam}`;const _d=INK.measureText('0123456789');const fs=Math.floor(cap/((_d.actualBoundingBoxAscent+_d.actualBoundingBoxDescent)/100)*4)/4;  // sized on the digits' ink (they can rise above the H cap), so the outer height never exceeds H
   INK.font=`${wt} ${fs}px ${fam}`;const m=INK.measureText(txt),m2=INK.measureText('88'),Hc=INK.measureText('H').actualBoundingBoxAscent;
   const m3=INK.measureText(t.dataset.ref||'88');const iw=m.actualBoundingBoxLeft+m.actualBoundingBoxRight,iw2=Math.max(m2.actualBoundingBoxLeft+m2.actualBoundingBoxRight,m3.actualBoundingBoxLeft+m3.actualBoundingBoxRight),W=Math.max(iw,iw2)+2*(P+0.5);
@@ -233,6 +237,8 @@ function inkTile(t,H){if(!(window.CSS&&CSS.supports('text-box','trim-both cap al
   set('box-sizing','content-box');set('font-size',fs+'px');set('letter-spacing','0');set('font-variant-numeric','normal');set('font-feature-settings','normal');set('top','0');set('transform','none');set('vertical-align','baseline');
   set('padding',`${(P-gt).toFixed(2)}px ${((W-iw)/2-gr).toFixed(2)}px ${(P-gb).toFixed(2)}px ${((W-iw)/2-gl).toFixed(2)}px`);
   const ct=t.querySelector('.ct');if(ct){for(const [k,v] of [['font-size','inherit'],['line-height','1'],['display','inline'],['height','auto'],['letter-spacing','0'],['font-variant-numeric','normal'],['text-box','none']])ct.style.setProperty(k,v,'important')}
+  {const z=t.currentCSSZoom||1,e=(H+((parseFloat(getComputedStyle(t).borderTopWidth)||0)+(parseFloat(getComputedStyle(t).borderBottomWidth)||0))-t.getBoundingClientRect().height/z)/2;  // outer height exactly H: split the rounding error between top and bottom (frames are inset shadows, inside H)
+   if(Math.abs(e)>0.01)set('padding',`${(P-gt+e).toFixed(2)}px ${((W-iw)/2-gr).toFixed(2)}px ${(P-gb+e).toFixed(2)}px ${((W-iw)/2-gl).toFixed(2)}px`)}
   return true}
 // sim Finish tile: as tall as the projection figures beside it (the 2%), sitting level with them
 function finFit(){document.querySelectorAll('.dso .rkb').forEach(k=>{if(!k.offsetParent)return;const v=k.closest('.dpc').nextElementSibling;const vs=v&&v.querySelector('span');if(!vs)return;
