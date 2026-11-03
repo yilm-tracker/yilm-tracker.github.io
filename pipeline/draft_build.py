@@ -1,7 +1,8 @@
 import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).removesuffix('/pos')+'/'
 # Drafts tab: every league draft from the 2021 startup on (history/drafts.json, written by drafts.mjs).
 # One button per year; each draft is listed round by round: pick number (tile in the player's position colour), player,
-# NFL team, and the team that made the pick, with "from <team>" when the pick was traded (original owner).
+# NFL team, career points chip (career.json), and the team that made the pick, with a "via <team>" box when the pick was
+# traded (original owner). The team column has one fixed width behind a divider, so the avatars line up down the round.
 # MFL drafts: the original owner comes from MFL's own note "Pick traded from <name>" (that season's team names).
 # Writes draft_section.html and draft_css.css. Also importable: section(years=None) for the season archive pages.
 import json,html,re
@@ -14,6 +15,17 @@ except Exception:OWN={}
 try:
     import sys;sys.path.insert(0,P);import lg as _lg;OWN=OWN or dict(getattr(_lg,'NICK',{}) or {})
 except Exception:pass
+# career points per drafted player (career.mjs -> career.json; built in CI, absent offline)
+try:CAR=json.load(open(P+'career.json',encoding='utf-8'))
+except Exception:CAR={}
+def _nk(n):
+    n=re.sub(r"[.'’`,]",'',str(n or '').lower()).replace('-',' ');n=re.sub(r'\b(jr|sr|ii|iii|iv|v)\b','',n);return re.sub(r'\s+',' ',n).strip()
+def career(pl,pos):
+    c=CAR.get(_nk(pl)+'|'+({'PK':'K','Def':'DEF'}.get(pos,pos) or ''))
+    if not c:return ''
+    pts,gp,ns,y0,y1,part=c
+    t=(f'Career fantasy points in this league\'s scoring: {pts:,.1f} in {gp} games' + (f', {y0}-{y1}' if y0 else '') + (' (stats from 2009 on)' if part else ''))
+    return f'<span class="dfcp{" z" if not gp else ""}" title="{e(t)}"><b>{pts:,.0f}</b><i>pts</i></span>'
 PC={'QB':'#f7739c','RB':'#3ddcc1','WR':'#5ec6f4','TE':'#fca95c','K':'#c491ff','DEF':'#c98a72','PK':'#c491ff','Def':'#c98a72'}
 NFLFIX={'KCC':'KC','GBP':'GB','NOS':'NO','NEP':'NE','SFO':'SF','TBB':'TB','LVR':'LV','JAC':'JAX','WSH':'WAS','LA':'LAR','FA':None,'FA*':None}
 from nfl_colors import badge_c as badge
@@ -59,8 +71,8 @@ def year_panel(y,d):
         rr=sorted([r for r in rows if r[0]==rd],key=lambda r:r[1])
         out.append(f'<div class="dfr"><div class="dfrh">Round {rd}</div>'+''.join(
             f'<div class="dfp" style="--pc:{PC.get(pos or "", "var(--hair)")}"><i class="dfn"><b>{rd}.{pk:02d}</b><span>{e(pos or "")}</span></i>'
-            f'<div class="dfpl"><b>{e(pl)}</b>{badge(nfl) if nfl else ""}</div>'
-            f'<div class="dfby"><i class="pav" data-avt="{e(by)}" aria-hidden="true"></i><span><b>{e(own(by))}</b>'+(f'<small>from {e(own(orig))}</small>' if orig!=by else '')+'</span></div></div>'
+            f'<div class="dfpl"><span class="dfpn"><b>{e(pl)}</b>{badge(nfl) if nfl else ""}</span>{career(pl,pos)}</div>'
+            f'<div class="dfby"><i class="pav" data-avt="{e(by)}" aria-hidden="true"></i><span><b>{e(own(by))}</b>'+(f'<small class="dfvia"><i>via</i>{e(own(orig))}</small>' if orig!=by else '')+'</span></div></div>'
             for rd_,pk,slot,orig,by,pl,pos,nfl in rr)+'</div>')
     return ''.join(out)
 def section(years=None,idp='df'):
@@ -107,11 +119,29 @@ CSS="""
 .dfs .pav{display:block;border-radius:50%;background-color:var(--deck-2);background-position:center;background-size:cover;background-repeat:no-repeat;box-shadow:0 0 0 1px var(--line-strong)}
 @media(max-width:380px){.dfp{grid-template-columns:42px minmax(0,1fr) auto;column-gap:8px;padding-right:10px}.dfpl b{font-size:14px}.dfby .pav{width:22px;height:22px}}
 @media(min-width:760px){.dfos{grid-template-columns:repeat(10,minmax(0,1fr))}.dfr .dfp{min-height:50px}}
+/* 2026-11-03: team column = one fixed width behind a divider (avatars line up down the round), "via" box for traded
+   picks, career points chip after the NFL badge */
+.dfp{grid-template-columns:46px minmax(0,1fr) var(--dfbw,140px);padding-right:0}
+.dfpl{padding-right:10px;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;padding-top:7px;padding-bottom:7px}
+.dfpn{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%}
+.dfpn b[style*="normal"]{line-height:1.15!important;overflow:visible!important}
+@media(min-width:760px){.dfpl{flex-direction:row;align-items:center;gap:8px;padding-top:0;padding-bottom:0}}
+.dfby{justify-self:stretch;align-self:stretch;justify-content:flex-start;gap:9px;padding:6px 10px 6px 12px;border-left:3px solid var(--pg,#0c1316);background:rgba(0,0,0,.13)}
+.dfby .pav{width:28px;height:28px}
+.dfby span{gap:4px;zoom:var(--dfz,1)}
+.dfvia{display:inline-flex;align-items:baseline;gap:4px;padding:3px 6px 2px;border-radius:4px;background:rgba(201,161,90,.12);box-shadow:inset 0 0 0 1px rgba(201,161,90,.45);font:600 11px/1 var(--display)!important;letter-spacing:.04em;text-transform:uppercase;color:#d9b568!important}
+.dfvia i{font-style:normal;font-weight:700;font-size:9.5px;color:rgba(217,181,104,.7)}
+.dfcp{flex:none;display:inline-flex;align-items:baseline;gap:3px;padding:3px 6px 2px;border-radius:5px;background:var(--deck-2);box-shadow:inset 0 0 0 1px var(--line-strong),0 1px 0 rgba(0,0,0,.35);font-family:var(--display);line-height:1}
+.dfcp b{font:700 12.5px/1 var(--display)!important;color:var(--chalk)!important;font-variant-numeric:tabular-nums}
+.dfcp i{font-style:normal;font-weight:600;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--steel)}
+.dfcp.z b{color:var(--steel)!important}
+@media(max-width:420px){.dfp{--dfbw:124px}.dfby{padding:6px 8px 6px 10px;gap:7px}.dfby .pav{width:26px;height:26px}}
+@media(max-width:380px){.dfp{--dfbw:112px}.dfby{padding:6px 6px 6px 8px;gap:6px}.dfby .pav{width:22px;height:22px}.dfvia{font-size:10px!important;padding:2px 4px 1px}.dfcp b{font-size:11.5px!important}}
 """
 if __name__=='__main__':
     s=section()
     if s:
-        open(P+'draft_section.html','w',encoding='utf-8').write(s[0]+'<script>(function(){function f(){document.querySelectorAll(".dfpl b").forEach(function(b){b.style.fontSize="";var p=b.parentElement,s=parseFloat(getComputedStyle(b).fontSize);while(p.scrollWidth>p.clientWidth+.5&&s>11){s-=.5;b.style.fontSize=s+"px"}})}f();addEventListener("resize",function(){requestAnimationFrame(f)});document.addEventListener("change",function(){requestAnimationFrame(f)});document.fonts&&document.fonts.ready.then(f)})()</script>')
+        open(P+'draft_section.html','w',encoding='utf-8').write(s[0]+'<script>(function(){function f(){document.querySelectorAll(".dfpl b").forEach(function(b){if(!b.offsetParent)return;b.style.fontSize="";b.style.whiteSpace="";var p=b.parentElement,s0=parseFloat(getComputedStyle(b).fontSize),s=s0,o=function(){return b.scrollWidth>b.clientWidth+.5||p.scrollWidth>p.clientWidth+.5};while(o()&&s>13){s-=.5;b.style.fontSize=s+"px"}if(o()){b.style.fontSize="";b.style.whiteSpace="normal"}});document.querySelectorAll(".dfby").forEach(function(c){if(!c.offsetParent)return;c.style.removeProperty("--dfz");var z=1;while(c.scrollWidth>c.clientWidth+.5&&z>.7){z-=.04;c.style.setProperty("--dfz",z.toFixed(2))}})}f();addEventListener("resize",function(){requestAnimationFrame(f)});document.addEventListener("change",function(){requestAnimationFrame(f)});document.fonts&&document.fonts.ready.then(f)})()</script>')
         open(P+'draft_css.css','w',encoding='utf-8').write(CSS+s[1])
         print('drafts',len(D))
     else:print('no drafts')

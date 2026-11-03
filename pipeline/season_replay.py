@@ -159,6 +159,7 @@ node('detail',f'1-{min(DONE+1,REG)}');node('top',max(DONE,1));
 if Y==CUR:
     os.makedirs(os.path.join(WS,'history'),exist_ok=True)
     subprocess.run(['node',os.path.join(WS,'drafts.mjs')],cwd=WS,env=dict(os.environ,DT_LEAGUE=LID))
+    subprocess.run(['node',os.path.join(WS,'career.mjs')],cwd=WS,env=dict(os.environ,DT_LEAGUE=LID))  # Drafts tab: career points (never fatal)
 try:
     if Y==CUR:node('wire',max(DONE,1))  # THE WIRE, current season only; never fatal (needs this week's projections in the capture)
 except Exception as ex:print('wire pull skipped:',ex)
