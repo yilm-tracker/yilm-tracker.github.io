@@ -20,7 +20,7 @@ on:
     - cron: '*/10 0-5 * 12 4'       # Christmas Wednesday night
 
 permissions:
-  contents: read
+  contents: write   # the weekly run commits the refreshed Sleeper capture
   pages: write
   id-token: write
 
@@ -81,6 +81,19 @@ jobs:
             fi
             mkdir -p site/$Y && cp archive/$Y/index.html site/$Y/index.html
           done
+      - name: Save the current season's capture to the repo
+        # Tuesday weekly run, pushes and manual runs only (not the 10-minute game-window runs), so the repo always holds
+        # the latest completed week for local builds and checks. [skip ci] keeps it from triggering another build.
+        if: github.event_name != 'schedule' || github.event.schedule == '17 10 * * 2'
+        continue-on-error: true
+        run: |
+          CUR=$(python3 -c "import json;print(json.load(open('pipeline/seasons.json'))['current'])")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pipeline/history/raw/$CUR
+          if git diff --cached --quiet; then echo "capture unchanged"; exit 0; fi
+          git commit -m "Save season capture $CUR [skip ci]"
+          for i in 1 2 3; do git pull --rebase -X theirs origin main && git push origin HEAD:main && break; sleep 5; done
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: { path: site }

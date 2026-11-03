@@ -34,6 +34,7 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 - **BBP local build:** `cd pipeline && python3 run.py build` → `site/index.html`.
 - **YILM local build:** `cd pipeline && python3 season_replay.py 2026 --build-only` → `.season/2026/site/index.html`. YILM builds by replaying its saved Sleeper data (`history/raw/<year>/*.json.gz`, refreshed in CI by `pull_season.mjs`) in a workspace copy `.season/<year>/pipeline`. Past seasons set `DT_PAST=1`.
 - The sandbox has no network to Sleeper/MFL; data for local builds comes from the committed JSON (pull from origin first).
+- YILM: every build pulls a fresh Sleeper capture in CI (`pull_season.mjs`); the Tuesday weekly run, pushes and manual runs then commit it (`pipeline/history/raw/<year>/`, "Save season capture [skip ci]"), so the repo holds the latest completed week. The 10-minute game-window runs do not commit. Before 2026-11-03 nothing committed it and the repo copy was stuck at Oct 31.
 
 ## Page architecture
 
