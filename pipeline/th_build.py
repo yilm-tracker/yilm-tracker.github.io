@@ -107,6 +107,7 @@ def data_view(t):
              +kpi('Points for',f'{x[3]:.1f}',x[4])+kpi('Points against',f'{x[6]:.1f}',x[7],' <span class="tqkn">most = 1st</span>',neutral=True)
              +kpi('All-play',f'{x[10]}-{x[11]}',crank(apr,t))+kpi('Luck',sg(x[12],2),crank(lk,t))
              +kpi('Lineup efficiency',f'{EF[t][0]:.0f}<small>%</small>',crank(EFR,t))+kpi('Left on bench',f'{EF[t][1]:.1f}<small>/wk</small>',crank({u:EF[u][1] for u in TEAMS},t,low=True))
+             +kpi('Highest / lowest seed',f"{ordn(min(SER[t]['stand']))} <small>/</small> {ordn(max(SER[t]['stand']))}",None,'<span class="tqkn">standings range, Wk 1 on</span>')+kpi('Average seed',f"{sum(SER[t]['stand'])/len(SER[t]['stand']):.1f}",None,'<span class="tqkn">across the weeks played</span>')
              +'</div>')
     # positions
     pr=PROWS[t];rows=''

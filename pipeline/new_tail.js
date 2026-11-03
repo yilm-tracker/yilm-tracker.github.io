@@ -81,7 +81,7 @@ function draw(med){
     return tierHtml+`<div class="r ${tc}${AVR[t]?" hav":""}${i>=PO?' out':''}${op?' open':''}" data-t="${esc(t)}" tabindex="0" role="button" aria-expanded="${op}">
       <div class="rk">${i+1}</div>
       ${AVR[t]?`<i class="av rav av-${AVR[t]}" aria-hidden="true"></i>`:""}<div class="nm"><span class="tn">${esc(t)}</span>${mv}</div>
-      <span class="hl">${NIK[t]?`<em class="mgr">${esc(NIK[t])}</em> · `:""}<em class="lb">Hi</em>${rkt(Math.min(...a))}<em class="lb">Lo</em>${rkt(Math.max(...a))}<em class="lb">Avg</em>${rkt(a.reduce((x,y)=>x+y,0)/a.length,1)}</span>
+      <span class="hl">${NIK[t]?`<em class="mgr">${esc(NIK[t])}</em>`:""}</span>
       <div class="sb s-pf"><div class="stx"><em class="lb">PF</em><span class="pf">${d[3].toFixed(2)}</span>${chip(d[4])} <i class="pw">· <b class="pwv">${d[5].toFixed(1)}</b>/wk <b class="psd" title="Weekly spread: standard deviation of the team's weekly scores">±${SDV(t).toFixed(0)}</b></i></div>${seg(d[4])}</div>
       <div class="sb s-pa"><div class="stx"><em class="lb">PA</em><span class="v">${d[6].toFixed(2)}</span>${chip(d[7])} <i class="pw">· <b class="pwv">${d[8].toFixed(1)}</b>/wk</i></div>${seg(d[7])}</div>
       <div class="sb s-lu"><div class="stx"><em class="lb">Tot Eff</em><span class="v">${EF[t][0].toFixed(0)}%</span>${chip(rankEf(t),tiedEf(t))} <i class="pw">· <b class="lw">${EF[t][1].toFixed(1)}</b>/wk</i></div>${seg(rankEf(t))}</div>
@@ -140,7 +140,10 @@ if(typeof AVR!=='undefined')document.querySelectorAll('.pav[data-avt]').forEach(
 function pfit(){document.querySelectorAll('.pr .pav.av+.psn').forEach(el=>{if(!el.offsetParent)return;el.style.fontSize='';let f=parseFloat(getComputedStyle(el).fontSize);while((el.scrollHeight>el.clientHeight+1||el.scrollWidth>el.clientWidth+1)&&f>9){f-=0.5;el.style.fontSize=f+'px'}})}
 pfit();document.addEventListener('change',()=>requestAnimationFrame(pfit));
 // standings card names: shrink a long name just enough to show in full (never an ellipsis)
-function tnFit(){document.querySelectorAll('.board .r .tn').forEach(e=>{if(!e.offsetParent)return;e.style.fontSize='';e.style.whiteSpace='';let f=parseFloat(getComputedStyle(e).fontSize);while(e.scrollWidth>e.clientWidth+.5&&f>12){f-=.25;e.style.fontSize=f+'px'}if(e.scrollWidth>e.clientWidth+.5){e.style.whiteSpace='normal';e.style.lineHeight='1.1'}});if(typeof ravFit==='function')ravFit()}
+function tnFit(){document.querySelectorAll('.board .r .tn').forEach(e=>{if(!e.offsetParent)return;e.style.fontSize='';e.style.whiteSpace='';e.style.lineHeight='';
+  // one line first, down to 85% of full size; a name that still does not fit takes two lines at full size (shrinking only if a word is too wide)
+  const f0=parseFloat(getComputedStyle(e).fontSize);let f=f0;while(e.scrollWidth>e.clientWidth+.5&&f>f0*.85){f-=.5;e.style.fontSize=f+'px'}
+  if(e.scrollWidth>e.clientWidth+.5){e.style.whiteSpace='normal';e.style.lineHeight='1.12';f=f0;e.style.fontSize='';while(e.scrollWidth>e.clientWidth+.5&&f>12){f-=.5;e.style.fontSize=f+'px'}}});if(typeof ravFit==='function')ravFit()}
 // tabs: one shared font size, shrunk just enough that the longest label keeps at least 8px from its frame on each side
 function tabFit(){const L=[...document.querySelectorAll('nav.tabs label')].filter(l=>l.offsetParent);if(!L.length)return;L.forEach(l=>l.style.fontSize='');
 let k=1;L.forEach(l=>{const rg=document.createRange();rg.selectNodeContents(l);const tw=rg.getBoundingClientRect().width;const ls=parseFloat(getComputedStyle(l).letterSpacing)||0;const room=l.getBoundingClientRect().width-2-16;const w=tw-ls;if(w>room)k=Math.min(k,room/w)});

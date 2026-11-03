@@ -717,3 +717,10 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .sb .stx .pw{margin-left:3px!important}
 /* Luck unit: W (wins gained or lost against expected), grey like /wk */
 .st.s2 .lku{font-style:normal;color:var(--dim);margin-left:4px;font-family:var(--body);font-weight:400;text-transform:none;letter-spacing:0;font-size:.9em}
+/* standings card: no Hi / Lo / Avg; bigger team name, manager's name under it */
+.board .r .nm .tn{font-size:22px;line-height:1.15}
+.board .r>.hl .mgr{font-size:14px}
+@media(max-width:380px){.board .r .nm .tn{font-size:19px}}
+/* bigger manager face (the seed number is unchanged) */
+.board .r>.rav{width:50px!important;height:50px!important;top:9px!important}.board .r.hav>.nm,.board .r.hav>.hl{padding-left:59px!important}
+@media(max-width:380px){.board .r>.rav{width:44px!important;height:44px!important}.board .r.hav>.nm,.board .r.hav>.hl{padding-left:52px!important}}
