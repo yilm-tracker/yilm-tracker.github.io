@@ -739,3 +739,27 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .board .r .nm .fab small{display:block;font:700 10px/1 var(--display);letter-spacing:.1em;color:var(--dim);text-box:trim-both cap alphabetic}
 @supports not (text-box:trim-both cap alphabetic){.board .r .nm .fab b{padding:5px 8px 4px}}
 @media(max-width:380px){.board .r .nm .fab b{font-size:13px;padding:6px 7px}}
+/* Rosters: season totals on the GP line (statline.season), in the Matchups summary-line style: grey category label, figures, dim bullets */
+.rn small .rsl{margin-left:9px;white-space:nowrap;font-size:12px;color:var(--label)}
+.rn small .rsl::before{content:"•";color:var(--dim);margin-right:9px}
+.rn small .rsl .sit{white-space:nowrap}
+.rn small .rsl u{text-decoration:none;font-size:10px;color:var(--steel);letter-spacing:.04em;margin-right:2.5px}
+.rn small .rsl .sdt{font-style:normal;color:var(--dim);margin:0 6px}
+@media (max-width:419px){.rn small .rsl{font-size:11.5px;margin-left:7px}.rn small .rsl::before{margin-right:7px}.rn small .rsl u{font-size:9.5px;letter-spacing:.01em;margin-right:2px}.rn small .rsl .sdt{margin:0 5px}}
+@media (max-width:370px){.rn small .rsl{font-size:11px;margin-left:6px}.rn small .rsl::before{margin-right:6px}.rn small .rsl u{font-size:9px}.rn small .rsl .sdt{margin:0 4px}}
+.rn small .rsl u{font-family:var(--display);font-weight:600;letter-spacing:.06em}
+/* rslFit: when GP + bye + totals do not fit beside the points, the totals take their own line under GP (that row only) */
+.rr2.rsw .rn small{flex-wrap:wrap;row-gap:5px}
+.rr2.rsw .rn small .rsl{flex-basis:100%;margin-left:0}
+.rr2.rsw .rn small .rsl::before{content:none}
+/* Rosters GP line: GP, bye and season totals in one style: condensed grey labels, light figures, dim bullets between.
+   Bye: past = dimmed, next week = sky, later = normal. */
+.rn small{font-size:12px!important;color:var(--label)}
+.rn small .gp,.rn small .by{display:inline-flex;align-items:baseline;white-space:nowrap}
+.rn small .gp u,.rn small .by u{text-decoration:none;font-family:var(--display);font-weight:600;font-size:10px;letter-spacing:.06em;color:var(--steel);margin-right:2.5px}
+.rn small .gp b,.rn small .by b{font-weight:500;color:var(--label)}
+.rn small .by::before{content:"•";color:var(--dim);margin:0 9px;font-weight:400}
+.rn small .by.past u,.rn small .by.past b{color:#4b5262}
+.rn small .by.now b{color:var(--sky);font-weight:600}.rn small .by.now u{color:var(--sky)}
+@media (max-width:419px){.rn small{font-size:11.5px!important}.rn small .gp u,.rn small .by u{font-size:9.5px;letter-spacing:.03em;margin-right:2px}.rn small .by::before{margin:0 7px}}
+@media (max-width:370px){.rn small{font-size:11px!important}.rn small .gp u,.rn small .by u{font-size:9px}.rn small .by::before{margin:0 6px}}

@@ -39,19 +39,20 @@ def nmh(name,pos):
     return f'<span class="nmx lg"><span class="fn">{e(parts[0])} </span><span class="fi">{e(parts[0][0])}. </span>{e(parts[1])}</span>'
 PG=json.load(open(P+'ro_pg.json'))
 from assess import assess_html as _AS
+from statline import season as _SEA
 def prow(pid,name,pos,nfl,pts,gp,tag='',flat=False,pgm=False):
     rk,tie,pts2=K[pid] if K.get(pid) else (None,0,0.0)
     assert abs(pts2-pts)<0.006,(pid,pts,pts2)
     lab=f'{pos}{rk}' if pts>0 else pos
     by=BYE.get(nfl);bc='past' if by and by<=DONE else 'now' if by==DONE+1 else ''
-    byh=f'<i class="by {bc}">(<b>{by}</b>)</i>' if by else ''
+    byh=f'<i class="by {bc}"><u>BYE</u><b>{by}</b></i>' if by else ''
     pg=f'{pts/gp:.1f}' if gp else '–'
     if pgm: rk=PG[pid][0] if PG.get(pid) else None
     big=rk and (rk>=100 or (pos=='DEF' and rk>=10))
     sq=f'<i class="pq p-{pos.lower()}{" l3" if big and pts>0 else ""} t-{nfl or "FA"}"><span class="pqi"><span>{pos}</span>{f"<b>{rk}</b>" if pts>0 and rk else ""}</span></i>'
     a=age(pid);ag=f'<em class="pag {acl(a)}">{a:.1f}</em>' if a else ''
     return (f'<div class="rr2">{sq}'
-            f'<span class="rn"><b>{nmh(name,pos)}{badge(nfl).replace('<em class="nfl','<em class="nfl tm',1) if nfl else ""}{ag}{IRX if tag=="IR" else ""}{TXC if (tag=="TX" and flat) else ""}</b><small><span class="gp">{gp} GP</span>{byh}</small></span>'
+            f'<span class="rn"><b>{nmh(name,pos)}{badge(nfl).replace('<em class="nfl','<em class="nfl tm',1) if nfl else ""}{ag}{IRX if tag=="IR" else ""}{TXC if (tag=="TX" and flat) else ""}</b><small><span class="gp"><u>GP</u><b>{gp}</b></span>{byh}{_SEA(pid,pos,DONE)}</small></span>'
             f'<span class="rv">{pts:.1f}</span><span class="rg2">{pg}</span></div>')
 def panel(i,t):
     pl=sorted(R[t],key=lambda p:(ORD.index(p[2]),-p[4],p[1]))

@@ -267,4 +267,9 @@ if(typeof FAABL!=='undefined'&&window.fetch)fetch('https://api.sleeper.app/v1/le
   for(const x of ro){const t=FAABR[x.roster_id];if(!t||!(t in FAAB))continue;const v=FAABB-(+((x.settings||{}).waiver_budget_used)||0);if(v!==FAAB[t]){FAAB[t]=v;ch=1}}
   if(!ch)return;document.querySelectorAll('.board .r').forEach(r=>{const t=r.dataset.t,f=r.querySelector('.fab');if(f&&t in FAAB){f.querySelector('b').textContent='$'+FAAB[t];f.title=`FAAB left: $${FAAB[t]} of $${FAABB} (opens The Wire)`}});tnFit()}).catch(()=>{});
 
+// Rosters: season totals sit beside GP and bye; a row whose line would reach the points drops them onto their own line
+(function(){function rslFit(){document.querySelectorAll('.rr2').forEach(r=>{const s=r.querySelector('.rsl');if(!s||!r.offsetParent)return;r.classList.remove('rsw');
+  const v=r.querySelector('.rv'),sm=s.parentElement;if(s.getBoundingClientRect().right>v.getBoundingClientRect().left-8||sm.scrollWidth>sm.clientWidth+0.5)r.classList.add('rsw')})}
+ const go=()=>requestAnimationFrame(rslFit);go();addEventListener('resize',go);document.addEventListener('change',go);document.addEventListener('click',go);
+ if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',go)}})();
 </script>

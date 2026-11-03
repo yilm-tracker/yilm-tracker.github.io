@@ -121,3 +121,31 @@ def fumbles_kept(w,pid):
         except Exception:_DXK={}
     s=_DXK.get(str(w),{}).get(pid) or {}
     return max(0,int(s.get('fum',0) or 0)-int(s.get('fum_lost',0) or 0))
+
+# ---------- Rosters: season-to-date totals on the GP line under the player name (weeks 1..done of stats_detail.json),
+# in the Matchups summary-line format (REC 7-46-1 • RU 1-10), most relevant category first: QB PA then RU, RB RU then REC,
+# WR/TE REC then RU, K FG then XP, DEF SK / TO / TD. Zero TDs/INTs are left off, as in the weekly line.
+def _tot(pid,done):
+    d={}
+    for w in range(1,int(done)+1):
+        for k,v in (DET.get(str(w),{}).get(pid) or {}).items():
+            if isinstance(v,(int,float)):d[k]=d.get(k,0)+v
+    return d
+def season(pid,pos,done):
+    d=_tot(pid,done)
+    if not d:return ''
+    gi=lambda k:int(round(d.get(k,0)))
+    td=lambda c,y,t:[c,y]+([t] if t else [])
+    pa=[_grp('PA',[gi('pass_yd')]+([gi('pass_td'),gi('pass_int')] if gi('pass_int') else [gi('pass_td')] if gi('pass_td') else []))] if gi('pass_att') else []
+    ru=[_grp('RU',td(gi('rush_att'),gi('rush_yd'),gi('rush_td')))] if gi('rush_att') else []
+    re_=[_grp('REC',td(gi('rec'),gi('rec_yd'),gi('rec_td')))] if gi('rec') or gi('rec_tgt') else []
+    if pos=='QB':o=pa+ru
+    elif pos=='RB':o=ru+re_
+    elif pos in('WR','TE'):o=re_+ru
+    elif pos=='K':
+        o=([_grp('FG',[f"{gi('fgm')}/{gi('fga')}"])] if gi('fga') else [])+([_grp('XP',[f"{gi('xpm')}/{gi('xpa') or gi('xpm')+gi('xpmiss')}"])] if gi('xpa') or gi('xpm') else [])
+    elif pos=='DEF':
+        tdd=gi('def_td')+gi('def_st_td')
+        o=[_grp('SK',[gi('sack')]),_grp('TO',[gi('int')+gi('fum_rec')])]+([_grp('TD',[tdd])] if tdd else [])
+    else:o=[]
+    return f'<span class="rsl">{"<i class=sdt>•</i>".join(o)}</span>' if o else ''
