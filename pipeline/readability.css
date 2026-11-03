@@ -764,8 +764,10 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 @media (max-width:419px){.rn small{font-size:11.5px!important}.rn small .gp u,.rn small .by u{font-size:9.5px;letter-spacing:.03em;margin-right:2px}.rn small .by::before{margin:0 7px}}
 @media (max-width:370px){.rn small{font-size:11px!important}.rn small .gp u,.rn small .by u{font-size:9px}.rn small .by::before{margin:0 6px}}
 /* streak tile on its own row under the last-5 dots, right-aligned; record scale --rrs (set below) */
-.side .skr{display:flex;justify-content:flex-end;margin-top:5px}
-.side .skr .sk{margin:0}
+/* streak tile left of the last-5 dots, on one line under the record */
+.side .l5r{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin:-2px 0 2px;white-space:nowrap}
+.side .l5r .sk{margin:0;flex:none}
+.side .l5r .l5d{margin:0}
 .rr b{font-size:35.1px}.rr.rr4 b{font-size:29.7px}
 /* standings board: one card again. Each tier is a plain section (section.tcard). Rows run edge to edge in alternating
    shades (first row of each tier lighter). Between tiers a ticket-style tear line: a dotted perforation across the card
@@ -803,11 +805,11 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 #list>.tcard>.tier em{color:color-mix(in srgb,var(--tc) 30%,var(--chalk))}
 /* standings panel: firmer shadow down both sides and along the bottom */
 #list.board{box-shadow:0 0 0 1px rgba(0,0,0,.3),0 4px 0 -1px rgba(0,0,0,.5),0 16px 22px -10px rgba(0,0,0,.8),-8px 8px 14px -9px rgba(0,0,0,.75),8px 8px 14px -9px rgba(0,0,0,.75)!important}
-/* dots (stat-line rank dots and last-5): dark ring around each dot so the colour pops. Whole-pixel dots spread across the
-   dots column (space-between), ring drawn outside the dot and sized so neighbouring rings never touch. */
+/* dots (stat-line rank dots and last-5): the dark ring is the dot's own border (one box for ring and colour, so they are
+   always concentric; a box-shadow ring is snapped separately and drifted off-centre). Size = colour + 2 x ring. */
 .seg10{justify-content:space-between!important;gap:0!important}
-.seg10 i{flex:none!important;aspect-ratio:auto;width:6px!important;height:6px!important;box-shadow:0 0 0 .9px rgba(6,11,15,.95)!important}
-.seg10:has(i:nth-child(11)) i{width:5px!important;height:5px!important;box-shadow:0 0 0 .8px rgba(6,11,15,.95)!important}
-.l5d{gap:3px!important}.l5d i{box-shadow:0 0 0 1px rgba(6,11,15,.95)}
-@media(max-width:420px){.seg10 i{width:5px!important;height:5px!important;box-shadow:0 0 0 .7px rgba(6,11,15,.95)!important}.seg10:has(i:nth-child(11)) i{width:4px!important;height:4px!important;box-shadow:0 0 0 .6px rgba(6,11,15,.95)!important}}
-@media(max-width:380px){.seg10 i{width:4px!important;height:4px!important;box-shadow:0 0 0 .6px rgba(6,11,15,.95)!important}.seg10:has(i:nth-child(11)) i{width:3.5px!important;height:3.5px!important;box-shadow:0 0 0 .5px rgba(6,11,15,.95)!important}}
+.seg10 i{flex:none!important;aspect-ratio:auto;box-sizing:border-box!important;width:8px!important;height:8px!important;border:1px solid rgba(6,11,15,.95)!important;box-shadow:none!important}
+.seg10:has(i:nth-child(11)) i{width:7px!important;height:7px!important}
+.l5d{gap:1px!important}.l5d i{box-sizing:border-box;width:8px!important;height:8px!important;border:1px solid rgba(6,11,15,.95);box-shadow:none!important;border-radius:2.5px!important}
+@media(max-width:420px){.seg10 i{width:6.5px!important;height:6.5px!important;border-width:.75px!important}.seg10:has(i:nth-child(11)) i{width:5.5px!important;height:5.5px!important;border-width:.7px!important}}
+@media(max-width:380px){.seg10 i{width:5.25px!important;height:5.25px!important;border-width:.65px!important}.seg10:has(i:nth-child(11)) i{width:4.5px!important;height:4.5px!important;border-width:.6px!important}}
