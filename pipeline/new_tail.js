@@ -65,7 +65,7 @@ function draw(med){
     const refs=[[0,'1st'],[1,'Bye'],[5,'Play-Off']];
     const gbOf=k=>{const [rw,rl]=wl(o[k]);const g=((rw-rw0)+(rl0-rl))/2;return g%1?g.toFixed(1):String(g)};
     const rf=refs.filter(([k])=>i>k);
-    const gbH=rf.length?`<div class="chl gbh">Games back</div>${rf.map(([k,lab])=>`<div class="cw">${lab} <b>${gbOf(k)}</b></div>`).join('')}`:'<div class="chl gbh lead">Leader</div>';
+    const gbH='';  // Games back (and the leader's 'Leader' label) removed from the card 2026-11-02
     const sub=med?`<div class="chl">Breakdown</div><div class="cw">H2H <b>${w}-${l}</b></div><div class="cw">Top-5 <b>${mw}-${G-mw}</b></div>`
                  :`<div class="chl">Could have</div><div class="cw">Won <b>${CH[t][0]}</b></div><div class="cw">Lost <b>${CH[t][1]}</b></div>`;
     const P=med?PM:PH,dl=P.indexOf(t)-i,a=(med?POS.M:POS.H)[t];
@@ -257,7 +257,7 @@ const go=()=>{if(!raf)raf=requestAnimationFrame(upd)};addEventListener('scroll',
 (function(){function f(){document.querySelectorAll('h1.yh').forEach(h=>{h.style.fontSize='';const m=parseFloat(getComputedStyle(h).fontSize);const w=h.clientWidth;if(!w)return;const R=document.createRange();R.selectNodeContents(h);let fs=Math.min(88,m*w/R.getBoundingClientRect().width);h.style.fontSize=fs.toFixed(2)+'px';let i=0;while(h.scrollWidth>h.clientWidth+0.5&&i++<20){fs-=0.5;h.style.fontSize=fs+'px'}})}
 f();addEventListener('resize',f);if(document.fonts)document.fonts.ready.then(f)})();
 let q=0;function sched(){if(q)return;q=requestAnimationFrame(()=>{q=0;fit();finFit();document.querySelectorAll('.tqt[data-h]:not([data-ok])').forEach(t=>{if(inkTile(t,+t.dataset.h))t.dataset.ok=1});document.querySelectorAll('.trc .tro2 b').forEach(el=>{if(!el.offsetParent)return;el.style.fontSize='';let f=parseFloat(getComputedStyle(el).fontSize);while((el.scrollWidth>el.clientWidth+0.5||el.scrollHeight>el.clientHeight+0.5)&&f>10){f-=0.5;el.style.fontSize=f+'px'}})})}
-window.tileFit=fit;window.finFit=finFit;sched();addEventListener('resize',sched);document.addEventListener('change',()=>setTimeout(sched,0));document.addEventListener('click',()=>setTimeout(sched,0));
+window.tileFit=fit;window.finFit=finFit;window.inkTile=inkTile;sched();addEventListener('resize',sched);document.addEventListener('change',()=>setTimeout(sched,0));document.addEventListener('click',()=>setTimeout(sched,0));
 if(document.fonts){document.fonts.ready.then(()=>{for(const k in FM)delete FM[k];document.querySelectorAll('.tqt[data-ok]').forEach(t=>delete t.dataset.ok);sched()});document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',()=>{for(const k in FM)delete FM[k];sched()})}
 })();
 addEventListener('resize',()=>requestAnimationFrame(pfit));document.addEventListener('click',()=>requestAnimationFrame(pfit));
@@ -272,4 +272,22 @@ if(typeof FAABL!=='undefined'&&window.fetch)fetch('https://api.sleeper.app/v1/le
   const v=r.querySelector('.rv'),sm=s.parentElement;if(s.getBoundingClientRect().right>v.getBoundingClientRect().left-8||sm.scrollWidth>sm.clientWidth+0.5)r.classList.add('rsw')})}
  const go=()=>requestAnimationFrame(rslFit);go();addEventListener('resize',go);document.addEventListener('change',go);document.addEventListener('click',go);
  if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',go)}})();
+// Standings card, right column (rrFit): the streak tile is the record's cap height, centred on it; "Could have" /
+// "Breakdown" starts level with the top of the OPP line (cap tops). Record and dots sizes are CSS (readability.css, +15%).
+(function(){const C=document.createElement('canvas').getContext('2d');
+function capOf(el,s){const cs=getComputedStyle(el);C.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;return C.measureText(s||'0123456789').actualBoundingBoxAscent*(el.currentCSSZoom||1)}
+function txt(el,last){const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);let t=null,x;while(x=w.nextNode())if(x.textContent.trim()){t=x;if(!last)break}return t}
+function base(tn){const p=document.createElement('i');p.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';tn.after(p);const b=p.getBoundingClientRect().bottom;p.remove();return b}
+function rrFit(){
+  const rows=[...document.querySelectorAll('.board .r')].filter(r=>r.offsetParent&&r.querySelector('.side .rr b'));
+  rows.forEach(r=>{const sb=r.querySelector('.side .subw');if(sb)sb.style.removeProperty('margin-top')});
+  rows.forEach(r=>{const b=r.querySelector('.side .rr b'),tn=txt(b,1),k=r.querySelector('.side .rr .sk');if(!tn||!k||!window.inkTile)return;
+    k.style.removeProperty('transform');const cap=capOf(b),z=k.currentCSSZoom||1;window.inkTile(k,Math.floor(cap/(b.currentCSSZoom||1)*4)/4);
+    const bl=base(tn),kr=k.getBoundingClientRect(),d=((bl-cap/2)-(kr.top+kr.bottom)/2)/z;if(Math.abs(d)>0.05)k.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important')});
+  rows.forEach(r=>{const sb=r.querySelector('.side .subw'),o=r.querySelector('.st.s2');if(!sb||!sb.offsetParent||!o||!o.offsetParent)return;
+    const lt=txt(sb,0),ot=txt(o,0);if(!lt||!ot)return;const z=sb.currentCSSZoom||1,dl=((base(ot)-capOf(ot.parentElement,'HOPC'))-(base(lt)-capOf(lt.parentElement,'HOPC')))/z;
+    const m=parseFloat(getComputedStyle(sb).marginTop)||0;sb.style.setProperty('margin-top',(m+dl).toFixed(2)+'px','important')});
+  if(typeof tnFit==='function')tnFit()}
+window.rrFit=rrFit;const go=()=>requestAnimationFrame(()=>requestAnimationFrame(rrFit));go();addEventListener('resize',go);document.addEventListener('change',go);document.addEventListener('click',go);
+if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',go)}})();
 </script>
