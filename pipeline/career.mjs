@@ -2,7 +2,9 @@
 // Every regular season a player has stats for (Sleeper season totals, 2009 on), scored with THIS league's current
 // scoring settings, so the numbers compare across players and eras. Players are matched to Sleeper ids by name +
 // position (MFL-era picks only have names). Output: { "<name key>|<POS>": [points, games, seasons with a game,
-// first season counted, last season counted, partial (career started before 2009)], _meta: {...} }
+// first season counted, last season counted, partial (career started before 2009), rookie-season points, rookie-season
+// games, rookie season (first season with a game; null when the career began before 2009), {season: [points, games]}],
+// _meta: {...} }
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -44,6 +46,8 @@ try {
   const ids = new Set(Object.values(pick));
   const start = Math.max(FIRST, Math.min(season, ...[...ids].map(id => season - (PL[id].years_exp || 0))));
   const tot = {};  // pid -> [pts, gp, seasons, first, last]
+  const rk = {};   // pid -> [pts, gp, year] of the first season with a game (the NFL rookie season)
+  const by = {};   // pid -> { year: [pts, gp] } (startup drafts show points from the draft year on)
   for (let y = start; y <= season; y++) {
     let rows;
     try { rows = await get(`${S}/stats/nfl/${y}?season_type=regular`); } catch (e) { console.log('career: season', y, 'skipped:', String(e)); continue; }
@@ -54,6 +58,8 @@ try {
       if (!gp && !pts) continue;
       const t = tot[r.player_id] || (tot[r.player_id] = [0, 0, 0, y, y]);
       t[0] += pts; t[1] += gp; if (gp) t[2]++; t[3] = Math.min(t[3], y); t[4] = Math.max(t[4], y);
+      (by[r.player_id] || (by[r.player_id] = {}))[y] = [Math.round(pts * 10) / 10, gp];
+      if (gp && (!rk[r.player_id] || y < rk[r.player_id][2])) rk[r.player_id] = [Math.round(pts * 10) / 10, gp, y];
     }
     await sleep(250);
   }
@@ -61,7 +67,8 @@ try {
   for (const [k] of want) {
     const id = pick[k]; if (!id) continue;
     const t = tot[id] || [0, 0, 0, null, null], rookie = season - (PL[id].years_exp || 0);
-    out[k] = [Math.round(t[0] * 10) / 10, t[1], t[2], t[3], t[4], rookie < FIRST];
+    const rr = rookie < FIRST ? null : rk[id] || null;  // a career that began before 2009 has no rookie season in the data
+    out[k] = [Math.round(t[0] * 10) / 10, t[1], t[2], t[3], t[4], rookie < FIRST, ...(rr || [null, null, null]), by[id] || {}];
   }
   fs.writeFileSync(path.join(P, 'career.json'), JSON.stringify(out));
   console.log(`career: ${Object.keys(out).length - 1} players, seasons ${start}-${season}, ${miss.length} unmatched${miss.length ? ' (' + miss.slice(0, 8).join(', ') + ')' : ''}`);

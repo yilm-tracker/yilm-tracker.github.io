@@ -1,8 +1,15 @@
 import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).removesuffix('/pos')+'/'
 # Drafts tab: every league draft from the 2021 startup on (history/drafts.json, written by drafts.mjs).
-# One button per year; each draft is listed round by round: pick number (tile in the player's position colour), player,
-# NFL team, career points chip (career.json), and the team that made the pick, with a "via <team>" box when the pick was
-# traded (original owner). The team column has one fixed width behind a divider, so the avatars line up down the round.
+# One button per year. Desktop (>=1100px): a draft board, one column per draft slot in the original (raw) order, headed
+# by the team that owned the slot; one row per round. Each cell is filled in the player's position colour: first name,
+# last name, points, and a strip "1.01 · RB" + NFL team. A traded pick has a subtle gold banner at the top
+# naming only the team that made the pick (current owner); when a draft has any traded pick, every cell keeps that row so names stay level.
+# Below 1100px: the list, round by round: pick tile (position colour), player, NFL team, points chip, and the team that
+# made the pick, with a "via <team>" box when the pick was traded. The team column has one fixed width behind a divider,
+# so the avatars line up down the round.
+# Points (career.json from career.mjs, CI only; absent offline; this league's current scoring): rookie drafts show the
+# player's rookie season (first NFL regular season with a game; none for careers that began before 2009); the startup
+# draft shows points from the draft season on.
 # MFL drafts: the original owner comes from MFL's own note "Pick traded from <name>" (that season's team names).
 # Writes draft_section.html and draft_css.css. Also importable: section(years=None) for the season archive pages.
 import json,html,re
@@ -20,12 +27,53 @@ try:CAR=json.load(open(P+'career.json',encoding='utf-8'))
 except Exception:CAR={}
 def _nk(n):
     n=re.sub(r"[.'’`,]",'',str(n or '').lower()).replace('-',' ');n=re.sub(r'\b(jr|sr|ii|iii|iv|v)\b','',n);return re.sub(r'\s+',' ',n).strip()
-def career(pl,pos):
+def rookie(pl,pos):
+    """(points, games, season) of the player's NFL rookie season, or None"""
     c=CAR.get(_nk(pl)+'|'+({'PK':'K','Def':'DEF'}.get(pos,pos) or ''))
-    if not c:return ''
-    pts,gp,ns,y0,y1,part=c
-    t=(f'Career fantasy points in this league\'s scoring: {pts:,.1f} in {gp} games' + (f', {y0}-{y1}' if y0 else '') + (' (stats from 2009 on)' if part else ''))
-    return f'<span class="dfcp{" z" if not gp else ""}" title="{e(t)}"><b>{pts:,.0f}</b><i>pts</i></span>'
+    if not c or len(c)<9 or c[8] is None:return None
+    return c[6],c[7],c[8]
+def _rt(r):return f'Rookie season {r[2]}: {r[0]:,.1f} fantasy points in {r[1]} games (this league\'s scoring)'
+def since(pl,pos,y0):
+    """(points, games, first, last) from season y0 on (startup drafts), or None"""
+    c=CAR.get(_nk(pl)+'|'+({'PK':'K','Def':'DEF'}.get(pos,pos) or ''))
+    if not c or len(c)<10:return None
+    s=[(int(k),v) for k,v in c[9].items() if int(k)>=y0]
+    if not s:return 0.0,0,y0,y0
+    return sum(v[0] for _,v in s),sum(v[1] for _,v in s),min(k for k,_ in s),max(k for k,_ in s)
+def pts(pl,pos,y,d):
+    """(value, label, title) for a pick: startup drafts = points from the draft season on, rookie drafts = rookie season"""
+    if d.get('type')=='startup':
+        y0=int(str(y)[:4]);r=since(pl,pos,y0)
+        if not r:return None
+        return r[0],f"pts since ’{y0%100:02d}",f'{r[0]:,.1f} fantasy points in {r[1]} games, {y0}-{r[3]} (this league\'s scoring)'
+    r=rookie(pl,pos)
+    return (r[0],'rookie pts',_rt(r)) if r else None
+def career(pl,pos,y,d):
+    r=pts(pl,pos,y,d)
+    if not r:return ''
+    return f'<span class="dfcp" title="{e(r[2])}"><b>{r[0]:,.0f}</b><i>{r[1]}</i></span>'
+def board(y,d,rows,snake,T):
+    """desktop draft board: columns = draft slots (round-1 original owner), rows = rounds"""
+    T=max([T]+[r[2] or r[1] for r in rows]);rds=sorted({r[0] for r in rows})
+    col={}
+    for r in sorted(rows,key=lambda r:r[0]):col.setdefault(r[2] or r[1],r[3])
+    at={(r[0],r[2] or r[1]):r for r in rows}
+    trd=any(r[4]!=col.get(r[2] or r[1]) for r in rows)  # any traded pick: every cell keeps the banner row (names stay level)
+    h=''.join(f'<span class="dfgt"><i class="pav" data-avt="{e(col.get(k,""))}" aria-hidden="true"></i><b>{e(own(col.get(k,"")))}</b></span>' for k in range(1,T+1))
+    out=[f'<div class="dfg" style="--dft:{T}" role="table" aria-label="{y} draft board"><span class="dfgc"></span>{h}']
+    for rd in rds:
+        arr=('<i aria-hidden="true">'+('←' if rd%2==0 else '→')+'</i>') if snake else ''  # direction only matters in a snake draft
+        out.append(f'<span class="dfgl"><small>RD</small><b>{rd}</b>{arr}</span>')
+        for k in range(1,T+1):
+            r=at.get((rd,k))
+            if not r:out.append('<span class="dfc dfc0"></span>');continue
+            _,pk,_,orig,by,pl,pos,nfl=r;nm=str(pl or '').split(' ',1);ro=pts(pl,pos,y,d);c0=col.get(k,'')
+            out.append(f'<div class="dfc" style="--pc:{PC.get(pos or "", "var(--hair)")}">'
+                +(f'<span class="dfct" title="{e(own(c0))}\'s pick, made by {e(own(by))}"><b>{e(own(by))}</b></span>' if by!=c0 else '<span class="dfct dfce" aria-hidden="true"></span>' if trd else '')
+                +f'<span class="dfcn"><small>{e(nm[0]) if len(nm)>1 else ""}</small><b>{e(nm[-1])}</b></span>'
+                +(f'<span class="dfcr" title="{e(ro[2])}"><b>{ro[0]:,.0f}</b> {ro[1]}</span>' if ro else '')
+                +f'<span class="dfcs"><b>{rd}.{pk:02d}</b><span>{e(pos or "")}</span>{badge(nfl) if nfl else ""}</span></div>')
+    return ''.join(out)+'</div>'
 PC={'QB':'#f7739c','RB':'#3ddcc1','WR':'#5ec6f4','TE':'#fca95c','K':'#c491ff','DEF':'#c98a72','PK':'#c491ff','Def':'#c98a72'}
 NFLFIX={'KCC':'KC','GBP':'GB','NOS':'NO','NEP':'NE','SFO':'SF','TBB':'TB','LVR':'LV','JAC':'JAX','WSH':'WAS','LA':'LAR','FA':None,'FA*':None}
 from nfl_colors import badge_c as badge
@@ -49,7 +97,7 @@ def norm(d,y):
             m=re.search(r'Pick traded from (.+?)\.(\s|$|\n|\])',cm or '')
             orig=nm.get(m.group(1).replace('’',"'").strip().lower(),m.group(1)) if m else by
             slot=(T+1-pk) if snake and rd%2==0 else pk
-            rows.append([rd,pk,slot,orig,by,pl,pos,NFLFIX.get(nfl,nfl)])
+            rows.append([rd,pk,slot,orig,by,pl,{'PK':'K','Def':'DEF'}.get(pos,pos),NFLFIX.get(nfl,nfl)])  # MFL position codes
     else:
         for r in d['picks']:
             rd,pk,slot,orig,by,pl,pos,nfl=r[:8];T=d.get('teams') or 10
@@ -66,15 +114,16 @@ def year_panel(y,d):
     out=[f'<div class="dfh"><b>{y} {kind}</b><span>{d.get("rounds") or max(r[0] for r in rows)} rounds · {"snake" if snake else "linear"} · {trd} traded picks · {src}</span></div>']
     # original order: round-1 slots and the team that held each slot before any trade
     r1=sorted([r for r in rows if r[0]==1],key=lambda r:r[2] or r[1])
+    out.append(board(y,d,rows,snake,T)+'<div class="dfl">')
     out.append('<div class="dfo"><span class="dfol">Original order</span><div class="dfos">'+''.join(f'<span class="dfoi"><em>{r[2] or r[1]}</em><i class="pav" data-avt="{e(r[3])}" aria-hidden="true"></i><b>{e(own(r[3]))}</b></span>' for r in r1)+'</div></div>')
     for rd in sorted({r[0] for r in rows}):
         rr=sorted([r for r in rows if r[0]==rd],key=lambda r:r[1])
         out.append(f'<div class="dfr"><div class="dfrh">Round {rd}</div>'+''.join(
             f'<div class="dfp" style="--pc:{PC.get(pos or "", "var(--hair)")}"><i class="dfn"><b>{rd}.{pk:02d}</b><span>{e(pos or "")}</span></i>'
-            f'<div class="dfpl"><span class="dfpn"><b>{e(pl)}</b>{badge(nfl) if nfl else ""}</span>{career(pl,pos)}</div>'
+            f'<div class="dfpl"><span class="dfpn"><b>{e(pl)}</b>{badge(nfl) if nfl else ""}</span>{career(pl,pos,y,d)}</div>'
             f'<div class="dfby"><i class="pav" data-avt="{e(by)}" aria-hidden="true"></i><span><b>{e(own(by))}</b>'+(f'<small class="dfvia"><i>via</i>{e(own(orig))}</small>' if orig!=by else '')+'</span></div></div>'
             for rd_,pk,slot,orig,by,pl,pos,nfl in rr)+'</div>')
-    return ''.join(out)
+    return ''.join(out)+'</div>'
 def section(years=None,idp='df'):
     ys=sorted([y for y in D if (years is None or y in years)],key=lambda y:int(str(y)[:4]))
     if not ys:return ''
@@ -137,11 +186,38 @@ CSS="""
 .dfcp.z b{color:var(--steel)!important}
 @media(max-width:420px){.dfp{--dfbw:124px}.dfby{padding:6px 8px 6px 10px;gap:7px}.dfby .pav{width:26px;height:26px}}
 @media(max-width:380px){.dfp{--dfbw:112px}.dfby{padding:6px 6px 6px 8px;gap:6px}.dfby .pav{width:22px;height:22px}.dfvia{font-size:10px!important;padding:2px 4px 1px}.dfcp b{font-size:11.5px!important}}
+/* 2026-11-03: desktop draft board (>=1100px); the list stays below 1100px */
+.dfg{display:none}
+@media(min-width:1100px){
+ .dfl{display:none}
+ .dfg{display:grid;grid-template-columns:44px repeat(var(--dft),minmax(0,1fr));gap:5px;align-items:stretch;background:var(--deck);border:1px solid var(--hair);border-radius:12px;box-shadow:var(--dsh2);padding:10px 10px 10px 6px;margin:0 0 14px}
+ .dfgt{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:0;padding:2px 0 6px}
+ .dfgt .pav{width:32px;height:32px}
+ .dfgt b{max-width:100%;text-align:center;font:700 12.5px/1.1 var(--display);letter-spacing:.03em;color:var(--label);white-space:nowrap}
+ .dfgl{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:var(--display);color:var(--steel)}
+ .dfgl small{font:700 10px/1 var(--display);letter-spacing:.1em}
+ .dfgl b{font:700 19px/1 var(--display);color:var(--chalk)}
+ .dfgl i{font-style:normal;font-size:12px;line-height:1}
+ .dfc{display:flex;flex-direction:column;min-width:0;min-height:96px;border-radius:7px;overflow:hidden;background:var(--pc);color:#0b0e14;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+ .dfc0{background:rgba(238,240,244,.035);box-shadow:inset 0 0 0 1px var(--hair)}
+ .dfct{flex:none;display:flex;align-items:center;justify-content:center;gap:4px;box-sizing:border-box;height:17px;padding:1px 7px 0;background:#e6cf96;box-shadow:inset 0 -1px 0 rgba(140,104,40,.45);color:#5c4515;font:600 10px/1.1 var(--display);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+ .dfct b{font-weight:700;color:#3b2a08}
+ .dfct i{font-style:normal;opacity:.7}
+ .dfce{background:transparent;box-shadow:none}
+ .dfcn{display:flex;flex-direction:column;gap:1px;padding:6px 7px 0;min-width:0}
+ .dfcn small{font:500 11.5px/1.15 var(--body);white-space:nowrap;opacity:.78}
+ .dfcn b{font:700 16px/1.1 var(--display);letter-spacing:.01em;white-space:nowrap}
+ .dfcr{padding:4px 7px 0;font:600 10px/1 var(--display);letter-spacing:.06em;text-transform:uppercase;opacity:.82;white-space:nowrap}
+ .dfcr b{font-size:13px;letter-spacing:0;font-variant-numeric:tabular-nums}
+ .dfcs{display:flex;align-items:center;gap:5px;margin-top:auto;padding:5px 5px 5px 7px;background:rgba(0,0,0,.13);font:700 11.5px/1 var(--display);letter-spacing:.03em;white-space:nowrap}
+ .dfcs>span{opacity:.75}
+ .dfcs .nfl{margin-left:auto;flex:none}
+}
 """
 if __name__=='__main__':
     s=section()
     if s:
-        open(P+'draft_section.html','w',encoding='utf-8').write(s[0]+'<script>(function(){function f(){document.querySelectorAll(".dfpl b").forEach(function(b){if(!b.offsetParent)return;b.style.fontSize="";b.style.whiteSpace="";var p=b.parentElement,s0=parseFloat(getComputedStyle(b).fontSize),s=s0,o=function(){return b.scrollWidth>b.clientWidth+.5||p.scrollWidth>p.clientWidth+.5};while(o()&&s>13){s-=.5;b.style.fontSize=s+"px"}if(o()){b.style.fontSize="";b.style.whiteSpace="normal"}});document.querySelectorAll(".dfby").forEach(function(c){if(!c.offsetParent)return;c.style.removeProperty("--dfz");var z=1;while(c.scrollWidth>c.clientWidth+.5&&z>.7){z-=.04;c.style.setProperty("--dfz",z.toFixed(2))}})}f();addEventListener("resize",function(){requestAnimationFrame(f)});document.addEventListener("change",function(){requestAnimationFrame(f)});document.fonts&&document.fonts.ready.then(f)})()</script>')
+        open(P+'draft_section.html','w',encoding='utf-8').write(s[0]+'<script>(function(){function fz(b,m){b.style.fontSize="";b.style.whiteSpace="";var s=parseFloat(getComputedStyle(b).fontSize),o=function(){return b.scrollWidth>b.clientWidth+.5||b.parentElement.scrollWidth>b.parentElement.clientWidth+.5};while(o()&&s>m){s-=.5;b.style.fontSize=s+"px"}if(o()){b.style.fontSize="";b.style.whiteSpace="normal";s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>7){s-=.5;b.style.fontSize=s+"px"}}}function f(){document.querySelectorAll(".dfcn b,.dfcn small,.dfgt b").forEach(function(b){if(b.offsetParent)fz(b,11)});document.querySelectorAll(".dfct,.dfcr").forEach(function(b){if(b.offsetParent)fz(b,8.5)});document.querySelectorAll(".dfpl b").forEach(function(b){if(!b.offsetParent)return;b.style.fontSize="";b.style.whiteSpace="";var p=b.parentElement,s0=parseFloat(getComputedStyle(b).fontSize),s=s0,o=function(){return b.scrollWidth>b.clientWidth+.5||p.scrollWidth>p.clientWidth+.5};while(o()&&s>13){s-=.5;b.style.fontSize=s+"px"}if(o()){b.style.fontSize="";b.style.whiteSpace="normal"}});document.querySelectorAll(".dfby").forEach(function(c){if(!c.offsetParent)return;c.style.removeProperty("--dfz");var z=1;while(c.scrollWidth>c.clientWidth+.5&&z>.7){z-=.04;c.style.setProperty("--dfz",z.toFixed(2))}})}f();addEventListener("resize",function(){requestAnimationFrame(f)});document.addEventListener("change",function(){requestAnimationFrame(f)});document.fonts&&document.fonts.ready.then(f)})()</script>')
         open(P+'draft_css.css','w',encoding='utf-8').write(CSS+s[1])
         print('drafts',len(D))
     else:print('no drafts')
