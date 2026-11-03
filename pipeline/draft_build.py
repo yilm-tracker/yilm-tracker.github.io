@@ -2,10 +2,11 @@ import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).r
 # Drafts tab: every league draft from the 2021 startup on (history/drafts.json, written by drafts.mjs).
 # One button per year. Desktop (>=1100px): a draft board, one column per draft slot in the original (raw) order, headed
 # by the team that owned the slot; one row per round. Each cell is filled in the player's position colour: first name,
-# last name, points, and a strip "1.01 · RB" + NFL team. A traded pick has a subtle gold banner at the top
+# last name, points ("40 RPts"; startup "1,398 Pts", explained in the draft's subtitle), and a strip "1.01 · RB" + NFL team. A traded pick has a subtle gold banner at the top
 # naming only the team that made the pick (current owner); when a draft has any traded pick, every cell keeps that row so names stay level.
 # Below 1100px: the list, round by round: pick tile (position colour), player + NFL team on the left, a points button
-# (number only; label to its right) whose left edge sits at 50% of the player cell (760px+), and the team that
+# (number only; each round's header names the columns: R1 · Player · Rookie Pts · GM) whose left edge sits at 50% of
+# the player cell (760px+), and the team that
 # made the pick, with a "via <team>" box when the pick was traded. The team column has one fixed width behind a divider,
 # so the avatars line up down the round.
 # Points (career.json from career.mjs, CI only; absent offline; this league's current scoring): rookie drafts show the
@@ -52,7 +53,7 @@ def pts(pl,pos,y,d):
 def career(pl,pos,y,d):
     r=pts(pl,pos,y,d)
     if not r:return ''
-    return f'<span class="dfcq" title="{e(r[2])}"><span class="dfcp"><b>{r[0]:,.0f}</b></span><i>{r[1]}</i></span>'
+    return f'<span class="dfcq" title="{e(r[2])}"><span class="dfcp"><b>{r[0]:,.0f}</b></span></span>'
 def board(y,d,rows,snake,T):
     """desktop draft board: columns = draft slots (round-1 original owner), rows = rounds"""
     T=max([T]+[r[2] or r[1] for r in rows]);rds=sorted({r[0] for r in rows})
@@ -72,7 +73,7 @@ def board(y,d,rows,snake,T):
             out.append(f'<div class="dfc" style="--pc:{PC.get(pos or "", "var(--hair)")}">'
                 +(f'<span class="dfct" title="{e(own(c0))}\'s pick, made by {e(own(by))}"><b>{e(own(by))}</b></span>' if by!=c0 else '<span class="dfct dfce" aria-hidden="true"></span>' if trd else '')
                 +f'<span class="dfcn"><small>{e(nm[0]) if len(nm)>1 else ""}</small><b>{e(nm[-1])}</b></span>'
-                +(f'<span class="dfcr" title="{e(ro[2])}"><b>{ro[0]:,.0f}</b> {ro[1]}</span>' if ro else '')
+                +(f'<span class="dfcr" title="{e(ro[2])}"><b>{ro[0]:,.0f}</b> {"Pts" if d.get("type")=="startup" else "RPts"}</span>' if ro else '')
                 +f'<span class="dfcs"><b>{rd}.{pk:02d}</b><span>{e(pos or "")}</span>{badge(nfl) if nfl else ""}</span></div>')
     return ''.join(out)+'</div>'
 PC={'QB':'#f7739c','RB':'#3ddcc1','WR':'#5ec6f4','TE':'#fca95c','K':'#c491ff','DEF':'#c98a72','PK':'#c491ff','Def':'#c98a72'}
@@ -112,14 +113,15 @@ def year_panel(y,d):
     kind={'startup':'Startup draft','rookie':'Rookie draft'}.get(d.get('type'),'Draft')
     src='MyFantasyLeague' if d['src']=='mfl' else 'Sleeper'
     trd=sum(1 for r in rows if r[3]!=r[4])
-    out=[f'<div class="dfh"><b>{y} {kind}</b><span>{d.get("rounds") or max(r[0] for r in rows)} rounds · {"snake" if snake else "linear"} · {trd} traded picks · {src}</span></div>']
+    pnote=f' · points from {int(str(y)[:4])} on' if d.get('type')=='startup' else ' · RPts = rookie-season points'
+    out=[f'<div class="dfh"><b>{y} {kind}</b><span>{d.get("rounds") or max(r[0] for r in rows)} rounds · {"snake" if snake else "linear"} · {trd} traded picks · {src}{pnote}</span></div>']
     # original order: round-1 slots and the team that held each slot before any trade
     r1=sorted([r for r in rows if r[0]==1],key=lambda r:r[2] or r[1])
     out.append(board(y,d,rows,snake,T)+'<div class="dfl">')
     out.append('<div class="dfo"><span class="dfol">Original order</span><div class="dfos">'+''.join(f'<span class="dfoi"><em>{r[2] or r[1]}</em><i class="pav" data-avt="{e(r[3])}" aria-hidden="true"></i><b>{e(own(r[3]))}</b></span>' for r in r1)+'</div></div>')
     for rd in sorted({r[0] for r in rows}):
         rr=sorted([r for r in rows if r[0]==rd],key=lambda r:r[1])
-        out.append(f'<div class="dfr"><div class="dfrh">Round {rd}</div>'+''.join(
+        out.append(f'<div class="dfr"><div class="dfrh" role="row"><span>R{rd}</span><span class="dfhp"><i>Player</i><i>{"Pts since ’"+str(int(str(y)[:4])%100).zfill(2) if d.get("type")=="startup" else "Rookie Pts"}</i></span><span class="dfhg">GM</span></div>'+''.join(
             f'<div class="dfp" style="--pc:{PC.get(pos or "", "var(--hair)")}"><i class="dfn"><b>{rd}.{pk:02d}</b><span>{e(pos or "")}</span></i>'
             f'<div class="dfpl"><span class="dfpn"><b>{e(pl)}</b>{badge(nfl) if nfl else ""}</span>{career(pl,pos,y,d)}</div>'
             f'<div class="dfby"><i class="pav" data-avt="{e(by)}" aria-hidden="true"></i><span><b>{e(own(by))}</b>'+(f'<small class="dfvia"><i>via</i>{e(own(orig))}</small>' if orig!=by else '')+'</span></div></div>'
@@ -224,6 +226,16 @@ CSS="""
  .dfpl .dfpn{justify-self:start;padding-right:12px}
  .dfpl .dfcq{justify-self:start}
 }
+/* 2026-11-03 (later): each round's header names the list columns (R1 · Player · Rookie Pts · GM); the points button
+   holds only the number */
+.dfrh{display:grid;grid-template-columns:46px minmax(0,1fr) var(--dfbw,140px);column-gap:10px;align-items:center;padding:9px 0 8px!important}
+.dfrh>span:first-child{text-align:center}
+.dfhp{display:flex;gap:6px;min-width:0}.dfhp i{font-style:normal;white-space:nowrap}
+.dfhp i+i::before{content:"·";margin-right:6px;color:var(--steel)}
+.dfhg{padding-left:15px}
+@media(max-width:420px){.dfrh{--dfbw:124px}.dfhg{padding-left:13px}}
+@media(max-width:380px){.dfrh{--dfbw:112px;grid-template-columns:42px minmax(0,1fr) var(--dfbw);column-gap:8px}.dfhg{padding-left:11px}}
+@media(min-width:760px){.dfhp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0}.dfhp i+i::before{content:none}}
 """
 if __name__=='__main__':
     s=section()

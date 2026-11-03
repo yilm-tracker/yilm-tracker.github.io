@@ -72,8 +72,9 @@ function draw(med){
     const tri=p=>`<svg class="tri" viewBox="0 0 8 7" aria-hidden="true"><path d="${p}"/></svg>`;
     const mv=dl>0?`<span class="mv up">${tri('M4 0L8 7H0Z')}${dl}</span>`:dl<0?`<span class="mv dn">${tri('M0 0H8L4 7Z')}${-dl}</span>`:`<span class="mv eq">–</span>`;
     const r=WK[t].map(g=>g[2]>g[3]?'W':'L'),lastR=r[r.length-1];let n=0;for(let k=r.length-1;k>=0&&r[k]===lastR;k--)n++;
-    const tc=i<BYN?'tier-bye':i<PO?'tier-po':'tier-out';
-    const th=i===0?['tier-bye','Bye',`Seeds 1–${BYN}`,BYN-1]:i===BYN?['tier-po','Playoffs',`Seeds ${BYN+1}–${PO}`,PO-1]:i===PO?['tier-out','Chasing',`Seeds ${PO+1}–${NT}`,-1]:null;
+    const BYT=0;  // YILM: the standings show only the playoff cutoff (no bye tier), by request
+    const tc=i<BYT?'tier-bye':i<PO?'tier-po':'tier-out';
+    const th=i===0&&BYT?['tier-bye','Bye',`Seeds 1–${BYT}`,BYT-1]:i===BYT?['tier-po','Playoffs',`Seeds ${BYT+1}–${PO}`,PO-1]:i===PO?['tier-out','Chasing',`Seeds ${PO+1}–${NT}`,-1]:null;
     const tierHtml=th?`${i?'</section>':''}<section class="tcard ${th[0]}" aria-label="${th[1]}"><div class="tier ${th[0]}"><b>${th[1]}</b><span>${th[2]}</span>${th[3]>=0?`<em>Line ${wl(o[th[3]]).join('-')}</em>`:''}</div>`:'';
     const op=OPEN.has(t);
     const strip=WK[t].map(g=>{const won=g[2]>g[3];return `<div class="gm"><div class="h"><span>Wk ${g[0]}</span><span class="res ${won?'w':'l'}"><span class="ct">${won?'W':'L'}</span></span></div><div class="sc">${g[2].toFixed(2)}${chip(g[4])}</div><div class="vs">vs ${esc(fn(g[1]))}</div><div class="os">${g[3].toFixed(2)}${chip(g[5])}</div></div>`}).join('')
@@ -99,7 +100,7 @@ function SDV(t){const a=WK[t].map(g=>g[2]),m=a.reduce((x,y)=>x+y,0)/a.length;ret
 function dtab(med){
   let box=document.getElementById('dtab');
   if(!box){box=document.createElement('div');box.id='dtab';box.className='dtab';const l=document.getElementById('list');l.parentNode.insertBefore(box,l)}
-  const o=med?M:H,N=o.length,PN=typeof PO!=='undefined'?PO:6,BY=typeof BYN!=='undefined'?BYN:2;
+  const o=med?M:H,N=o.length,PN=typeof PO!=='undefined'?PO:6,BY=0;  // YILM: no bye tier in the table either
   const wl=x=>{const e=T[x];return med?[e[0]+e[2],e[1]+G-e[2]]:[e[0],e[1]]};
   const sd=t=>{const a=WK[t].map(g=>g[2]),m=a.reduce((x,y)=>x+y,0)/a.length;return Math.sqrt(a.reduce((x,y)=>x+(y-m)*(y-m),0)/a.length)};
   const pc=x=>x<=0?'0%':x>=100?'100%':x<1?'<1%':x>99?'>99%':Math.round(x)+'%';

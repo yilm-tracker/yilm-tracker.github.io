@@ -105,7 +105,8 @@ def m_sched():
          'b.className="ssb on"+(own?" own":d>0?" up":d<0?" dn":" eq")});'
          'm.addEventListener("keydown",function(e){if((e.key==="Enter"||e.key===" ")&&e.target.dataset.w){e.preventDefault();e.target.click()}})})()</script>')
     av={a:sum(M[a][b] for b in TEAMS)/len(TEAMS) for a in TEAMS}
-    lr=[[nmb(a,dvb(T[a][0]-av[a],1.2)),f'<span class="sxv">{T[a][0]}</span>',f'<span class="sxv">{av[a]:.1f}</span>',f'<span class="sxv b {"up" if T[a][0]-av[a]>=0.5 else "dn" if T[a][0]-av[a]<=-0.5 else ""}">{sgn(T[a][0]-av[a])}</span>'] for a in sorted(TEAMS,key=lambda a:-(T[a][0]-av[a]))]
+    lmx=max([abs(T[x][0]-av[x]) for x in TEAMS]+[0.1])  # bar scale = the largest luck either way (a fixed 1.2 capped most bars at full length)
+    lr=[[nmb(a,dvb(T[a][0]-av[a],lmx)),f'<span class="sxv">{T[a][0]}</span>',f'<span class="sxv">{av[a]:.1f}</span>',f'<span class="sxv b {"up" if T[a][0]-av[a]>=0.5 else "dn" if T[a][0]-av[a]<=-0.5 else ""}">{sgn(T[a][0]-av[a])}</span>'] for a in sorted(TEAMS,key=lambda a:-(T[a][0]-av[a]))]
     return (head('Schedule swap',f'Wins through Week {G} with each team\'s schedule')+mat+
             head('Schedule luck',f'Actual wins vs average across all {len(TEAMS)} schedules')+table([('Team',''),('Wins','42px'),('Avg','42px'),('Luck','46px')],lr))
 EW=D.everyweek()
