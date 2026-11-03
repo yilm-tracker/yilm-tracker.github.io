@@ -16,7 +16,7 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 2. **Workflow per change:** edit `pipeline/` in both repos, build locally, QA, commit (clear message), `git pull --rebase` then push, wait for the Actions deploy (`gh run list -L 1`), send a screenshot, report briefly.
 3. **Test widths:** 402 first (regular iPhone Pro), then 440 (his phone), 360 (floor), 1440 desktop. No sideways scroll, nothing clipped, nothing ellipsised (`…`), no overflow.
 4. **Visual precision on the FIRST iteration**, not after feedback:
-   - **Rank tiles beside a figure are never taller than the figure and never poke above its cap top or below its baseline.** Check EVERY time with `python3 tools/tilechk.py 402 440 360 1440`; expect 0 violations on both trackers.
+   - **Rank tiles beside a figure are never taller than the figure and never poke above its cap top or below its baseline.** Check EVERY time with `python3 tools/tilechk.py 402 440 360 1440`; expect 0 violations on both trackers (exact to 0.05px, Dumb and Nerd).
    - Digits never touch a tile frame; gap ink-to-frame equal top/bottom and left/right (judged by glyph ink, not the text box).
    - Equal ink gaps; stacked tiles share one width and one left edge across rows; logos centred on what they sit beside.
    - Elements must not move between states (Dumb/Nerd, H2H/Median, re-fits on resize).
@@ -70,7 +70,7 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 - Measuring only visible rows changes widths between modes: measure all (`.sbm`).
 - Canvas font metrics read before web fonts load are wrong: never cache across runs.
 - Digit ink can rise above the H cap: size tiles on digit ink.
-- Baselines estimated from canvas font metrics are off by up to ~0.9px at zoomed widths (1440 has `zoom` 1.1; layout rounds ascent/descent differently): measure with a zero-size inline-block on the baseline. `tilechk.py`'s 0.6px allowance hides this; the strict check is in the 2026-11-02 session (probe baseline, expect <=0.05px).
+- Baselines estimated from canvas font metrics are off by up to ~0.9px at zoomed widths (1440 has `zoom` 1.1; layout rounds ascent/descent differently): measure with a zero-size inline-block on the baseline. `tilechk.py` now measures this way (it used to allow 0.6px, which hid it).
 - A tile's stale `translateY` once made `fit` think it was off its line, so it was skipped forever (360: PF/PA tiles missing, 3.75px digits). Fixed by clearing transforms before the check.
 - `new_tail.js` ends with `</script>`: append new JS before it.
 - `const _cv` canvas already exists in new_tail.js: reuse, don't redeclare.
@@ -94,5 +94,5 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 ## QA tools (tools/)
 
 - `realfonts.py`: real fonts in Playwright (required).
-- `tilechk.py`: tile-inside-figure check, both trackers, any widths.
+- `tilechk.py`: every tile beside a figure spans exactly its cap height (real baseline via a zero-size marker, real CSS zoom, tolerance 0.05px, `TOL=` to loosen); stat-line tiles off their line count as violations; Dumb and Nerd; both trackers, any widths; exit code 1 on any violation. Against the pre-2026-11-02 fitter it fails 80-98% of tiles; the old version passed them all.
 - `fab.py`: per-row name size/height/clip report + crops. `shot.py`: name-block-only screenshots at 402/440.
