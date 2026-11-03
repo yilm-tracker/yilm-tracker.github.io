@@ -154,11 +154,11 @@ function ravFit(){let mx=0;const bd=document.querySelector('.board');document.qu
   a.style.transform='';const z=a.currentCSSZoom||1;const top=_ink(tn,'H').cap,bot=_ink(lb,'H').base;const H=Math.max(12,bot-top)/z;mx=Math.max(mx,H);a.style.flex='0 0 '+H.toFixed(2)+'px';
   a.style.width=a.style.height=H.toFixed(2)+'px';const at=a.getBoundingClientRect().top;a.style.transform='translateY('+((top-at)/z).toFixed(2)+'px)'});if(bd&&mx)document.querySelectorAll('.board').forEach(b=>b.style.setProperty('--ravc',mx.toFixed(2)+'px'))}
 // standings stat lines: one shared text scale (1 = 15px), lowered in small steps until no line is clipped
-function sbFit(){document.querySelectorAll('.board').forEach(bd=>{bd.style.setProperty('--sbs','1');const L=[...bd.querySelectorAll('.sb .stx:not(.spl)')].filter(x=>x.offsetParent);let k=1;
+function sbFit(){document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;bd.classList.add('sbm');bd.style.setProperty('--sbs','1');const L=[...bd.querySelectorAll('.sb .stx:not(.spl)')].filter(x=>x.offsetParent);let k=1;
   bd.style.removeProperty('--stw2');while(k>.78&&L.some(x=>x.scrollWidth>x.clientWidth+.5)){k-=.02;bd.style.setProperty('--sbs',k.toFixed(2))}
   // then the text column shrinks to the longest line, so the dots sit just after the text (all lines aligned)
   const mw=Math.max(0,...L.filter(x=>x.closest('.sb')).map(x=>{const rg=document.createRange();rg.selectNodeContents(x);const a=rg.getBoundingClientRect(),b=x.getBoundingClientRect();return a.right-b.left}));
-  if(mw)bd.style.setProperty('--stw2',Math.ceil(mw+2)+'px')});if(typeof tileFit==='function')tileFit()}
+  if(mw)bd.style.setProperty('--stw2',Math.ceil(mw+2)+'px');bd.classList.remove('sbm')});if(typeof tileFit==='function')tileFit()}
 // Opp rk · All-play · Luck line: its own scale (down to 86%); if it still does not fit, Luck wraps to a second line
 function s2Fit(){document.querySelectorAll('.board').forEach(bd=>{const L=[...bd.querySelectorAll('.r>.st.s2')].filter(x=>x.offsetParent);bd.style.setProperty('--s2s','1');L.forEach(x=>x.classList.remove('wrp'));let k=1;
   const over=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);while(k>.81&&over()){k-=.02;bd.style.setProperty('--s2s',k.toFixed(2))}

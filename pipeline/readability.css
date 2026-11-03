@@ -672,3 +672,9 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .lrk{font-style:normal}@media(max-width:600px){.board .r>.st.s2 .lrk{display:none}}
 .board .r>.st.s2{gap:0 7px!important}
 .sb.s-sk{grid-template-columns:minmax(0,1fr)!important}
+.pane-st .tgl{margin-bottom:12px!important;text-box:trim-both cap alphabetic}
+/* sbFit measures every stat line (Nerd rows too) so the dots sit in the same place in Dumb and Nerd */
+.board.sbm .r>.sb{display:grid!important}
+/* mid-rank dots a step brighter so they read against the panel */
+.seg10:not(.g):not(.b) i.on{background:#aab5bc!important}
+.seg10.gold:not(.g):not(.b) i.on{background:#e8c15a!important}
