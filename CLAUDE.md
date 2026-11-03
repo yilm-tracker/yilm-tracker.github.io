@@ -39,7 +39,7 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 
 - `rebuild.py` assembles `standings.html` = `new_head.html` (base CSS) + data globals (`data_block.js`, `AVR` team→avatar id, `RNI` numeral art, `NIK` YILM nicknames, `FAAB*`) + tab sections + `new_tail.js` (all page JS). `gen.js` and `build_static.py` render, `build_site.py` wraps into `site/index.html`.
 - **`pipeline/readability.css` is appended last**: all recent overrides live at its end. Do not put `!important` on font sizes that JS fits (it blocks the fitter).
-- `build_site.py` hides `body>*` until a final `<style>` at the end of body (no flash on load); page background from the last `--pg` in readability.css. It also builds the season/year buttons (`yrs`).
+- `build_site.py` hides `body>*` until the page is fitted: the closing script reveals it only after the web fonts (Barlow Condensed 600/700, IBM Plex Sans 400/600) have loaded, `fonts.ready` has fired (the fitters hook it earlier, so they run first) and two frames have passed; 2.5s fallback, `<noscript>` reveal. Before this a refresh showed the pre-font fit and then visibly re-sized (streak tile, Could have). Page background from the last `--pg` in readability.css. It also builds the season/year buttons (`yrs`).
 - Tabs: Standings, Leaderboards, Stats, Rosters, Matchups, Compare, Playoffs, Players, The Wire, Drafts, Team Hub. Each tab has a `*_build.py` writing `*_section.html` and `*_css.css` (see the header comment of each file).
 - Data pulls: `sleeper.mjs` (pure pull functions), `pull.mjs` CLI (`weekly`, `live`, `wire`, `top`, `detail`, `faab`, `state`), `drafts.mjs`, `history.mjs`, `fp_pull.py`.
 
@@ -90,6 +90,9 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 - List name fit: shrink to 13px, else wrap to two lines at full size (never clipped). A long team name in the team column is zoomed down (`--dfz`, to 0.7).
 
 ## Stats matrices (Schedule swap, Every-week head to head)
+
+- Stats tables (Points by position `.pt`, stat modules `.sxt`) alternate row shades like the standings (first data row lighter); rows widened 8px each side so the shade clears the text.
+- Points by position: the rank tile is centred under the figure in every view (one tile size, `min-width:20px`); Per start's "14 GP" hangs to the right of the tile out of the flow, so switching views never moves the tile. Below 1100px figure + tile sit 8px left of the column centre (header pills too) to leave room for it.
 
 - Schedule luck bars are scaled to the largest luck either way (a fixed 1.2-win scale capped most bars at full length).
 - Column heads = face/logo + manager name (`coach()`: BBP owners.json, YILM league nicknames); on phones the columns are ~20px, so heads are face only. Row labels: face + team name on desktop; face + manager name on phones (team names were cut; `pcnFit` shrinks a long one, floor 10px). Cells have a 1px frame (green/red tinted for better/worse) so they stand off the panel.

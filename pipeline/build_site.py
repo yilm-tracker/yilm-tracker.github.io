@@ -31,7 +31,13 @@ UPD+=('<script>(function(){var K="dt-radios'+('-'+Y if PAST else '')+'";try{var 
 # (page colour only) until that last style block has arrived, then shows fully styled
 import re as _reh
 _pgs=_reh.findall(r'--pg:\s*(#[0-9a-fA-F]{3,8})',open(P+'readability.css',encoding='utf-8').read())
-_HIDE='<style>body>*{visibility:hidden}'+(f'html,body{{background:{_pgs[-1]}}}' if _pgs else '')+'</style>';_SHOW='<style>body>*{visibility:visible}</style>'
+_HIDE='<style>body>*{visibility:hidden}'+(f'html,body{{background:{_pgs[-1]}}}' if _pgs else '')+'</style>';_SHOW=('<noscript><style>body>*{visibility:visible}</style></noscript>'
+       # reveal only after the web fonts have loaded and the fitters have run on them (they hook fonts.ready earlier),
+       # two frames later; refreshing used to show the first, pre-font fit and then visibly re-size (2.5s fallback)
+       '<script>(function(){var d=0;function s(){if(d)return;d=1;requestAnimationFrame(function(){requestAnimationFrame(function(){'
+       'var t=document.createElement("style");t.textContent="body>*{visibility:visible}";document.head.appendChild(t)})})}'
+       'var F=document.fonts;if(F&&F.load){Promise.all([F.load(\'700 20px "Barlow Condensed"\'),F.load(\'600 20px "Barlow Condensed"\'),F.load(\'400 15px "IBM Plex Sans"\'),F.load(\'600 15px "IBM Plex Sans"\')])'
+       '.then(function(){return F.ready}).then(function(){setTimeout(s,60)},s)}else s();setTimeout(s,2500)})()</script>')
 j=s.index('</style>')+len('</style>');s=s[:j]+_HIDE+'\n</head>\n<body>'+s[j:]+_SHOW+UPD+f'\n<!-- built {stamp} -->\n</body>\n</html>\n'
 s=s.replace('</style>','body{margin:0}</style>',1)
 # small TeamHub link on the eyebrow line (live site only; the download file stays as is). Negative margins keep the

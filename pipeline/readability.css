@@ -950,3 +950,15 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
  .dtt td.dwl small.wlb{display:block;margin:2px 0 0;font:500 10.5px/1 var(--body);color:var(--steel)!important;white-space:nowrap}
  .dtt td.dsd .rni{height:24px!important;margin:-2px auto!important}
 }
+/* 2026-11-03: Points by position: the rank tile stays centred under the figure in every view; "16 GP" (Per start) hangs
+   to the right of the tile, out of the flow, so switching Per start / Per week / Total never moves the tile */
+.pcr{position:relative;display:inline-flex!important;justify-content:center}
+.pcr .pgp{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:4px;white-space:nowrap}
+/* 2026-11-03: Stats tables (Points by position and the stat modules) alternate row shades like the standings: first
+   data row lighter. Rows widened 8px each side (margin + padding) so the shade does not end at the text. */
+.pt>.pr,.sxt>.sxr{margin-left:-8px;margin-right:-8px;padding-left:8px;padding-right:8px;border-radius:6px}
+.pt>.pr:not(.ph):nth-child(even),.sxt>.sxr:not(.sxhd):nth-child(even){background:rgba(238,240,244,.045)}
+.pt .pcr .ch{min-width:20px!important;padding:0 2px!important}
+.pcr .pgp{margin-left:3px}
+/* figure + tile sit 8px left of the column centre in every view (header pill too), leaving room for the hanging GP */
+@media (max-width:1099px){.pt .pr>[role=cell],.pt .pr>[role=columnheader]:not(:first-child){padding-right:16px;box-sizing:border-box}}
