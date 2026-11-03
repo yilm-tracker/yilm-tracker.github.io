@@ -917,3 +917,24 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 #list>.tcard+.tcard>.tier::before,#list>.tcard+.tcard>.tier::after{content:none!important;display:none!important}
 #list>.tcard+.tcard>.tier{padding-top:14px!important}
 #list>.tcard+.tcard>.tier{border-top:3px solid var(--pg)}
+/* 2026-11-03 (later): tier banners replaced by cutoff lines (YILM-site style): a dark strip under the last seed of a
+   tier with the label in the tier colour, a 2px rule in that colour, and the count at the right ("Top 6 in"). No
+   Chasing banner. Cards and the desktop table use the same .pline. The desktop table is one raised panel. */
+.pline{display:flex;align-items:center;gap:14px;padding:11px 16px;background:var(--pg);font:700 11.5px/1 var(--display);letter-spacing:.2em;text-transform:uppercase;white-space:nowrap}
+.pline b{font-weight:700;color:var(--lc)}
+.pline i{flex:1;min-width:12px;height:2px;border-radius:1px;background:color-mix(in srgb,var(--lc) 75%,transparent)}
+.pline span{color:var(--chalk)}
+.pl-bye{--lc:var(--pylon)}.pl-po{--lc:var(--pylon)}
+#list>.pline{margin:0 -14px}
+#list>.tcard:first-child>.r:first-child{border-radius:15px 15px 0 0}
+@media (max-width:380px){.pline{gap:10px;padding:10px 12px;font-size:10.5px;letter-spacing:.16em}}
+@media (min-width:1100px){
+ #list>.pline{margin:0 calc(-14px/1.1)}
+ .dtp .dtt{width:100%}
+ .dtt tr.dtl td{padding:0!important;border-bottom:0!important;background:none!important}
+ .dtt tr.dtl .pline{padding:12px 16px}
+ .dtp .dtt tr.dtg th{padding:10px 9px 0;border-bottom:0}
+ .dtp .dtt tr.dtg th.dsim{padding:10px 0 2px!important;border-left:4px solid var(--pg)}
+ .dtp .dtt tr.dtg th.dsim span{border-bottom:0;padding:0}
+ .dtp .dtt thead tr:last-child th{padding-top:8px;padding-bottom:10px}
+}

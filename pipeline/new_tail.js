@@ -74,8 +74,9 @@ function draw(med){
     const r=WK[t].map(g=>g[2]>g[3]?'W':'L'),lastR=r[r.length-1];let n=0;for(let k=r.length-1;k>=0&&r[k]===lastR;k--)n++;
     const BYT=0;  // YILM: the standings show only the playoff cutoff (no bye tier), by request
     const tc=i<BYT?'tier-bye':i<PO?'tier-po':'tier-out';
-    const th=i===0&&BYT?['tier-bye','Bye',`Seeds 1–${BYT}`,BYT-1]:i===BYT?['tier-po','Playoffs',`Seeds ${BYT+1}–${PO}`,PO-1]:i===PO?['tier-out','Chasing',`Seeds ${PO+1}–${NT}`,-1]:null;
-    const tierHtml=th?`${i?'</section>':''}<section class="tcard ${th[0]}" aria-label="${th[1]}"><div class="tier ${th[0]}"><b>${th[1]}</b><span>${th[2]}</span>${th[3]>=0?`<em>Line ${wl(o[th[3]]).join('-')}</em>`:''}</div>`:'';
+    const th=i===0?['tier-po']:i===PO?['tier-out','po','Playoff line',`Top ${PO} in`]:null;  // YILM: no bye; one line under the last playoff seed
+    // a cutoff line (YILM-site style: label, rule, count) under the last seed of a tier; no tier banners
+    const tierHtml=th?`${i?`</section><div class="pline pl-${th[1]}" role="separator" aria-label="${th[2]}: ${th[3]}"><b>${th[2]}</b><i></i><span>${th[3]}</span></div>`:''}<section class="tcard ${th[0]}">`:'';
     const op=OPEN.has(t);
     const strip=WK[t].map(g=>{const won=g[2]>g[3];return `<div class="gm"><div class="h"><span>Wk ${g[0]}</span><span class="res ${won?'w':'l'}"><span class="ct">${won?'W':'L'}</span></span></div><div class="sc">${g[2].toFixed(2)}${chip(g[4])}</div><div class="vs">vs ${esc(fn(g[1]))}</div><div class="os">${g[3].toFixed(2)}${chip(g[5])}</div></div>`}).join('')
       +FUT[t].map(g=>`<div class="gm fut"><div class="h"><span>Wk ${g[0]}</span></div><div class="up">Upcoming</div><div class="vs">vs ${esc(fn(g[1]))}</div></div>`).join('');
@@ -117,13 +118,13 @@ function dtab(med){
   const tcls={bye:'Bye · seeds 1–'+BY,po:'Playoffs · seeds '+(BY+1)+'–'+PN,out:'Chasing · seeds '+(PN+1)+'–'+N};
   let h='<table class="dtt"><thead><tr class="dtg">'+cols.slice(0,-4).map(()=>'<th></th>').join('')+'<th colspan="4" class="dsim"><span>20k simulations</span></th></tr><tr>'+cols.map(c=>`<th data-k="${c[0]}"${c[2]?' class="srt'+(c[0]===key?' on':'')+(c[0]==='seed'?' rst'+(key!=='seed'?' act':''):'')+'"':''}${c[0]==='seed'?' title="Reset to standings order"':''}>${c[0]==='seed'?'<svg class="rsi" viewBox="0 0 16 16" aria-label="Reset sort"><path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2.6 1.9v3.4H6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>':c[1]}</th>`).join('')+'</tr></thead><tbody>',lt='';
   for(const r of sorted){
-    if(key==='seed'&&tier(r.i)!==lt){lt=tier(r.i);const tl=lt==='bye'?BY-1:lt==='po'?PN-1:-1,tn={bye:['Bye','Seeds 1–'+BY],po:['Playoffs','Seeds '+(BY+1)+'–'+PN],out:['Chasing','Seeds '+(PN+1)+'–'+N]}[lt];h+=`<tr class="dtb ${lt} tier-${lt} ${r.i?'dtn':''}"><td colspan="${cols.length}"><div class="dtbh"><b>${tn[0]}</b><span>${tn[1]}</span>${tl>=0?`<em>Line ${wl(o[tl]).join('-')}</em>`:''}</div></td></tr>`}
+    if(key==='seed'&&tier(r.i)!==lt){const pv=lt;lt=tier(r.i);if(pv){const pl=pv==='bye'?['bye','Bye line','Top '+BY+' bye']:['po','Playoff line','Top '+PN+' in'];h+=`<tr class="dtl"><td colspan="${cols.length}"><div class="pline pl-${pl[0]}" role="separator"><b>${pl[1]}</b><i></i><span>${pl[2]}</span></div></td></tr>`}}
     h+=`<tr class="dtr ${tier(r.i)}" data-t="${esc(r.t)}"><td class="dsd">${typeof RNI!=='undefined'&&RNI[r.i+1]?`<img class="rni dri" src="${RNI[r.i+1]}" alt="${r.i+1}" aria-label="Rank ${r.i+1}">`:r.i+1}</td><td class="dtm"><span>${av(r.t)}${esc(r.t)}</span></td>`+
        `<td><b>${r.w}-${r.l}</b></td><td><i class="dsk ${r.st[0]==='W'?'w':'l'}">${r.st}</i></td><td><span class="dl5">${r.l5.map(x=>`<i class="${x?'w':'l'}"></i>`).join('')}</span></td>`+
        `<td>${r.pf.toFixed(1)}${chip(r.pfr)}</td><td><b>${r.pw.toFixed(1)}</b><small>±${r.sd.toFixed(0)}</small></td><td>${r.pa.toFixed(1)}${chip(r.par)}</td><td><b>${r.paw.toFixed(1)}</b></td>`+
        `<td>${r.apw}-${r.apl}${chip(r.apr)}</td><td><b>${r.xw.toFixed(2)}</b></td><td class="${r.lk>=0.05?'up':r.lk<=-0.05?'dn':''}">${(r.lk>=0?'+':'−')+Math.abs(r.lk).toFixed(2)}</td><td>${r.ef.toFixed(0)}%</td>`+
        (r.s?`<td class="dfin">${rkt(r.s[0],1)}</td><td class="c1">${pc(r.s[1])}</td><td class="c2">${pc(r.s[2])}</td><td class="c3">${pc(r.s[3])}</td>`:'<td class="dfin"></td><td></td><td></td><td></td>')+'</tr>'}
-  box.innerHTML=h+'</tbody></table>';if(key==='seed')dtPanels(box);
+  box.innerHTML='<div class="dtp">'+h+'</tbody></table></div>';
   if(!box.dataset.w){box.dataset.w=1;box.addEventListener('click',e=>{
     const th=e.target.closest('th.srt');if(th){const k=th.dataset.k;box.dataset.d=box.dataset.k===k?-(+box.dataset.d||1):1;box.dataset.k=k===box.dataset.k&&+box.dataset.d===1?'seed':k;if(box.dataset.k==='seed')box.dataset.d=1;dtab(document.getElementById('bm').getAttribute('aria-pressed')==='true');return}
     const tr=e.target.closest('tr.dtr');if(!tr)return;const c=document.querySelector('#list .r[data-t="'+CSS.escape(tr.dataset.t)+'"]');
