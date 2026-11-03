@@ -767,9 +767,28 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .side .skr{display:flex;justify-content:flex-end;margin-top:5px}
 .side .skr .sk{margin:0}
 .rr b{font-size:35.1px}.rr.rr4 b{font-size:29.7px}
-/* standings: each tier (Bye / Playoffs / Chasing) is its own card, separated by a gap of page background; the tier colour
-   runs along the card top (inset, follows the corner radius). The board itself is only the stack. */
-#list.board{background:none!important;border:0!important;border-radius:0!important;padding:0!important;box-shadow:none!important;display:flex;flex-direction:column;gap:16px}
-#list>.tcard{background:var(--deck);border:1px solid var(--hair);border-radius:16px;padding:0 14px 4px;box-shadow:inset 0 3px 0 var(--tc),var(--dsh)}
-#list>.tcard>.tier{padding:17px 0 4px;margin:0}
-#list>.tcard>.tier::before{content:none}
+/* standings board: one card again. Each tier is a plain section (section.tcard). Rows run edge to edge in alternating
+   shades (first row of each tier lighter). Between tiers a ticket-style tear line: a dotted perforation across the card
+   with a semicircle notch bitten out of each edge; the tier name, seeds and Line sit under it. */
+#list.board{padding:0 14px 0}
+#list>.tcard>.r{margin:0 -14px;padding-left:14px;padding-right:14px;border-top:0}
+#list>.tcard>.r:nth-child(even){background:rgba(238,240,244,.055)}
+#list>.tcard:last-child>.r:last-child{border-radius:0 0 15px 15px}
+#list>.tcard>.tier{padding:16px 0 8px;margin:0}
+#list>.tcard+.tcard>.tier{margin:0 -14px;padding:24px 14px 9px;background:radial-gradient(circle at 2px 2px,var(--line-strong) 1.15px,transparent 1.6px) 0 0/7px 4px repeat-x}
+#list>.tcard+.tcard>.tier::before,#list>.tcard+.tcard>.tier::after{content:"";position:absolute;top:-8px;width:9px;height:18px;background:var(--pg);border:1px solid var(--hair);box-shadow:none;opacity:1;z-index:1}
+#list>.tcard+.tcard>.tier::before{left:-1px;right:auto;border-left:0;border-radius:0 9px 9px 0}
+#list>.tcard+.tcard>.tier::after{right:-1px;left:auto;border-right:0;border-radius:9px 0 0 9px}
+#list>.tcard+.tcard>.tier{background-position:0 -2px}
+/* desktop: one team per row; the Nerd blocks (Tot Eff, Dropped pts + sim, season chart) stack in a right-hand column
+   of the same row (nrdFit sets their offsets), behind a thin divider. Left side keeps its width in Dumb and Nerd. */
+@media (min-width:1100px){
+#list>.tcard>.r{margin:0 calc(-14px/1.1);padding-left:calc(14px/1.1);padding-right:calc(14px/1.1)}
+#list>.tcard:last-child>.r:last-child{border-radius:0 0 calc(15px/1.1) calc(15px/1.1)}
+#list.board>.tcard>.r.r{grid-template-columns:102px 270px 84px 78px minmax(0,1fr)!important;grid-template-rows:repeat(9,auto) 1fr!important}
+#list.board>.tcard>.r.r>:is(.s-lu,.s-sk,.szw){grid-column:5!important;grid-row:1 / 11!important;align-self:start;margin-left:34px}
+#list.board>.tcard>.r.r::after{content:"";grid-column:5;grid-row:1 / 11;border-left:1px solid var(--line-strong);margin:4px 0 4px 12px;align-self:stretch;pointer-events:none}
+#dn-lean:checked~#list.board>.tcard>.r.r::after{display:none}
+#list.board>.tcard>.r.r>.strip{grid-row:12!important}
+#list.board>.tcard>.r.r>.nm{grid-column:2 / 5!important}
+}

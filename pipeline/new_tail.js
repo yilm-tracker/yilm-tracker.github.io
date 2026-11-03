@@ -291,4 +291,11 @@ function rrFit(){
   if(typeof tnFit==='function')tnFit()}
 window.rrFit=rrFit;const go=()=>requestAnimationFrame(()=>requestAnimationFrame(rrFit));go();addEventListener('resize',go);document.addEventListener('change',go);document.addEventListener('click',go);
 if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',go)}})();
+// desktop (>=1100px): stack the Nerd blocks of each standings row in its right-hand column (all share one grid cell)
+(function(){const mq=matchMedia('(min-width:1100px)');
+function nrdFit(){document.querySelectorAll('#list .r').forEach(r=>{const els=[...r.querySelectorAll(':scope>.s-lu,:scope>.s-sk,:scope>.szw')];
+  els.forEach(e=>e.style.removeProperty('margin-top'));if(!mq.matches)return;let y=0;
+  els.forEach(e=>{if(!e.offsetParent)return;e.style.setProperty('margin-top',y+'px','important');y+=e.getBoundingClientRect().height/(e.currentCSSZoom||1)+(e.classList.contains('s-lu')?12:16)})})}
+window.nrdFit=nrdFit;const go=()=>requestAnimationFrame(()=>requestAnimationFrame(nrdFit));go();addEventListener('resize',go);document.addEventListener('change',go);document.addEventListener('click',go);
+if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',go)}})();
 </script>
