@@ -792,3 +792,22 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 #list.board>.tcard>.r.r>.strip{grid-row:12!important}
 #list.board>.tcard>.r.r>.nm{grid-column:2 / 5!important}
 }
+/* tier header band (2026-11-03): from the tear line down to just under the tier name, tinted in the tier colour, with a
+   2px rule at its foot marking the cut. Name / seeds / Line in lighter tints of the same colour. */
+#list>.tcard>.tier{margin:0 -14px!important;padding:14px 14px 11px!important;background-color:color-mix(in srgb,var(--tc) 19%,transparent);border-bottom:2px solid color-mix(in srgb,var(--tc) 62%,transparent)}
+#list>.tcard:first-child>.tier{border-radius:15px 15px 0 0;padding-top:16px!important}
+#list>.tcard+.tcard>.tier{padding-top:19px!important;background-image:radial-gradient(circle at 2px 2px,rgba(238,240,244,.38) 1.15px,transparent 1.6px)!important;background-size:7px 4px!important;background-repeat:repeat-x!important;background-position:0 0!important}
+#list>.tcard+.tcard>.tier::before,#list>.tcard+.tcard>.tier::after{top:-7px!important}
+#list>.tcard>.tier b{color:color-mix(in srgb,var(--tc) 78%,#fff)}
+#list>.tcard>.tier span{color:color-mix(in srgb,var(--tc) 42%,var(--label))}
+#list>.tcard>.tier em{color:color-mix(in srgb,var(--tc) 30%,var(--chalk))}
+/* standings panel: firmer shadow down both sides and along the bottom */
+#list.board{box-shadow:0 0 0 1px rgba(0,0,0,.3),0 4px 0 -1px rgba(0,0,0,.5),0 16px 22px -10px rgba(0,0,0,.8),-8px 8px 14px -9px rgba(0,0,0,.75),8px 8px 14px -9px rgba(0,0,0,.75)!important}
+/* dots (stat-line rank dots and last-5): dark ring around each dot so the colour pops. Whole-pixel dots spread across the
+   dots column (space-between), ring drawn outside the dot and sized so neighbouring rings never touch. */
+.seg10{justify-content:space-between!important;gap:0!important}
+.seg10 i{flex:none!important;aspect-ratio:auto;width:6px!important;height:6px!important;box-shadow:0 0 0 .9px rgba(6,11,15,.95)!important}
+.seg10:has(i:nth-child(11)) i{width:5px!important;height:5px!important;box-shadow:0 0 0 .8px rgba(6,11,15,.95)!important}
+.l5d{gap:3px!important}.l5d i{box-shadow:0 0 0 1px rgba(6,11,15,.95)}
+@media(max-width:420px){.seg10 i{width:5px!important;height:5px!important;box-shadow:0 0 0 .7px rgba(6,11,15,.95)!important}.seg10:has(i:nth-child(11)) i{width:4px!important;height:4px!important;box-shadow:0 0 0 .6px rgba(6,11,15,.95)!important}}
+@media(max-width:380px){.seg10 i{width:4px!important;height:4px!important;box-shadow:0 0 0 .6px rgba(6,11,15,.95)!important}.seg10:has(i:nth-child(11)) i{width:3.5px!important;height:3.5px!important;box-shadow:0 0 0 .5px rgba(6,11,15,.95)!important}}
