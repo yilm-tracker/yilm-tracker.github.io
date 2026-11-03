@@ -147,12 +147,14 @@ function mvAl(){
   document.querySelectorAll('.board .r .nm').forEach(n=>{if(!n.offsetParent)return;const t=n.querySelector('.tn'),v=n.querySelector('.mv'),f=n.querySelector('.fab');if(!t)return;
   const cap=e=>{const c=getComputedStyle(e);_cv.font=`${c.fontWeight} ${c.fontSize} ${c.fontFamily}`;return _cv.measureText('H').actualBoundingBoxAscent};
   if(v)v.style.verticalAlign=((cap(t)-cap(v))/2)+'px';
-  const T=capC(t),H=t.getBoundingClientRect().height;
-  if(f){f.style.marginBottom='0px';const fr=f.getBoundingClientRect(),br=f.querySelector('b').getBoundingClientRect();f.style.marginBottom=((H-T.lh)/2+T.c-(fr.bottom-(br.top+br.height/2)))+'px'}})}
+  // top of the name's capitals level with the top of the team logo
+  n.style.marginTop='0px';const lg=n.closest('.r').querySelector('.rav');if(lg&&lg.getBoundingClientRect().height>0){
+    const c=getComputedStyle(t);_cv.font=`${c.fontWeight} ${c.fontSize} ${c.fontFamily}`;const m=_cv.measureText('H'),a=m.fontBoundingBoxAscent,d=m.fontBoundingBoxDescent,lh=parseFloat(c.lineHeight)||a+d;
+    const off=(lh-a-d)/2+a-m.actualBoundingBoxAscent;n.style.marginTop=(lg.getBoundingClientRect().top-(t.getBoundingClientRect().top+off))+'px'}})}
 function tnFit(){
-  // FAAB tiles: one width (the widest balance), so they share a left edge down the board
+  // FAAB tiles: one width (the widest balance), so the FAAB labels beside them line up down the board
   const fb=[...document.querySelectorAll('.board .r .nm .fab b')].filter(b=>b.offsetParent);fb.forEach(b=>b.style.width='');const fw=Math.max(0,...fb.map(b=>b.getBoundingClientRect().width));fb.forEach(b=>b.style.width=fw+'px');
-  // name line ends 6px short of the widest record tile (W3 4-3) on the board, the same on every row, so the FAAB tiles line up
+  // names end 6px short of the widest record tile (W3 4-3) on the board, the same on every row
   const R=[...document.querySelectorAll('.board .r')].map(r=>[r.querySelector(':scope>.nm'),r.querySelector('.side .rr')]).filter(([n,k])=>n&&k&&n.offsetParent);
   R.forEach(([n])=>n.style.paddingRight='');const pr=Math.max(0,...R.map(([n,k])=>n.getBoundingClientRect().right-Math.min(...[...k.children].map(c=>c.getBoundingClientRect().left))+6));R.forEach(([n])=>n.style.paddingRight=pr+'px');
   document.querySelectorAll('.board .r .tn').forEach(e=>{if(!e.offsetParent)return;e.style.fontSize='';e.style.whiteSpace='nowrap';e.style.lineHeight='';
