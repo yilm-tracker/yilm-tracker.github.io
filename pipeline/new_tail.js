@@ -175,13 +175,19 @@ function ravFit(){let mx=0;const bd=document.querySelector('.board');document.qu
   a.style.transform='';const z=a.currentCSSZoom||1;const top=_ink(tn,'H').cap,bot=_ink(lb,'H').base;const H=Math.max(12,bot-top)/z;mx=Math.max(mx,H);a.style.flex='0 0 '+H.toFixed(2)+'px';
   a.style.width=a.style.height=H.toFixed(2)+'px';const at=a.getBoundingClientRect().top;a.style.transform='translateY('+((top-at)/z).toFixed(2)+'px)'});if(bd&&mx)document.querySelectorAll('.board').forEach(b=>b.style.setProperty('--ravc',mx.toFixed(2)+'px'))}
 // standings stat lines: one shared text scale (1 = 15px), lowered in small steps until no line is clipped
-function sbFit(){document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;bd.classList.add('sbm');bd.style.setProperty('--sbs','1');const L=[...bd.querySelectorAll('.sb .stx:not(.spl)')].filter(x=>x.offsetParent);let k=1;
-  bd.style.removeProperty('--stw2');while(k>.68&&L.some(x=>x.scrollWidth>x.clientWidth+.5)){k-=.02;bd.style.setProperty('--sbs',k.toFixed(2))}
+// desktop (>=1100px): only the left-hand lines (PF, PA) set the shared scale; Tot Eff sits in the wide right-hand column.
+// If even the floor (0.68) cannot make a line fit, the scale goes back to 1: shrinking every line for a lost cause made the
+// text and dots jump between full size and the floor on a 1px width change.
+const SBQ=matchMedia('(min-width:1100px)');
+function sbLines(bd){return [...bd.querySelectorAll('.sb .stx:not(.spl)')].filter(x=>x.offsetParent&&!(SBQ.matches&&x.closest('.s-lu')))}
+function sbFit(){document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;bd.classList.add('sbm');bd.style.setProperty('--sbs','1');const L=sbLines(bd);let k=1;
+  bd.style.removeProperty('--stw2');const ov=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);while(k>.68&&ov()){k-=.02;bd.style.setProperty('--sbs',k.toFixed(2))}
+  if(k<1&&ov()){k=1;bd.style.setProperty('--sbs','1')}
   // then the text column shrinks to the longest line, so the dots sit just after the text (all lines aligned)
   const mw=Math.max(0,...L.filter(x=>x.closest('.sb')).map(x=>{const rg=document.createRange();rg.selectNodeContents(x);const a=rg.getBoundingClientRect(),b=x.getBoundingClientRect();return a.right-b.left}));
   if(mw)bd.style.setProperty('--stw2',Math.ceil(mw+2)+'px');bd.classList.remove('sbm')});if(typeof tileFit==='function'){tileFit();
   // the rank tiles resize with the text: if a line now overflows, step the scale down again (a few passes at most)
-  for(let n=0;n<4;n++){let again=false;document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;const L=[...bd.querySelectorAll('.sb .stx:not(.spl)')].filter(x=>x.offsetParent);
+  for(let n=0;n<4;n++){let again=false;document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;const L=sbLines(bd);
     if(L.some(x=>x.scrollWidth>x.clientWidth+.5)){const k=parseFloat(bd.style.getPropertyValue('--sbs')||'1')-.02;if(k>.66){bd.style.setProperty('--sbs',k.toFixed(2));again=true}}});if(!again)break;tileFit()}}}
 // Opp rk · All-play · Luck line: its own scale (down to 86%); if it still does not fit, Luck wraps to a second line
 function s2Fit(){document.querySelectorAll('.board').forEach(bd=>{const L=[...bd.querySelectorAll('.r>.st.s2')].filter(x=>x.offsetParent);bd.style.setProperty('--s2s','1');L.forEach(x=>x.classList.remove('wrp'));let k=1;
