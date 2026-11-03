@@ -677,7 +677,7 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .board.sbm .r>.sb{display:grid!important}
 /* mid-rank dots a step brighter so they read against the panel */
 .seg10:not(.g):not(.b) i.on{background:#aab5bc!important}
-.seg10.gold:not(.g):not(.b) i.on{background:#e8c15a!important}
+.seg10.gold:not(.g):not(.b) i.on{background:var(--win)!important}
 /* Compare sections: a fixed grid of pills inside the panel (4 a row on phones, one row on desktop), no sideways scroll */
 .lbc.csub{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px!important;overflow:visible!important;margin-left:0!important;margin-right:0!important;padding:0!important;mask-image:none!important;-webkit-mask-image:none!important;scroll-snap-type:none!important}
 .lbc.csub label{text-align:center;min-width:0;padding:8px 2px!important;font-size:12.5px!important;letter-spacing:.05em!important}
