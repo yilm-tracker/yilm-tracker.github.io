@@ -95,9 +95,16 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 - Stats tables (Points by position `.pt`, stat modules `.sxt`) alternate row shades like the standings (first data row lighter); rows widened 8px each side so the shade clears the text.
 - Points by position: the rank tile is centred under the figure in every view (one tile size, `min-width:20px`); Per start's "14 GP" hangs to the right of the tile out of the flow, so switching views never moves the tile. Below 1100px figure + tile sit 8px left of the column centre (header pills too) to leave room for it.
 
+- Bar tables (Schedule luck, VS projection, closeness, lineup, home/road): logo/face + name (`nmb`), bar track inset 12px each side; bars framed (1px darker inset); centre-line bars squared where they meet the line, which is drawn on top (2px, `--label`).
+- Stats row shading runs edge to edge of the panel (rows offset by the panel padding: 12px, `.posx` 22px on desktop), square ends.
+- BBP: logos in the Stats tab carry half the standings shadow (1px offset).
 - Schedule luck bars are scaled to the largest luck either way (a fixed 1.2-win scale capped most bars at full length).
 - Column heads = face/logo + manager name (`coach()`: BBP owners.json, YILM league nicknames); on phones the columns are ~20px, so heads are face only. Row labels: face + team name on desktop; face + manager name on phones (team names were cut; `pcnFit` shrinks a long one, floor 10px). Cells have a 1px frame (green/red tinted for better/worse) so they stand off the panel.
 - YILM only: faces have no ring or disc behind them anywhere (`.pav,.av` box-shadow/background removed). BBP logos keep their shadow.
+
+## Panel frames
+
+- Panels (board, Stats/Leaderboards/Rosters/Matchups/Compare/Drafts/Team Hub cards, desktop table) have a 2px frame in `--frame`, darker than the page (BBP `#070d10`, YILM `#08111a`), as on the YILM site; light frames read as soft.
 
 ## Gotchas learned the hard way
 

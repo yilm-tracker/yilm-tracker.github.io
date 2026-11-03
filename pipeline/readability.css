@@ -962,3 +962,20 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .pcr .pgp{margin-left:3px}
 /* figure + tile sit 8px left of the column centre in every view (header pill too), leaving room for the hanging GP */
 @media (max-width:1099px){.pt .pr>[role=cell],.pt .pr>[role=columnheader]:not(:first-child){padding-right:16px;box-sizing:border-box}}
+/* 2026-11-03: Stats bar tables (Schedule luck etc.): logo/face beside the name; the bar track inset 12px each side; bars
+   framed and squared where they meet the centre line, which is drawn on top of them */
+.sxnl{display:flex;align-items:center;gap:8px;min-width:0}
+.sxnl .pav{display:block;flex:none;width:22px;height:22px;border-radius:50%;background-color:var(--deck-2);background-position:center;background-size:cover;background-repeat:no-repeat}
+.sxnb .dvb{margin-left:12px;margin-right:12px}
+.dvb::before{z-index:2;width:2px;margin-left:-1px;top:-3px;bottom:-3px;background:var(--label)!important}
+.dvb i.up{border-radius:0 3px 3px 0!important;box-shadow:inset 0 0 0 1px rgba(10,60,40,.55)!important}
+.dvb i.dn{border-radius:3px 0 0 3px!important;box-shadow:inset 0 0 0 1px rgba(90,15,25,.55)!important}
+/* 2026-11-03: panel frames darker than the page (as on the YILM site), not lighter: 2px in --frame */
+.board,.cmx,.lbx,.mux,.posx,.rox,.sxc,.dfr,.dfo,.dfg,.dtp,.tch,.trc,.tqhero,.tqhr,.tqk,.wpb,.wq,.wrt,.thk{border:2px solid var(--frame)!important}
+/* Stats tables: alternating row shade runs edge to edge of the panel (no inset, no rounded ends) */
+.pt>.pr,.sxt>.sxr{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px;border-radius:0}
+@media (min-width:1100px){.posx .pt>.pr{margin-left:-22px;margin-right:-22px;padding-left:22px;padding-right:22px}}
+/* all Stats bars: a defined 1px frame in a darker shade of the bar colour; single-direction bars keep a square start */
+.obar i,.hbr i{box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)!important}
+:root{--frame:#08111a}
+.sxnb>.sxnl+*{margin-left:12px!important;margin-right:12px!important}

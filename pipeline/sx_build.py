@@ -30,7 +30,7 @@ def dvb(v,mx):
     w=min(abs(v)/mx,1)*50 if mx else 0
     return f'<span class="dvb"><i class="{"up" if v>=0 else "dn"}" style="width:{w:.2f}%"></i></span>'
 def hbar(v,mx,cls=''):return f'<span class="hbr"><i class="{cls}" style="width:{(min(v/mx,1)*100 if mx else 0):.2f}%"></i></span>'
-def nmb(t,bar):return f'<span class="sxnb">{nm(t)}{bar}</span>'
+def nmb(t,bar):return f'<span class="sxnb"><span class="sxnl"><i class="pav" data-avt="{e(t)}" aria-hidden="true"></i>{nm(t)}</span>{bar}</span>'  # logo/face + name, bar under
 def head(title,sub):return f'<div class="sxh"><b>{title}</b><span>{sub}</span></div>'
 def table(cols,rows,cls=''):
     # cols: list of (label, width) ; first col is the team name (flex)
