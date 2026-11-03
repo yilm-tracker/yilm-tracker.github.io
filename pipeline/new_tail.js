@@ -74,7 +74,7 @@ function draw(med){
     const r=WK[t].map(g=>g[2]>g[3]?'W':'L'),lastR=r[r.length-1];let n=0;for(let k=r.length-1;k>=0&&r[k]===lastR;k--)n++;
     const tc=i<BYN?'tier-bye':i<PO?'tier-po':'tier-out';
     const th=i===0?['tier-bye','Bye',`Seeds 1–${BYN}`,BYN-1]:i===BYN?['tier-po','Playoffs',`Seeds ${BYN+1}–${PO}`,PO-1]:i===PO?['tier-out','Chasing',`Seeds ${PO+1}–${NT}`,-1]:null;
-    const tierHtml=th?`<div class="tier ${th[0]}"><b>${th[1]}</b><span>${th[2]}</span>${th[3]>=0?`<em>Line ${wl(o[th[3]]).join('-')}</em>`:''}</div>`:'';
+    const tierHtml=th?`${i?'</section>':''}<section class="tcard ${th[0]}" aria-label="${th[1]}"><div class="tier ${th[0]}"><b>${th[1]}</b><span>${th[2]}</span>${th[3]>=0?`<em>Line ${wl(o[th[3]]).join('-')}</em>`:''}</div>`:'';
     const op=OPEN.has(t);
     const strip=WK[t].map(g=>{const won=g[2]>g[3];return `<div class="gm"><div class="h"><span>Wk ${g[0]}</span><span class="res ${won?'w':'l'}"><span class="ct">${won?'W':'L'}</span></span></div><div class="sc">${g[2].toFixed(2)}${chip(g[4])}</div><div class="vs">vs ${esc(fn(g[1]))}</div><div class="os">${g[3].toFixed(2)}${chip(g[5])}</div></div>`}).join('')
       +FUT[t].map(g=>`<div class="gm fut"><div class="h"><span>Wk ${g[0]}</span></div><div class="up">Upcoming</div><div class="vs">vs ${esc(fn(g[1]))}</div></div>`).join('');
@@ -89,7 +89,7 @@ function draw(med){
       <div class="st s2"><span><em class="lb">Opp<i class="lrk"> rk</i></em><span class="v">${d[9].toFixed(1)}</span>${chip(rankOf(d[9],9,true),tied(d[9],9))}</span><span><em class="lb">All-play</em><span class="v">${d[10]}-${d[11]}</span>${chip(rankOf(d[10],10,false),tied(d[10],10))}</span><span><em class="lb">Luck</em><span class="v">${luck(d[12])}<i class="lku" title="Expected wins (xW): all-play win rate × games played. Luck = actual wins − xW">${(d[10]/(d[10]+d[11])*(d[0]+d[1])).toFixed(2)} xW</i></span>${chip(rankOf(d[12],12,false),tied(d[12],12))}</span></div>
       <div class="side"><div class="rr${(String(rw0)+String(rl0)).length>2?" rr4":""}"><b>${rw0}-${rl0}</b></div><span class="l5d" aria-label="Last 5 results">${WK[t].slice(-5).map(g=>`<i class="${g[2]>g[3]?'w':'l'}"></i>`).join('')}</span><div class="skr"><span class="sk ${lastR==='W'?'w':'l'}"><span class="ct">${lastR}${n}</span></span></div>${gbH}<div class="subw">${sub}</div></div>
       <div class="szw">${season(t)}</div>
-      <div class="strip"${op?'':' hidden'}>${strip}</div></div>`}).join('');
+      <div class="strip"${op?'':' hidden'}>${strip}</div></div>`}).join('')+'</section>';  // each tier is its own card (section.tcard)
 }
 // sim odds as shown: whole percent, '<1%' / '>99%' instead of a rounded 0 or 100 that the sim did not actually reach
 function pctS(x){return x<=0?'0%':x>=100?'100%':x<1?'<1%':x>99?'>99%':Math.round(x)+'%'}

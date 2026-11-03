@@ -1056,10 +1056,10 @@ RO_CSS
   .dtt .dsk.w{background:var(--win-bg);color:var(--win)}.dtt .dsk.l{background:var(--loss-bg);color:var(--loss)}
   .dtt .dl5{display:inline-flex;gap:3px}.dtt .dl5 i{display:block;width:8px;height:8px;border-radius:2px;background:var(--loss)}.dtt .dl5 i.w{background:var(--win)}
   .dtt td.up{color:var(--win)}.dtt td.dn{color:var(--loss)}.dtt td.c1{color:#e8c15a}.dtt td.c2{color:var(--pylon)}.dtt td.c3{color:var(--sky)}
-  #list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px;align-items:start}
-  #list>.tier{grid-column:1 / -1}
-  #list>.r{zoom:1.1;scroll-margin-top:80px}
-  #list>.r.dfl{animation:dfl 1.6s ease-out}
+  #list{display:flex!important;flex-direction:column}
+  #list>.tcard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px;align-items:start}#list>.tcard>.tier{grid-column:1 / -1}
+  #list>.tcard>.r{zoom:1.1;scroll-margin-top:80px}
+  #list>.tcard>.r.dfl{animation:dfl 1.6s ease-out}
   @keyframes dfl{0%,30%{box-shadow:inset 0 0 0 2px var(--chalk)}100%{box-shadow:inset 0 0 0 2px transparent}}
   /* matchups: games list (stays in view) | lineups | game card + schedules */
   .mwx{grid-template-columns:350px minmax(0,1fr);column-gap:28px;align-items:start}

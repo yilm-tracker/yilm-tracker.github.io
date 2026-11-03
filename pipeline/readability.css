@@ -767,3 +767,9 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .side .skr{display:flex;justify-content:flex-end;margin-top:5px}
 .side .skr .sk{margin:0}
 .rr b{font-size:35.1px}.rr.rr4 b{font-size:29.7px}
+/* standings: each tier (Bye / Playoffs / Chasing) is its own card, separated by a gap of page background; the tier colour
+   runs along the card top (inset, follows the corner radius). The board itself is only the stack. */
+#list.board{background:none!important;border:0!important;border-radius:0!important;padding:0!important;box-shadow:none!important;display:flex;flex-direction:column;gap:16px}
+#list>.tcard{background:var(--deck);border:1px solid var(--hair);border-radius:16px;padding:0 14px 4px;box-shadow:inset 0 3px 0 var(--tc),var(--dsh)}
+#list>.tcard>.tier{padding:17px 0 4px;margin:0}
+#list>.tcard>.tier::before{content:none}
