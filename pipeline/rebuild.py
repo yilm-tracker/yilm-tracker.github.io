@@ -180,7 +180,7 @@ if _os.path.isdir(P+'logos'):
                 _bb=_io.BytesIO();_im.save(_bb,format='WEBP',quality=90,method=6)
                 _u='data:image/webp;base64,'+_b64.b64encode(_bb.getvalue()).decode()
             except Exception:pass
-            _LG+=f'.thr .nfl.tm.n-{_t},.cnm b .nfl.tm.n-{_t},.rn>b .nfl.tm.n-{_t},.cnm small .nfl.opp.n-{_t},.tpb .nfl.n-{_t},.ppl .nfl.n-{_t},.wrx .nfl.n-{_t}{{background:url("{_u}") center/contain no-repeat!important;box-shadow:none!important;border-radius:0!important;width:22px!important;height:20px!important}}.nfl.tm.n-{_t} .ct,.nfl.opp.n-{_t} .ct,.tpb .nfl.n-{_t} .ct,.ppl .nfl.n-{_t} .ct,.wrx .nfl.n-{_t} .ct{{visibility:hidden}}'
+            _LG+=f'.thr .nfl.tm.n-{_t},.cnm b .nfl.tm.n-{_t},.rn>b .nfl.tm.n-{_t},.cnm small .nfl.opp.n-{_t},.tpb .nfl.n-{_t},.ppl .nfl.n-{_t},.wrx .nfl.n-{_t},.dfs .nfl.n-{_t}{{background:url("{_u}") center/contain no-repeat!important;box-shadow:none!important;border-radius:0!important;width:22px!important;height:20px!important}}.nfl.tm.n-{_t} .ct,.nfl.opp.n-{_t} .ct,.tpb .nfl.n-{_t} .ct,.ppl .nfl.n-{_t} .ct,.wrx .nfl.n-{_t} .ct,.dfs .nfl.n-{_t} .ct{{visibility:hidden}}'
 # THE WIRE tab (best available players), after Players; needs pull_wire.json
 _WR=_dt_os.path.exists(P+'pull_wire.json') and _PL
 _WRCSS=''
@@ -192,5 +192,18 @@ if _WR:
     # 10 tabs: phones 3 + 3 + 2 + 2 (the last four span half the row), desktop one row of 10
     _WRCSS=(open(P+'wire_css.css',encoding='utf-8').read()+'#tab-wr:checked~.tabs label[for="tab-wr"]{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}#tab-wr:checked~.pane-wr{display:block}'
       '@media(max-width:1099px){nav.tabs>label.tpo{grid-column:span 3!important}}@media(min-width:1100px){nav.tabs{grid-template-columns:repeat(10,minmax(0,1fr))!important}nav.tabs>label,nav.tabs>label.tpo{grid-column:auto / span 1!important}}')
-_i=h.rindex('</style>');h=h[:_i]+open(P+'readability.css',encoding='utf-8').read()+_LG+(_PLCSS if _PL else '')+_WRCSS+('.tabs label.tpo{grid-column:1 / -1!important}' if _TH_OFF and not _PL else '.tabs label.tpo{grid-column:span 2!important}' if not _TH_OFF and _PL else '')+h[_i:]
+# Drafts tab (every draft since the startup), after The Wire; needs history/drafts.json
+_DF=_dt_os.path.exists(P+'history/drafts.json') and _WR
+_DFCSS=''
+if _DF:
+    sp0.run(['python3',P+'draft_build.py'],check=True,stdout=sp0.DEVNULL)
+    if _dt_os.path.exists(P+'draft_section.html'):
+        h=h.replace('<input type="radio" name="tab" id="tab-wr" class="lr tabr">','<input type="radio" name="tab" id="tab-wr" class="lr tabr"><input type="radio" name="tab" id="tab-df" class="lr tabr">',1)
+        h=h.replace('<label for="tab-wr" class="tpo">The Wire</label>','<label for="tab-wr" class="tpo">The Wire</label><label for="tab-df" class="tpo">Drafts</label>',1)
+        h=h.replace('  <div class="pane pane-wr">','  <div class="pane pane-df">\n  '+open(P+'draft_section.html',encoding='utf-8').read()+'\n  </div>\n  <div class="pane pane-wr">',1)
+        # 11 tabs: phones 3 + 3 + 3 + 2 (Drafts and Team Hub share the last row), desktop one row of 11
+        _DFCSS=(open(P+'draft_css.css',encoding='utf-8').read()+'#tab-df:checked~.tabs label[for="tab-df"]{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}#tab-df:checked~.pane-df{display:block}'
+          '@media(max-width:1099px){nav.tabs>label.tpo{grid-column:span 2!important}nav.tabs>label[for="tab-df"],nav.tabs>label[for="tab-th"]{grid-column:span 3!important}}'
+          '@media(min-width:1100px){nav.tabs{grid-template-columns:repeat(11,minmax(0,1fr))!important}}')
+_i=h.rindex('</style>');h=h[:_i]+open(P+'readability.css',encoding='utf-8').read()+_LG+(_PLCSS if _PL else '')+_WRCSS+_DFCSS+('.tabs label.tpo{grid-column:1 / -1!important}' if _TH_OFF and not _PL else '.tabs label.tpo{grid-column:span 2!important}' if not _TH_OFF and _PL else '')+h[_i:]
 open(P+'standings.html','w',encoding='utf-8').write(h+d+t)

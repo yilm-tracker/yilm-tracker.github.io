@@ -152,6 +152,10 @@ for w in range(1,DONE+1):
 if DONE<REG:
     W=DONE+1;node('live',W);py('score.py','live.json','--no-build');log('week',W,'live')
 node('detail',f'1-{min(DONE+1,REG)}');node('top',max(DONE,1));
+# Drafts tab: every Sleeper draft of this league chain (live fetch, not the capture); never fatal
+if Y==CUR:
+    os.makedirs(os.path.join(WS,'history'),exist_ok=True)
+    subprocess.run(['node',os.path.join(WS,'drafts.mjs')],cwd=WS,env=dict(os.environ,DT_LEAGUE=LID))
 try:
     if Y==CUR:node('wire',max(DONE,1))  # THE WIRE, current season only; never fatal (needs this week's projections in the capture)
 except Exception as ex:print('wire pull skipped:',ex)
