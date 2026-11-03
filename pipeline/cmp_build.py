@@ -53,14 +53,25 @@ rk=lambda p:K[p[0]][0] if K.get(p[0]) and p[4]>0 else None
 def overview(a,b):
     A,B=T[a],T[b]
     m=[x for x in WK[a] if FULL[x[1]]==b]
-    h2=''.join(f'<div class="mprev">Week {x[0]}: <b>{e(a) if x[2]>x[3] else e(b)}</b> won {max(x[2],x[3]):.1f}–{min(x[2],x[3]):.1f}</div>' for x in m) or '<div class="mprev">Haven’t played yet this season</div>'
+    SHN={v:k for k,v in FULL.items() if len(k)<len(v)}
+    # meetings: last result (scores, winner bright) and the next game, as two tiles
     nxt=[x for x in FUT[a] if FULL[x[1]]==b]
-    if nxt: h2+=f'<div class="mprev">Meet in Week {nxt[0][0]}</div>'
+    def last(x):
+        wa=x[2]>x[3];w=a if wa else b
+        return (f'<div class="mtg"><span class="mtl">Last meeting · Wk {x[0]}</span><b class="mts"><i class="{"win" if wa else ""}">{x[2]:.1f}</i><em>–</em><i class="{"" if wa else "win"}">{x[3]:.1f}</i></b>'
+                f'<span class="mtw"><i class="pav" data-avt="{e(w)}" aria-hidden="true"></i>{e(SHN.get(w,w))} by {abs(x[2]-x[3]):.1f}</span></div>')
+    tiles=''.join(last(x) for x in m[-1:]) or '<div class="mtg"><span class="mtl">Last meeting</span><b class="mts mtn">—</b><span class="mtw">Not played yet this season</span></div>'
+    if nxt:
+        k=nxt[0][0];gap=k-G
+        tiles+=(f'<div class="mtg nx"><span class="mtl">Next meeting</span><b class="mts">Week {k}</b><span class="mtw">'
+                +('this week' if gap<=1 else f'in {gap} weeks')+'</span></div>')
+    else:tiles+='<div class="mtg nx"><span class="mtl">Next meeting</span><b class="mts mtn">—</b><span class="mtw">No more regular-season games</span></div>'
+    h2=f'<div class="mtgs">{tiles}</div>'+(''.join(f'<div class="mprev">Also Week {x[0]}: {x[2]:.1f}–{x[3]:.1f}</div>' for x in m[:-1]))
     ew=lambda x,y:(sum(p[2]>q[2] for p,q in zip(WK[x],WK[y])),sum(p[2]<q[2] for p,q in zip(WK[x],WK[y])))
     ea,eb=ew(a,b),ew(b,a)
     body=(row('Record',f'{A[0]}-{A[1]}',f'{B[0]}-{B[1]}',A[0],B[0])+row('Every-week H2H',f'{ea[0]}-{ea[1]}',f'{eb[0]}-{eb[1]}',ea[0],eb[0])+row('PF / wk',f'{A[5]:.1f}',f'{B[5]:.1f}',A[5],B[5])+
-      row('PA / wk',f'{A[8]:.1f}',f'{B[8]:.1f}')+row('Max PF / wk',f'{EF[a][3]/G:.1f}',f'{EF[b][3]/G:.1f}',EF[a][3],EF[b][3])+
-      row('All-play',f'{A[10]}-{A[11]}',f'{B[10]}-{B[11]}',A[10],B[10])+row('Luck',f'{A[12]:+.2f}',f'{B[12]:+.2f}')+
+      row('PA / wk',f'{A[8]:.1f}',f'{B[8]:.1f}',A[8],B[8],low=True)+row('Max PF / wk',f'{EF[a][3]/G:.1f}',f'{EF[b][3]/G:.1f}',EF[a][3],EF[b][3])+
+      row('All-play',f'{A[10]}-{A[11]}',f'{B[10]}-{B[11]}',A[10],B[10])+row('Luck',f'{A[12]:+.2f}',f'{B[12]:+.2f}',A[12],B[12])+
       row('Eff',f'{EF[a][0]:.0f}%',f'{EF[b][0]:.0f}%',round(EF[a][0]),round(EF[b][0]))+row('Skill',f'{SK[a]:.0f}%',f'{SK[b]:.0f}%',round(SK[a]),round(SK[b])))
     return f'<div class="cs cs-ov">{h2}{sec("Season",body)}</div>'
 # ---------- Scoring
@@ -148,7 +159,7 @@ def depth(a,b):
     tot=lambda t:sum(p[4] for p in R[t])
     n10=lambda t:sum(1 for p in active(t) if p[6] and p[4]/p[6]>=10)
     cnt=lambda t,k:sum(1 for p in R[t] if p[7]==k)
-    body=(row('Bench pts / wk',f'{ba:.1f}',f'{bb:.1f}',ba,bb)+row('Bench share',f'{ba/(ba+T[a][5])*100:.0f}%',f'{bb/(bb+T[b][5])*100:.0f}%')+
+    body=(row('Bench pts / wk',f'{ba:.1f}',f'{bb:.1f}',ba,bb)+row('Bench share',f'{ba/(ba+T[a][5])*100:.0f}%',f'{bb/(bb+T[b][5])*100:.0f}%',ba/(ba+T[a][5]),bb/(bb+T[b][5]))+
       row('Roster pts',f'{tot(a):.0f}',f'{tot(b):.0f}',tot(a),tot(b))+row('10+ pts/g players',str(n10(a)),str(n10(b)),n10(a),n10(b))+
       row('Active players',str(cnt(a,'')),str(cnt(b,'')))+row('On IR',str(cnt(a,'IR')),str(cnt(b,'IR')))+(row('Taxi',str(cnt(a,'TX')),str(cnt(b,'TX'))) if lg.DYN else ''))
     return f'<div class="cs cs-dp">{sec("Depth",body,f"bench = rostered players not started, Wk 1–{G}")}</div>'

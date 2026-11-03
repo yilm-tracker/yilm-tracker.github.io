@@ -678,3 +678,30 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 /* mid-rank dots a step brighter so they read against the panel */
 .seg10:not(.g):not(.b) i.on{background:#aab5bc!important}
 .seg10.gold:not(.g):not(.b) i.on{background:#e8c15a!important}
+/* Compare sections: a fixed grid of pills inside the panel (4 a row on phones, one row on desktop), no sideways scroll */
+.lbc.csub{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px!important;overflow:visible!important;margin-left:0!important;margin-right:0!important;padding:0!important;mask-image:none!important;-webkit-mask-image:none!important;scroll-snap-type:none!important}
+.lbc.csub label{text-align:center;min-width:0;padding:8px 2px!important;font-size:12.5px!important;letter-spacing:.05em!important}
+@media(min-width:760px){.lbc.csub{grid-template-columns:repeat(8,minmax(0,1fr))}}
+@media(max-width:380px){.lbc.csub label{font-size:11.5px!important;letter-spacing:.03em!important}}
+/* weekly bars in the header: taller bars, larger figures */
+.wkc .wb{height:42px!important}
+.wkc .wv{font-size:12.5px!important;height:16px!important}
+.wkc>span:last-child{font-size:13px!important}
+.wkc i.done .wrk{font-size:11px!important;bottom:3px!important}
+@media(max-width:380px){.wkc .wb{height:38px!important}.wkc .wv{font-size:11px!important}.wkc>span:last-child{font-size:12px!important}.wkc i.done .wrk{font-size:10px!important}}
+@media(min-width:1100px){.wkc .wb{height:48px!important}.wkc .wv{font-size:14px!important}.wkc>span:last-child{font-size:14px!important}.wkc i.done .wrk{font-size:12px!important}}
+@media(max-width:420px){.wkc .wv{font-size:11px!important}}@media(max-width:380px){.wkc .wv{font-size:10px!important}}
+/* Compare: last / next meeting tiles */
+.mtgs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 4px}
+.mtg{display:flex;flex-direction:column;align-items:center;gap:6px;padding:11px 8px 10px;border-radius:12px;background:var(--deck-2);border:1px solid var(--hair);box-shadow:var(--dsh2);text-align:center;min-width:0}
+.mtl{font:700 11px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--label)}
+.mts{display:flex;align-items:baseline;gap:5px;font:700 22px/1 var(--display);color:var(--chalk);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mts i{font-style:normal;color:var(--steel)}.mts i.win{color:var(--chalk)}.mts em{font-style:normal;color:var(--dim);font-size:16px}
+.mts.mtn{color:var(--dim)}
+.mtw{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--steel);white-space:nowrap;max-width:100%;overflow:hidden}
+.mtw .pav{width:18px;height:18px;flex:none;border-radius:50%;background-size:cover;background-position:center}
+.mtg.nx .mts{color:#c9a15a}
+.mcr span.up{color:var(--chalk)!important;font-weight:700}
+@media(max-width:380px){.mts{font-size:19px}.mtw{font-size:11px}}
+/* Rosters: no panel behind the picker and switches, like Team Hub */
+.rox{background:none!important;border:0!important;box-shadow:none!important;padding-left:0!important;padding-right:0!important}
