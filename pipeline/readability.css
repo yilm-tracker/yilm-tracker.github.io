@@ -813,3 +813,53 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .l5d{gap:1px!important}.l5d i{box-sizing:border-box;width:8px!important;height:8px!important;border:1px solid rgba(6,11,15,.95);box-shadow:none!important;border-radius:2.5px!important}
 @media(max-width:420px){.seg10 i{width:6.5px!important;height:6.5px!important;border-width:.75px!important}.seg10:has(i:nth-child(11)) i{width:5.5px!important;height:5.5px!important;border-width:.7px!important}}
 @media(max-width:380px){.seg10 i{width:5.25px!important;height:5.25px!important;border-width:.65px!important}.seg10:has(i:nth-child(11)) i{width:4.5px!important;height:4.5px!important;border-width:.6px!important}}
+/* 2026-11-03: head-to-head / schedule-swap matrices: column heads = face/logo + manager name (face only on phones);
+   phone row labels = face/logo + manager name (team names were cut); firmer cells with a frame */
+.sxm .sxhd>span.mxh{display:flex!important;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:auto!important;min-width:0;padding-bottom:2px;text-transform:none;letter-spacing:.02em}
+.mxh .pav{display:block;flex:none;width:min(20px,100%);height:auto;aspect-ratio:1;border-radius:50%;background-color:var(--deck-2);background-position:center;background-size:cover;background-repeat:no-repeat;box-shadow:0 0 0 1px var(--hair)}
+.mxh b{display:none;max-width:100%;font:600 11.5px/1.1 var(--display);color:var(--label);white-space:nowrap}
+.mxn .pcn{display:none}
+@media (max-width:1099px){
+ .sxm:not(.tqgrid) .mxn{display:flex;align-items:center;gap:5px;overflow:visible;text-overflow:clip}
+ .sxm:not(.tqgrid) .mxn .pav{display:block;flex:none;width:20px;height:20px;border-radius:50%;background-color:var(--deck-2);background-position:center;background-size:cover;background-repeat:no-repeat;box-shadow:0 0 0 1px var(--hair)}
+ .sxm:not(.tqgrid) .mxn .psn,.sxm:not(.tqgrid) .mxn .pfn{display:none}
+ .sxm:not(.tqgrid) .mxn .pcn{display:block;min-width:0;white-space:nowrap;font:600 13.5px/1.1 var(--display);letter-spacing:.01em}
+ .sxm:not(.tqgrid) .mxn .pcn.l{font-size:11.5px;letter-spacing:0}
+}
+@media (min-width:1100px){.mxh .pav{width:26px}.mxh b{display:block}}
+.sxm .sxr>span.mx{box-shadow:inset 0 0 0 1px rgba(238,240,244,.09)}
+.sxm .sxr>span.mx.up{background:rgba(63,214,155,.2)!important;box-shadow:inset 0 0 0 1px rgba(63,214,155,.4)}
+.sxm .sxr>span.mx.dn{background:rgba(255,93,115,.17)!important;box-shadow:inset 0 0 0 1px rgba(255,93,115,.38)}
+.sxm .sxr>span.mx.dg{box-shadow:none}
+.sxm .sxr>span.mx.on{box-shadow:inset 0 0 0 2px var(--chalk)}
+/* 2026-11-03 (YILM only): faces sit on the page with no ring or disc behind them */
+.pav,.av{box-shadow:none!important;background-color:transparent!important}
+/* 2026-11-03: desktop standings table: projected finish shown at every desktop width, left of #1; a subtle rule before it
+   and "20k simulations" centred above the four sim columns (finish, #1, bye, playoffs); BBP seed column uses the rank tiles */
+@media (min-width:1100px){
+ .dtt th:nth-child(14),.dtt td:nth-child(14){display:table-cell!important}
+ .dtt tr.dtg th{padding:6px 9px 0;border-bottom:0;cursor:default}
+ .dtt tr.dtg th.dsim{text-align:center;padding:6px 0 0 14px;font:700 11px/1 var(--display);letter-spacing:.12em;color:var(--steel)}
+ .dtt tr.dtg th.dsim span{display:block;padding-bottom:6px;border-bottom:1px solid var(--line-strong)}
+ .dtt th[data-k="fin"],.dtt td.dfin{border-left:1px solid var(--line-strong);padding-left:14px!important}
+ .dtt tr.dtb td{border-left:0}
+ .dtt td.dsd{width:auto}
+ .dtt td.dsd .rni{display:block;height:30px;width:auto;margin:-4px auto}
+}
+/* 2026-11-03: desktop table tier rows mirror the card's tier headers: tinted band, dotted tear line with a notch bitten
+   out of each edge (not above Bye), tier name / seeds / Line, closed by a 2px rule in the tier colour */
+@media (min-width:1100px){
+ .dtt tr.dtb td{position:relative;padding:14px 14px 10px!important;border-bottom:2px solid color-mix(in srgb,var(--tc) 62%,transparent);background-color:color-mix(in srgb,var(--tc) 19%,transparent)}
+ .dtt tr.dtb.dtn td{padding-top:19px!important;background-image:radial-gradient(circle at 2px 2px,rgba(238,240,244,.38) 1.15px,transparent 1.6px);background-size:7px 4px;background-repeat:repeat-x;background-position:0 0}
+ .dtt tr.dtb.dtn td::before,.dtt tr.dtb.dtn td::after{content:"";position:absolute;top:-7px;width:9px;height:18px;background:var(--pg)}
+ .dtt tr.dtb.dtn td::before{left:0;border-radius:0 9px 9px 0}
+ .dtt tr.dtb.dtn td::after{right:0;border-radius:9px 0 0 9px}
+ .dtt tr.dtb .dtbh{display:flex;align-items:baseline;gap:10px;font-family:var(--display);text-transform:uppercase}
+ .dtt tr.dtb .dtbh b{font-weight:700;font-size:22px;letter-spacing:.06em;line-height:1;color:color-mix(in srgb,var(--tc) 78%,#fff)}
+ .dtt tr.dtb .dtbh span{font-weight:600;font-size:13px;letter-spacing:.1em;color:color-mix(in srgb,var(--tc) 42%,var(--label))}
+ .dtt tr.dtb .dtbh em{margin-left:auto;font-style:normal;font-weight:600;font-size:13px;letter-spacing:.1em;color:color-mix(in srgb,var(--tc) 30%,var(--chalk))}
+ .dtt td.dfin{text-align:center}.dtt th[data-k="fin"]{text-align:center}
+ .dtt td.dsd .rni{height:28px;margin:-3px auto}
+}
+/* 1100-1239px: the four sim columns fit without sideways scroll */
+@media (min-width:1100px) and (max-width:1239px){.dtt td,.dtt th{padding-left:4px!important;padding-right:4px!important}.dtt td{font-size:13.5px}.dtt td.dtm{font-size:14px}.dtt td.dtm span{gap:8px}.dtt th{font-size:11px;letter-spacing:.06em}.dtt th[data-k="fin"],.dtt td.dfin{padding-left:8px!important}}

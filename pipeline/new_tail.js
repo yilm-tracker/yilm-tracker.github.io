@@ -114,14 +114,14 @@ function dtab(med){
   const f=cols.find(c=>c[0]===key)[2];
   const sorted=key==='seed'?rows:[...rows].sort((a,b)=>dir*((key==='team'?a.t.localeCompare(b.t):f(b)-f(a))));
   const tcls={bye:'Bye · seeds 1–'+BY,po:'Playoffs · seeds '+(BY+1)+'–'+PN,out:'Chasing · seeds '+(PN+1)+'–'+N};
-  let h='<table class="dtt"><thead><tr>'+cols.map(c=>`<th data-k="${c[0]}"${c[2]?' class="srt'+(c[0]===key?' on':'')+(c[0]==='seed'?' rst'+(key!=='seed'?' act':''):'')+'"':''}${c[0]==='seed'?' title="Reset to standings order"':''}>${c[0]==='seed'?'<svg class="rsi" viewBox="0 0 16 16" aria-label="Reset sort"><path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2.6 1.9v3.4H6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>':c[1]}</th>`).join('')+'</tr></thead><tbody>',lt='';
+  let h='<table class="dtt"><thead><tr class="dtg">'+cols.slice(0,-4).map(()=>'<th></th>').join('')+'<th colspan="4" class="dsim"><span>20k simulations</span></th></tr><tr>'+cols.map(c=>`<th data-k="${c[0]}"${c[2]?' class="srt'+(c[0]===key?' on':'')+(c[0]==='seed'?' rst'+(key!=='seed'?' act':''):'')+'"':''}${c[0]==='seed'?' title="Reset to standings order"':''}>${c[0]==='seed'?'<svg class="rsi" viewBox="0 0 16 16" aria-label="Reset sort"><path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2.6 1.9v3.4H6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>':c[1]}</th>`).join('')+'</tr></thead><tbody>',lt='';
   for(const r of sorted){
-    if(key==='seed'&&tier(r.i)!==lt){lt=tier(r.i);h+=`<tr class="dtb ${lt}"><td colspan="${cols.length}">${tcls[lt]}</td></tr>`}
-    h+=`<tr class="dtr ${tier(r.i)}" data-t="${esc(r.t)}"><td class="dsd">${r.i+1}</td><td class="dtm"><span>${av(r.t)}${esc(r.t)}</span></td>`+
+    if(key==='seed'&&tier(r.i)!==lt){lt=tier(r.i);const tl=lt==='bye'?BY-1:lt==='po'?PN-1:-1,tn={bye:['Bye','Seeds 1–'+BY],po:['Playoffs','Seeds '+(BY+1)+'–'+PN],out:['Chasing','Seeds '+(PN+1)+'–'+N]}[lt];h+=`<tr class="dtb ${lt} tier-${lt} ${r.i?'dtn':''}"><td colspan="${cols.length}"><div class="dtbh"><b>${tn[0]}</b><span>${tn[1]}</span>${tl>=0?`<em>Line ${wl(o[tl]).join('-')}</em>`:''}</div></td></tr>`}
+    h+=`<tr class="dtr ${tier(r.i)}" data-t="${esc(r.t)}"><td class="dsd">${typeof RNI!=='undefined'&&RNI[r.i+1]?`<img class="rni dri" src="${RNI[r.i+1]}" alt="${r.i+1}" aria-label="Rank ${r.i+1}">`:r.i+1}</td><td class="dtm"><span>${av(r.t)}${esc(r.t)}</span></td>`+
        `<td><b>${r.w}-${r.l}</b></td><td><i class="dsk ${r.st[0]==='W'?'w':'l'}">${r.st}</i></td><td><span class="dl5">${r.l5.map(x=>`<i class="${x?'w':'l'}"></i>`).join('')}</span></td>`+
        `<td>${r.pf.toFixed(1)}${chip(r.pfr)}</td><td><b>${r.pw.toFixed(1)}</b><small>±${r.sd.toFixed(0)}</small></td><td>${r.pa.toFixed(1)}${chip(r.par)}</td><td><b>${r.paw.toFixed(1)}</b></td>`+
        `<td>${r.apw}-${r.apl}${chip(r.apr)}</td><td><b>${r.xw.toFixed(2)}</b></td><td class="${r.lk>=0.05?'up':r.lk<=-0.05?'dn':''}">${(r.lk>=0?'+':'−')+Math.abs(r.lk).toFixed(2)}</td><td>${r.ef.toFixed(0)}%</td>`+
-       (r.s?`<td>${rkt(r.s[0],1)}</td><td class="c1">${pc(r.s[1])}</td><td class="c2">${pc(r.s[2])}</td><td class="c3">${pc(r.s[3])}</td>`:'<td></td><td></td><td></td><td></td>')+'</tr>'}
+       (r.s?`<td class="dfin">${rkt(r.s[0],1)}</td><td class="c1">${pc(r.s[1])}</td><td class="c2">${pc(r.s[2])}</td><td class="c3">${pc(r.s[3])}</td>`:'<td class="dfin"></td><td></td><td></td><td></td>')+'</tr>'}
   box.innerHTML=h+'</tbody></table>';
   if(!box.dataset.w){box.dataset.w=1;box.addEventListener('click',e=>{
     const th=e.target.closest('th.srt');if(th){const k=th.dataset.k;box.dataset.d=box.dataset.k===k?-(+box.dataset.d||1):1;box.dataset.k=k===box.dataset.k&&+box.dataset.d===1?'seed':k;if(box.dataset.k==='seed')box.dataset.d=1;dtab(document.getElementById('bm').getAttribute('aria-pressed')==='true');return}
@@ -304,4 +304,9 @@ function nrdFit(){document.querySelectorAll('#list .r').forEach(r=>{const els=[.
   els.forEach(e=>{if(!e.offsetParent)return;e.style.setProperty('margin-top',y+'px','important');y+=e.getBoundingClientRect().height/(e.currentCSSZoom||1)+(e.classList.contains('s-lu')?12:16)})})}
 window.nrdFit=nrdFit;const go=()=>requestAnimationFrame(()=>requestAnimationFrame(nrdFit));go();addEventListener('resize',go);document.addEventListener('change',go);document.addEventListener('click',go);
 if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',go)}})();
+
+/* pcnFit: matrix row labels on phones (face + manager name): shrink a long manager name until it fits its label (floor 10px) */
+(function(){function pcnFit(){document.querySelectorAll('.sxm .mxn .pcn').forEach(function(n){if(!n.offsetParent)return;n.style.fontSize='';var p=n.parentElement,s=parseFloat(getComputedStyle(n).fontSize);
+ while((p.scrollWidth>p.clientWidth+.5||n.getBoundingClientRect().right>p.getBoundingClientRect().right+.5)&&s>10){s-=.5;n.style.fontSize=s+'px'}})}
+ pcnFit();addEventListener('resize',function(){requestAnimationFrame(pcnFit)});document.addEventListener('change',function(){requestAnimationFrame(pcnFit)});document.fonts&&document.fonts.ready.then(pcnFit)})();
 </script>

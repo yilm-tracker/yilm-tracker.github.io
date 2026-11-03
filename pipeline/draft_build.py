@@ -4,7 +4,8 @@ import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).r
 # by the team that owned the slot; one row per round. Each cell is filled in the player's position colour: first name,
 # last name, points, and a strip "1.01 · RB" + NFL team. A traded pick has a subtle gold banner at the top
 # naming only the team that made the pick (current owner); when a draft has any traded pick, every cell keeps that row so names stay level.
-# Below 1100px: the list, round by round: pick tile (position colour), player, NFL team, points chip, and the team that
+# Below 1100px: the list, round by round: pick tile (position colour), player + NFL team on the left, a points button
+# (number only; label to its right) whose left edge sits at 50% of the player cell (760px+), and the team that
 # made the pick, with a "via <team>" box when the pick was traded. The team column has one fixed width behind a divider,
 # so the avatars line up down the round.
 # Points (career.json from career.mjs, CI only; absent offline; this league's current scoring): rookie drafts show the
@@ -51,7 +52,7 @@ def pts(pl,pos,y,d):
 def career(pl,pos,y,d):
     r=pts(pl,pos,y,d)
     if not r:return ''
-    return f'<span class="dfcp" title="{e(r[2])}"><b>{r[0]:,.0f}</b><i>{r[1]}</i></span>'
+    return f'<span class="dfcq" title="{e(r[2])}"><span class="dfcp"><b>{r[0]:,.0f}</b></span><i>{r[1]}</i></span>'
 def board(y,d,rows,snake,T):
     """desktop draft board: columns = draft slots (round-1 original owner), rows = rounds"""
     T=max([T]+[r[2] or r[1] for r in rows]);rds=sorted({r[0] for r in rows})
@@ -212,6 +213,16 @@ CSS="""
  .dfcs{display:flex;align-items:center;gap:5px;margin-top:auto;padding:5px 5px 5px 7px;background:rgba(0,0,0,.13);font:700 11.5px/1 var(--display);letter-spacing:.03em;white-space:nowrap}
  .dfcs>span{opacity:.75}
  .dfcs .nfl{margin-left:auto;flex:none}
+}
+/* 2026-11-03: list player cell: name on the left; the points button holds only the number and starts at 50% of the cell
+   (so every button in the round lines up), its label outside it to the right */
+.dfcq{flex:none;display:inline-flex;align-items:center;gap:6px}
+.dfcq>i{font:600 10px/1 var(--display);font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:var(--steel);white-space:nowrap}
+.dfcq .dfcp{min-width:34px;justify-content:center}
+@media(min-width:760px){
+ .dfpl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;justify-content:stretch;column-gap:0;padding-right:0}
+ .dfpl .dfpn{justify-self:start;padding-right:12px}
+ .dfpl .dfcq{justify-self:start}
 }
 """
 if __name__=='__main__':
