@@ -1051,3 +1051,16 @@ html:root{--dim:#aab9c7;--steel:#a9b9ca}
 .board .r.hav>.hl{min-height:0!important;height:0;overflow:visible}
 .board .r.hav>.rk{box-sizing:content-box;padding-bottom:18px}
 @media(max-width:380px){.board .r.hav>.rk{padding-bottom:17px}}
+
+/* 2026-11-03 (Nicklaus) rank column: 52px, numerals centred, 9px to the face at every width (BBP the same) */
+.board .r{grid-template-columns:calc(52px + 9px + 50px) minmax(0,1fr) 84px 78px!important}
+@media(max-width:380px){.board .r{grid-template-columns:calc(52px + 9px + 44px) minmax(0,1fr) 72px 78px!important}}
+.board .r>.rav{left:calc(var(--rpx) + 61px)!important}
+.board .r>.hl .mgr{left:calc(var(--rpx) + 86px)!important}
+@media(max-width:380px){.board .r>.rav{left:calc(var(--rpx) + 61px)!important}.board .r>.hl .mgr{left:calc(var(--rpx) + 83px)!important}}
+/* rank numerals: seed 1 league red, 2-6 the team-name white, 7-12 muted (unchanged) */
+.board .r.tier-po>.rk{color:var(--chalk)}
+#list>.tcard:first-child>.r:nth-child(1 of .r)>.rk{color:var(--pylon)}
+/* FAAB tile: league-logo blue, navy figures (6.05:1); shadow, radius, size unchanged */
+html:root{--faab:#4F9FE8}
+.board .r .nm .fab b{background:var(--faab);color:var(--pg)}
