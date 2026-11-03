@@ -71,7 +71,7 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 
 ## YILM tiers
 
-- YILM shows only the playoff cutoff (no bye line), by request; the line and seed numbers 1-6 are the league red (`--pylon` #fb637a). Note: Sleeper's settings for YILM (6 playoff teams, week 15 start) give seeds 1-2 a first-round bye, and the sim and Team Hub still compute bye odds / bye seeds from `po_byes` (2); asked Nicklaus whether the league really has no byes (open).
+- YILM has no byes (Nicklaus, 2026-11-03: follow the league's own site, which has none; it also has its own features such as a committee-voted power ranking). Standings: playoff line only, in the league red (`--pylon` #fb637a); no Bye odds on the card's Season sim or in the desktop table (sim group is Proj finish / #1 / Playoffs, colspan 3). Not changed: `po_byes` in league.json (from Sleeper's 6-team setting) still drives the Playoffs-tab bracket and Team Hub bye-seed colouring.
 
 ## BBP kit palette (Standings Redesign Spec, 2026-11-03; BBP only)
 
