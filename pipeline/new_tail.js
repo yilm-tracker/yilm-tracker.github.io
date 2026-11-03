@@ -87,7 +87,7 @@ function draw(med){
       <div class="sb s-lu"><div class="stx"><em class="lb">Tot Eff</em><span class="v">${EF[t][0].toFixed(0)}%</span>${chip(rankEf(t),tiedEf(t))} <i class="pw">· <b class="lw">${EF[t][1].toFixed(1)}</b>/wk</i></div>${seg(rankEf(t))}</div>
       <div class="sb s-sk"><div class="stx spl dps"><span class="dpb dpd"><span class="dph"><em class="lb dpl">Dropped pts</em><i class="pw pu">/wk</i></span><span class="dpg">${['QB','RB','WR','TE'].map((k,i)=>LPOS.includes(k)?`<span class="dpc p-${k.toLowerCase()}"><b>${k}</b><span class="${DP[t][i]>=0.05?'':'z'}">${DP[t][i].toFixed(1)}</span>${chip(dpR(i,t),dpT(i,t))}</span>`:'').join('')}</span></span><span class="dpb dso"><span class="dph"><em class="lb dpl">Season sim</em></span><span class="dpg sog">${[['Finish',SO[t][0].toFixed(1)],['#1',pctS(SO[t][1])],['Bye',pctS(SO[t][2])],['Playoffs',pctS(SO[t][3])]].map(([k,v],i)=>`<span class="dpc so s${i}"><b>${k}</b><span class="${i&&v==='0%'?'z':''}">${i?v:`<span class="sof ${tone(Math.round(SO[t][0]))}">${v}</span>`}</span></span>`).join('')}</span></span></div></div>
       <div class="st s2"><span><em class="lb">Opp<i class="lrk"> rk</i></em><span class="v">${d[9].toFixed(1)}</span>${chip(rankOf(d[9],9,true),tied(d[9],9))}</span><span><em class="lb">All-play</em><span class="v">${d[10]}-${d[11]}</span>${chip(rankOf(d[10],10,false),tied(d[10],10))}</span><span><em class="lb">Luck</em><span class="v">${luck(d[12])}<i class="lku" title="Expected wins (xW): all-play win rate × games played. Luck = actual wins − xW">${(d[10]/(d[10]+d[11])*(d[0]+d[1])).toFixed(2)} xW</i></span>${chip(rankOf(d[12],12,false),tied(d[12],12))}</span></div>
-      <div class="side"><div class="rr${(String(rw0)+String(rl0)).length>2?" rr4":""}"><span class="sk ${lastR==='W'?'w':'l'}"><span class="ct">${lastR}${n}</span></span><b>${rw0}-${rl0}</b></div><span class="l5d" aria-label="Last 5 results">${WK[t].slice(-5).map(g=>`<i class="${g[2]>g[3]?'w':'l'}"></i>`).join('')}</span>${gbH}<div class="subw">${sub}</div></div>
+      <div class="side"><div class="rr${(String(rw0)+String(rl0)).length>2?" rr4":""}"><b>${rw0}-${rl0}</b></div><span class="l5d" aria-label="Last 5 results">${WK[t].slice(-5).map(g=>`<i class="${g[2]>g[3]?'w':'l'}"></i>`).join('')}</span><div class="skr"><span class="sk ${lastR==='W'?'w':'l'}"><span class="ct">${lastR}${n}</span></span></div>${gbH}<div class="subw">${sub}</div></div>
       <div class="szw">${season(t)}</div>
       <div class="strip"${op?'':' hidden'}>${strip}</div></div>`}).join('');
 }
@@ -281,12 +281,13 @@ function base(tn){const p=document.createElement('i');p.style.cssText='display:i
 function rrFit(){
   const rows=[...document.querySelectorAll('.board .r')].filter(r=>r.offsetParent&&r.querySelector('.side .rr b'));
   rows.forEach(r=>{const sb=r.querySelector('.side .subw');if(sb)sb.style.removeProperty('margin-top')});
-  rows.forEach(r=>{const b=r.querySelector('.side .rr b'),tn=txt(b,1),k=r.querySelector('.side .rr .sk');if(!tn||!k||!window.inkTile)return;
-    k.style.removeProperty('transform');const cap=capOf(b),z=k.currentCSSZoom||1;window.inkTile(k,Math.floor(cap/(b.currentCSSZoom||1)*4)/4);
-    const bl=base(tn),kr=k.getBoundingClientRect(),d=((bl-cap/2)-(kr.top+kr.bottom)/2)/z;if(Math.abs(d)>0.05)k.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important')});
-  rows.forEach(r=>{const sb=r.querySelector('.side .subw'),o=r.querySelector('.st.s2');if(!sb||!sb.offsetParent||!o||!o.offsetParent)return;
-    const lt=txt(sb,0),ot=txt(o,0);if(!lt||!ot)return;const z=sb.currentCSSZoom||1,dl=((base(ot)-capOf(ot.parentElement,'HOPC'))-(base(lt)-capOf(lt.parentElement,'HOPC')))/z;
-    const m=parseFloat(getComputedStyle(sb).marginTop)||0;sb.style.setProperty('margin-top',(m+dl).toFixed(2)+'px','important')});
+  rows.forEach(r=>{const k=r.querySelector('.side .skr .sk'),b=r.querySelector('.side .rr b');if(!k||!window.inkTile)return;k.style.removeProperty('transform');
+    const cs=getComputedStyle(b);C.font=cs.fontStyle+' '+cs.fontWeight+' 26px '+cs.fontFamily;window.inkTile(k,Math.floor(C.measureText('0123456789').actualBoundingBoxAscent*4)/4)});
+  rows.forEach(r=>{const sb=r.querySelector('.side .subw');if(!sb||!sb.offsetParent)return;const lt=txt(sb,0);if(!lt)return;const z=sb.currentCSSZoom||1;
+    const ab=r.querySelector('.side .skr')||r.querySelector('.side .l5d'),floor=ab.getBoundingClientRect().bottom+6*z,me=base(lt)-capOf(lt.parentElement,'HOPC');
+    const lines=[...r.querySelectorAll(':scope>.st, :scope>.sb')].filter(e=>e.offsetParent&&!r.querySelector('.side').contains(e));let tgt=null;
+    for(const L of lines){for(const el of L.querySelectorAll('.lb,em,b,span')){if(!el.offsetParent)continue;const t=txt(el,0);if(!t)continue;const top=base(t)-capOf(t.parentElement,'HOPC');if(top>=floor-0.5&&(tgt===null||top<tgt))tgt=top;break}}
+    if(tgt===null)return;const m=parseFloat(getComputedStyle(sb).marginTop)||0;sb.style.setProperty('margin-top',(m+(tgt-me)/z).toFixed(2)+'px','important')});
   if(typeof tnFit==='function')tnFit()}
 window.rrFit=rrFit;const go=()=>requestAnimationFrame(()=>requestAnimationFrame(rrFit));go();addEventListener('resize',go);document.addEventListener('change',go);document.addEventListener('click',go);
 if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',go)}})();
