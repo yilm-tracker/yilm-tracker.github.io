@@ -938,3 +938,15 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
  .dtp .dtt tr.dtg th.dsim span{border-bottom:0;padding:0}
  .dtp .dtt thead tr:last-child th{padding-top:8px;padding-bottom:10px}
 }
+/* 2026-11-03: rows separated by a 2px line in the page colour (as on the YILM site), cards and desktop table; desktop
+   table rows alternate in shade like the cards; in Median mode the table's record shows its parts (H2H + Top-half);
+   desktop table rank tiles 24px (were 28px, too big beside the 28px logos/faces) */
+#list>.tcard>.r+.r{border-top:2px solid var(--pg)!important}
+@media (min-width:1100px){
+ .dtp .dtt tbody tr.dtr td{border-bottom:2px solid var(--pg)}
+ .dtp .dtt tbody tr.dtr.dra td{background:rgba(238,240,244,.045)}
+ .dtp .dtt tbody tr.dtr:has(+tr.dtl) td,.dtp .dtt tbody tr.dtr:last-child td{border-bottom:0}
+ .dtt td.dwl{line-height:1}
+ .dtt td.dwl small.wlb{display:block;margin:2px 0 0;font:500 10.5px/1 var(--body);color:var(--steel)!important;white-space:nowrap}
+ .dtt td.dsd .rni{height:24px!important;margin:-2px auto!important}
+}
