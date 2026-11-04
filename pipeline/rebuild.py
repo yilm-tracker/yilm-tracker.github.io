@@ -215,11 +215,13 @@ if _DF:
           '@media(min-width:1100px){nav.tabs{grid-template-columns:repeat(11,minmax(0,1fr))!important}}')
 # Paper Trail tab (pick chains + player moves), after Drafts; needs paper_build.py data (BBP history/paper, YILM captures)
 _PTCSS=''
-if _dt_os.path.exists(P+'paper_build.py') and '<label for="tab-df" class="tpo">Drafts</label>' in h:
+_PTA=next((a for a in (('tab-df','Drafts','df'),('tab-wr','The Wire','wr'),('tab-pl','Players','pl')) if f'<label for="{a[0]}" class="tpo">{a[1]}</label>' in h),None)  # after Drafts, else the last Front Office tab built
+if _dt_os.path.exists(P+'paper_build.py') and _PTA:
     if sp0.run(['python3',P+'paper_build.py'],stdout=sp0.DEVNULL).returncode==0 and _dt_os.path.exists(P+'paper_section.html'):
-        h=h.replace('<input type="radio" name="tab" id="tab-df" class="lr tabr">','<input type="radio" name="tab" id="tab-df" class="lr tabr"><input type="radio" name="tab" id="tab-pt" class="lr tabr">',1)
-        h=h.replace('<label for="tab-df" class="tpo">Drafts</label>','<label for="tab-df" class="tpo">Drafts</label><label for="tab-pt" class="tpo">Paper Trail</label>',1)
-        h=h.replace('  <div class="pane pane-df">','  <div class="pane pane-pt">\n  '+open(P+'paper_section.html',encoding='utf-8').read()+'\n  </div>\n  <div class="pane pane-df">',1)
+        _t,_l,_c=_PTA
+        h=h.replace(f'<input type="radio" name="tab" id="{_t}" class="lr tabr">',f'<input type="radio" name="tab" id="{_t}" class="lr tabr"><input type="radio" name="tab" id="tab-pt" class="lr tabr">',1)
+        h=h.replace(f'<label for="{_t}" class="tpo">{_l}</label>',f'<label for="{_t}" class="tpo">{_l}</label><label for="tab-pt" class="tpo">Paper Trail</label>',1)
+        h=h.replace(f'  <div class="pane pane-{_c}">','  <div class="pane pane-pt">\n  '+open(P+'paper_section.html',encoding='utf-8').read()+f'\n  </div>\n  <div class="pane pane-{_c}">',1)
         _PTCSS=open(P+'paper_css.css',encoding='utf-8').read()+'#tab-pt:checked~.pane-pt{display:block}'
 # ---------- navigation groups (Nicklaus, 2026-11-03): the 11 tab buttons become 3 groups (nav.tabs, existing button
 # component) + a sub-tab row of the active group's tabs (.lbc pills, as in Stats). Group radios sit just before the
