@@ -1,3 +1,5 @@
+Read DESIGN.md before any UI change. After applying and verifying a change, update DESIGN.md in the same commit: set its status tag, and add a one-line Decision log entry (date · what · why). DESIGN.md wins if it conflicts with anything else in CLAUDE.md about design.
+
 # Fantasy trackers: working notes (read first)
 
 Two sister sites built by the same pipeline. This file is identical in both repos.
@@ -14,33 +16,17 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 
 1. **Every UI change goes to BOTH trackers, 1 for 1.** Only exceptions: MFL history (BBP only), the Jaguars art/palette and rank-numeral art (BBP), round-logo shadows on profile pictures (BBP; YILM has faces). The Bill's Block Party team is the user's own: never highlight it.
 2. **Workflow per change:** edit `pipeline/` in both repos, build locally, QA, commit (clear message), `git pull --rebase` then push, wait for the Actions deploy (`gh run list -L 1`), send a screenshot, report briefly.
-3. **Test widths:** 402 first (regular iPhone Pro), then 440 (his phone), 360 (floor), 1440 desktop. No sideways scroll, nothing clipped, nothing ellipsised (`…`), no overflow.
-4. **Visual precision on the FIRST iteration**, not after feedback:
-   - **Rank tiles beside a figure are never taller than the figure and never poke above its cap top or below its baseline.** Check EVERY time with `python3 tools/tilechk.py 402 440 360 1440`; expect 0 violations on both trackers (exact to 0.05px, Dumb and Nerd).
-   - Digits never touch a tile frame; gap ink-to-frame equal top/bottom and left/right (judged by glyph ink, not the text box).
-   - Equal ink gaps; stacked tiles share one width and one left edge across rows; logos centred on what they sit beside.
-   - Elements must not move between states (Dumb/Nerd, H2H/Median, re-fits on resize).
-   - Use the available width; no dead space.
-5. **Fonts in local QA:** the site uses Google Fonts (Barlow Condensed display, IBM Plex Sans body), which do not load in the sandbox. Always run Playwright with `tools/realfonts.py` (see its header for the one-time npm install). Measurements without it are wrong (e.g. false header overflow at 402).
-6. Clinical tone; verify any arithmetic in Python; no Reddit/Wikipedia as sources.
-7. **Secrets/licensing:** never enter API keys (the user adds `FP_API_KEY` in GitHub settings). FantasyPros data is personal-use: keep it out of the public repos (Actions cache only), show team totals only.
-8. Commit attribution lines as the session's system reminder specifies.
+3. **Test widths and visual precision:** see `DESIGN.md` §7 (402 first, then 440, 360, 1440; nothing clipped/ellipsised; `python3 tools/tilechk.py 402 440 360 1440` = 0 violations on both trackers, every time).
+4. **Visual precision on the FIRST iteration**, not after feedback (rules in `DESIGN.md` §7).
+5. **Fonts in local QA:** the site uses Google Fonts (Barlow Condensed display, IBM Plex Sans body), which do not load in the sandbox. Always run Playwright with `tools/realfonts.py` (see its header for the one-time npm install).
+6. **End every UI change by updating `DESIGN.md`** (status tag + Decision log line) in the same commit, identical in both repos.
+7. Clinical tone; verify any arithmetic in Python; no Reddit/Wikipedia as sources.
+8. **Secrets/licensing:** never enter API keys (the user adds `FP_API_KEY` in GitHub settings). FantasyPros data is personal-use: keep it out of the public repos (Actions cache only), show team totals only.
+9. Commit attribution lines as the session's system reminder specifies.
 
-## Design rules (Nicklaus, 2026-11-03; permanent, every UI change)
+## Design
 
-- **Tokens only.** No new colour, shadow, radius or font size inline; if one is needed, add a token and say so.
-- **Surfaces, darkest to lightest:** plate (`--frame`/`--plate`) < page (`--pg`) < panel (`--deck`) < zebra row (one step above panel). Nothing nested is lighter than its container (text, chips and data excepted).
-- **One job per colour:** tier colours mean tiers; green/red mean results only.
-- **Flat:** no gradients, glows, blurred shadows, top highlights, accent rails, or cards inside cards. Depth only as a hard plate shadow, `--sh-hard` (`1px 3px 0 0 var(--frame)`).
-- **Rows** inside a panel: no radius or shadow. **Row separation is a four-step depth system** (Nicklaus, 2026-11-03; reference bdge.co standings), one hue, darkest to lightest: outer frame < divider `--row-divider` < darker row (panel `--deck`) < lighter row `--row-lt`. Rows alternate shades AND have a 1px full-width divider (half the 2px frame) between team rows: a deliberate exception to "zebra or divider, not both"; do not undo it. Applies to the standings cards, desktop table and Stats tables; cutoff lines unchanged. BBP: `--row-lt #243F49`, `--row-divider #121F24`, frame `#070C0E`. YILM: `--row-lt #2F4B66`, `--row-divider #172A3E`, frame `#08111A`.
-- **Shadow depth scales with the element** (Nicklaus, 2026-11-03; reference: standings logos and FAAB tile): offset about 5% of the element's height, whole pixels, minimum 1px; dark elements on dark rows (value tiles) 1px (`--sh-1` = `0 1px 0 0 var(--frame)`); light elements (FAAB tile, active pills) keep `--sh-hard`. Same direction and colour everywhere: hard offset, frame colour, no blur (BBP logos keep their agreed ring + soft shadow, scaled by size: Drafts original order 40px = offsets 2, blur 5; 36px = offsets 1, blur 4). Elements still to align were audited 2026-11-03 (not yet changed).
-- **Corners:** outer panels `--r-panel` (6px); inside, only chips/pills and avatars are rounded.
-- **Borders** only where they separate content, in the plate colour (chips and position pills keep their coded outlines).
-- **Avatars:** flat circle, no shadow by default; exceptions agreed: BBP logos keep their original ring + shadow (Stats halved), YILM faces stay bare cut-outs.
-- **Process:** before coding, list every colour/border/shadow/radius/spacing used and the existing component it matches; reuse components; check 402/440/360 (nothing clipped/wrapped/ellipsised, no sideways scroll, optically centred, equal spacing); contrast >= 4.5:1 small text, 3:1 large text and graphics; report what changed and any rule not followed. When unsure, choose the plainer option and mention the alternative.
-- `--dim` and `--steel` at 4.5:1 on the lighter row (BBP `--dim` = `--text-dim #A0A8B8`, `--steel #aba497`; YILM `--dim #aab9c7`, `--steel #a9b9ca`; lifted 2026-11-03 for the new `--row-lt`). Coloured data on the lighter row (position QB pink, tier teal/red, result red) is still under 4.5:1 (open item).
-- The 2026-11-03 cleanup block at the end of both `readability.css` files enforces most of this (`--sh-hard`, `--r-panel`, plate borders via a `body *` rule with chip exclusions).
-- BBP colour history: a build-time green-teal map (hue 178) was tried on 2026-11-03 and reverted the same day at Nicklaus's request; surfaces use their source values again (`--pg #101b1f`, `--deck #1a2c33`, `--row-alt #203841`). Page `--pg` `#0C1215` and plate `--frame`/`--plate` `#04080A` (Nicklaus, 2026-11-03 evening: darker page for long viewing, panel/page 1.30:1; the frame went #060E0E -> #070C0E -> #04080A so it stays perceptibly darker than the page, L* gap 3.1). BBP standings cards use two text levels: values `--chalk`, labels/units `--text-dim` #A0A8B8 (OPP, ALL-PLAY, LUCK, PF, PA, TOT EFF, /wk, xW, COULD HAVE, Won/Lost, FAAB, DROPPED PTS, SEASON SIM, FINISH); `--dim` = `--text-dim` on BBP. Season chart labels unchanged. BBP logo rings are back to their pre-cleanup values (1px `--line-strong` ring + 2px/2px hard and 6px soft shadow; Stats tab halved), an agreed exception to the flat-avatar rule.
+- All design rules, tokens, component specs, statuses and the decision log live in `DESIGN.md` (identical in both repos). The sections below are implementation notes.
 
 ## Build and deploy
 
@@ -92,12 +78,6 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 
 - YILM has no byes (Nicklaus, 2026-11-03: follow the league's own site, which has none; it also has its own features such as a committee-voted power ranking). Standings: playoff line only, in the league red (`--pylon` #fb637a); no Bye odds on the card's Season sim or in the desktop table (sim group is Proj finish / #1 / Playoffs, colspan 3). Not changed: `po_byes` in league.json (from Sleeper's 6-team setting) still drives the Playoffs-tab bracket and Team Hub bye-seed colouring.
 
-## BBP kit palette (Standings Redesign Spec, 2026-11-03; BBP only)
-
-- Tokens at the end of BBP `readability.css`: `--pg #0C1215` (page; was #101b1f), `--deck #1a2c33` (panel: board, every second row, header bands, nav buttons, year tabs, toggle tracks), `--row-alt #203841` (other rows, FAAB pills), tiers `--tier-bye #e2cf93` / `--tier-po #19b5c4` / `--tier-ch #cda74b` (label, sub-labels and header rule at full colour; band = tier 10% over panel), season chart `--chart-po-line #0097a7`, `--chart-po-fill #023442`, `--chart-po-val #19b5c4`, `--chart-nfl-bye #5a6870`.
-- `--pylon`/`--sky` are NOT redefined (used across other tabs); standings/chart uses are overridden one by one (sim BYE/PLAYOFFS labels, desktop table tier rows, seeds and odds columns, focus outline).
-- Spec contrast checks pass (verified in Python). Left unchanged by design: status colours (form dots, streaks, arrows, rank chips), cream text, the position colours (TE stays orange).
-
 ## Drafts tab
 
 - **Desktop (>=1100px): draft board** (`board()` in `draft_build.py`). One column per draft slot in the raw (original) order, headed by the slot's round-1 original owner (avatar + nickname); one row per round (`RD n`, with ← / → only for snake drafts). Cell filled in the pastel position colour: first name (small), last name (bold), points, bottom strip "1.01 · RB" + NFL logo. A traded pick has a subtle gold banner at the TOP naming only the team that made the pick (Nicklaus: no original owner, no arrow); when a draft has any traded pick every cell keeps an empty banner row so names stay level across a row. Fitter shrinks names/banner (11px / 8.5px floor), then wraps at spaces, never clips.
@@ -135,10 +115,6 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 - Schedule luck bars are scaled to the largest luck either way (a fixed 1.2-win scale capped most bars at full length).
 - Column heads = face/logo + manager name (`coach()`: BBP owners.json, YILM league nicknames); on phones the columns are ~20px, so heads are face only. Row labels: face + team name on desktop; face + manager name on phones (team names were cut; `pcnFit` shrinks a long one, floor 10px). Cells have a 1px frame (green/red tinted for better/worse) so they stand off the panel.
 - YILM only: faces have no ring or disc behind them anywhere (`.pav,.av` box-shadow/background removed). BBP logos keep their shadow.
-
-## Panel frames
-
-- Panels (board, Stats/Leaderboards/Rosters/Matchups/Compare/Drafts/Team Hub cards, desktop table) have a 2px frame in `--frame`, darker than the page (BBP `#070d10`, YILM `#08111a`), as on the YILM site; light frames read as soft.
 
 ## Gotchas learned the hard way
 
