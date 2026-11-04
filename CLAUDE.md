@@ -105,6 +105,10 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 - List player cell: name + NFL logo on the left; the points button holds only the number and its left edge sits at exactly 50% of the player cell at 760px+ (every button in the round lines up), label ("rookie pts" / "pts since '21") outside it to the right; on phones the button sits on its own line under the name.
 - List name fit: shrink to 13px, else wrap to two lines at full size (never clipped). A long team name in the team column is zoomed down (`--dfz`, to 0.7).
 
+## Stats > Trades (2026-11-03)
+
+- `m_trades()` in `sx_build.py`: one panel, each trade a full-width row (`.trx`, zebra `--row-lt`/`--deck`, 1px `--row-divider` between). Zones: header strip `.txh` (28px, `--row-divider`, date cream / "Week N on" `--text-dim`), body `.txg` (one column per side + 46px centre column `.txx` with the swap badge `.txsw` and a 1px line), footer `.txfo` (1px rule; total 35.1px, "pts since" + WON chip on line 2; win `--win`, else `--text-dim`). Team names in the side headers ellipsise (Nicklaus asked for clean truncation here). FAAB tile uses `--faab` / `--faab-ink` (BBP #D9D0BC / #101B1F; YILM #4F9FE8 / `--pg`). YILM 3-team trades stack below 760px (badge between sides; totals one per line with the face). YILM `--text-dim` = `--dim`.
+
 ## Stats matrices (Schedule swap, Every-week head to head)
 
 - Stats tables (Points by position `.pt`, stat modules `.sxt`) alternate row shades like the standings (first data row lighter); rows widened 8px each side so the shade clears the text.

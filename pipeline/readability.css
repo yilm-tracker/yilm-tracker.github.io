@@ -1067,3 +1067,66 @@ html:root{--faab:#4F9FE8}
 
 /* 2026-11-03 (Nicklaus) desktop table: equal ink gaps either side of the simulations divider, >= 16px: set by simGap()
    in new_tail.js (Proj finish padding-left 16px, Tot eff padding-right to match; other columns pinned, TEAM gives the width) */
+
+/* 2026-11-03 (Nicklaus) Stats > Trades: one panel, each trade a full-width row (zebra --row-lt / --deck, 1px --row-divider
+   between trades; no card, border, radius or shadow on rows). Zones: header strip (--row-divider, 28px, 16px inset),
+   12px, body (sides + 46px centre column holding the swap badge and a 1px line), 12px, 1px rule, footer (12px / 12px).
+   :not(#z) lifts the divider rules above the plate-colour border rule. */
+.trx{margin:0 -12px;background:var(--deck)}
+.trx:nth-child(odd of .trx){background:var(--row-lt)}
+.trx+.trx:not(#z){border-top:1px solid var(--row-divider)!important}
+.txh{display:flex;align-items:center;justify-content:space-between;gap:12px;height:28px;padding:0 16px;background:var(--row-divider)}
+.txh b{font:700 13px/1 var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--chalk);white-space:nowrap}
+.txh span{font:600 11px/1 var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);white-space:nowrap}
+.txg{display:grid;align-items:stretch;padding:12px 16px 0}
+.txs{min-width:0;display:flex;flex-direction:column}
+.txm{display:flex;align-items:center;gap:8px;height:24px;min-width:0}
+.txm .pav{display:block;flex:none;width:24px;height:24px;border-radius:50%;background-size:cover;background-position:center;background-repeat:no-repeat}
+.txm span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:700 16px/24px var(--display);letter-spacing:.02em;color:var(--chalk)}
+.txr{display:flex;align-items:center;gap:8px;margin:6px 0 10px}
+.txr i{flex:1;height:1px;background:var(--row-divider)}
+.txr em{font:600 10.5px/1 var(--display);letter-spacing:.14em;text-transform:uppercase;font-style:normal;color:var(--text-dim)}
+.txp{display:grid;grid-template-columns:minmax(0,1fr) 38px;column-gap:6px;align-items:baseline}
+.txp+.txp{margin-top:10px}
+.txn{min-width:0;font:400 14px/1.25 var(--body);color:var(--chalk);overflow-wrap:break-word}
+.txz{color:var(--text-dim)}
+.txv{text-align:right;font:600 15px/1.25 var(--display);font-variant-numeric:tabular-nums;color:var(--chalk)}
+.txb{grid-column:1/-1;display:flex;align-items:center;gap:6px;margin-top:4px}
+.txk .txn,.txf .txn{display:flex;align-items:center;gap:8px}
+.txk .pkc{margin:0}
+.txk em{font-style:normal;color:var(--text-dim)}
+.txft{padding:6px 8px;border-radius:7px;background:var(--faab);color:var(--faab-ink);box-shadow:var(--sh-hard);font:700 14px/1 var(--display);letter-spacing:.03em}
+.txf small{font:700 10px/1 var(--display);letter-spacing:.1em;color:var(--text-dim)}
+.txx{position:relative}
+.txsw{position:absolute;left:50%;top:1px;width:22px;height:22px;margin-left:-11px;display:grid;place-items:center;background:var(--row-divider);box-shadow:var(--sh-hard);border-radius:4px;color:var(--text-dim)}
+.txsw svg{display:block;width:14px;height:14px}
+.txx::after{content:"";position:absolute;left:50%;top:27px;bottom:0;width:1px;margin-left:-.5px;background:var(--row-divider)}
+.txfo{margin:12px 16px 0;padding:12px 0}
+.txfo:not(#z){border-top:1px solid var(--row-divider)!important}
+.txt{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;row-gap:3px;min-width:0}
+.txt b{font:700 35.1px/1 var(--display);font-variant-numeric:tabular-nums;color:var(--text-dim)}
+.txt.win b{color:var(--win)}
+.txw{justify-self:end;font:700 11px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;font-style:normal;color:var(--win);padding:4px 6px;border-radius:4px;background:color-mix(in srgb,var(--win) 15%,transparent);box-shadow:inset 0 0 0 1px var(--win)}
+.txl{grid-column:1/-1;font:400 11.5px/1.2 var(--body);color:var(--text-dim)}
+html:root{--text-dim:var(--dim);--faab-ink:var(--pg)}  /* --text-dim = YILM muted grey #AAB9C7; FAAB tile figures navy */
+.txv.txq{color:var(--text-dim)}
+.txkt{min-width:0}
+/* footer: total on line 1; "pts since" + WON chip on line 2 (a 3-digit total and the chip do not share a 123px column at 360) */
+.txt b{grid-column:1/-1}
+.txt .txl{grid-column:1;grid-row:2}
+.txt .txw{grid-column:2;grid-row:2}
+.txt .txa{display:none}
+/* trades with 3+ sides, below 760px: sides stack (badge between them), totals one per line with the side's face/logo */
+@media(max-width:759px){
+ .txg.txn3{grid-template-columns:minmax(0,1fr)!important}
+ .txg.txn3>.txx{height:22px;margin:12px 0}
+ .txg.txn3>.txx::after{display:none}
+ .txg.txn3>.txx .txsw{top:0}
+ .txfo.txn3>i{display:none}
+ .txfo.txn3{row-gap:10px}
+ .txfo.txn3 .txt{grid-template-columns:24px auto minmax(0,1fr) auto;column-gap:8px;align-items:center}
+ .txfo.txn3 .txt .txa{display:block;grid-row:1;grid-column:1;width:24px;height:24px;border-radius:50%;background-size:cover;background-position:center;background-repeat:no-repeat}
+ .txfo.txn3 .txt b{grid-column:2;grid-row:1}
+ .txfo.txn3 .txt .txl{grid-column:3;grid-row:1}
+ .txfo.txn3 .txt .txw{grid-column:4;grid-row:1}
+}

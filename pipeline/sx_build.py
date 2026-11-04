@@ -136,24 +136,34 @@ def m_everyweek():
     return (head('Every-week head to head',f'Row team wins if the row team had played the column team every week, Weeks 1–{G}')+mat+
             head('Most lopsided','Same opponent every week, better team first')+table([('Team',''),('Record','52px'),('vs','minmax(0,1fr)')],[line(*p) for p in lop],'ewl'))
 # ---------- 3 Trades
+# 2026-11-03 (Nicklaus): one panel, each trade a full-width row (zebra + 1px --row-divider) with three zones:
+# header strip (date | "Week N on"), body (one column per side, swap badge + 1px line between), footer (totals).
+SWP='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5h9.5M10 3l2.5 2.5L10 8M13 10.5H3.5M6 8l-2.5 2.5L6 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 def m_trades():
     out=[head('Trade scorecard',f'Points scored since each trade · through Week {G}')]
     for x in D.trades():
         SD=x['sides'];pend=x['eff']>G
+        def won(s):return (not pend) and bool(s['pl']) and all(s['tot']>o['tot']+0.05 for o in SD if o is not s)
         def side(s):
-            win=(not pend) and all(s['tot']>o['tot']+0.05 for o in SD if o is not s)
-            fp=lambda v:'–' if pend else f'{v:.1f}'
-            pl=''.join(f'<div class="tpl"><span class="tpn">{e(p["name"])}<span class="tpb">{pz(p["pos"])}{badge(p["nfl"])}</span></span>{"" if pend else f"<b>{p['pts']:.1f}</b>"}</div>' for p in s['pl'])
+            pl=''.join(f'<div class="txp"><span class="txn">{e(p["name"])}</span><b class="txv{" txq" if pend else ""}">{"–" if pend else f"{p["pts"]:.1f}"}</b><span class="txb tpb">{pz(p["pos"])}{badge(p["nfl"])}</span></div>' for p in s['pl'])
             def pkh(k):
-                y,rd,rest=k.split(' ',2);return f'<div class="tpk"><i class="pkc r{rd[0]}">{rd}</i><span class="pkt">{y} <em>{e(rest.strip("()"))}</em></span></div>'
+                y,rd,rest=k.split(' ',2);return f'<div class="txp txk"><span class="txn"><i class="pkc r{rd[0]}">{rd}</i><span class="txkt">{y} <em>{e(rest.strip("()"))}</em></span></span></div>'
             pk=''.join(pkh(k) for k in s['pk'])
-            fb=f'<div class="tpk"><i class="pkc fb">${s["faab"]}</i>FAAB</div>' if s['faab'] else ''
-            body=pl+pk+fb or '<div class="tpk">–</div>'
-            tot='<span>No games yet</span>' if pend else ('<span>No players</span>' if not s['pl'] else f'<b>{s["tot"]:.1f}</b><span>pts since</span>')
-            return f'<div class="tsd{" win" if win else ""}"><div class="tnm"><i class="pav" data-avt="{e(s["team"])}" aria-hidden="true"></i><span>{e(s["team"])}</span></div><div class="trc">receives</div>{body}<div class="ttot">{tot}</div></div>'
-        when=f'{x["date"]} · counts from Week {x["eff"]}' if not pend else f'{x["date"]} · no games since'
-        if x['eff']==1:when=f'{x["date"]} · before Week 1'
-        out.append(f'<div class="trd"><div class="trw">{when}</div><div class="trg"{f' style="grid-template-columns:repeat({len(SD)},minmax(0,1fr))"' if len(SD)>2 else ''}>{''.join(side(s) for s in SD)}</div></div>')
+            fb=f'<div class="txp txf"><span class="txn"><b class="txft">${s["faab"]}</b><small>FAAB</small></span></div>' if s['faab'] else ''
+            body=pl+pk+fb or '<div class="txp"><span class="txn txz">Nothing</span></div>'
+            return (f'<div class="txs"><div class="txm"><i class="pav" data-avt="{e(s["team"])}" aria-hidden="true"></i><span>{e(s["team"])}</span></div>'
+                    f'<div class="txr"><i></i><em>Received</em></div>{body}</div>')
+        def foot(s):
+            av=f'<i class="pav txa" data-avt="{e(s["team"])}" aria-hidden="true"></i>'
+            if pend:return f'<div class="txt">{av}<span class="txl">No games yet</span></div>'
+            if not s['pl']:return f'<div class="txt">{av}<span class="txl">No players</span></div>'
+            w=won(s);return f'<div class="txt{" win" if w else ""}"><i class="pav txa" data-avt="{e(s["team"])}" aria-hidden="true"></i><b>{s["tot"]:.1f}</b><span class="txl">pts since</span>{"<i class=txw>Won</i>" if w else ""}</div>'
+        n=len(SD);cols=' 46px '.join(['minmax(0,1fr)']*n)
+        sep='<div class="txx"><i class="txsw">'+SWP+'</i></div>'
+        right='No games yet' if pend else ('Before Week 1' if x['eff']==1 else f'Week {x["eff"]} on')
+        out.append(f'<div class="trx"><div class="txh"><b>{e(x["date"])}</b><span>{right}</span></div>'
+                   f'<div class="txg{" txn3" if n>2 else ""}" style="grid-template-columns:{cols}">{sep.join(side(s) for s in SD)}</div>'
+                   f'<div class="txg txfo{" txn3" if n>2 else ""}" style="grid-template-columns:{cols}">{"<i></i>".join(foot(s) for s in SD)}</div></div>')
     return ''.join(out)
 # ---------- 4 Lineup calls
 RW,PER=D.decisions()
