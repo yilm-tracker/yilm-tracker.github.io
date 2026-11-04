@@ -331,4 +331,36 @@ function dtPanels(box){
     return `<div class="dtp"><table class="dtt dtf" style="width:${TW}px">${cg()}${i?'<tbody>'+band:'<thead>'+band+hdr+'</thead><tbody>'}${g.rows.map(r=>r.outerHTML).join('')}</tbody></table></div>`}).join('')}
 addEventListener('resize',()=>{clearTimeout(window._dtR);window._dtR=setTimeout(()=>{const b=document.getElementById('bm');if(window.innerWidth>=1100&&typeof dtab==='function')dtab(!!b&&b.getAttribute('aria-pressed')==='true')},120)});
 document.fonts&&document.fonts.ready.then(()=>{const b=document.getElementById('bm');if(typeof dtab==='function')dtab(!!b&&b.getAttribute('aria-pressed')==='true')});
+// Desktop table: equal space either side of the simulations divider (Nicklaus, 2026-11-03). Proj finish gets 16px
+// padding; the column before the divider (Tot eff) gets the padding-right that puts its glyph ink exactly as far from the
+// divider as Proj finish's content is on the other side (judged by ink: canvas bearings on the last/first glyph).
+const _sgc=document.createElement('canvas').getContext('2d');
+function _sgBear(e,txt,side){const s=getComputedStyle(e);_sgc.font=s.fontStyle+' '+s.fontWeight+' '+s.fontSize+' '+s.fontFamily;
+  if(s.letterSpacing&&s.letterSpacing!=='normal')try{_sgc.letterSpacing=s.letterSpacing}catch(_){}
+  let ch=side==='r'?txt.slice(-1):txt[0];if(s.textTransform==='uppercase')ch=ch.toUpperCase();const m=_sgc.measureText(ch);
+  return side==='r'?(m.width-m.actualBoundingBoxRight):(-m.actualBoundingBoxLeft)}  // blank space inside the text box on that side
+function _sgEdge(cell,side){let v=side==='r'?-1e9:1e9;const w=document.createTreeWalker(cell,NodeFilter.SHOW_TEXT);let n;
+  while(n=w.nextNode()){const t=n.textContent.replace(/\s+$/,'').replace(/^\s+/,'');if(!t)continue;const e=n.parentElement;if(!e.getClientRects().length)continue;
+    const rg=document.createRange();rg.selectNodeContents(n);for(const r of rg.getClientRects()){if(!r.width)continue;
+      if(side==='r')v=Math.max(v,r.right-_sgBear(e,t,'r'));else v=Math.min(v,r.left+_sgBear(e,t,'l'))}}
+  if(side==='l')cell.querySelectorAll('*').forEach(e=>{const b=getComputedStyle(e).backgroundColor;if(b!=='rgba(0, 0, 0, 0)'&&!/, 0\)$/.test(b)){const r=e.getBoundingClientRect();if(r.width)v=Math.min(v,r.left)}});
+  return v}
+function simGap(){if(innerWidth<1100)return;const t=document.querySelector('.dtp .dtt');if(!t||!t.offsetParent)return;const pre=[],fin=[];
+  t.querySelectorAll('tr').forEach(tr=>{const f=tr.querySelector('td.dfin,th[data-k="fin"]');if(!f||!f.offsetParent)return;let p=f.previousElementSibling;while(p&&!p.offsetParent)p=p.previousElementSibling;if(p){pre.push(p);fin.push(f)}});
+  if(!pre.length)return;pre.forEach(p=>p.style.removeProperty('padding-right'));fin.forEach(f=>f.style.removeProperty('padding-left'));
+  // the width the wider Tot eff column needs comes from TEAM only: pin every other column at its natural width first
+  const hr=[...t.querySelectorAll('thead tr')].pop(),hs=hr?[...hr.children].filter(c=>c.offsetParent):[];hs.forEach(h=>h.style.removeProperty('width'));
+  const keep=hs.filter(h=>!['team','fin'].includes(h.dataset.k)&&h!==pre[pre.length-1]&&!pre.includes(h)).map(h=>[h,h.getBoundingClientRect().width]);
+  keep.forEach(([h,wd])=>{h.style.boxSizing='border-box';h.style.width=wd+'px'});
+  fin.forEach(f=>f.style.setProperty('padding-left','16px','important'));  // 16px from the divider to Proj finish
+  let R=1e9,L=1e9;fin.forEach((f,i)=>{const fb=f.getBoundingClientRect(),dl=fb.left,dr=dl+parseFloat(getComputedStyle(f).borderLeftWidth);
+    R=Math.min(R,_sgEdge(f,'l')-dr);L=Math.min(L,dl-_sgEdge(pre[i],'r'))});
+  if(!isFinite(R)||!isFinite(L))return;const np=parseFloat(getComputedStyle(pre[0]).paddingRight)+(R-L);
+  pre.forEach(p=>p.style.setProperty('padding-right',Math.max(0,np).toFixed(2)+'px','important'));
+  // one correction pass: a wider column can re-centre Proj finish
+  let R2=1e9,L2=1e9;fin.forEach((f,i)=>{const fb=f.getBoundingClientRect(),dl=fb.left,dr=dl+parseFloat(getComputedStyle(f).borderLeftWidth);R2=Math.min(R2,_sgEdge(f,'l')-dr);L2=Math.min(L2,dl-_sgEdge(pre[i],'r'))});
+  if(Math.abs(R2-L2)>.25)pre.forEach(p=>p.style.setProperty('padding-right',Math.max(0,np+(R2-L2)).toFixed(2)+'px','important'))}
+if(typeof dtab==='function'){const _dt0=dtab;dtab=function(){const r=_dt0.apply(this,arguments);requestAnimationFrame(simGap);return r}}
+(()=>{let q=0;new MutationObserver(ms=>{if(q||innerWidth<1100)return;if(!ms.some(m=>m.target.closest&&m.target.closest('.dtp')))return;q=requestAnimationFrame(()=>{q=0;simGap()})}).observe(document.body,{childList:true,subtree:true})})();
+document.fonts&&document.fonts.ready.then(()=>requestAnimationFrame(simGap));addEventListener('resize',()=>setTimeout(simGap,200));
 </script>

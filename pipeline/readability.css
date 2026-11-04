@@ -1064,3 +1064,6 @@ html:root{--dim:#aab9c7;--steel:#a9b9ca}
 /* FAAB tile: league-logo blue, navy figures (6.05:1); shadow, radius, size unchanged */
 html:root{--faab:#4F9FE8}
 .board .r .nm .fab b{background:var(--faab);color:var(--pg)}
+
+/* 2026-11-03 (Nicklaus) desktop table: equal ink gaps either side of the simulations divider, >= 16px: set by simGap()
+   in new_tail.js (Proj finish padding-left 16px, Tot eff padding-right to match; other columns pinned, TEAM gives the width) */
