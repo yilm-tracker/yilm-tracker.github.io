@@ -1212,3 +1212,13 @@ html:root{--text-dim:var(--dim);--faab-ink:var(--pg)}  /* --text-dim = YILM mute
 .dvb:not(#z)>i.dn{right:50%!important;left:auto!important;border-radius:999px 0 0 999px!important}
 .dvb:not(#z)::before{content:""!important;position:absolute!important;top:0!important;bottom:0!important;left:calc(50% - .5px)!important;width:1px!important;height:auto!important;margin:0!important;background:var(--label)!important;z-index:1!important}
 .dvb:not(#z)::after{content:none!important}
+
+/* Tier identity in text comes from position and labels, not colour (DESIGN.md §4, Nicklaus 2026-11-04). Alabaster (BBP)
+   is a surface colour (rank tiles, cutoff rule); the playoff tier's text takes the normal text levels: season sim
+   "Playoffs" label --text-dim like Finish, desktop table playoff % values body text, Stats seed numbers 3-6 body text.
+   The cutoff label "Playoff line" keeps its tier colour. */
+.dpc.so.s3 b:not(#z){color:var(--label)!important}  /* YILM: same as its Finish label (--label); BBP sim labels are --text-dim */
+.dtt td.c3:not(#z){color:var(--chalk)!important}
+.pr.tier-po>span[role="rowheader"] em:not(#z){color:var(--chalk)!important}
+/* YILM: league red marks seed 1 and the playoff line only (as on the standings); seed 2 is body text */
+.pr.tier-bye+.pr.tier-bye>span[role="rowheader"] em:not(#z){color:var(--chalk)!important}
