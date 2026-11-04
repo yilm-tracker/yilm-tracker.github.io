@@ -1172,3 +1172,9 @@ html:root{--text-dim:var(--dim);--faab-ink:var(--pg)}  /* --text-dim = YILM mute
 @media(max-width:380px){.wpf .wpb{padding-left:var(--wpp,9px);padding-right:var(--wpp,9px)}}
 .wpb.wflx{color:var(--chalk)}
 .wpb.wflx.on{color:var(--ink)}
+
+/* 2026-11-03 (Nicklaus) SHADOW DEPTH scales with the element: offset ~5% of height, whole px, min 1px; dark elements on
+   dark rows 1px; light elements (FAAB tile, active pills) keep --sh-hard. --sh-1 = the 1px step (straight down: the
+   1:3 direction of --sh-hard rounds to 0 across at 1px down). Original-order faces stay bare, as in standings. */
+:root{--sh-1:0 1px 0 0 var(--frame)}
+.dftl{box-shadow:var(--sh-1)!important}
