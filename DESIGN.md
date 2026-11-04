@@ -185,6 +185,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 ### Desktop standings table `LIVE`
 - Equal gaps (≥ 16px) on both sides of the 20K SIMULATIONS divider, measured by visible glyphs; only TEAM gives up width.
+- Every re-draw (resize, font load, sort, H2H/Median) lands on exactly the load layout: the rank chips are fitted before the column widths are pinned. Checked 2026-11-04 at 1100 and 1440, H2H and Median, both sites: every cell 0px apart, screenshots identical (after one matched repaint on both sides; the only residue without it is Chromium re-rasterising a repainted panel, 1 corner pixel at 1/255).
 
 ### Paper Trail `LIVE`
 - Front Office tab after Drafts. **BBP**: Picks / Players switch; **YILM**: players only.
@@ -202,19 +203,24 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 - Elements must not move between states (Dumb/Nerd, H2H/Median, re-fits on resize).
 - Local QA always with real fonts (`tools/realfonts.py`); measurements without them are wrong.
 - **Performance budget** (Nicklaus, 2026-11-04) `LIVE`: **under 20,000 elements on first load** and **under 300 MB memory** (Safari and Chrome) after visiting every tab, on both trackers. How it is met: only the tab shown on load is in `index.html` (Standings, or Playoffs in Weeks 15-17, or the #hash tab, built before the page is revealed); every other tab is fetched the first time it is opened from a file named by its content hash. Matchups, Compare and Rosters are rebuilt on each visit and dropped ~1.5s after leaving (switches, selections and scroll come back); Matchups builds only the selected week; Playoffs builds only the selected bracket game / team panel. A tab that takes over 300ms shows its empty panel frame (no spinner); on failure the frame reads "Couldn't load. Tap to retry" in `--text-dim`. No visual change: every tab at 402 and 1440 pixel-identical to the one-file page. Check before shipping anything that adds markup: element count on load and Chromium memory after Standings and after every tab (local QA over http, not file://).
+- **Live data** (checked 2026-11-04) `LIVE`: only Matchups updates in place during games (the current week's lineups, scores, totals and game picker), and it polls whenever that week is on the page. Standings, projected finish, sim odds and headers change only through the site rebuild (every 10 min in game windows); the "New scores · Refresh" pill announces it. That pill's check is in `index.html` and runs on every tab, every 2 min. This was already true before on-demand tabs, so nothing outside Matchups lost live updates.
 
 ## 8. Features in progress and open items
 
 - **Paper Trail**: `LIVE` (Phases 1-4 built 2026-11-04). Data notes in `CLAUDE.md`.
 - **Navigation three levels** (§5): `PENDING`.
 - **List patterns** cleanup of Stats and Team Hub (§6): `BRIEFED`, four questions open.
-- **Shadow cap** for panels/cards over 60px and the eight audited elements (§2.12): decision pending.
+- **Shadow cap** for panels/cards over 60px and the eight audited elements (§2.12): decision pending. Re-measured 2026-11-04 at 402: unchanged. Since the audit, Paper Trail's inactive Picks/Players switch (34px; rule 2px) and its search box (41px; rule 2px) also carry the full 3px.
+- **BBP desktop table in Median mode overflows at 1100-1239px** (found 2026-11-04, predates the re-draw fix; not changed): the W-L cell's second line widens the table to 1068px at 1100 (1020px in H2H), so the page scrolls 8px sideways; 1175px at 1240. YILM fits (1027px at 1100).
 - **Coloured data contrast** on the lighter row (§4): open.
 - **Reduced opacity still used** (found 2026-11-04, not changed; decide per item): stacked-bar fills `.sbar i` 0.55; season chart OPP tile background 0.55 and playoff values `.wkc .wv.pov` 0.9; Rosters position labels `.cr .pq .pqi>span` 0.85/0.9; lineup-call figures `.dln2 em` 0.9; `.lu .cv .fs small` 0.75; out-of-contention stat values `.out .st .v` 0.85; bye tile `.stc.bye` 0.6; Drafts board cells (`.dfct i` 0.7, `.dfcn small` 0.78, `.dfcr` 0.82, `.dfcs>span` 0.75).
 
 ## 9. Decision log
 
 Newest first. One line per decision: date · what · why.
+
+- 2026-11-04 · Desktop standings table re-draws fit the rank chips before pinning column widths; resize lands on the load layout exactly (0px, 1100/1440, H2H and Median, both sites) · a resize left the chips unfitted (13.5px instead of 8.75px), shifting columns by up to 2.4px.
+- 2026-11-04 · Live polling left as built: nothing outside Matchups updates in place; Standings/sim/headers come from the rebuild and the site-wide refresh pill · confirmed against the pre-chunk live.js.
 
 - 2026-11-04 · YILM `--text-dim` `#AAB9C7` → `#AEBECC`: 4.76:1 on the lighter row, 6.14:1 on the darker row (verified on the built page at 402/360), still clearly dimmer than white values (1.90:1 to white) · 4.52:1 was too close to the 4.5:1 limit.
 - 2026-11-04 · On-demand tabs on both sites: tabs built from content-hashed chunk files when opened (Matchups by week, Playoffs by panel), Matchups/Compare/Rosters dropped after leaving with state restored, hidden tabs out of the document, one width-only resize dispatcher, live scores poll only while the current week is on the page; budget added to §7 · Safari used 3.5-4.3 GB on 434k elements; first view and every tab unchanged.

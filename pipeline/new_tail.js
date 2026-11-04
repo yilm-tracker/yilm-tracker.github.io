@@ -360,7 +360,9 @@ function simGap(){if(innerWidth<1100)return;const t=document.querySelector('.dtp
   // one correction pass: a wider column can re-centre Proj finish
   let R2=1e9,L2=1e9;fin.forEach((f,i)=>{const fb=f.getBoundingClientRect(),dl=fb.left,dr=dl+parseFloat(getComputedStyle(f).borderLeftWidth);R2=Math.min(R2,_sgEdge(f,'l')-dr);L2=Math.min(L2,dl-_sgEdge(pre[i],'r'))});
   if(Math.abs(R2-L2)>.25)pre.forEach(p=>p.style.setProperty('padding-right',Math.max(0,np+(R2-L2)).toFixed(2)+'px','important'))}
-if(typeof dtab==='function'){const _dt0=dtab;dtab=function(){const r=_dt0.apply(this,arguments);requestAnimationFrame(simGap);return r}}
+// every dtab render (load, fonts, resize, sort, H2H/Median): fit the new rank chips first, then simGap, so the pinned column widths
+// are always measured on fitted chips (2026-11-04: a resize re-draw left the chips unfitted, 1-2px drift)
+if(typeof dtab==='function'){const _dt0=dtab;dtab=function(){const r=_dt0.apply(this,arguments);requestAnimationFrame(()=>{if(typeof tileFit==='function')tileFit();simGap()});return r}}
 (()=>{let q=0;new MutationObserver(ms=>{if(q||innerWidth<1100)return;if(!ms.some(m=>m.target.closest&&m.target.closest('.dtp')))return;q=requestAnimationFrame(()=>{q=0;simGap()})}).observe(document.body,{childList:true,subtree:true})})();
 document.fonts&&document.fonts.ready.then(()=>requestAnimationFrame(simGap));addEventListener('resize',()=>setTimeout(simGap,200));
 // Navigation groups (Nicklaus, 2026-11-03). Group follows the selected tab (labels, the FAAB tile, code, #hash);
