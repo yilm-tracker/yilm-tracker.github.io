@@ -13,3 +13,4 @@ pipeline/live.json
 .cache/
 pipeline/psim.json
 pipeline/fp/
+.chunks/

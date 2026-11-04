@@ -3,11 +3,14 @@
 // lineup rows in place: player points, FINAL / LIVE tile, game status, stat line, and each team's points total.
 // Polling: every 60 s while a game is in progress and the page is visible; every 10 min otherwise.
 // The hourly site rebuild still recomputes everything else (slate totals, optimal lineups, odds).
+// On-demand tabs (2026-11-04): the current week's lineups are on the page only while Matchups is open on that week
+// (lazy.js builds it from its chunk and drops it after leaving). Polling runs while they are on the page; each time the
+// week is built again the last scores are put back at once, and a fresh poll follows if they are over 55 s old.
 (function(){
-  var box=document.getElementById('mlive');if(!box||!window.fetch)return;
-  var W=+box.dataset.w,L='1335450123487961088',Y='2026',A='https://api.sleeper.app/v1',S='https://api.sleeper.com';
-  var cells=document.querySelectorAll('.cv[data-p]');if(!cells.length)return;
-  var last=0,lastStats=0,stats={},timer=null;
+  if(!window.fetch)return;
+  var box,cells,W=0,L='1335450123487961088',Y='2026',A='https://api.sleeper.app/v1',S='https://api.sleeper.com';
+  var last=0,lastStats=0,stats={},timer=null,on=false,data=null,shown=null;
+  function setup(){box=document.getElementById('mlive');if(!box)return false;W=+box.dataset.w;cells=document.querySelectorAll('.cv[data-p]');return cells.length>0}
   function get(u){return fetch(u,{cache:'no-store'}).then(function(r){if(!r.ok)throw r.status;return r.json()})}
   function f1(x){return (Math.round(x*10)/10).toFixed(1)}
   function grp(lab,nums){return '<span class="sit"><u>'+lab+'</u> '+nums.map(function(n){return typeof n==='number'&&n<0?'(−'+(-n)+')':String(n)}).join('-')+'</span>'}
@@ -43,7 +46,10 @@
     for(var k in st){if(st[k]==='in')live++;if(st[k]==='post')done++}
     return live;
   }
+  function show(n,d){box.hidden=false;box.classList.toggle('on',n>0);
+    box.textContent=(n>0?'Live · ':'Updated ')+d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
   function tick(){
+    if(!setup()){on=false;clearTimeout(timer);return}  // this week's lineups are not on the page: wait for 'panebuilt'
     if(document.visibilityState!=='visible'){schedule(60000);return}
     get(S+'/scores/nfl/regular/'+Y+'/'+W).then(function(sc){
       var st={},soon=false,now=Date.now();
@@ -55,14 +61,18 @@
       var needStats=anyIn&&now-lastStats>110000||!lastStats;
       return Promise.all([get(A+'/league/'+L+'/matchups/'+W),needStats?get(S+'/stats/nfl/'+Y+'/'+W+'?season_type=regular'):null]).then(function(r){
         if(r[1]){stats={};r[1].forEach(function(x){if(x.stats&&(x.stats.gp||x.stats.gms_active||x.player&&x.player.position==='DEF'))stats[x.player_id]=x.stats});lastStats=now}
-        var n=apply(st,r[0]);last=now;
-        var d=new Date();box.hidden=false;box.classList.toggle('on',n>0);
-        box.textContent=(n>0?'Live · ':'Updated ')+d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+        if(!setup()){on=false;return}
+        var n=apply(st,r[0]);last=now;data=[st,r[0],soon];
+        var d=new Date();shown=d;show(n,d);
         schedule(n>0||soon?60000:600000);
       });
     }).catch(function(){schedule(120000)});
   }
   function schedule(ms){clearTimeout(timer);timer=setTimeout(tick,ms)}
-  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&Date.now()-last>55000)schedule(500)});
-  tick();
+  function start(){if(!setup())return;
+    if(data){show(apply(data[0],data[1]),shown)}  // the week was built again: last scores back at once
+    if(!on){on=true;var age=Date.now()-last;schedule(!data||age>55000?0:Math.max(500,60000-age))}}
+  document.addEventListener('visibilitychange',function(){if(on&&document.visibilityState==='visible'&&Date.now()-last>55000)schedule(500)});
+  document.addEventListener('panebuilt',start);
+  start();
 })();

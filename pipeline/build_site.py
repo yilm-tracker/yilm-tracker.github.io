@@ -1,5 +1,5 @@
 # Wrap standings.html (scripts kept, for the live site) as site/index.html, and copy the no-script file for download.
-import os,shutil,datetime,zoneinfo
+import os,shutil,datetime,zoneinfo,json
 P=os.path.dirname(os.path.abspath(__file__))+'/';OUT=os.path.join(P,'..','site')
 os.makedirs(OUT,exist_ok=True)
 # Year switch: this build's season (DT_SEASON, default the current one) and the past seasons published under site/<year>/
@@ -22,7 +22,8 @@ else:UPD+='<script>'+open(P+'live.js',encoding='utf-8').read().replace("L='13354
 # remember the switches (not the tab or group: Nicklaus 2026-11-03, every load opens the default or the #hash tab)
 # formerly: remember the selected tab / switches (per season; the tab itself is shared, so switching year keeps the section) across reloads (radio state), so a refresh comes back to the same view and
 # Safari's restored scroll position lands where it was instead of in the middle of Standings
-UPD+=('<script>(function(){var K="dt-radios'+('-'+Y if PAST else '')+'";try{var s=JSON.parse(sessionStorage.getItem(K)||"[]");'
+LAZY=not PAST and not os.environ.get('DT_NOLAZY')  # on-demand tabs (lazy.py / lazy.js); past seasons stay one file
+if not LAZY:UPD+=('<script>(function(){var K="dt-radios'+('-'+Y if PAST else '')+'";try{var s=JSON.parse(sessionStorage.getItem(K)||"[]");'
       's.forEach(function(id){var e=document.getElementById(id);if(e&&e.type==="radio"&&e.name!=="tab"&&e.name!=="tgrp")e.checked=true})}catch(e){}'
       'document.addEventListener("change",function(ev){var t=ev.target;if(!t||t.type!=="radio")return;'
       'try{var ids=[].map.call(document.querySelectorAll("input[type=radio]:checked"),function(x){return x.id}).filter(Boolean);'
@@ -37,8 +38,25 @@ _HIDE='<style>body>*{visibility:hidden}'+(f'html,body{{background:{_pgs[-1]}}}' 
        '<script>(function(){var d=0;function s(){if(d)return;d=1;requestAnimationFrame(function(){requestAnimationFrame(function(){'
        'var t=document.createElement("style");t.textContent="body>*{visibility:visible}";document.head.appendChild(t)})})}'
        'var F=document.fonts;if(F&&F.load){Promise.all([F.load(\'700 20px "Barlow Condensed"\'),F.load(\'600 20px "Barlow Condensed"\'),F.load(\'400 15px "IBM Plex Sans"\'),F.load(\'600 15px "IBM Plex Sans"\')])'
-       '.then(function(){return F.ready}).then(function(){setTimeout(s,60)},s)}else s();setTimeout(s,2500)})()</script>')
-j=s.index('</style>')+len('</style>');s=s[:j]+_HIDE+'\n</head>\n<body>'+s[j:]+_SHOW+UPD+f'\n<!-- built {stamp} -->\n</body>\n</html>\n'
+       '.then(function(){return F.ready}).then(function(){return window.__pr}).then(function(){setTimeout(s,60)},s)}else s();setTimeout(s,2500)})()</script>')
+# one resize dispatcher for the whole page (2026-11-04): the page's ~20 resize handlers are collected here and run
+# together once per frame, and only when the width (or pixel ratio) changed; window.__fitAll() runs them on demand
+_RZ=('<script>(function(){var Q=[],w=innerWidth,dp=devicePixelRatio,raf=0,ael=window.addEventListener;'
+     'window.addEventListener=function(t,f,o){if(t==="resize"&&typeof f==="function"){Q.push(f);return}return ael.call(this,t,f,o)};'
+     'function all(e){raf=0;Q.slice().forEach(function(f){try{f.call(window,e)}catch(x){setTimeout(function(){throw x})}})}'
+     'window.__fitAll=function(){all(new Event("resize"))};'
+     'ael.call(window,"resize",function(e){if(innerWidth===w&&devicePixelRatio===dp)return;w=innerWidth;dp=devicePixelRatio;if(!raf)raf=requestAnimationFrame(function(){all(e)})})})()</script>') if LAZY else ''
+_LZ=''
+if LAZY:
+    import lazy as _lz,re as _rel
+    _po=_rel.search(r'class="tnav" data-po="1"',s) is not None;_cw=_rel.search(r'id="mlive"[^>]*data-w="(\d+)"',s)
+    s,_man=_lz.chunk(s,OUT,inline=('st','po') if _po else ('st',))
+    if _man:
+        _man.update(k='dt-radios',po=_po,cw=_cw.group(1) if _cw else None)
+        _LZ=('<style>.lzf{box-sizing:border-box;min-height:60vh;background:var(--deck);border:2px solid var(--frame);border-radius:var(--r-panel);box-shadow:var(--sh-hard)}'
+             '.lzf .lze{display:block;width:100%;min-height:calc(60vh - 4px);border:0;background:none;color:var(--text-dim);font:600 15px var(--body);cursor:pointer}</style>'
+             '<script>window.LZ='+json.dumps(_man,separators=(',',':'))+'</script><script>'+open(P+'lazy.js',encoding='utf-8').read()+'</script>')
+j=s.index('</style>')+len('</style>');s=s[:j]+_HIDE+_RZ+'\n</head>\n<body>'+s[j:]+_LZ+_SHOW+UPD+f'\n<!-- built {stamp} -->\n</body>\n</html>\n'
 s=s.replace('</style>','body{margin:0}</style>',1)
 # small TeamHub link on the eyebrow line (live site only; the download file stays as is). Negative margins keep the
 # line box unchanged, so nothing else on the page moves; the ::after pad gives it a 44px tap target.

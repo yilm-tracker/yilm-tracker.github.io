@@ -201,6 +201,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 - Rank tiles beside a figure never poke above its cap top or below its baseline; digits never touch the frame. Check every time with `python3 tools/tilechk.py 402 440 360 1440`: 0 violations on both trackers (exact to 0.05px, Dumb and Nerd).
 - Elements must not move between states (Dumb/Nerd, H2H/Median, re-fits on resize).
 - Local QA always with real fonts (`tools/realfonts.py`); measurements without them are wrong.
+- **Performance budget** (Nicklaus, 2026-11-04) `LIVE`: **under 20,000 elements on first load** and **under 300 MB memory** (Safari and Chrome) after visiting every tab, on both trackers. How it is met: only the tab shown on load is in `index.html` (Standings, or Playoffs in Weeks 15-17, or the #hash tab, built before the page is revealed); every other tab is fetched the first time it is opened from a file named by its content hash. Matchups, Compare and Rosters are rebuilt on each visit and dropped ~1.5s after leaving (switches, selections and scroll come back); Matchups builds only the selected week; Playoffs builds only the selected bracket game / team panel. A tab that takes over 300ms shows its empty panel frame (no spinner); on failure the frame reads "Couldn't load. Tap to retry" in `--text-dim`. No visual change: every tab at 402 and 1440 pixel-identical to the one-file page. Check before shipping anything that adds markup: element count on load and Chromium memory after Standings and after every tab (local QA over http, not file://).
 
 ## 8. Features in progress and open items
 
@@ -215,6 +216,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-04 · On-demand tabs on both sites: tabs built from content-hashed chunk files when opened (Matchups by week, Playoffs by panel), Matchups/Compare/Rosters dropped after leaving with state restored, hidden tabs out of the document, one width-only resize dispatcher, live scores poll only while the current week is on the page; budget added to §7 · Safari used 3.5-4.3 GB on 434k elements; first view and every tab unchanged.
 - 2026-11-04 · YILM labels and units step down to `--text-dim` like BBP's (same elements; 5.83:1 panel, 4.52:1 lighter row); values stay white · two text levels on both sites.
 - 2026-11-04 · Token cleanup: `--hair`→`--line`, `--dim`→`--text-dim`, `--plate`→`--frame`, `--dsh`/`--dsh2`→`--sh-hard`, `--pylon`→`--accent` (both sites), unused `--bg`/`--surface`/`--fg`/`--muted`/`--faint` deleted; every tab pixel-identical before/after (one YILM screenshot off by 1/255 in 28 pixels) · one name per role, no aliases.
 - 2026-11-04 · Season sim #1 and Bye labels take the sim label colour (BBP `--text-dim`, YILM `--label`) · gold marks top seeds only.

@@ -68,11 +68,22 @@ jobs:
         run: |
           export DT_SEASON=$(python3 -c "import json;print(json.load(open('pipeline/seasons.json'))['current'])") DT_LEAGUE=$(python3 -c "import json;c=json.load(open('pipeline/seasons.json'));print(c['leagues'][c['current']])")
           python3 pipeline/fp_pull.py
+      - name: Tab chunk cache
+        # on-demand tabs: the previous builds' chunk files stay published, so a page left open across a deploy can
+        # still open its tabs (pipeline/lazy.py keeps the last 6 changed builds' chunks)
+        uses: actions/cache@v4
+        with:
+          path: .chunks
+          key: chunks-${{ github.run_id }}
+          restore-keys: chunks-
       - name: Build the current season
+        env:
+          DT_CHUNKS: ${{ github.workspace }}/.chunks
         run: |
           CUR=$(python3 -c "import json;print(json.load(open('pipeline/seasons.json'))['current'])")
           python3 pipeline/season_replay.py $CUR
           mkdir -p site && cp .season/$CUR/site/index.html site/index.html && touch site/.nojekyll
+          cp -r .season/$CUR/site/p site/p  # the tabs' chunk files (on-demand tabs)
       - name: Build past seasons
         run: |
           for Y in $(python3 -c "import json;c=json.load(open('pipeline/seasons.json'));print(' '.join(y for y in c['leagues'] if y!=c['current']))"); do
