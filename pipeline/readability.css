@@ -1198,3 +1198,17 @@ html:root{--text-dim:var(--dim);--faab-ink:var(--pg)}  /* --text-dim = YILM mute
  .dfby{justify-content:center!important;padding-left:0!important;padding-right:0!important;gap:0!important}
  .dfhg{text-align:center;padding-left:0!important}
 }
+
+/* Data bars (DESIGN.md §6, Nicklaus 2026-11-04): every bar is one framed track: 8px, fully rounded, frame-colour
+   background, 1px --line border, 1px padding; fills inside, flat (no inset frames). Stacked bars keep their 2px gaps;
+   the empty remainder is the track itself. Diverging bars: fills from the centre, square at the 1px zero mark. */
+.g4b:not(#z),.tqbar:not(#z),.hx-bar:not(#z),.dvb:not(#z),.hbr:not(#z),.bar.sbar:not(#z),.bar.ybar:not(#z),.obar:not(#z){box-sizing:border-box!important;height:8px!important;border-radius:999px!important;background:var(--frame)!important;border:1px solid var(--line)!important;padding:1px!important;overflow:hidden!important;box-shadow:none!important}
+.g4b:not(#z)>i,.tqbar:not(#z)>i,.hx-bar:not(#z)>i,.hbr:not(#z)>i,.bar.sbar:not(#z)>i,.bar.ybar:not(#z)>i,.obar:not(#z)>i{height:100%!important;border-radius:999px!important;box-shadow:none!important}
+.hx-bar:not(#z)>i{border-radius:0!important}.hx-bar:not(#z)>i:first-child{border-radius:999px 0 0 999px!important}.hx-bar:not(#z)>i:last-child{border-radius:0 999px 999px 0!important}
+.bar.sbar:not(#z)::after,.obar:not(#z)::after{content:none!important}
+.dvb:not(#z){position:relative!important}
+.dvb:not(#z)>i{position:absolute!important;top:1px!important;bottom:1px!important;height:auto!important;max-width:calc(50% - 1px)!important;box-shadow:none!important}
+.dvb:not(#z)>i.up{left:50%!important;right:auto!important;border-radius:0 999px 999px 0!important}
+.dvb:not(#z)>i.dn{right:50%!important;left:auto!important;border-radius:999px 0 0 999px!important}
+.dvb:not(#z)::before{content:""!important;position:absolute!important;top:0!important;bottom:0!important;left:calc(50% - .5px)!important;width:1px!important;height:auto!important;margin:0!important;background:var(--label)!important;z-index:1!important}
+.dvb:not(#z)::after{content:none!important}

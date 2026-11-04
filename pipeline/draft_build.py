@@ -193,7 +193,7 @@ CSS="""
 .dfrh+.dfp{border-top:0}
 .dfn{align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:var(--pc);color:#0b0e14;font-style:normal}
 .dfn b{font:700 14px/1 var(--display);text-box:trim-both cap alphabetic}
-.dfn span{font:700 10px/1 var(--display);letter-spacing:.06em;text-box:trim-both cap alphabetic;opacity:.8}
+.dfn span{font:700 10px/1 var(--display);letter-spacing:.06em;text-box:trim-both cap alphabetic}
 .dfpl{display:flex;align-items:center;gap:6px;min-width:0}
 .dfpl b{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:clip;font:600 15px/1.2 var(--body);color:var(--chalk)}
 .dfpl .nfl{flex:none}

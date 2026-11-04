@@ -7,7 +7,7 @@ Implementation notes (file names, fitting functions, data pipelines) stay in `CL
 
 Status tags: `LIVE` = verified on the built page · `BRIEFED` = sent, not yet confirmed · `PENDING` = agreed, not yet sent.
 When a brief is applied and verified, change its tag to `LIVE` and add a line to the Decision log.
-Last reconciled against the built pages: 2026-11-04 (BBP `site/index.html`, YILM `.season/2026/site/index.html`, values read with real fonts at 402px).
+Last reconciled against the built pages: 2026-11-04, after the data bar / opacity / rank pack changes (BBP `site/index.html`, YILM `.season/2026/site/index.html`, values read with real fonts at 402px).
 
 ---
 
@@ -76,7 +76,7 @@ Four steps in one hue; only lightness changes. Reference: bdge.co standings. App
 
 - `--dim` and `--steel` meet 4.5:1 on the lighter row (lifted 2026-11-03). Coloured data on the lighter row (position QB pink, tier teal/red, result red) is still under 4.5:1: open item.
 - **BBP** two text levels on the standings cards: values `--chalk`; labels/units `--text-dim` (OPP, ALL-PLAY, LUCK, PF, PA, TOT EFF, /wk, xW, COULD HAVE, Won/Lost, FAAB, DROPPED PTS, SEASON SIM, FINISH). Season chart labels unchanged.
-- **BBP** kit palette (Standings Redesign Spec, 2026-11-03), at the end of BBP `readability.css`: tiers `--tier-bye #E2CF93` / `--tier-po #19B5C4` / `--tier-ch #CDA74B` (labels, sub-labels and rules at full colour); season chart `--chart-po-line #0097A7`, `--chart-po-fill #023442`, `--chart-po-val #19B5C4`, `--chart-nfl-bye #5A6870`; `--row-alt #203841` (FAAB pills). `--pylon` / `--sky` are NOT redefined (used across other tabs); standings/chart uses are overridden one by one. Unchanged by design: status colours (form dots, streaks, arrows, rank chips), the position colours (TE stays orange). `LIVE`
+- **BBP** kit palette (Standings Redesign Spec, 2026-11-03), at the end of BBP `readability.css`: tiers match the live rank pack (2026-11-04): `--tier-bye #E2CF93` (gold), `--tier-po #E4DDCD` (alabaster; was teal `#19B5C4`), `--tier-ch #006778` (teal; was `#CDA74B`; no visible text uses it, and it fails text contrast, 2.2:1 on the panel) (labels, sub-labels and rules at full colour); season chart `--chart-po-line #0097A7`, `--chart-po-fill #023442`, `--chart-po-val #19B5C4`, `--chart-nfl-bye #5A6870`; `--row-alt #203841` (FAAB pills). `--pylon` / `--sky` are NOT redefined (used across other tabs); standings/chart uses are overridden one by one. Unchanged by design: status colours (form dots, streaks, arrows, rank chips), the position colours (TE stays orange). `LIVE`
 - **YILM** palette: logo blue `#4F9FE8`, logo red `#EC5F70`, league red `--pylon #FB637A`.
 
 **Rejected; do not reintroduce:** **BBP** surfaces at hue 178° (too green; tried and reverted 2026-11-03); green-tinted frame `#060E0E`; Sleeper's navy for BBP (borrow its dark page and quiet labels, not its hue); FAAB alabaster `#ECE8DD` (read as white).
@@ -103,10 +103,10 @@ Four steps in one hue; only lightness changes. Reference: bdge.co standings. App
 ## 6. Components
 
 ### Rank tiles and numerals (BBP) `LIVE`
-- **Live pack: `scoreboard_rank_tiles_final.zip`** (flip-scoreboard cards, square, WebP): 1-2 white face + gold frame (`1_bye_white`), 3-6 teal face (`2_playoff_teal`), 7-12 charcoal (`3_chasing_dark`); 4px transparent margin and shadow baked in. Served byte-for-byte from `ranknum/r1-12.webp`; never cropped or re-encoded. Neither option listed below is live.
-- CSS: `.rni{display:block;height:var(--rt);width:auto;max-width:none;margin:0}`; one rule, `--rt` 44px, no per-tier size/filter/opacity; fixed 52px rank column (`--rks`), centred; `alt` + `aria-label` per seed. Team Hub uses the same tiles at 44px; the desktop standings table at 24px.
-- Other packs offered (not live): `rank_tiles_gold_alabaster_teal.zip` (1-2 brushed gold, 3-6 alabaster `#E4DDCD`, 7-12 teal `#006778`) and `rank_numerals_keyline.zip` (free-standing; `--rt` 32px desktop / 44px mobile, 40px column).
-- Section label colours match the live pack's tiers (bye gold `--tier-bye`, playoff teal `--tier-po`); gold = top seeds only.
+- **Live pack: `rank_tiles_gold_alabaster_teal.zip`, `no_buffer/rounded`** (split-flap tiles, 272×320 WebP, lossless): 1-2 brushed gold (`1_bye_gold`; highlight `#F4E3A8`, trim `#806E3A`, teal extrusion), 3-6 alabaster face `#E4DDCD` (`2_playoff_alabaster`; gold trim `#CDA74B`), 7-12 teal face `#006778` (`3_chasing_teal`; extrusion `#023442`). No margin, depth baked into the art (no CSS shadow). Served byte-for-byte from `ranknum/r1-12.webp` (identical to the pack's `RNI_snippet.js`); never cropped or re-encoded. Replaced `scoreboard_rank_tiles_final.zip` on 2026-11-04.
+- CSS: `.rni{display:block;height:var(--rt);width:auto;max-width:none;margin:0}`; one rule, `--rt` 44px (tile 37.4px wide), no per-tier size/filter/opacity; fixed 52px rank column (`--rks`), centred; tile centre level with the logo centre (within 0.3px at 402 and 360). `alt` + `aria-label` per seed. Team Hub uses the same tiles at 44px; the desktop standings table at 24px.
+- Other packs offered (not live): `rank_numerals_keyline.zip` (free-standing; `--rt` 32px desktop / 44px mobile, 40px column); the earlier `scoreboard_rank_tiles_final.zip`.
+- Section label colours match the live pack's tiers: Bye line gold `--tier-bye`, Playoff line alabaster `--tier-po` (also the sim PLAYOFFS labels and the desktop table's playoff column).
 
 ### Rank numerals (YILM) `LIVE`
 - Own fixed 52px column + 9px gap before the face; faces at the same x on every row.
@@ -120,13 +120,14 @@ Four steps in one hue; only lightness changes. Reference: bdge.co standings. App
 - **BBP**: ring + shadow restored from the pre-cleanup commit: 1px `--line-strong` ring + 2px/2px hard and 6px soft shadow on standings; halved (1px, 3px soft) in Stats and Paper Trail. **YILM** faces: no ring, no disc, no shadow anywhere.
 - Drafts › Original order: logos 40px (36px ≤ 380px), same treatment as standings scaled by size (40px = offsets 2, blur 5; 36px = offsets 1, blur 4).
 
-### Data bars `BRIEFED`
-- Spec: one framed track: frame around the whole track. 8px, full-round, frame-colour background, 1px line border, 1px padding; green/red fill inside.
-- Diverging: one track, 1px zero mark centred, fill grows left (red) / right (green). Empty values still show the track.
-- Live today (not matching): 6px track, 3px radius, white 4-5% background, no border or padding; each bar framed by a 1px darker inset; centre line 2px `--label`, drawn on top.
+### Data bars `LIVE`
+- Every bar (Stats: luck `.dvb`, totals `.hbr`, odds `.obar`, stacked `.sbar` / `.ybar`, home/road `.hx-bar`; Team Hub: `.tqbar`, `.tqhb`, `.sbar`, `.ybar`; Matchups: win probability `.g4b`) is one framed track: 8px, fully rounded, `--frame` background, 1px `--line` border, 1px padding; fills inside, fully rounded and flat (no inset frames). Stacked bars keep their 2px gaps; the empty remainder is the track itself. One rule block at the end of both `readability.css` files (selectors carry `:not(#z)` to beat the `body *` border rule).
+- Diverging: one track, 1px zero mark (`--label`) centred and drawn on top; fills grow left (red) / right (green) from it, square at the mark, rounded at the outer end, never past the padding. Empty values still show the track.
 
 ### Text levels
-- Values full cream/white; labels and units `--text-dim`. Hierarchy from size/weight, never reduced opacity. `LIVE` on the standings cards; reduced opacity still used in two places (see §8 mismatches).
+- Values full cream/white; labels and units `--text-dim`. Hierarchy from size/weight, never reduced opacity. `LIVE` on the standings cards, the season chart and the Drafts pick tiles; other reduced-opacity uses remain (§8).
+- Season chart OPP row numbers: `--text-dim` (≥ 5.2:1 BBP, ≥ 4.9:1 YILM on their tiles), no opacity.
+- Drafts pick tile position label (RB, WR…): full ink `#0B0E14`, no opacity; smaller size carries the hierarchy. `--text-dim` was not used there: on the pastel position colours it is 1.0-1.4:1.
 
 ### Cutoff lines `LIVE`
 - No tier banners. Cutoff line under the last seed of a tier: dark strip (`--pg`), label in the tier colour, 2px rule in that colour, count at the right. **BBP**: bye line under 2 ("Top 2 bye"), playoff line under 6 ("Top 6 in"); **YILM**: playoff line only, league red. Same lines in the desktop table.
@@ -179,15 +180,17 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 - **List patterns** cleanup of Stats and Team Hub (§6): `BRIEFED`, four questions open.
 - **Shadow cap** for panels/cards over 60px and the eight audited elements (§2.12): decision pending.
 - **Coloured data contrast** on the lighter row (§4): open.
-- **Mismatches found 2026-11-04 (site not changed; decide which wins):**
-  - Data bars (§6): live track 6px / 3px radius / white 4-5% fill, no border or padding; spec 8px full-round, frame-colour track, 1px border, 1px padding. Diverging zero mark live 2px `--label`, spec 1px.
-  - Reduced opacity used for hierarchy (§6 Text levels): Drafts pick-tile position label (`.dfn span`, 0.8) and season chart SVG text (0.9).
-  - Values in the draft of this file that differed from the built pages; this file now records the live value (confirm): **BBP** frame live `#04080A` (draft said `#070C0E`, the value before the 2026-11-03 evening change); **YILM** frame live `#08111A` (draft said `#0B1622`); **BBP** body text live `#ECE6DA` (draft said `#EBE6DB`).
+- **Reduced opacity still used** (found 2026-11-04, not changed; decide per item): stacked-bar fills `.sbar i` 0.55; season chart OPP tile background 0.55 and playoff values `.wkc .wv.pov` 0.9; Rosters position labels `.cr .pq .pqi>span` 0.85/0.9; lineup-call figures `.dln2 em` 0.9; `.lu .cv .fs small` 0.75; out-of-contention stat values `.out .st .v` 0.85; bye tile `.stc.bye` 0.6; Drafts board cells (`.dfct i` 0.7, `.dfcn small` 0.78, `.dfcr` 0.82, `.dfcs>span` 0.75).
+- **BBP playoff tier = alabaster** (§4, §6): `--tier-po #E4DDCD` is 1.09:1 against the cream body text, so the Playoff line label, sim PLAYOFFS labels and the desktop table's playoff column now read like plain text. Alternative if wanted: keep alabaster for the tile and the cutoff rule, gold trim `#CDA74B` for the text (taken by `--tier-ch` before).
 
 ## 9. Decision log
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-04 · BBP rank tiles switched to gold/alabaster/teal (no buffer, rounded); tier tokens follow (playoff alabaster, chasing teal) · Nicklaus's choice of pack.
+- 2026-11-04 · Season chart OPP numbers `--text-dim`, Drafts tile position label full ink, no opacity · hierarchy without opacity; `--text-dim` fails on the pastel tiles.
+- 2026-11-04 · Every data bar is one framed track (8px, round, frame bg, 1px line border, 1px padding; 1px zero mark) · one bar component on both sites.
+- 2026-11-04 · Kept live frame (BBP `#04080A`, YILM `#08111A`) and BBP text `#ECE6DA` · Nicklaus confirmed the live values.
 - 2026-11-04 · DESIGN.md reconciled with the built pages and added to both repos; design rules moved here from CLAUDE.md · one source of truth.
 - 2026-11-04 · Paper Trail tab (pick chains BBP, player histories both) · trace every pick and player move since 2021.
 - 2026-11-04 · Sub-tab row may tighten its gap to 5px and padding to 4px · five Front Office pills on one line at 360.
