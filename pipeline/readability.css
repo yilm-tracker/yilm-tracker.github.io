@@ -1164,3 +1164,11 @@ html:root{--text-dim:var(--dim);--faab-ink:var(--pg)}  /* --text-dim = YILM mute
 @media(max-width:380px){.dfoi .pav{width:36px!important;height:36px!important}}
 @media(max-width:380px){.dfr .dfp .dfpl{padding-right:8px!important}.dfrh .dfhp{padding-right:8px}}  /* column gap is 8px here: still 16px to the GM divider */
 @media(max-width:380px){.dftl{padding-left:6px;padding-right:6px;min-width:calc(var(--dftw,3) * .5em + 12px)}.dfr .dfp .dfpl{gap:8px!important}}  /* startup drafts (4-digit totals) still leave room for the name at 360 */
+
+/* 2026-11-03 (Nicklaus) The Wire: FLX filter (RB+WR+TE) after TE; the pill row spans the content width on one line,
+   pills grow equally with 6px gaps; the fitter in wire_build.py eases side padding (to 6px) if the row would overflow */
+.wpf{flex:1 0 100%;min-width:0;flex-wrap:nowrap!important}
+.wpf .wpb{flex:1 1 auto;padding-left:var(--wpp,12px);padding-right:var(--wpp,12px)}
+@media(max-width:380px){.wpf .wpb{padding-left:var(--wpp,9px);padding-right:var(--wpp,9px)}}
+.wpb.wflx{color:var(--chalk)}
+.wpb.wflx.on{color:var(--ink)}

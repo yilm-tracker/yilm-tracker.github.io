@@ -45,7 +45,9 @@ for (pid,name,pos,team,inj,pts,gp,rk,proj,opp,home,ko,ad) in ROWS:
       +(f'<i class="winj" title="{e(inj)}">{it}</i>' if it else '')+f'</b><small>{mu}</small></div>'
       f'<span class="wv wpj">{n1(proj)}<small>pts</small></span><span class="wv wpt2">{pts:.0f}</span><span class="wv wpg">{n1(ppg) if gp else "–"}</span><span class="wv wad">{adds(ad)}</span></div>'))
 rows.sort(key=lambda r:(-r[0],-r[1]))
-btn=''.join(f'<button type="button" class="wpb{" on" if p=="ALL" else ""}" data-p="{p}"'+(f' style="--pc:{PC[p]}"' if p in PC else '')+f'>{p}</button>' for p in ['ALL']+POS)
+_FL=[p for p in ('RB','WR','TE') if p in POS]  # FLX (2026-11-03): RB/WR/TE together, placed after TE
+_PB=['ALL']+[q for p in POS for q in ([p,'FLX'] if p=='TE' and len(_FL)>1 else [p])]
+btn=''.join(f'<button type="button" class="wpb{" on" if p=="ALL" else ""}{" wflx" if p=="FLX" else ""}" data-p="{p}"'+(f' style="--pc:{PC[p]}"' if p in PC else '')+f'>{p}</button>' for p in _PB)
 srt=lambda k,lab,cls='':f'<button type="button" class="wsb{cls}" data-k="{k}">{lab}<i aria-hidden="true">▾</i></button>'
 html_=(f'<section class="wrx" aria-labelledby="wrh"><div class="posh"><b id="wrh">The Wire</b><span class="wsub">Best available · not on any roster in the league</span></div>'
   f'<div class="wrc"><div class="wpf" role="group" aria-label="Position">{btn}</div><input class="wq" type="search" placeholder="Search player…" aria-label="Search player" autocomplete="off"></div>'
@@ -56,11 +58,13 @@ html_=(f'<section class="wrx" aria-labelledby="wrh"><div class="posh"><b id="wrh
   f'<b>Tile</b> position and season rank at the position (league scoring, all players). <b>Proj</b> Sleeper projection for Week {N} in league scoring. '
   '<b>Fpts / Ppg</b> season points and points per game played. <b>Adds</b> times the player was added across all Sleeper leagues in the last 48 hours. '
   'Tap a column to sort; the top 50 for the filter are shown.</div></div></section>'
-  """<script>(function(){const X=document.querySelector('.wrx');if(!X)return;const L=X.querySelector('.wrl'),R=[...L.children],M=X.querySelector('.wmore');let pos='ALL',k=0,q='';
+  """<script>(function(){const X=document.querySelector('.wrx');if(!X)return;const L=X.querySelector('.wrl'),R=[...L.children],M=X.querySelector('.wmore');let pos='ALL',k=0,q='';const FLX=['RB','WR','TE'];
 const sv=r=>r._s||(r._s=r.dataset.s.split(',').map(Number));
-function draw(){const v=R.filter(r=>(pos==='ALL'||r.dataset.p===pos)&&(!q||r.dataset.n.includes(q))).sort((a,b)=>sv(b)[k]-sv(a)[k]||sv(b)[0]-sv(a)[0]);
+function draw(){const v=R.filter(r=>(pos==='ALL'||r.dataset.p===pos||(pos==='FLX'&&FLX.includes(r.dataset.p)))&&(!q||r.dataset.n.includes(q))).sort((a,b)=>sv(b)[k]-sv(a)[k]||sv(b)[0]-sv(a)[0]);
 R.forEach(r=>r.hidden=true);v.slice(0,50).forEach((r,i)=>{r.hidden=false;r.style.order=i});M.textContent=v.length?(v.length>50?'Top 50 of '+v.length:v.length+' players'):'No players';X.classList.toggle('wk3',k===3);fit()}
 function fit(){X.querySelectorAll('.wrr:not([hidden]) .wn').forEach(n=>{n.textContent=n.dataset.f;n.style.fontSize='';const b=n.parentElement;if(b.scrollWidth>b.clientWidth+.5)n.textContent=n.dataset.s;let f=parseFloat(getComputedStyle(n).fontSize);while(b.scrollWidth>b.clientWidth+.5&&f>11){f-=.5;n.style.fontSize=f+'px'}})}
+function pf(){const f=X.querySelector('.wpf');if(!f)return;f.style.removeProperty('--wpp');let p=parseFloat(getComputedStyle(X.querySelector('.wpb')).paddingLeft);while(f.scrollWidth>f.clientWidth+.5&&p>6){p-=1;f.style.setProperty('--wpp',p+'px')}}
+pf();addEventListener('resize',()=>requestAnimationFrame(pf));document.addEventListener('change',()=>requestAnimationFrame(pf));document.fonts&&document.fonts.ready.then(pf);
 X.querySelectorAll('.wpb').forEach(b=>b.onclick=()=>{pos=b.dataset.p;X.querySelectorAll('.wpb').forEach(x=>x.classList.toggle('on',x===b));draw()});
 X.querySelectorAll('.wsb').forEach(b=>b.onclick=()=>{k=+b.dataset.k;X.querySelectorAll('.wsb').forEach(x=>x.classList.toggle('on',x===b));draw()});
 X.querySelector('.wq').oninput=ev=>{q=ev.target.value.trim().toLowerCase();draw()};
