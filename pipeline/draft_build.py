@@ -54,6 +54,31 @@ def career(pl,pos,y,d):
     r=pts(pl,pos,y,d)
     if not r:return ''
     return f'<span class="dfcq" title="{e(r[2])}"><span class="dfcp"><b>{r[0]:,.0f}</b></span></span>'
+# NFL draft slot per player (nfl_draft.py -> nfl_draft.json, from nflverse draft_picks; committed, refreshed after each NFL draft)
+try:NFD=json.load(open(P+'nfl_draft.json',encoding='utf-8'))
+except Exception:NFD={}
+def nflslot(pl,pos,y):
+    """[season, round, overall pick], 'UDFA', or None (unknown / team defense)"""
+    p={'PK':'K','Def':'DEF'}.get(pos,pos) or ''
+    if p=='DEF' or not NFD:return None
+    nk=_nk(pl);k=nk+'|'+p;c=CAR.get(k);rk=c[8] if c and len(c)>8 else None
+    cand=NFD.get(k) or []
+    if not cand:  # listed at another position (e.g. a QB playing TE): use it only when the name is unique
+        alt=[v for kk,vv in NFD.items() if kk.split('|')[0]==nk for v in vv];cand=alt if len(alt)==1 else []
+    if not cand and ' ' in nk:  # short first name in the NFL data (Cam / Cameron Ward): same last name and position, one first name a prefix of the other
+        f0,l0=nk.split(' ',1)
+        alt=[v for kk,vv in NFD.items() if kk.endswith('|'+p) and ' ' in kk.split('|')[0] and kk.split('|')[0].split(' ',1)[1]==l0 and (lambda f:f.startswith(f0) or f0.startswith(f))(kk.split('|')[0].split(' ',1)[0]) for v in vv]
+        cand=alt
+    yr=int(str(y)[:4])
+    if rk:cand=[v for v in cand if rk-3<=v[0]<=rk]
+    else:cand=[v for v in cand if v[0]<=yr]
+    if cand:return cand[-1]
+    return 'UDFA' if rk else None
+def nslot(pl,pos,y):
+    s=nflslot(pl,pos,y)
+    if s=='UDFA':return '<span class="dfnl u" title="Undrafted free agent">UDFA</span>'
+    if not s:return '<span class="dfnl z">–</span>'
+    return f'<span class="dfnl" title="NFL draft {s[0]}: round {s[1]}, pick {s[2]} overall"><i>RD {s[1]}</i><i>PK {s[2]}</i></span>'
 def tile(pl,pos,y,d,on):
     """list view (2026-11-03): points tile at the right of the player cell; '–' when the player has none yet;
     nothing when the draft has no points data at all (offline builds)"""
@@ -130,10 +155,10 @@ def year_panel(y,d):
         rr=sorted([r for r in rows if r[0]==rd],key=lambda r:r[1])
         on=any(pts(r[5],r[6],y,d) for r in rows)
         tw=max([3]+[len(f'{pts(r[5],r[6],y,d)[0]:,.0f}') for r in rr if pts(r[5],r[6],y,d)])
-        out.append(f'<div class="dfr" style="--dftw:{tw}"><div class="dfrh" role="row"><span>R{rd}</span><span class="dfhp"><i>Player</i>{("<i class=dfhr>"+("Pts" if d.get("type")=="startup" else "RPts")+"</i>") if on else ""}</span><span class="dfhg">GM</span></div>'+''.join(
+        out.append(f'<div class="dfr" style="--dftw:{tw}"><div class="dfrh" role="row"><span>R{rd}</span><span class="dfhp"><i>Player</i>{"<i class=dfhn>NFL</i>" if NFD else ""}{("<i class=dfhr>"+("Pts" if d.get("type")=="startup" else "RPts")+"</i>") if on else ""}</span><span class="dfhg">GM</span></div>'+''.join(
             f'<div class="dfp" style="--pc:{PC.get(pos or "", "var(--hair)")}"><i class="dfn"><b>{rd}.{pk:02d}</b><span>{e(pos or "")}</span></i>'
-            f'<div class="dfpl"><span class="dfpn"><b>{e(pl.replace("FootballTeam","Football Team"))}</b>{badge(nfl) if nfl else ""}</span>{tile(pl,pos,y,d,on)}</div>'
-            f'<div class="dfby"><i class="pav" data-avt="{e(by)}" aria-hidden="true"></i><span><b>{e(own(by))}</b>'+(f'<small class="dfvia"><i>via</i>{e(own(orig))}</small>' if orig!=by else '')+'</span></div></div>'
+            f'<div class="dfpl"><span class="dfpn"><b>{e(pl.replace("FootballTeam","Football Team"))}</b>{badge(nfl) if nfl else ""}</span>{nslot(pl,pos,y) if NFD else ""}{tile(pl,pos,y,d,on)}</div>'
+            f'<div class="dfby" title="{e(own(by))}{(" via "+e(own(orig))) if orig!=by else ""}"><i class="pav" data-avt="{e(by)}" aria-hidden="true"></i><span><b>{e(own(by))}</b>'+(f'<small class="dfvia"><i>via</i>{e(own(orig))}</small>' if orig!=by else '')+'</span></div></div>'
             for rd_,pk,slot,orig,by,pl,pos,nfl in rr)+'</div>')
     return ''.join(out)+'</div>'
 def section(years=None,idp='df'):

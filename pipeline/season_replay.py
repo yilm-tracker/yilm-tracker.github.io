@@ -16,7 +16,7 @@ BO='--build-only' in sys.argv  # re-sync code into an existing replay and rebuil
 CODE_RE=re.compile(r'\.(py|js|mjs|html|css)$')
 if BO:
     for f in os.listdir(SRC):
-        if (CODE_RE.search(f) or f=='champions.json') and f!='data_block.js' and not re.match(r'.*_(section|css)\.|standings\.html|DynastyStandings|po_static',f):
+        if (CODE_RE.search(f) or f in ('champions.json','nfl_draft.json')) and f!='data_block.js' and not re.match(r'.*_(section|css)\.|standings\.html|DynastyStandings|po_static',f):
             shutil.copy(os.path.join(SRC,f),os.path.join(WS,f))
     shutil.copy(os.path.join(SRC,'pos','build_pos.py'),os.path.join(WS,'pos','build_pos.py'))
 else:
