@@ -19,11 +19,11 @@ head=('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta 
 s=head+s.replace('<meta charset="utf-8">\n','',1)
 if PAST:UPD=''  # a finished season never changes: no update poller, no live scores
 else:UPD+='<script>'+open(P+'live.js',encoding='utf-8').read().replace("L='1335450123487961088'","L='"+os.environ.get('DT_LEAGUE',_j.load(open(P+'seasons.json'))['leagues'][CUR])+"'").replace("Y='2026'","Y='"+str(Y)+"'")+'</script>'  # this league's id and season (live.js came from the BBP tracker)  # in-page live scores (Matchups)
-# remember the selected tab / switches (per season; the tab itself is shared, so switching year keeps the section) across reloads (radio state), so a refresh comes back to the same view and
+# remember the switches (not the tab or group: Nicklaus 2026-11-03, every load opens the default or the #hash tab)
+# formerly: remember the selected tab / switches (per season; the tab itself is shared, so switching year keeps the section) across reloads (radio state), so a refresh comes back to the same view and
 # Safari's restored scroll position lands where it was instead of in the middle of Standings
 UPD+=('<script>(function(){var K="dt-radios'+('-'+Y if PAST else '')+'";try{var s=JSON.parse(sessionStorage.getItem(K)||"[]");'
-      's.forEach(function(id){var e=document.getElementById(id);if(e&&e.type==="radio")e.checked=true});'
-      'var tb=document.getElementById(sessionStorage.getItem("dt-tab")||"");if(tb&&tb.name==="tab")tb.checked=true}catch(e){}'
+      's.forEach(function(id){var e=document.getElementById(id);if(e&&e.type==="radio"&&e.name!=="tab"&&e.name!=="tgrp")e.checked=true})}catch(e){}'
       'document.addEventListener("change",function(ev){var t=ev.target;if(!t||t.type!=="radio")return;'
       'try{var ids=[].map.call(document.querySelectorAll("input[type=radio]:checked"),function(x){return x.id}).filter(Boolean);'
       'sessionStorage.setItem(K,JSON.stringify(ids));if(t.name==="tab")sessionStorage.setItem("dt-tab",t.id)}catch(e){}},true)})()</script>')

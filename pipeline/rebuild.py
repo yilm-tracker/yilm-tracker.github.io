@@ -213,5 +213,21 @@ if _DF:
         _DFCSS=(open(P+'draft_css.css',encoding='utf-8').read()+'#tab-df:checked~.tabs label[for="tab-df"]{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}#tab-df:checked~.pane-df{display:block}'
           '@media(max-width:1099px){nav.tabs>label.tpo{grid-column:span 2!important}nav.tabs>label[for="tab-df"],nav.tabs>label[for="tab-th"]{grid-column:span 3!important}}'
           '@media(min-width:1100px){nav.tabs{grid-template-columns:repeat(11,minmax(0,1fr))!important}}')
+# ---------- navigation groups (Nicklaus, 2026-11-03): the 11 tab buttons become 3 groups (nav.tabs, existing button
+# component) + a sub-tab row of the active group's tabs (.lbc pills, as in Stats). Group radios sit just before the
+# sticky .tnav band so CSS can show the right sub-tabs; new_tail.js keeps group and tab in step (and handles #hash links).
+def _navgroups(h):
+    import re as _re
+    m=_re.search(r'<nav class="tabs" aria-label="Sections">(.*?)</nav>',h,_re.S)
+    if not m:return h
+    labs=dict((a,b) for a,b in _re.findall(r'<label for="(tab-[a-z]+)"[^>]*>([^<]+)</label>',m.group(1)))
+    GR=[('gd','Game Day',['tab-st','tab-mu','tab-po']),('lab','The Lab',['tab-sx','tab-lb','tab-cm','tab-th']),('fo','Front Office',['tab-ro','tab-pl','tab-wr','tab-df'])]
+    GR=[(g,n,[t for t in ts if t in labs]) for g,n,ts in GR];GR=[x for x in GR if x[2]]
+    po=1 if (DONE>=14 and _dt_os.environ.get('DT_PAST')!='1') else 0
+    rad=''.join(f'<input type="radio" name="tgrp" id="grp-{g}" class="lr tgr"{" checked" if i==0 else ""}>' for i,(g,n,ts) in enumerate(GR))
+    top='<nav class="tabs" role="tablist" aria-label="Sections">'+''.join(f'<label for="grp-{g}" role="tab" id="gtab-{g}">{n}</label>' for g,n,ts in GR)+'</nav>'
+    sub='<div class="lbc tsub" role="tablist" aria-label="Pages">'+''.join(f'<label for="{t}" role="tab" class="g-{g}">{labs[t]}</label>' for g,n,ts in GR for t in ts)+'</div>'
+    return h[:m.start()]+rad+f'<div class="tnav" data-po="{po}">'+top+sub+'</div>'+h[m.end():]
+h=_navgroups(h)
 _i=h.rindex('</style>');h=h[:_i]+open(P+'readability.css',encoding='utf-8').read()+_LG+(_PLCSS if _PL else '')+_WRCSS+_DFCSS+('.tabs label.tpo{grid-column:1 / -1!important}' if _TH_OFF and not _PL else '.tabs label.tpo{grid-column:span 2!important}' if not _TH_OFF and _PL else '')+h[_i:]
 open(P+'standings.html','w',encoding='utf-8').write(h+d+t)

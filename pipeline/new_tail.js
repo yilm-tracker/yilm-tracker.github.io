@@ -363,4 +363,36 @@ function simGap(){if(innerWidth<1100)return;const t=document.querySelector('.dtp
 if(typeof dtab==='function'){const _dt0=dtab;dtab=function(){const r=_dt0.apply(this,arguments);requestAnimationFrame(simGap);return r}}
 (()=>{let q=0;new MutationObserver(ms=>{if(q||innerWidth<1100)return;if(!ms.some(m=>m.target.closest&&m.target.closest('.dtp')))return;q=requestAnimationFrame(()=>{q=0;simGap()})}).observe(document.body,{childList:true,subtree:true})})();
 document.fonts&&document.fonts.ready.then(()=>requestAnimationFrame(simGap));addEventListener('resize',()=>setTimeout(simGap,200));
+// Navigation groups (Nicklaus, 2026-11-03). Group follows the selected tab (labels, the FAAB tile, code, #hash);
+// picking a group opens its first tab (Game Day opens Playoffs once Week 14 is done, current season only).
+// Defaults: Game Day > Standings (Playoffs in the playoffs); a #hash deep link wins. No tab is remembered.
+(function(){const nav=document.querySelector('.tnav');if(!nav)return;
+ const GR={gd:['tab-st','tab-mu','tab-po'],lab:['tab-sx','tab-lb','tab-cm','tab-th'],fo:['tab-ro','tab-pl','tab-wr','tab-df']};
+ const has=id=>!!document.getElementById(id),grpOf=id=>Object.keys(GR).find(g=>GR[g].includes(id)),PO=nav.dataset.po==='1';
+ const first=g=>(g==='gd'&&PO&&has('tab-po'))?'tab-po':GR[g].find(has);
+ const SLUG={standings:'tab-st',matchups:'tab-mu',playoffs:'tab-po',stats:'tab-sx',leaderboards:'tab-lb',compare:'tab-cm','team-hub':'tab-th',teamhub:'tab-th',hub:'tab-th',rosters:'tab-ro',players:'tab-pl','the-wire':'tab-wr',wire:'tab-wr',drafts:'tab-df'};
+ function fromHash(){let h='';try{h=decodeURIComponent(location.hash.slice(1)).trim().toLowerCase()}catch(_){}if(!h)return null;
+   const id=SLUG[h]||(/^tab-[a-z]{2}$/.test(h)?h:null);return id&&has(id)&&grpOf(id)?id:null}
+ const tabs=()=>[...nav.querySelectorAll('[role=tab]')];
+ document.querySelectorAll('input.tabr,input.tgr').forEach(i=>{i.tabIndex=-1;i.setAttribute('aria-hidden','true')});
+ function aria(){const rows=[nav.querySelector('nav.tabs'),nav.querySelector('.tsub')];
+   rows.forEach(row=>{if(!row)return;const L=[...row.querySelectorAll('label')];L.forEach(l=>{const on=!!document.getElementById(l.htmlFor)?.checked;l.setAttribute('aria-selected',on);l.tabIndex=on?0:-1})})}
+ function subFit(){const row=nav.querySelector('.tsub');if(!row)return;row.style.removeProperty('--tsp');row.style.removeProperty('--tsl');
+   if(innerWidth>=1100)return;let p=12,ls=.06;const over=()=>row.scrollWidth>row.clientWidth+.5;
+   while(over()&&p>6){p-=1;row.style.setProperty('--tsp',p+'px')}
+   while(over()&&ls>0){ls=Math.max(0,+(ls-.01).toFixed(2));row.style.setProperty('--tsl',ls+'em')}}
+ function sync(){const t=document.querySelector('input[name=tab]:checked'),g=(t&&grpOf(t.id))||'gd',r=document.getElementById('grp-'+g);
+   if(r&&!r.checked)r.checked=true;aria();subFit()}
+ function pick(id){const t=id&&document.getElementById(id);if(!t)return;if(!t.checked){t.checked=true;t.dispatchEvent(new Event('change',{bubbles:true}))}sync()}
+ document.addEventListener('change',e=>{const t=e.target;if(!t||t.type!=='radio')return;
+   if(t.name==='tgrp'){const g=t.id.slice(4),cur=document.querySelector('input[name=tab]:checked');if(!cur||grpOf(cur.id)!==g)pick(first(g));else sync()}
+   else if(t.name==='tab')sync()});
+ nav.addEventListener('keydown',e=>{const l=e.target.closest&&e.target.closest('[role=tab]');if(!l)return;const row=[...l.parentElement.querySelectorAll('[role=tab]')].filter(x=>x.offsetParent);
+   let i=row.indexOf(l),j=i;if(e.key==='ArrowRight')j=(i+1)%row.length;else if(e.key==='ArrowLeft')j=(i-1+row.length)%row.length;else if(e.key==='Home')j=0;else if(e.key==='End')j=row.length-1;
+   else if(e.key==='Enter'||e.key===' '){e.preventDefault();l.click();requestAnimationFrame(()=>{const n=nav.querySelector('label[for="'+l.htmlFor+'"]');n&&n.focus()});return}else return;
+   e.preventDefault();row[j].click();requestAnimationFrame(()=>{const sel=[...row[j].parentElement.querySelectorAll('[role=tab][aria-selected=true]')][0]||row[j];sel.focus()})});
+ addEventListener('hashchange',()=>{const id=fromHash();if(id)pick(id)});
+ addEventListener('resize',()=>requestAnimationFrame(subFit));document.fonts&&document.fonts.ready.then(subFit);
+ try{history.scrollRestoration='manual'}catch(_){}
+ pick(fromHash()||first('gd'));sync()})();
 </script>

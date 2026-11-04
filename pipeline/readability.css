@@ -1130,3 +1130,17 @@ html:root{--text-dim:var(--dim);--faab-ink:var(--pg)}  /* --text-dim = YILM mute
  .txfo.txn3 .txt .txl{grid-column:3;grid-row:1}
  .txfo.txn3 .txt .txw{grid-column:4;grid-row:1}
 }
+
+/* 2026-11-03 (Nicklaus) NAVIGATION GROUPS: sticky band .tnav = the old nav band (same bg, plate rule, padding, margins);
+   row 1 = nav.tabs (existing nav button), 3 groups; row 2 = .lbc.tsub (existing Stats pill) with only the active group's tabs.
+   Rows 6px apart (8px desktop), 16px from the content edges. subFit() (new_tail.js) eases pill padding/letter-spacing at 360. */
+.tnav{position:sticky;top:0;z-index:20;margin:6px -16px 16px;padding:8px 16px;background:var(--pg,var(--ink));border-bottom:1px solid var(--hair)}
+.tnav nav.tabs{position:static;margin:0!important;padding:0!important;border:0!important;background:none!important;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+.tnav nav.tabs>label{grid-column:auto!important}
+.tnav .lbc.tsub{display:flex;flex-wrap:nowrap;overflow:visible;gap:8px;margin:6px 0 0;padding:0}
+.tnav .tsub label{flex:1 1 auto;text-align:center;padding-left:var(--tsp,12px);padding-right:var(--tsp,12px);letter-spacing:var(--tsl,.06em)}
+@media(min-width:1100px){.tnav nav.tabs{gap:8px!important}.tnav .lbc.tsub{margin-top:8px}.tnav .tsub label{flex:none}}
+#grp-gd:checked~.tnav .tsub label:not(.g-gd){display:none}#grp-lab:checked~.tnav .tsub label:not(.g-lab){display:none}#grp-fo:checked~.tnav .tsub label:not(.g-fo){display:none}
+#grp-gd:checked~.tnav nav.tabs label[for="grp-gd"],#grp-lab:checked~.tnav nav.tabs label[for="grp-lab"],#grp-fo:checked~.tnav nav.tabs label[for="grp-fo"]{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}
+#tab-st:checked~.tnav .tsub label[for="tab-st"],#tab-mu:checked~.tnav .tsub label[for="tab-mu"],#tab-po:checked~.tnav .tsub label[for="tab-po"],#tab-sx:checked~.tnav .tsub label[for="tab-sx"],#tab-lb:checked~.tnav .tsub label[for="tab-lb"],#tab-cm:checked~.tnav .tsub label[for="tab-cm"],#tab-th:checked~.tnav .tsub label[for="tab-th"],#tab-ro:checked~.tnav .tsub label[for="tab-ro"],#tab-pl:checked~.tnav .tsub label[for="tab-pl"],#tab-wr:checked~.tnav .tsub label[for="tab-wr"],#tab-df:checked~.tnav .tsub label[for="tab-df"]{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}
+.tnav label:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
