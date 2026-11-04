@@ -54,6 +54,13 @@ def career(pl,pos,y,d):
     r=pts(pl,pos,y,d)
     if not r:return ''
     return f'<span class="dfcq" title="{e(r[2])}"><span class="dfcp"><b>{r[0]:,.0f}</b></span></span>'
+def tile(pl,pos,y,d,on):
+    """list view (2026-11-03): points tile at the right of the player cell; '–' when the player has none yet;
+    nothing when the draft has no points data at all (offline builds)"""
+    if not on:return ''
+    r=pts(pl,pos,y,d)
+    if not r:return '<span class="dftl z" title="No points yet">–</span>'
+    return f'<span class="dftl" title="{e(r[2])}">{r[0]:,.0f}</span>'
 def board(y,d,rows,snake,T):
     """desktop draft board: columns = draft slots (round-1 original owner), rows = rounds"""
     T=max([T]+[r[2] or r[1] for r in rows]);rds=sorted({r[0] for r in rows})
@@ -121,9 +128,11 @@ def year_panel(y,d):
     out.append('<div class="dfo"><span class="dfol">Original order</span><div class="dfos">'+''.join(f'<span class="dfoi"><em>{r[2] or r[1]}</em><i class="pav" data-avt="{e(r[3])}" aria-hidden="true"></i><b>{e(own(r[3]))}</b></span>' for r in r1)+'</div></div>')
     for rd in sorted({r[0] for r in rows}):
         rr=sorted([r for r in rows if r[0]==rd],key=lambda r:r[1])
-        out.append(f'<div class="dfr"><div class="dfrh" role="row"><span>R{rd}</span><span class="dfhp"><i>Player</i><i>{"Pts since ’"+str(int(str(y)[:4])%100).zfill(2) if d.get("type")=="startup" else "Rookie Pts"}</i></span><span class="dfhg">GM</span></div>'+''.join(
+        on=any(pts(r[5],r[6],y,d) for r in rows)
+        tw=max([3]+[len(f'{pts(r[5],r[6],y,d)[0]:,.0f}') for r in rr if pts(r[5],r[6],y,d)])
+        out.append(f'<div class="dfr" style="--dftw:{tw}"><div class="dfrh" role="row"><span>R{rd}</span><span class="dfhp"><i>Player</i>{("<i class=dfhr>"+("Pts" if d.get("type")=="startup" else "RPts")+"</i>") if on else ""}</span><span class="dfhg">GM</span></div>'+''.join(
             f'<div class="dfp" style="--pc:{PC.get(pos or "", "var(--hair)")}"><i class="dfn"><b>{rd}.{pk:02d}</b><span>{e(pos or "")}</span></i>'
-            f'<div class="dfpl"><span class="dfpn"><b>{e(pl)}</b>{badge(nfl) if nfl else ""}</span>{career(pl,pos,y,d)}</div>'
+            f'<div class="dfpl"><span class="dfpn"><b>{e(pl.replace("FootballTeam","Football Team"))}</b>{badge(nfl) if nfl else ""}</span>{tile(pl,pos,y,d,on)}</div>'
             f'<div class="dfby"><i class="pav" data-avt="{e(by)}" aria-hidden="true"></i><span><b>{e(own(by))}</b>'+(f'<small class="dfvia"><i>via</i>{e(own(orig))}</small>' if orig!=by else '')+'</span></div></div>'
             for rd_,pk,slot,orig,by,pl,pos,nfl in rr)+'</div>')
     return ''.join(out)+'</div>'
@@ -240,7 +249,7 @@ CSS="""
 if __name__=='__main__':
     s=section()
     if s:
-        open(P+'draft_section.html','w',encoding='utf-8').write(s[0]+'<script>(function(){function fz(b,m){b.style.fontSize="";b.style.whiteSpace="";var s=parseFloat(getComputedStyle(b).fontSize),o=function(){return b.scrollWidth>b.clientWidth+.5||b.parentElement.scrollWidth>b.parentElement.clientWidth+.5};while(o()&&s>m){s-=.5;b.style.fontSize=s+"px"}if(o()){b.style.fontSize="";b.style.whiteSpace="normal";s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>7){s-=.5;b.style.fontSize=s+"px"}}}function f(){document.querySelectorAll(".dfcn b,.dfcn small,.dfgt b").forEach(function(b){if(b.offsetParent)fz(b,11)});document.querySelectorAll(".dfct,.dfcr").forEach(function(b){if(b.offsetParent)fz(b,8.5)});document.querySelectorAll(".dfpl b").forEach(function(b){if(!b.offsetParent)return;b.style.fontSize="";b.style.whiteSpace="";var p=b.parentElement,s0=parseFloat(getComputedStyle(b).fontSize),s=s0,o=function(){return b.scrollWidth>b.clientWidth+.5||p.scrollWidth>p.clientWidth+.5};while(o()&&s>13){s-=.5;b.style.fontSize=s+"px"}if(o()){b.style.fontSize="";b.style.whiteSpace="normal"}});document.querySelectorAll(".dfby").forEach(function(c){if(!c.offsetParent)return;c.style.removeProperty("--dfz");var z=1;while(c.scrollWidth>c.clientWidth+.5&&z>.7){z-=.04;c.style.setProperty("--dfz",z.toFixed(2))}})}f();addEventListener("resize",function(){requestAnimationFrame(f)});document.addEventListener("change",function(){requestAnimationFrame(f)});document.fonts&&document.fonts.ready.then(f)})()</script>')
+        open(P+'draft_section.html','w',encoding='utf-8').write(s[0]+'<script>(function(){function fz(b,m){b.style.fontSize="";b.style.whiteSpace="";var s=parseFloat(getComputedStyle(b).fontSize),o=function(){return b.scrollWidth>b.clientWidth+.5||b.parentElement.scrollWidth>b.parentElement.clientWidth+.5};while(o()&&s>m){s-=.5;b.style.fontSize=s+"px"}if(o()){b.style.fontSize="";b.style.whiteSpace="normal";s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>7){s-=.5;b.style.fontSize=s+"px"}}}function f(){document.querySelectorAll(".dfcn b,.dfcn small,.dfgt b").forEach(function(b){if(b.offsetParent)fz(b,11)});document.querySelectorAll(".dfct,.dfcr").forEach(function(b){if(b.offsetParent)fz(b,8.5)});document.querySelectorAll(".dfpl b").forEach(function(b){if(!b.offsetParent)return;b.style.fontSize="";b.style.whiteSpace="";var p=b.parentElement,s0=parseFloat(getComputedStyle(b).fontSize),s=s0,o=function(){return b.scrollWidth>b.clientWidth+.5||p.scrollWidth>p.clientWidth+.5};while(o()&&s>13){s-=.5;b.style.fontSize=s+"px"}if(o()){b.style.fontSize="";b.style.whiteSpace="normal";s=s0;while(o()&&s>10){s-=.5;b.style.fontSize=s+"px"}}});document.querySelectorAll(".dfby").forEach(function(c){if(!c.offsetParent)return;c.style.removeProperty("--dfz");var z=1;while(c.scrollWidth>c.clientWidth+.5&&z>.7){z-=.04;c.style.setProperty("--dfz",z.toFixed(2))}})}f();addEventListener("resize",function(){requestAnimationFrame(f)});document.addEventListener("change",function(){requestAnimationFrame(f)});document.fonts&&document.fonts.ready.then(f)})()</script>')
         open(P+'draft_css.css','w',encoding='utf-8').write(CSS+s[1])
         print('drafts',len(D))
     else:print('no drafts')

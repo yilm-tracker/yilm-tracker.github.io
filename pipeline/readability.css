@@ -1144,3 +1144,23 @@ html:root{--text-dim:var(--dim);--faab-ink:var(--pg)}  /* --text-dim = YILM mute
 #grp-gd:checked~.tnav nav.tabs label[for="grp-gd"],#grp-lab:checked~.tnav nav.tabs label[for="grp-lab"],#grp-fo:checked~.tnav nav.tabs label[for="grp-fo"]{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}
 #tab-st:checked~.tnav .tsub label[for="tab-st"],#tab-mu:checked~.tnav .tsub label[for="tab-mu"],#tab-po:checked~.tnav .tsub label[for="tab-po"],#tab-sx:checked~.tnav .tsub label[for="tab-sx"],#tab-lb:checked~.tnav .tsub label[for="tab-lb"],#tab-cm:checked~.tnav .tsub label[for="tab-cm"],#tab-th:checked~.tnav .tsub label[for="tab-th"],#tab-ro:checked~.tnav .tsub label[for="tab-ro"],#tab-pl:checked~.tnav .tsub label[for="tab-pl"],#tab-wr:checked~.tnav .tsub label[for="tab-wr"],#tab-df:checked~.tnav .tsub label[for="tab-df"]{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}
 .tnav label:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+
+/* 2026-11-03 (Nicklaus) Drafts list: points tile at the right of the player cell (16px to the GM divider), one width per
+   round (--dftw = widest value, at least "100"); every row in a round as tall as the tallest; RPTS header over the tiles.
+   Original order logos 40px (36px at <=380). */
+.dfr{display:grid;grid-template-rows:auto;grid-auto-rows:1fr}
+.dfr .dfp .dfpl{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;padding:6px 6px 6px 0!important}  /* + the 10px column gap = 16px to the GM divider */
+.dfr .dfp .dfpl .dfpn{flex:1 1 auto;min-width:0;padding-right:0!important;justify-self:auto}
+.dftl{flex:none;margin-left:auto;display:inline-grid;place-items:center;box-sizing:border-box;min-width:calc(var(--dftw,3) * .5em + 16px);padding:5px 8px;border-radius:4px;background:var(--row-divider);box-shadow:var(--sh-hard);font:700 15px/1 var(--display);letter-spacing:0;font-variant-numeric:tabular-nums;color:var(--chalk);text-box:trim-both cap alphabetic}
+@supports not (text-box:trim-both cap alphabetic){.dftl{padding:4px 8px 3px}}
+.dftl.z{color:var(--text-dim)}
+.dfrh{color:var(--text-dim)!important}
+.dfrh .dfhp{display:flex!important;justify-content:space-between;align-items:center;padding-right:6px}
+.dfrh .dfhp i+i::before{content:none!important}
+.dfhr{text-align:right}
+.dfos{gap:8px!important}
+.dfoi{gap:6px!important}
+.dfoi .pav{width:40px!important;height:40px!important}
+@media(max-width:380px){.dfoi .pav{width:36px!important;height:36px!important}}
+@media(max-width:380px){.dfr .dfp .dfpl{padding-right:8px!important}.dfrh .dfhp{padding-right:8px}}  /* column gap is 8px here: still 16px to the GM divider */
+@media(max-width:380px){.dftl{padding-left:6px;padding-right:6px;min-width:calc(var(--dftw,3) * .5em + 12px)}.dfr .dfp .dfpl{gap:8px!important}}  /* startup drafts (4-digit totals) still leave room for the name at 360 */
