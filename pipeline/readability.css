@@ -1137,7 +1137,7 @@ html:root{--text-dim:var(--dim);--faab-ink:var(--pg)}  /* --text-dim = YILM mute
 .tnav{position:sticky;top:0;z-index:20;margin:6px -16px 16px;padding:8px 16px;background:var(--pg,var(--ink));border-bottom:1px solid var(--hair)}
 .tnav nav.tabs{position:static;margin:0!important;padding:0!important;border:0!important;background:none!important;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
 .tnav nav.tabs>label{grid-column:auto!important}
-.tnav .lbc.tsub{display:flex;flex-wrap:nowrap;overflow:visible;gap:8px;margin:6px 0 0;padding:0}
+.tnav .lbc.tsub{display:flex;flex-wrap:nowrap;overflow:visible;gap:var(--tsg,8px);margin:6px 0 0;padding:0}
 .tnav .tsub label{flex:1 1 auto;text-align:center;padding-left:var(--tsp,12px);padding-right:var(--tsp,12px);letter-spacing:var(--tsl,.06em)}
 @media(min-width:1100px){.tnav nav.tabs{gap:8px!important}.tnav .lbc.tsub{margin-top:8px}.tnav .tsub label{flex:none}}
 #grp-gd:checked~.tnav .tsub label:not(.g-gd){display:none}#grp-lab:checked~.tnav .tsub label:not(.g-lab){display:none}#grp-fo:checked~.tnav .tsub label:not(.g-fo){display:none}

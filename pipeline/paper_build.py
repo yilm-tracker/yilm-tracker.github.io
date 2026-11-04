@@ -1,0 +1,409 @@
+import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).removesuffix('/pos')+'/'
+# PAPER TRAIL tab (Front Office, after Drafts; Nicklaus 2026-11-04). Identical file in both trackers.
+#   BBP (dynasty): every draft pick's chain of owners (season + round + ORIGINAL team) and every player's moves since
+#     2021, from the normalised MFL 2021-24 + Sleeper 2025+ log (history/paper_audit.py over history/paper/, refreshed
+#     by history/paper_pull.mjs in weekly runs). Import picks that only re-create an end-of-MFL roster spot are hidden
+#     (carryover); a pick that changed hands with no transaction gets a "commissioner move, no trade logged" step.
+#   YILM (redraft): players only, from the saved Sleeper captures (history/raw/<year>/core.json.gz) plus the season's
+#     draft (history/drafts.json, CI only).
+# Writes paper_section.html (lists, sheet shell, data PT, script) and paper_css.css. Rows of the sheets are rendered by
+# the script from PT; deep links #paper-trail/pick/<year>-<round>-<team slug> and #paper-trail/player/<sleeper id>.
+import json,html,re,os,sys,gzip,collections,datetime as dt
+from zoneinfo import ZoneInfo
+P=__DTP__
+e=html.escape
+ET=ZoneInfo('America/New_York')
+sys.path.insert(0,P)
+from nfl_colors import badge_c as badge
+PC={'QB':'#f7739c','RB':'#3ddcc1','WR':'#5ec6f4','TE':'#fca95c','K':'#c491ff','DEF':'#c98a72'}
+def day(ms):return dt.datetime.fromtimestamp(ms/1000,dt.timezone.utc).astimezone(ET).strftime('%Y-%m-%d')
+def slug(t):return re.sub(r'[^a-z0-9]+','-',str(t).lower()).strip('-')
+SEASON=int(os.environ.get('DT_SEASON') or 0) or None
+def nk(n):
+    n=str(n or '');n=re.sub(r"[.'’`,]",'',n.lower()).replace('-',' ');n=re.sub(r'\b(jr|sr|ii|iii|iv|v)\b','',n);return re.sub(r'\s+',' ',n).strip()
+
+T=[];TI={}
+def ti(name):
+    if name is None:return -1
+    if name not in TI:TI[name]=len(T);T.append(name)
+    return TI[name]
+PL={}        # sid -> [name, pos, nfl, current team idx]
+H=collections.defaultdict(list)   # sid -> rows [season, date, kind, a, b, x]
+K={};C={}    # picks: key -> [year, round, orig idx, owner idx, used label, used sid]; key -> chain rows
+SRC={}       # season -> 'MFL' | 'Sleeper'
+PICKS=False
+
+if _dt_os.path.exists(P+'history/paper/sleeper_2025.json'):
+    # ------------------------------------------------------------------ BBP: MFL + Sleeper, picks and players
+    PICKS=True
+    sys.path.insert(0,P+'history')
+    import paper_audit as A
+    SP=A.SP
+    for y in A.MY:SRC[y]='MFL'
+    for y in A.SY:SRC[y]='Sleeper'
+    last=A.SY[max(A.SY)]
+    HOLD={}
+    for r in last['rosters']:
+        for p in r['players'] or []:HOLD[p]=A.ST.get(r['roster_id'])
+    for t in sorted(set(A.ST.values())):ti(t)
+    def pkey(k):
+        m=re.match(r'(\d+) R(\d+) \((.*)\)',k);return (int(m.group(1)),int(m.group(2)),m.group(3)) if m else None
+    def kslug(y,r,o):return f'{y}-{r}-{slug(o)}'
+    def ref(m):
+        if m[0]=='player':return 'p'+str(m[1])
+        if m[0]=='pick':
+            q=pkey(m[1]);return 'k'+kslug(*q) if q else None
+        if m[0]=='faab':return '$'+(f'{m[1]:g}')
+    DPOS={}  # fantasy position from the drafts when Sleeper lists a non-fantasy one (Travis Hunter: CB)
+    for _y,_d in A.SY.items():
+        for _dd in _d['drafts']:
+            for _p in _dd['picks'] or []:
+                _q=(_p.get('metadata') or {}).get('position')
+                if _q in PC:DPOS[str(_p['player_id'])]=_q
+    def pinfo(sid):
+        if sid not in PL:
+            s=SP.get(sid) or [sid,None,None]
+            pos=s[1] if s[1] in PC else DPOS.get(sid,s[1] or '')
+            PL[sid]=[s[0],pos,s[2] or '',ti(HOLD.get(sid))]
+    def dlabel(ev):
+        y,r,s=ev['slot']
+        if ev.get('kind') in('import','supplemental'):s=ev['pick_no']-(r-1)*10
+        return f'{r}.{s:02d}'
+    for ev in A.EV:
+        y=ev['season'];d=day(ev['ts']);ty=ev['type']
+        if ev.get('carryover'):continue
+        for m in ev['moves']:
+            if m[0]!='player':continue
+            sid=str(m[1]);pinfo(sid)
+            if ty=='trade':
+                ret=[x for x in (ref(mm) for mm in ev['moves'] if m[2] is not None and mm[3]==m[2]) if x]
+                wth=[x for x in (ref(mm) for mm in ev['moves'] if mm is not m and mm[2]==m[2] and mm[3]==m[3]) if x]
+                H[sid].append([y,d,'T',ti(m[3]),ti(m[2]),ret,wth])
+            elif ty=='draft':
+                kd={'startup':'s','rookie':'r','import':'i','supplemental':'p'}.get(ev.get('kind'),'r')
+                q=pkey(ev['pick']) if ev.get('pick') else None
+                H[sid].append([y,d,'R',ti(m[3]),-1,[dlabel(ev),kd,kslug(*q) if q else '']])
+            elif ty in('waiver','free_agent','commissioner'):
+                if m[3]:
+                    k={'waiver':'W','free_agent':'A','commissioner':'CA'}[ty]
+                    H[sid].append([y,d,k,ti(m[3]),-1,[f'{ev["bid"]:g}'] if k=='W' and ev.get('bid') is not None else []])
+                if m[2]:H[sid].append([y,d,'CD' if ty=='commissioner' else 'D',-1,ti(m[2]),[]])
+    # picks: every season/round/team from the first rookie draft to the furthest future pick
+    rounds=int((last['league'].get('settings') or {}).get('draft_rounds') or 4)
+    yrs=[int(k[:4]) for k in A.CH]+[int(tp['season']) for tp in last.get('traded_picks') or []]
+    cur=int(last['league']['season']);Y0=2022;Y1=max(yrs+[cur+2])
+    steps=collections.defaultdict(list)
+    for ev in A.EV:
+        for m in ev['moves']:
+            if m[0]=='pick' and pkey(m[1]):steps[pkey(m[1])].append((ev,m))
+        if ev['type']=='draft' and ev.get('pick') and pkey(ev['pick']):steps[pkey(ev['pick'])].append((ev,None))
+    for y in range(Y0,Y1+1):
+        for r in range(1,rounds+1):
+            for o in sorted(set(A.ST.values())):
+                q=(y,r,o);key=kslug(*q);own=o;rows=[];used=None
+                for ev,m in sorted(steps.get(q,[]),key=lambda z:z[0]['ts']):
+                    d=day(ev['ts'])
+                    if m is None:  # used in a draft
+                        by=ev['teams'][0]
+                        if by!=own:rows.append([ev['season'],d,'M',ti(by),ti(own),[]]);own=by
+                        sid=str(ev['moves'][0][1]);pinfo(sid);used=[dlabel(ev),sid]
+                        rows.append([ev['season'],d,'U',ti(by),-1,[dlabel(ev),sid]]);continue
+                    if m[2]!=own:rows.append([ev['season'],d,'M',ti(m[2]),ti(own),[]])
+                    ret=[x for x in (ref(mm) for mm in ev['moves'] if mm[3]==m[2]) if x]
+                    wth=[x for x in (ref(mm) for mm in ev['moves'] if mm is not m and mm[2]==m[2] and mm[3]==m[3]) if x]
+                    rows.append([ev['season'],d,'T',ti(m[3]),ti(m[2]),ret,wth]);own=m[3]
+                if y<=cur and not used and y<2025 and not rows:continue
+                K[key]=[y,r,ti(o),ti(own),used[0] if used else '',used[1] if used else '']
+                C[key]=rows
+    TEAMNOW=sorted(set(A.ST.values()))
+else:
+    # ------------------------------------------------------------------ YILM: Sleeper captures, players only
+    ROOT=P.split('/.season/')[0]+'/pipeline/' if '/.season/' in P else P
+    RAW=ROOT+'history/raw/'
+    yrs=sorted(int(y) for y in os.listdir(RAW) if y.isdigit() and os.path.exists(RAW+y+'/core.json.gz')) if os.path.isdir(RAW) else []
+    if SEASON:yrs=[y for y in yrs if y<=SEASON]
+    CORE={y:json.load(gzip.open(RAW+f'{y}/core.json.gz')) for y in yrs}
+    PLM={}
+    for y in yrs:
+        try:PLM.update(next(iter(json.load(gzip.open(RAW+f'{y}/players.json.gz')).values())))
+        except Exception:pass
+    def g(C_,suf):return next((v for k,v in C_.items() if re.search(r'/league/\d+'+suf+'$',k)),None)
+    cy=max(yrs) if yrs else None
+    def tname(u):
+        md=(u or {}).get('metadata') or {};return md.get('team_name') or (u or {}).get('display_name')
+    NOW={}  # owner id -> current team name
+    if cy:
+        try:
+            import lg as _lg;RN=_lg.RN
+        except Exception:RN={}
+        U={u['user_id']:u for u in g(CORE[cy],'/users') or []}
+        for r in g(CORE[cy],'/rosters') or []:NOW[r['owner_id']]=RN.get(r['roster_id']) or tname(U.get(r['owner_id']))
+    RT={}   # (year, roster id) -> team name (current name of the same manager when he is still in the league)
+    for y in yrs:
+        U={u['user_id']:u for u in g(CORE[y],'/users') or []}
+        for r in g(CORE[y],'/rosters') or []:RT[(y,r['roster_id'])]=NOW.get(r['owner_id']) or tname(U.get(r['owner_id'])) or f'Team {r["roster_id"]}'
+    for t in sorted(set(NOW.values())):ti(t)
+    HOLD={}
+    if cy:
+        for r in g(CORE[cy],'/rosters') or []:
+            for p in r.get('players') or []:HOLD[p]=RT.get((cy,r['roster_id']))
+    def pinfo(sid):
+        if sid not in PL:
+            p=PLM.get(sid) or {}
+            nm=p.get('full_name') or ' '.join(x for x in (p.get('first_name'),p.get('last_name')) if x) or sid
+            PL[sid]=[nm,p.get('position') or '',p.get('team') or '',ti(HOLD.get(sid))]
+    EVS=[]
+    for y in yrs:
+        SRC[y]='Sleeper'
+        for k,v in CORE[y].items():
+            if '/transactions/' not in k:continue
+            for t in v or []:
+                if t.get('status')=='complete':EVS.append((y,t))
+    by_nm=collections.defaultdict(list)
+    for sid,p in PLM.items():by_nm[(nk(p.get('full_name') or ''),p.get('position'))].append(sid)
+    DR=json.load(open(P+'history/drafts.json',encoding='utf-8')) if _dt_os.path.exists(P+'history/drafts.json') else {}
+    for ys,dd in DR.items():
+        try:y=int(ys)
+        except Exception:continue
+        if y not in yrs:continue
+        raw=(dd.get('raw') or {}).get('picks') or []
+        nt=int(dd.get('teams') or len(NOW) or 12);dd_=day(dd['start']) if dd.get('start') else f'{y}-08-31'
+        for i,row in enumerate(dd.get('picks') or []):
+            rd,pk,sl,orig,byn,pname,pos=row[:7]
+            c=by_nm.get((nk(pname),pos)) or []
+            if len(c)!=1:continue
+            rid=raw[i][3] if i<len(raw) and len(raw[i])>3 else None
+            team=RT.get((y,rid)) or byn
+            sid=c[0];pinfo(sid)
+            H[sid].append([y,dd_,'R',ti(team),-1,[f'{rd}.{int(pk)-(int(rd)-1)*nt:02d}','d','']])
+    for y,t in sorted(EVS,key=lambda z:z[1].get('status_updated') or z[1].get('created') or 0):
+        d=day(t.get('status_updated') or t.get('created'));ty=t['type'];RN_=lambda rid:RT.get((y,rid))
+        adds=t.get('adds') or {};drops=t.get('drops') or {}
+        if ty=='trade':
+            for sid,rid in adds.items():
+                pinfo(sid);frm=drops.get(sid)
+                ret=['p'+s2 for s2,r2 in adds.items() if frm is not None and r2==frm]+[f'${w["amount"]:g}' for w in t.get('waiver_budget') or [] if frm is not None and w['receiver']==frm]
+                wth=['p'+s2 for s2,r2 in adds.items() if s2!=sid and r2==rid and drops.get(s2)==frm]
+                H[sid].append([y,d,'T',ti(RN_(rid)),ti(RN_(frm)) if frm else -1,ret,wth])
+            continue
+        for sid,rid in adds.items():
+            pinfo(sid);k={'waiver':'W','free_agent':'A','commissioner':'CA'}.get(ty,'A')
+            bid=(t.get('settings') or {}).get('waiver_bid')
+            H[sid].append([y,d,k,ti(RN_(rid)),-1,[f'{bid:g}'] if k=='W' and bid is not None else []])
+        for sid,rid in drops.items():
+            pinfo(sid);H[sid].append([y,d,'CD' if ty=='commissioner' else 'D',-1,ti(RN_(rid)),[]])
+    TEAMNOW=sorted(set(NOW.values()))
+
+# every row in date order (stable: a draft or claim before a same-day drop)
+for sid in H:H[sid].sort(key=lambda r:(r[1],{'R':0,'T':1,'W':2,'A':2,'CA':2,'M':3,'D':4,'CD':4,'U':5}.get(r[2],3)))
+PT=dict(T=T,S={str(k):v for k,v in SRC.items()},P=PL,H=H,K=K,C=C,Z={t:slug(t) for t in T})
+_js=json.dumps(PT,separators=(',',':'),ensure_ascii=False)
+if __name__=='__main__' and '--stats' in sys.argv:
+    print('teams',len(T),'players',len(PL),'rows',sum(len(v) for v in H.values()),'picks',len(K),'chain rows',sum(len(v) for v in C.values()),'json',len(_js))
+    raise SystemExit
+
+# ====================================================================== page
+CUR=max(SRC) if SRC else 0
+FIRST=min(SRC) if SRC else 0
+def av(t,cls=''):return f'<i class="pav{(" "+cls) if cls else ""}" data-avt="{e(t)}" aria-hidden="true"></i>'
+out=[f'<section class="ptx" aria-labelledby="pth"><div class="posh"><b id="pth">Paper Trail</b><span class="wsub">'
+     +(f'Every pick and every player move since {FIRST} · tap one for its full history' if PICKS else f'Every player move since {FIRST} · tap a player for his full history')
+     +'</span></div>']
+if PICKS:
+    out.append('<div class="ptsw" role="group" aria-label="Show"><button type="button" class="ptb on" data-v="k" aria-pressed="true">Picks</button>'
+               '<button type="button" class="ptb" data-v="p" aria-pressed="false">Players</button></div>')
+    years=sorted({v[0] for v in K.values()})
+    past={v[0] for v in K.values() if v[4]}
+    dflt=next((y for y in years if y not in past),years[-1])
+    out.append('<div class="ptv ptv-k">'+''.join(f'<input type="radio" name="pty" id="pty-{y}" class="lr"{" checked" if y==dflt else ""}>' for y in years))
+    out.append(f'<div class="ptyb yrs n{len(years)}" role="group" aria-label="Draft year">'+''.join(
+        f'<label class="yb" for="pty-{y}"><b>{y}</b><small>{"Drafted" if y in past else "Future"}</small></label>' for y in years)+'</div>')
+    for y in years:
+        out.append(f'<div class="ptyx ptyx-{y}">')
+        ks=[k for k,v in K.items() if v[0]==y]
+        for r in sorted({K[k][1] for k in ks}):
+            rk=[k for k in ks if K[k][1]==r]
+            rk.sort(key=lambda k:(K[k][4] or 'z',T[K[k][2]]))
+            rows=[]
+            for k in rk:
+                yy,rr,o,own,lab,sid=K[k];n=sum(1 for x in C[k] if x[2] in('T','M'))
+                if lab:
+                    pl=PL.get(sid) or ['?','','',-1]
+                    tile=f'<i class="ptn{"" if pl[1] in PC else " ptn0"}" style="--pc:{PC.get(pl[1],"var(--row-divider)")}"><b>{lab}</b><span>{e(pl[1])}</span></i>'
+                    sub=f'<span class="ptl2"><span class="ptpn">{e(pl[0])}</span>{badge(pl[2]) if pl[2] else ""}</span>'
+                else:
+                    tile=f'<i class="ptn ptn0"><b>R{rr}</b></i>'
+                    sub=f'<span class="ptl2 ptd">{"Traded "+str(n)+"×" if n else "Not traded"}</span>'
+                tr=f'<em class="ptc">{n}×</em>' if (lab and n) else ''
+                rows.append(f'<button type="button" class="ptk" data-k="{k}" aria-label="{y} round {rr}, {e(T[o])}\'s pick, history">{tile}'
+                            f'<span class="ptm"><span class="ptl1">{av(T[o])}<b class="ptt">{e(T[o])}</b>{tr}</span>{sub}</span>'
+                            f'<span class="ptg" title="{"Used by" if lab else "Owned by"} {e(T[own])}">{av(T[own])}</span></button>')
+            out.append(f'<div class="ptp"><div class="pthd"><span>R{r}</span><span>Original team</span><span>GM</span></div>{"".join(rows)}</div>')
+        out.append('</div>')
+    out.append('</div>')
+out.append(f'<div class="ptv ptv-p"{" hidden" if PICKS else ""}><input class="wq ptq" type="search" placeholder="Search player…" aria-label="Search player" autocomplete="off">'
+           '<div class="ptp ptpl"><div class="pthd"><span>Moves</span><span>Player · last move</span><span>Date</span><span>GM</span></div><div class="ptlist"></div></div>'
+           '<p class="ptmore"></p></div>')
+out.append('<div class="key"><div>'+('<b>Picks</b> each pick is named by its season, round and the team it originally belonged to. The tile shows the pick number once used. '
+           '<b>Moves</b> times the pick changed hands. ' if PICKS else '')
+           +'<b>Players</b> every draft, trade, waiver claim, free-agent add and drop, newest first in the list; tap for the full history. '
+           +('MyFantasyLeague trades (2021-24) carry the date the commissioner entered them. Rosters carried over to Sleeper in March 2025 are not shown as moves. '
+             'A pick that changed hands with no recorded trade shows as a commissioner move.' if PICKS else '')
+           +'</div></div></section>')
+out.append('<div class="pts" role="dialog" aria-modal="true" aria-labelledby="ptsT" hidden><div class="ptsh"><button type="button" class="ptsx" aria-label="Close">'
+           '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>'
+           '<div class="ptsi"><h3 id="ptsT" class="ptst"></h3><div class="ptss"></div></div></div><div class="ptsb"></div></div>')
+JS=r'''<script>document.addEventListener('DOMContentLoaded',function(){
+const D=window.PT,X=document.querySelector('.ptx');if(!D||!X)return;
+const T=D.T,MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const PC={QB:'#f7739c',RB:'#3ddcc1',WR:'#5ec6f4',TE:'#fca95c',K:'#c491ff',DEF:'#c98a72'};
+const av=i=>{if(i<0)return '<i class="pav ptfa" aria-hidden="true"></i>';const r=typeof AVR!=='undefined'?AVR[T[i]]:null;return '<i class="pav'+(r?' av av-'+r:' nl')+'" aria-hidden="true"></i>'};
+const nfl=t=>t?'<em class="nfl n-'+esc(t)+'"><span class="ct">'+esc(t)+'</span></em>':'';
+const KN=k=>{const v=D.K[k];return v?v[0]+' R'+v[1]+' ('+T[v[2]]+')':k};
+const refh=r=>{const c=r[0],v=r.slice(1);if(c==='p'){const p=D.P[v];return '<button type="button" class="ptr" data-p="'+esc(v)+'">'+esc(p?p[0]:v)+'</button>'}
+ if(c==='k')return '<button type="button" class="ptr" data-k="'+esc(v)+'">'+esc(KN(v))+'</button>';if(c==='$')return '<span class="ptr0">$'+esc(v)+' FAAB</span>';return ''};
+const lst=a=>a.length?a.join(', '):'nothing';
+const dk={s:'Startup draft',r:'Rookie draft',i:'Sleeper import',p:'Supplemental draft',d:'Draft'};
+function line(r,isPick){const[y,d,k,a,b,x,w]=r,ta=a>=0?T[a]:'',tb=b>=0?T[b]:'';let l1='',l2='',who=a;
+ if(k==='T'){l1='Traded to <b>'+esc(ta)+'</b>';l2=(tb?'From '+esc(tb)+' · ':'')+(w&&w.length?'with '+w.map(refh).join(', ')+' · ':'')+'for '+lst(x.map(refh))}
+ else if(k==='W'){l1='Claimed by <b>'+esc(ta)+'</b>';l2='Waivers'+(x[0]?' · $'+esc(x[0])+' FAAB':'')}
+ else if(k==='A'){l1='Added by <b>'+esc(ta)+'</b>';l2='Free agent'}
+ else if(k==='CA'){l1='Added by <b>'+esc(ta)+'</b>';l2='Commissioner'}
+ else if(k==='D'){l1='Dropped by <b>'+esc(tb)+'</b>';who=b}
+ else if(k==='CD'){l1='Removed from <b>'+esc(tb)+'</b>';l2='Commissioner';who=b}
+ else if(k==='R'){l1='Drafted by <b>'+esc(ta)+'</b>';l2=(dk[x[1]]||'Draft')+' · '+esc(x[0])+(x[2]&&D.K[x[2]]&&D.K[x[2]][2]!==a?' · '+refh('k'+x[2]):'')}
+ else if(k==='U'){l1='Used by <b>'+esc(ta)+'</b>';l2=esc(x[0])+' · '+refh('p'+x[1])}
+ else if(k==='M'){l1='Moved to <b>'+esc(ta)+'</b>';l2='From '+esc(tb)+' · commissioner, no trade logged'}
+ const m=+d.slice(5,7),dd=+d.slice(8,10);
+ return '<div class="pte"><span class="ptdt"><i>'+MO[m-1]+'</i><b>'+dd+'</b></span>'+av(who)+'<span class="ptx1"><span class="pta">'+l1+'</span>'+(l2?'<span class="ptb2">'+l2+'</span>':'')+'</span></div>'}
+function body(rows,isPick){let h='',cur=null;
+ for(const r of rows){const y=r[0];if(y!==cur){cur=y;h+='<div class="ptsy"><span>'+y+'</span><span>'+esc(D.S[y]==='MFL'?'MyFantasyLeague':'Sleeper')+'</span></div>'}h+=line(r,isPick)}
+ return h||'<p class="ptnone">No moves yet.</p>'}
+const S=document.querySelector('.pts'),ST=S.querySelector('.ptst'),SS=S.querySelector('.ptss'),SB=S.querySelector('.ptsb');let back=null,pushed=false;
+function show(kind,id,push){let t='',s='',rows=[];
+ if(kind==='player'){const p=D.P[id];if(!p)return false;rows=D.H[id]||[];
+   t='<span class="ptsn">'+esc(p[0])+'</span>'+nfl(p[2]);
+   s='<span class="ptsl">'+(p[1]?'<i class="pz p-'+esc(p[1].toLowerCase())+'">'+esc(p[1])+'</i>':'')+(p[3]>=0?av(p[3])+'<span>On <b>'+esc(T[p[3]])+'</b></span>':'<span>Not on a roster</span>')+'</span>'
+     +'<span class="ptsm">'+rows.length+' move'+(rows.length===1?'':'s')+(rows.length?' since '+rows[0][1].slice(0,4):'')+'</span>';
+   rows=rows.slice().reverse()}
+ else{const v=D.K[id];if(!v)return false;rows=D.C[id]||[];
+   t='<span class="ptsn">'+v[0]+' · Round '+v[1]+'</span>';
+   s='<span class="ptsl">'+av(v[2])+'<span><b>'+esc(T[v[2]])+'</b>’s pick</span></span>'
+     +'<span class="ptsm">'+(v[4]?'Pick '+esc(v[4])+' · used by '+esc(T[v[3]])+' · '+refh('p'+v[5]):(v[3]===v[2]?'Not traded · ':'')+'Owned by '+esc(T[v[3]]))+'</span>';
+   rows=rows.slice().reverse()}
+ ST.innerHTML=t;SS.innerHTML=s;SB.innerHTML=body(rows,kind==='pick');SB.scrollTop=0;
+ if(S.hidden){back=document.activeElement;S.hidden=false;document.documentElement.classList.add('ptlock')}
+ const h='#paper-trail/'+kind+'/'+id;if(push&&location.hash!==h){history.pushState({pt:1},'',h);pushed=true}
+ requestAnimationFrame(()=>{fitT();S.querySelector('.ptsx').focus({preventScroll:true})});return true}
+function hide(fromPop){if(S.hidden)return;S.hidden=true;document.documentElement.classList.remove('ptlock');
+ if(!fromPop){if(pushed&&history.state&&history.state.pt){history.back()}else history.replaceState(null,'','#paper-trail')}pushed=false;
+ if(back&&back.focus)back.focus({preventScroll:true})}
+function fitT(){const n=ST.querySelector('.ptsn');if(!n)return;n.style.fontSize='';let s=parseFloat(getComputedStyle(n).fontSize);while(ST.scrollWidth>ST.clientWidth+.5&&s>17){s-=.5;n.style.fontSize=s+'px'}}
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-k],[data-p]');
+ if(b&&(X.contains(b)||S.contains(b))){if(b.classList.contains('ptb'))return;ev.preventDefault();b.dataset.k?show('pick',b.dataset.k,true):show('player',b.dataset.p,true)}});
+S.querySelector('.ptsx').addEventListener('click',()=>hide(false));
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!S.hidden){ev.preventDefault();hide(false)}});
+function route(){const m=/^#paper-trail\/(pick|player)\/([^/]+)$/i.exec(location.hash||'');if(m){if(!show(m[1].toLowerCase(),decodeURIComponent(m[2]),false))hide(true)}else hide(true)}
+addEventListener('popstate',route);addEventListener('hashchange',route);
+// players list
+const L=X.querySelector('.ptlist'),Q=X.querySelector('.ptq'),MORE=X.querySelector('.ptmore');
+const last={};for(const id in D.H){const h=D.H[id];if(h.length)last[id]=h[h.length-1]}
+const ORD=Object.keys(last).sort((a,b)=>last[b][1]<last[a][1]?-1:last[b][1]>last[a][1]?1:0);
+const lastTxt=r=>{const[y,d,k,a,b]=r,t=(k==='D'||k==='CD')?b:a;return esc({T:'Traded to',W:'Claimed by',A:'Added by',CA:'Added by',D:'Dropped by',CD:'Removed from',R:'Drafted by'}[k]||'')+' '+av(t)+'<span class="ptln">'+esc(t>=0?T[t]:'')+'</span>'};
+const lastTxt0=r=>{const[y,d,k,a,b]=r,t=(k==='D'||k==='CD')?b:a;return ({T:'Traded to',W:'Claimed by',A:'Added by',CA:'Added by',D:'Dropped by',CD:'Removed from',R:'Drafted by'}[k]||'')+' '+(t>=0?T[t]:'')};
+function rowP(id){const p=D.P[id],h=D.H[id],r=h[h.length-1],d=r[1],m=+d.slice(5,7);
+ return '<button type="button" class="ptk ptkp" data-p="'+esc(id)+'"><i class="ptn'+(PC[p[1]]?'':' ptn0')+'" style="--pc:'+(PC[p[1]]||'var(--row-divider)')+'"><b>'+h.length+'</b><span>'+esc(p[1]||'–')+'</span></i>'
+  +'<span class="ptm"><span class="ptl1"><b class="ptt" data-f="'+esc(p[0])+'">'+esc(p[0])+'</b>'+nfl(p[2])+'</span><span class="ptl2 ptd" title="'+esc(lastTxt0(r))+'">'+lastTxt(r)+'</span></span>'
+  +'<span class="ptdt ptdl"><i>'+MO[m-1]+' '+(+d.slice(8,10))+'</i><b>'+d.slice(0,4)+'</b></span>'
+  +'<span class="ptg">'+(p[3]>=0?av(p[3]):'<i class="ptfa0">FA</i>')+'</span></button>'}
+function draw(){const q=(Q.value||'').trim().toLowerCase();const ids=q?ORD.filter(id=>D.P[id][0].toLowerCase().includes(q)):ORD;
+ L.innerHTML=ids.slice(0,50).map(rowP).join('')||'<p class="ptnone">No player found.</p>';
+ MORE.textContent=ids.length>50?'Showing 50 of '+ids.length+(q?' matches':' players')+' · search to find any player':'';fitN()}
+function fitN(){if(!X.offsetParent)return;L.querySelectorAll('.ptl2').forEach(b=>{b.style.fontSize='';b.classList.remove('ptlo');let s=parseFloat(getComputedStyle(b).fontSize);while(b.scrollWidth>b.clientWidth+.5&&s>11.5){s-=.25;b.style.fontSize=s+'px'}if(b.scrollWidth>b.clientWidth+.5){b.style.fontSize='';b.classList.add('ptlo')}});L.querySelectorAll('.ptt').forEach(b=>{b.style.fontSize='';const w=b.parentElement;
+  const o=()=>w.scrollWidth>w.clientWidth+.5||b.scrollWidth>b.clientWidth+.5;let s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>13){s-=.5;b.style.fontSize=s+'px'}});
+ X.querySelectorAll('.ptv-k .ptt').forEach(b=>{if(!b.offsetParent)return;b.style.fontSize='';b.style.whiteSpace='';const w=b.parentElement;const o=()=>w.scrollWidth>w.clientWidth+.5;
+  let s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>13){s-=.5;b.style.fontSize=s+'px'}if(o()){b.style.whiteSpace='normal'}})}
+Q&&Q.addEventListener('input',draw);draw();
+X.querySelectorAll('.ptb').forEach(b=>b.addEventListener('click',()=>{X.querySelectorAll('.ptb').forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on)});
+ X.querySelectorAll('.ptv').forEach(v=>v.hidden=!v.classList.contains('ptv-'+b.dataset.v));fitN()}));
+document.addEventListener('change',()=>requestAnimationFrame(fitN));addEventListener('resize',()=>requestAnimationFrame(()=>{fitN();if(!S.hidden)fitT()}));document.fonts&&document.fonts.ready.then(()=>{fitN();route()});
+route();
+})</script>'''
+SEC=''.join(out)+f'<script>window.PT={_js};</script>'+JS
+yrs_css=''.join(f'#pty-{y}:checked~.ptyx-{y}{{display:block}}@media(min-width:1100px){{#pty-{y}:checked~.ptyx-{y}{{display:grid}}}}#pty-{y}:checked~.ptyb label[for="pty-{y}"] b{{background:var(--chalk);color:var(--ink)}}#pty-{y}:checked~.ptyb label[for="pty-{y}"] small{{color:var(--steel)}}' for y in sorted({v[0] for v in K.values()}))
+CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}.ptx{--ptg:44px}'
+ '.ptx .pav,.pts .pav{display:block;flex:none;border-radius:50%;background-color:var(--deck-2);background-position:center;background-size:cover;background-repeat:no-repeat}.ptx .pav.nl,.pts .pav.nl{visibility:hidden}'
+ +('.ptx .pav.av,.pts .pav.av{box-shadow:0 0 0 1px var(--line-strong),1px 1px 0 .5px rgba(0,0,0,.4),1px 1px 3px .5px rgba(0,0,0,.25)!important}' if PICKS else '')+  # BBP logos: the Stats tab's halved ring + shadow; YILM faces stay bare
+
+ '.ptx .posh{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}.ptx .wsub{font-size:12.5px;color:var(--steel)}'
+ # Picks / Players switch: The Wire's position pill (same font, padding, shadow), two equal halves
+ '.ptsw{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:4px 0 14px}'
+ '.ptb{font:700 13px/1 var(--display);letter-spacing:.06em;text-transform:uppercase;padding:10px 12px 9px;border-radius:9px;border:1px solid var(--frame);background:var(--deck);color:var(--label);box-shadow:var(--sh-hard);cursor:pointer}'
+ '.ptb.on{background:var(--chalk);color:var(--ink)}'
+ '.ptv[hidden]{display:none!important}.ptyx{display:none}'
+ '@media(min-width:1100px){.ptsw{max-width:420px}.ptyx .ptp{margin:0}#pty-0:checked{}'
+ '.ptv-k .ptyx{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px;align-items:start}.ptv-p{max-width:760px}}'
+
+ '.ptyb{margin:0 0 14px auto}.ptyb .yb{cursor:pointer}'
+ '@media(max-width:759px){.ptyb{grid-auto-flow:row;grid-template-columns:repeat(4,minmax(0,1fr));width:100%}}'
+ '.ptq{display:block;width:100%;box-sizing:border-box;margin:0 0 14px}'
+ # panel and rows: four-step depth (frame, divider, panel, lighter row), 16px inset
+ '.ptp{background:var(--deck);border:2px solid var(--frame);border-radius:var(--r-panel);box-shadow:var(--sh-hard);overflow:hidden;margin:0 0 14px}'
+ '.pthd{display:grid;grid-template-columns:52px minmax(0,1fr) var(--ptg);column-gap:12px;align-items:center;padding:10px 0 9px;font:700 12px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);background:var(--deck)}'
+ '.pthd>span:first-child{text-align:center}.pthd>span:last-child{text-align:center}'
+ '.ptpl .pthd{grid-template-columns:52px minmax(0,1fr) 46px var(--ptg)}.ptpl .pthd>span:nth-child(3){text-align:right}'
+ '.ptk{all:unset;box-sizing:border-box;display:grid;grid-template-columns:52px minmax(0,1fr) var(--ptg);column-gap:12px;align-items:stretch;width:100%;min-height:52px;cursor:pointer;'
+ 'border-top:1px solid var(--row-divider);background:var(--deck)}'
+ '.ptp .ptk:nth-of-type(odd){background:var(--row-lt)}'
+ '.ptlist .ptk:nth-child(odd){background:var(--row-lt)}.ptlist .ptk:nth-child(even){background:var(--deck)}'
+ '.ptkp{grid-template-columns:52px minmax(0,1fr) 46px var(--ptg)}'
+ '.ptk:focus-visible{outline:2px solid var(--chalk);outline-offset:-2px}'
+ '.ptn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:var(--pc);color:var(--ink);font-style:normal}'
+ '.ptn b{font:700 15px/1 var(--display);text-box:trim-both cap alphabetic}.ptn span{font:700 10px/1 var(--display);letter-spacing:.06em;text-box:trim-both cap alphabetic}'
+ '.ptn0{background:var(--row-divider);color:var(--chalk)}'
+ '.ptm{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:9px 0}'
+ '.ptl1{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap}'
+ '.ptl1 .pav{width:22px;height:22px}'
+ '.ptt{font:600 15px/1.15 var(--body);color:var(--chalk);min-width:0}'
+ '.ptl2{display:flex;align-items:center;gap:6px;min-width:0;font:400 12.5px/1.25 var(--body);color:var(--chalk)}.ptl2.ptd,.ptd{color:var(--text-dim)}'
+ '@media(max-width:380px){.ptx{--ptg:40px}.pthd,.ptk{grid-template-columns:44px minmax(0,1fr) var(--ptg);column-gap:8px}.ptpl .pthd,.ptkp{grid-template-columns:44px minmax(0,1fr) 40px var(--ptg)}.ptpl .pthd>span:first-child{font-size:11px;letter-spacing:.06em}}'
+ '.ptpn{min-width:0}.ptl2{white-space:nowrap}.ptl2 .pav{width:18px;height:18px}.ptl2.ptlo .ptln{display:none}'
+ '.ptc{margin-left:auto;flex:none;font:700 12px/1 var(--display);letter-spacing:.04em;color:var(--text-dim);font-style:normal;padding-right:2px}'
+ '.ptg{display:flex;align-items:center;justify-content:center;border-left:3px solid var(--pg)}'
+ '.ptg .pav{width:28px;height:28px}'
+ '.ptfa0{font:700 12px/1 var(--display);letter-spacing:.06em;color:var(--text-dim);font-style:normal}'
+ '.ptdt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-style:normal}'
+ '.ptdt i{font:600 11px/1 var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);font-style:normal;text-box:trim-both cap alphabetic}'
+ '.ptdt b{font:700 17px/1 var(--display);color:var(--chalk);text-box:trim-both cap alphabetic}'
+ '.ptdl{align-items:flex-end}.ptdl b{font-size:12px;color:var(--text-dim);font-weight:600;letter-spacing:.06em}.ptdl i{color:var(--chalk);font-size:12px}'
+ '.ptmore{margin:-4px 0 14px;font-size:12px;color:var(--steel)}.ptmore:empty{display:none}'
+ '.ptnone{margin:0;padding:16px;color:var(--text-dim);font-size:13px}'
+ # the sheet: full-height panel on phones, side panel on desktop
+ 'html.ptlock,html.ptlock body{overflow:hidden}'
+ '.pts{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;background:var(--deck);color:var(--chalk)}.pts[hidden]{display:none}'
+ '@media(min-width:1100px){.pts{left:auto;width:460px;border-left:2px solid var(--frame);box-shadow:var(--sh-hard)}html.ptlock,html.ptlock body{overflow:auto}}'
+ '.ptsh{display:grid;grid-template-columns:minmax(0,1fr) 40px;column-gap:12px;align-items:start;padding:16px 16px 14px;background:var(--deck);border-bottom:2px solid var(--frame)}'
+ '.ptsi{min-width:0;grid-column:1;grid-row:1}.ptsx{grid-column:2;grid-row:1}'
+ '.ptsx{all:unset;box-sizing:border-box;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--row-lt);color:var(--chalk);border:1px solid var(--frame);box-shadow:var(--sh-hard);cursor:pointer}'
+ '.ptsx:focus-visible{outline:2px solid var(--chalk);outline-offset:2px}'
+ '.ptst{margin:0;display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;font:700 26px/1.1 var(--display);letter-spacing:.02em;text-transform:uppercase;color:var(--chalk)}'
+ '.ptss{display:flex;flex-direction:column;gap:6px;margin-top:8px}'
+ '.ptsl{display:flex;align-items:center;gap:8px;font:400 14px/1.2 var(--body);color:var(--chalk)}.ptsl .pav{width:24px;height:24px}.ptsl b{font-weight:600}'
+ '.ptsm{font:400 12.5px/1.35 var(--body);color:var(--text-dim)}'
+ '.ptsb{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:max(16px,env(safe-area-inset-bottom))}'
+ '.ptsy{display:flex;justify-content:space-between;align-items:center;padding:10px 16px 9px;font:700 12px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);background:var(--pg)}'
+ '.pte{display:grid;grid-template-columns:32px 28px minmax(0,1fr);column-gap:12px;align-items:center;padding:12px 16px;border-top:1px solid var(--row-divider);background:var(--deck)}'
+ '.ptsy+.pte{border-top:0}.pte:nth-child(odd){background:var(--row-lt)}'
+ '.pte .pav{width:28px;height:28px}.pte .ptfa{visibility:hidden}'
+ '.ptx1{min-width:0;display:flex;flex-direction:column;gap:5px}'
+ '.pta{font:400 14px/1.25 var(--body);color:var(--chalk)}.pta b{font-weight:600}'
+ '.ptb2{font:400 12.5px/1.35 var(--body);color:var(--text-dim)}'
+ '.ptr{all:unset;cursor:pointer;color:var(--chalk);text-decoration:underline;text-decoration-color:var(--text-dim);text-underline-offset:2px}'
+ '.ptr:focus-visible{outline:2px solid var(--chalk);outline-offset:1px}.ptr0{color:var(--chalk)}'
+ '.ptsm .ptr{font-weight:600}'
+ '.ptx .nfl,.pts .nfl{flex:none}'
+ +yrs_css)
+if __name__=='__main__':
+    open(P+'paper_section.html','w',encoding='utf-8').write(SEC)
+    open(P+'paper_css.css','w',encoding='utf-8').write(CSS)
