@@ -18,8 +18,8 @@ s=re.sub(r'<script>.*?</script>','',s,flags=re.S)
 css='''
 body{margin:0}
 .vr,.xp{position:fixed;top:50%;left:0;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
-.tb{flex:1;text-align:center;color:var(--muted);font:500 13px var(--body);padding:8px 0;border-radius:7px;cursor:pointer}
-#vh:checked~.tg .tbh,#vm:checked~.tg .tbm{background:var(--surface);color:var(--fg);box-shadow:0 0 0 1px var(--line-strong)}
+.tb{flex:1;text-align:center;color:var(--steel);font:500 13px var(--body);padding:8px 0;border-radius:7px;cursor:pointer}
+#vh:checked~.tg .tbh,#vm:checked~.tg .tbm{background:var(--deck);color:var(--chalk);box-shadow:0 0 0 1px var(--line-strong)}
 .lm{display:none}
 #vm:checked~.lh{display:none}
 #vm:checked~.lm{display:block}

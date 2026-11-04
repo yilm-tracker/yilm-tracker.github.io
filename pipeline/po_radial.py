@@ -77,7 +77,7 @@ def build(S,GAMES,win,winp,PT,SHORT,seed,e,tone,final=None):
          '.prd .prl b,.prd .prl em{white-space:nowrap!important}'
          '.prd .prl.lng b{white-space:normal!important;width:7.6em;text-align:center;text-wrap:balance}'
          '.prd .prl b{font-size:12.5px;font-weight:500;color:var(--steel)}.prd .prw .prl b{color:var(--chalk)}'
-         '.prd .prl em{font-style:normal;font-family:var(--display);font-weight:600;font-size:13px;color:var(--steel);letter-spacing:.02em}.prd .prby .prl em{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}'
+         '.prd .prl em{font-style:normal;font-family:var(--display);font-weight:600;font-size:13px;color:var(--steel);letter-spacing:.02em}.prd .prby .prl em{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)}'
          '.prd .prg{display:flex;flex-direction:column;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;box-sizing:border-box;cursor:pointer;'
          'background:var(--deck);border:1.5px solid var(--line-strong);line-height:1}'
          '.prd .prg small{position:absolute;transform:translate(-50%,-50%);font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--chalk);white-space:nowrap;line-height:1;text-align:center;pointer-events:none}'

@@ -102,13 +102,13 @@ css+=(sel(['rv-pos','rv-pts','rs-p','rs-g','rc-p','rc-t','rq-all','rq-noqb'])+'{
       '.rox .rctl .rqf,.rox .rctl .rqt{visibility:hidden}#rv-pts:checked~.rctl .rqf,#rv-pts:checked~.rctl .rqt{visibility:visible}'
       '.rox .rogd{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:2px 0 12px}'
       
-      '.rox .rogd label{display:flex;align-items:center;gap:7px;min-height:36px;padding:6px 10px;box-sizing:border-box;border-radius:6px;border:1px solid var(--hair);background:var(--ink);cursor:pointer;'
+      '.rox .rogd label{display:flex;align-items:center;gap:7px;min-height:36px;padding:6px 10px;box-sizing:border-box;border-radius:6px;border:1px solid var(--line);background:var(--ink);cursor:pointer;'
       'font-family:var(--display);font-weight:700;font-size:13.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--label);white-space:nowrap;min-width:0}'
       '.rox .rogd label span{overflow:hidden;text-overflow:ellipsis;min-width:0}'
       '@media(max-width:429px){.rox .rogd label{font-size:12.5px;letter-spacing:.02em;padding:6px 8px;gap:6px}}@media(max-width:374px){.rox .rogd label{font-size:11.5px;letter-spacing:.01em;padding:6px 6px;gap:5px}}'
       '.rox .rogd .rrk{font-style:normal;flex:none;min-width:1.2em;text-align:right;color:var(--steel);font-variant-numeric:tabular-nums}'
       +''.join(f'#ro-{i}:checked~.roc label[for="ro-{i}"] .rrk{{color:var(--ink);opacity:.55}}' for i in range(lg.N))
-      +'.rox .rofb{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:1px;margin:2px 0 12px;border-radius:12px;overflow:hidden;background:var(--hair);border:1px solid var(--hair)}'
+      +'.rox .rofb{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:1px;margin:2px 0 12px;border-radius:12px;overflow:hidden;background:var(--line);border:1px solid var(--line)}'
       '.rox .rofb label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-width:0;padding:10px 2px 9px;box-sizing:border-box;cursor:pointer;border:0!important;border-radius:0!important;background:var(--deck-2)!important;-webkit-tap-highlight-color:transparent}'
             '.rox .rofb .rfi{display:block;width:48px;height:48px;border-radius:50%;background-color:var(--deck);background-position:center;background-size:cover;background-repeat:no-repeat;filter:grayscale(1);opacity:.55;transition:filter .15s,opacity .15s}'
       '.rox .rofb .rfi.nl{visibility:hidden}'

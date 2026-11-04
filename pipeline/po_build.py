@@ -269,7 +269,7 @@ else:
     css+=','.join(f'#pa-{i}:checked~#pb-{j}:checked~.pp-{i}-{j}' for i in range(lg.N) for j in range(lg.N) if i!=j)+'{display:block}'
     css+=''.join(f'#pw-{w}:checked~.ppn .pwl-{w}{{display:inline}}' for w in WEEKS)
 css+=('.pox .pfph{margin-top:22px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}.pox .pfph small{font-family:var(--body);font-weight:500;font-size:11px;letter-spacing:0;text-transform:none;color:var(--steel)}.pfph{margin-bottom:8px}.pfpx{display:flex;flex-direction:column;gap:4px}'
-      '.pfpr{display:grid;grid-template-columns:1.6em 2.9em minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--hair);border-radius:6px;background:var(--ink)}'
+      '.pfpr{display:grid;grid-template-columns:1.6em 2.9em minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--ink)}'
       '.pfpr>em{font-style:normal;font-family:var(--display);font-weight:700;font-size:15px;color:var(--steel);text-align:right;font-variant-numeric:tabular-nums}'
       '.pfpr>b{font-weight:600;color:var(--chalk);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
       '.pfpr .pfprc{color:var(--steel);font-variant-numeric:tabular-nums;font-size:.92em}'

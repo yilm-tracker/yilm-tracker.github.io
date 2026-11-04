@@ -116,7 +116,7 @@ css=(''.join(f'.plx .plc label[for="pl-{i}"]{{color:{PC[i]};border-color:color-m
  +'.plx .rn small{display:flex;align-items:baseline;gap:0 6px;min-width:0;white-space:nowrap}.plx .own{font-style:normal;color:var(--label);overflow:hidden;text-overflow:ellipsis;min-width:0}.plx .own::before{content:"·";margin-right:6px;color:var(--steel)}.plx .own.fa{color:var(--steel)}'
  +'.plx .os{display:none}@media(max-width:429px){.plx .of{display:none}.plx .os{display:inline}}'
  +'.plx .rn{overflow:visible}.plx .plr{align-items:start}.plx .plr .rv,.plx .plr .rg2{align-self:start;padding-top:10px}'
- +'.plx .pst{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px 6px;width:calc(100% + 110px);box-sizing:border-box;margin-top:8px;padding-top:8px;border-top:1px solid var(--hair)}'
+ +'.plx .pst{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px 6px;width:calc(100% + 110px);box-sizing:border-box;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}'
  +'.plx .pst span{display:flex;flex-direction:column;gap:2px;min-width:0}'
  +'.plx .pst u{text-decoration:none;font:600 9.5px/1.1 var(--body);letter-spacing:.04em;color:var(--steel);white-space:nowrap}'
  +'.plx .pst b{font:600 15px/1.1 var(--display);color:var(--chalk);white-space:nowrap;font-variant-numeric:tabular-nums}'

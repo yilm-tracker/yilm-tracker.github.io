@@ -64,39 +64,49 @@ Four steps in one hue; only lightness changes. Reference: bdge.co standings. App
 
 | Token | BBP | YILM | Status |
 |---|---|---|---|
-| Outer frame `--frame` / `--plate` | `#04080A` (was `#070C0E`) | `#08111A` | `LIVE` |
+| Outer frame `--frame` | `#04080A` (was `#070C0E`) | `#08111A` | `LIVE` |
 | Page `--pg` | `#0C1215` (was `#101B1F`) | `#101D2B` | `LIVE` |
 | Panel / darker row `--deck` | `#1A2C33` | `#203A55` | `LIVE` |
 | Lighter row `--row-lt` | `#243F49` (was `#203841`) | `#2F4B66` (was `#2B445D`) | `LIVE` |
 | `--row-divider` | `#121F24` | `#172A3E` | `LIVE` |
 | Body text `--chalk` | `#ECE6DA` cream | `#FFFFFF` white | `LIVE` |
-| `--text-dim` (labels, units) | `#A0A8B8` (`--dim` = `--text-dim`) | `#AAB9C7` (= `--dim`) | `LIVE` |
+| `--text-dim` (labels, units) | `#A0A8B8` | `#AAB9C7` | `LIVE` |
 | `--steel` | `#ABA497` | `#A9B9CA` | `LIVE` |
 | FAAB tile `--faab` / `--faab-ink` | `#D9D0BC` alabaster, `#101B1F` figures (11.4:1) | `#4F9FE8`, navy `#101D2B` figures (6.05:1) | `LIVE` |
 
-- `--dim` and `--steel` meet 4.5:1 on the lighter row (lifted 2026-11-03). Coloured data on the lighter row (position QB pink, tier teal/red, result red) is still under 4.5:1: open item.
-- **Tier text (2026-11-04)** `LIVE`: the playoff tier's text uses the normal text levels. Season sim "Playoffs" label: **BBP** `--text-dim` like Finish; **YILM** `--label` like its Finish label. Desktop table playoff % values: body text (cream / white), header unchanged (same as other headers). Stats › Points by position seed numbers 3-6: body text (**BBP** 1-2 stay gold, 7-12 `--text-dim`; **YILM** seed 1 league red, 2-6 white, 7-12 `--dim`, as on the standings). Contrast on the lighter row: `--text-dim` 4.67:1 BBP / 4.52:1 YILM; body text 8.98:1 / 9.06:1. All season sim labels (Finish, #1, Bye, Playoffs) share one colour: **BBP** `--text-dim`; **YILM** `--label` (its sim label colour; YILM has no Bye). Gold stays only where it marks a top seed (tiles 1-2, Bye line, seed numbers 1-2, the gold projected-finish value 1.0).
-- **BBP** two text levels on the standings cards: values `--chalk`; labels/units `--text-dim` (OPP, ALL-PLAY, LUCK, PF, PA, TOT EFF, /wk, xW, COULD HAVE, Won/Lost, FAAB, DROPPED PTS, SEASON SIM, FINISH). Season chart labels unchanged.
-- **BBP** kit palette (Standings Redesign Spec, 2026-11-03), at the end of BBP `readability.css`: tiers match the live rank pack (2026-11-04): `--tier-bye #E2CF93` (gold), `--tier-po #E4DDCD` (alabaster; was teal `#19B5C4`), `--tier-ch #006778` (teal; was `#CDA74B`; no visible text uses it, and it fails text contrast, 2.2:1 on the panel) (labels, sub-labels and rules at full colour); season chart `--chart-po-line #0097A7`, `--chart-po-fill #023442`, `--chart-po-val #19B5C4`, `--chart-nfl-bye #5A6870`; `--row-alt #203841` (FAAB pills). `--pylon` / `--sky` are NOT redefined (used across other tabs); standings/chart uses are overridden one by one. Unchanged by design: status colours (form dots, streaks, arrows, rank chips), the position colours (TE stays orange). `LIVE`
-- **YILM** palette: logo blue `#4F9FE8`, logo red `#EC5F70`, league red `--pylon #FB637A`.
+- `--text-dim` and `--steel` meet 4.5:1 on the lighter row (lifted 2026-11-03). Coloured data on the lighter row (position QB pink, tier teal/red, result red) is still under 4.5:1: open item.
+- **Tier text (2026-11-04)** `LIVE`: the playoff tier's text uses the normal text levels. All season sim labels (Finish, #1, Bye, Playoffs) are `--text-dim` on both sites (YILM has no Bye). Desktop table playoff % values: body text (cream / white), header unchanged (same as other headers). Stats › Points by position seed numbers 3-6: body text (**BBP** 1-2 stay gold, 7-12 `--text-dim`; **YILM** seed 1 league red, 2-6 white, 7-12 `--text-dim`, as on the standings). Contrast on the lighter row: `--text-dim` 4.67:1 BBP / 4.52:1 YILM; body text 8.98:1 / 9.06:1. Gold stays only where it marks a top seed (tiles 1-2, Bye line, seed numbers 1-2, the gold projected-finish value 1.0).
+- Two text levels on the standings cards, **both sites** (BBP 2026-11-03, YILM 2026-11-04) `LIVE`: values `--chalk` (BBP cream, YILM white); labels/units `--text-dim` (OPP, ALL-PLAY, LUCK, PF, PA, TOT EFF, /wk, xW, COULD HAVE, Won/Lost, FAAB, DROPPED PTS, SEASON SIM, FINISH, #1, BYE, PLAYOFFS, the "no change" dash). `--text-dim` on the panel / lighter row: BBP 6.05:1 / 4.67:1, YILM 5.83:1 / 4.52:1. Season chart labels unchanged. YILM manager nickname under the face stays `--label`.
+- **BBP** kit palette (Standings Redesign Spec, 2026-11-03), at the end of BBP `readability.css`: tiers match the live rank pack (2026-11-04): `--tier-bye #E2CF93` (gold), `--tier-po #E4DDCD` (alabaster; was teal `#19B5C4`), `--tier-ch #006778` (teal; was `#CDA74B`; no visible text uses it, and it fails text contrast, 2.2:1 on the panel) (labels, sub-labels and rules at full colour); season chart `--chart-po-line #0097A7`, `--chart-po-fill #023442`, `--chart-po-val #19B5C4`, `--chart-nfl-bye #5A6870`; `--row-alt #203841` (FAAB pills). `--accent` (was `--pylon`) and `--sky` are NOT redefined (used across other tabs); standings/chart uses are overridden one by one. Unchanged by design: status colours (form dots, streaks, arrows, rank chips), the position colours (TE stays orange). `LIVE`
+- **YILM** palette: logo blue `#4F9FE8`, logo red `#EC5F70`, league red `--accent #FB637A`.
 
-**Token names: one name per role on both sites** (2026-11-04) `LIVE`. Briefs use these names; both sites define all of them.
+**Token names: one name per role on both sites** (2026-11-04) `LIVE`. Every token below is defined on both sites under the same name and does the same job; values differ per site. No aliases.
 
-| Role | Token | Notes |
-|---|---|---|
-| Body text | `--chalk` | |
-| Secondary labels, table headers, sim labels on YILM | `--label` | BBP `#CFC6B6`, YILM `#D3DFEB`. A different, lighter step than `--text-dim` on both sites; not an alias (aliasing would change every YILM label and header). |
-| Dim text: units, quiet labels | `--text-dim` | Canonical on both; `--dim` is its alias on both (YILM used to define it the other way round). |
-| Muted figures | `--steel` | |
-| Playoff tier colour | `--tier-po` | BBP alabaster; YILM `var(--pylon)` league red (alias added; YILM tier rules now use it). |
-| Bye tier colour | `--tier-bye` | BBP only (YILM has no byes). |
-| Rank column width | `--rks` | 52px on both (YILM alias added). |
-| Frame / plate | `--frame` | `--plate` is the same value on both. |
-| Hard shadow | `--sh-hard`, `--sh-1` | `--dsh` / `--dsh2` are aliases of `--sh-hard` on both. |
-| Line | `--hair` | `--line` is its alias on both. |
+| Role | Token | BBP | YILM |
+|---|---|---|---|
+| Page | `--pg` | `#0C1215` | `#101D2B` |
+| Panel / darker row | `--deck` | `#1A2C33` | `#203A55` |
+| Lighter row | `--row-lt` | `#243F49` | `#2F4B66` |
+| Row divider | `--row-divider` | `#121F24` | `#172A3E` |
+| Frame (plate, panel frames, hard shadows) | `--frame` | `#04080A` | `#08111A` |
+| Hairline | `--line` | `#24444D` | `#30506F` |
+| Stronger line, logo rings | `--line-strong` | `#2F5761` | `#3F6385` |
+| Body text, values | `--chalk` | `#ECE6DA` | `#FFFFFF` |
+| Secondary labels, table headers | `--label` | `#CFC6B6` | `#D3DFEB` |
+| Muted figures | `--steel` | `#ABA497` | `#A9B9CA` |
+| Dim text: labels, units | `--text-dim` | `#A0A8B8` | `#AAB9C7` |
+| Dark text on light tiles | `--ink` | `#0F1C20` | `#15263A` |
+| Site accent | `--accent` | `#FF7A1A` orange (The Wire sort arrow, chart playoff weeks) | `#FB637A` league red (also seed 1 and, via `--tier-po`, the playoff line) |
+| Second accent | `--sky` | `#7FA6FF` | `#259FD6` |
+| Playoff tier | `--tier-po` | `#E4DDCD` alabaster | `var(--accent)` |
+| Results | `--win` / `--loss` (+ `-bg`) | | |
+| Hard shadows | `--sh-hard`, `--sh-1` | | |
+| Panel corners | `--r-panel` | 6px | 6px |
+| Rank column width | `--rks` | 52px | 52px |
+| FAAB tile / figures | `--faab` / `--faab-ink` | | |
 
-- Still site-specific by design: **BBP** `--rt` (rank tile height), `--ravh` / `--rd` (logo sizes), `--row-alt` (FAAB pills), `--chart-*`; **YILM** `--nt` / `--np` (layout counts). Legacy aliases with no uses on either site: `--bg`, `--surface`, `--fg`, `--muted`, `--faint` (left in place).
-- `--pylon` keeps a different job per site (BBP orange accent in other tabs; YILM league red). Briefs about the playoff tier say `--tier-po`.
+- Site-specific by design: **BBP** `--tier-bye`, `--tier-ch`, `--chart-*`, `--rt` (rank tile height), `--ravh` / `--rd` (logo sizes), `--row-alt` (FAAB pills); **YILM** `--nt` / `--np` (layout counts).
+- Removed 2026-11-04 (do not reintroduce): `--hair` (now `--line`), `--dim` (now `--text-dim`), `--plate` (now `--frame`), `--dsh` / `--dsh2` (now `--sh-hard`), `--pylon` (now `--accent`), and the unused `--bg`, `--surface`, `--fg`, `--muted`, `--faint`.
 
 **Rejected; do not reintroduce:** **BBP** surfaces at hue 178° (too green; tried and reverted 2026-11-03); green-tinted frame `#060E0E`; Sleeper's navy for BBP (borrow its dark page and quiet labels, not its hue); FAAB alabaster `#ECE8DD` (read as white).
 
@@ -129,7 +139,7 @@ Four steps in one hue; only lightness changes. Reference: bdge.co standings. App
 
 ### Rank numerals (YILM) `LIVE`
 - Own fixed 52px column + 9px gap before the face; faces at the same x on every row.
-- Seed 1 league red `#FB637A`; 2-6 white; 7-12 muted (`--dim #AAB9C7`). Desktop table seeds unchanged.
+- Seed 1 league red `#FB637A`; 2-6 white; 7-12 muted (`--text-dim #AAB9C7`). Desktop table seeds unchanged.
 
 ### FAAB tile `LIVE`
 - Light tile, dark figures, raised by `--sh-hard` (the shadow is its frame; no border). Values in §4.
@@ -205,6 +215,8 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-04 · YILM labels and units step down to `--text-dim` like BBP's (same elements; 5.83:1 panel, 4.52:1 lighter row); values stay white · two text levels on both sites.
+- 2026-11-04 · Token cleanup: `--hair`→`--line`, `--dim`→`--text-dim`, `--plate`→`--frame`, `--dsh`/`--dsh2`→`--sh-hard`, `--pylon`→`--accent` (both sites), unused `--bg`/`--surface`/`--fg`/`--muted`/`--faint` deleted; every tab pixel-identical before/after (one YILM screenshot off by 1/255 in 28 pixels) · one name per role, no aliases.
 - 2026-11-04 · Season sim #1 and Bye labels take the sim label colour (BBP `--text-dim`, YILM `--label`) · gold marks top seeds only.
 - 2026-11-04 · Token names aligned: `--text-dim` canonical on both (`--dim` alias), YILM `--tier-po` and `--rks` added; `--label` kept as its own lighter step, not aliased; no pixel change (YILM before/after identical) · one name per role, so briefs mean the same thing on both.
 - 2026-11-04 · Alabaster is a surface colour, not a text colour: playoff-tier text uses the normal text levels (sim Playoffs label, desktop playoff %, Stats seeds 3-6; YILM seed 2-6 and Playoffs label likewise); Playoff line label stays alabaster · tier identity comes from position and labels; gold means top seeds only.

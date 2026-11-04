@@ -102,7 +102,7 @@ def board(y,d,rows,snake,T):
             r=at.get((rd,k))
             if not r:out.append('<span class="dfc dfc0"></span>');continue
             _,pk,_,orig,by,pl,pos,nfl=r;nm=str(pl or '').split(' ',1);ro=pts(pl,pos,y,d);c0=col.get(k,'')
-            out.append(f'<div class="dfc" style="--pc:{PC.get(pos or "", "var(--hair)")}">'
+            out.append(f'<div class="dfc" style="--pc:{PC.get(pos or "", "var(--line)")}">'
                 +(f'<span class="dfct" title="{e(own(c0))}\'s pick, made by {e(own(by))}"><b>{e(own(by))}</b></span>' if by!=c0 else '<span class="dfct dfce" aria-hidden="true"></span>' if trd else '')
                 +f'<span class="dfcn"><small>{e(nm[0]) if len(nm)>1 else ""}</small><b>{e(nm[-1])}</b></span>'
                 +(f'<span class="dfcr" title="{e(ro[2])}"><b>{ro[0]:,.0f}</b> {"Pts" if d.get("type")=="startup" else "RPts"}</span>' if ro else '')
@@ -156,7 +156,7 @@ def year_panel(y,d):
         on=any(pts(r[5],r[6],y,d) for r in rows)
         tw=max([3]+[len(f'{pts(r[5],r[6],y,d)[0]:,.0f}') for r in rr if pts(r[5],r[6],y,d)])
         out.append(f'<div class="dfr" style="--dftw:{tw}"><div class="dfrh" role="row"><span>R{rd}</span><span class="dfhp"><i>Player</i>{"<i class=dfhn>NFL</i>" if NFD else ""}{("<i class=dfhr>"+("Pts" if d.get("type")=="startup" else "RPts")+"</i>") if on else ""}</span><span class="dfhg">GM</span></div>'+''.join(
-            f'<div class="dfp" style="--pc:{PC.get(pos or "", "var(--hair)")}"><i class="dfn"><b>{rd}.{pk:02d}</b><span>{e(pos or "")}</span></i>'
+            f'<div class="dfp" style="--pc:{PC.get(pos or "", "var(--line)")}"><i class="dfn"><b>{rd}.{pk:02d}</b><span>{e(pos or "")}</span></i>'
             f'<div class="dfpl"><span class="dfpn"><b>{e(pl.replace("FootballTeam","Football Team"))}</b>{badge(nfl) if nfl else ""}</span>{nslot(pl,pos,y) if NFD else ""}{tile(pl,pos,y,d,on)}</div>'
             f'<div class="dfby" title="{e(own(by))}{(" via "+e(own(orig))) if orig!=by else ""}"><i class="pav" data-avt="{e(by)}" aria-hidden="true"></i><span><b>{e(own(by))}</b>'+(f'<small class="dfvia"><i>via</i>{e(own(orig))}</small>' if orig!=by else '')+'</span></div></div>'
             for rd_,pk,slot,orig,by,pl,pos,nfl in rr)+'</div>')
@@ -180,16 +180,16 @@ CSS="""
 .dfh{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:4px 0 10px}
 .dfh b{font:700 18px/1.1 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--chalk)}
 .dfh span{font-size:12.5px;color:var(--steel)}
-.dfo{background:var(--deck);border:1px solid var(--hair);border-radius:12px;box-shadow:var(--dsh2);padding:10px 12px;margin:0 0 14px}
+.dfo{background:var(--deck);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-hard);padding:10px 12px;margin:0 0 14px}
 .dfol{display:block;font:700 11px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--label);margin-bottom:8px}
 .dfos{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 6px}
 .dfoi{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
 .dfoi em{font:700 12px/1 var(--display);font-style:normal;color:var(--steel)}
 .dfoi .pav{width:30px;height:30px}
 .dfoi b{max-width:100%;overflow:hidden;white-space:nowrap;font:700 12px/1.1 var(--display);letter-spacing:.02em;color:var(--label)}
-.dfr{background:var(--deck);border:1px solid var(--hair);border-radius:12px;box-shadow:var(--dsh2);overflow:hidden;margin:0 0 12px}
+.dfr{background:var(--deck);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-hard);overflow:hidden;margin:0 0 12px}
 .dfrh{padding:9px 12px 8px;font:700 12px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--label);border-bottom:1px solid var(--line-strong)}
-.dfp{display:grid;grid-template-columns:46px minmax(0,1fr) auto;column-gap:10px;align-items:center;min-height:46px;border-top:1px solid var(--hair);padding-right:12px}
+.dfp{display:grid;grid-template-columns:46px minmax(0,1fr) auto;column-gap:10px;align-items:center;min-height:46px;border-top:1px solid var(--line);padding-right:12px}
 .dfrh+.dfp{border-top:0}
 .dfn{align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:var(--pc);color:#0b0e14;font-style:normal}
 .dfn b{font:700 14px/1 var(--display);text-box:trim-both cap alphabetic}
@@ -227,7 +227,7 @@ CSS="""
 .dfg{display:none}
 @media(min-width:1100px){
  .dfl{display:none}
- .dfg{display:grid;grid-template-columns:44px repeat(var(--dft),minmax(0,1fr));gap:5px;align-items:stretch;background:var(--deck);border:1px solid var(--hair);border-radius:12px;box-shadow:var(--dsh2);padding:10px 10px 10px 6px;margin:0 0 14px}
+ .dfg{display:grid;grid-template-columns:44px repeat(var(--dft),minmax(0,1fr));gap:5px;align-items:stretch;background:var(--deck);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-hard);padding:10px 10px 10px 6px;margin:0 0 14px}
  .dfgt{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:0;padding:2px 0 6px}
  .dfgt .pav{width:32px;height:32px}
  .dfgt b{max-width:100%;text-align:center;font:700 12.5px/1.1 var(--display);letter-spacing:.03em;color:var(--label);white-space:nowrap}
@@ -236,7 +236,7 @@ CSS="""
  .dfgl b{font:700 19px/1 var(--display);color:var(--chalk)}
  .dfgl i{font-style:normal;font-size:12px;line-height:1}
  .dfc{display:flex;flex-direction:column;min-width:0;min-height:96px;border-radius:7px;overflow:hidden;background:var(--pc);color:#0b0e14;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
- .dfc0{background:rgba(238,240,244,.035);box-shadow:inset 0 0 0 1px var(--hair)}
+ .dfc0{background:rgba(238,240,244,.035);box-shadow:inset 0 0 0 1px var(--line)}
  .dfct{flex:none;display:flex;align-items:center;justify-content:center;gap:4px;box-sizing:border-box;height:17px;padding:1px 7px 0;background:#e6cf96;box-shadow:inset 0 -1px 0 rgba(140,104,40,.45);color:#5c4515;font:600 10px/1.1 var(--display);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
  .dfct b{font-weight:700;color:#3b2a08}
  .dfct i{font-style:normal;opacity:.7}

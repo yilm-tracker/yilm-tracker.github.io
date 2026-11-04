@@ -90,7 +90,7 @@ def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2,opt=lambda t,w:set()):
          '.cr.lu.psr.psh{border-color:transparent!important;background:none!important;box-shadow:none!important}.cr.lu.psr::after{display:none!important}'
          '.psr>*{grid-row:1;min-width:0}.psr>.cn{grid-column:1;grid-area:auto;padding-right:6px}.psr>:nth-child(2){grid-column:2}.psr>:nth-child(3){grid-column:3}.psr>:nth-child(4){grid-column:4}'
          '.psr.psh{padding-top:10px!important;padding-bottom:6px!important;min-height:0!important;font-family:var(--display);font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--label)}'
-         '.psh>span:not(:first-child){text-align:center}.psh>span.psy{color:var(--dim)}'
+         '.psh>span:not(:first-child){text-align:center}.psh>span.psy{color:var(--text-dim)}'
          # each week a pillar: full row height, its own shade, a cut on its left
          '.psg{align-self:stretch;margin:-8px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;line-height:1;'
          'background:rgba(255,255,255,.035);box-shadow:inset 2px 0 0 var(--ink)}'
@@ -99,7 +99,7 @@ def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2,opt=lambda t,w:set()):
          '.psv .psk2{margin:0;min-width:21px;height:15px;padding:0 4px;font-size:11px;font-weight:700;font-style:normal;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}'
          '.psa{font-family:var(--display);font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums;color:var(--chalk)}'
          '.pst{font-size:10.5px;font-weight:500;color:var(--steel);white-space:nowrap;font-variant-numeric:tabular-nums}'
-         '.psb{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}'
+         '.psb{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)}'
          '.psg.psy{background:rgba(0,0,0,.18)}.psg.psy>*{opacity:.28}'
          '.psbh{margin-top:18px}'
          # sizes follow the week cell's width (container units), never smaller than the phone sizes above: wider
