@@ -155,6 +155,8 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 
 ## Open items / ideas offered, not decided
 
+- Paper Trail (phase 1 done 2026-11-04; `pipeline/history/paper_pull.mjs` via `paper.yml`, `paper_audit.py`): owners confirmed by Nicklaus: MFL 0001 Homer's Heroes = plj5023 (Sleeper roster 2), 0002 Team Ram Rod = acguay6 (roster 3), 0005 Orchids of Asia = NickBobJohn (roster 1, Convicts), so `teams.json` is right. The 2025-03-19 Sleeper import still rotated those three rosters (0005's players went to roster 3, 0002's to roster 2, 0001's to roster 1) while their picks stayed with the owners; how to show it is undecided. 2026 R2 (Nuts in the Face) reached Convicts with no transaction (commissioner edit?), unconfirmed.
+
 - At 360 BBP, "Mandingoes" fits only at 16px (with FAAB below the name it is better than before; recheck).
 - Page weight: 11.3 MB raw / 2.1 MB gzip (Matchups 4.7 MB, Playoffs and Compare 1.8 MB each). Lazy-loading tabs, Matchups first, was proposed.
 - Converting the MFL seasons (2021-24) into full tracker pages like 2025 was offered.
