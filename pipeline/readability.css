@@ -869,9 +869,9 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 /* 2026-11-03 (YILM only): playoff tier in the league red (no bye tier); manager's name centred under the face; desktop
    rank column = 30px as on phones (the face sits at the start of the name column, as on phones), so it no longer covers
    the number */
-.tier-po{--tc:var(--pylon)}
+.tier-po{--tc:var(--tier-po)}
 .dtt tr.po td.dsd,.dtt td.c3{color:var(--pylon)}
-.dpc.so.s3 b{color:var(--pylon)}
+.dpc.so.s3 b{color:var(--tier-po)}
 .board .r>.hl{min-height:21px}
 .board .r>.hl .mgr{position:absolute;left:64px;top:63px;transform:translateX(-50%);text-align:center;font-size:12.5px!important;line-height:1.1;white-space:nowrap}
 @media(max-width:380px){.board .r>.hl .mgr{left:55px;top:57px;font-size:11.5px!important}}
@@ -924,7 +924,7 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .pline b{font-weight:700;color:var(--lc)}
 .pline i{flex:1;min-width:12px;height:2px;border-radius:1px;background:color-mix(in srgb,var(--lc) 75%,transparent)}
 .pline span{color:var(--chalk)}
-.pl-bye{--lc:var(--pylon)}.pl-po{--lc:var(--pylon)}
+.pl-bye{--lc:var(--pylon)}.pl-po{--lc:var(--tier-po)}
 #list>.pline{margin:0 -14px}
 #list>.tcard:first-child>.r:first-child{border-radius:15px 15px 0 0}
 @media (max-width:380px){.pline{gap:10px;padding:10px 12px;font-size:10.5px;letter-spacing:.16em}}
@@ -1029,7 +1029,7 @@ html:root{--row-lt:#2F4B66;--row-divider:#172A3E}
 .board .r{grid-template-columns:calc(52px + 8px + 50px) minmax(0,1fr) 84px 78px!important}
 @media(max-width:380px){.board .r{grid-template-columns:calc(52px + 6px + 44px) minmax(0,1fr) 72px 78px!important}}
 @media(min-width:1100px){#list.board>.tcard>.r.r{grid-template-columns:111px 270px 84px 78px minmax(0,1fr)!important}}
-.board .r>.rk{grid-column:1;justify-self:start;align-self:start;width:52px;height:50px;margin-top:0!important;display:flex;align-items:center;justify-content:center}
+.board .r>.rk{grid-column:1;justify-self:start;align-self:start;width:var(--rks);height:50px;margin-top:0!important;display:flex;align-items:center;justify-content:center}
 @media(max-width:380px){.board .r>.rk{height:44px}}
 .board .r>.rav{left:calc(var(--rpx) + 60px)!important;top:var(--rpt)!important}
 @media(max-width:380px){.board .r>.rav{left:calc(var(--rpx) + 59px)!important}}
@@ -1108,7 +1108,8 @@ html:root{--faab:#4F9FE8}
 .txt.win b{color:var(--win)}
 .txw{justify-self:end;font:700 11px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;font-style:normal;color:var(--win);padding:4px 6px;border-radius:4px;background:color-mix(in srgb,var(--win) 15%,transparent);box-shadow:inset 0 0 0 1px var(--win)}
 .txl{grid-column:1/-1;font:400 11.5px/1.2 var(--body);color:var(--text-dim)}
-html:root{--text-dim:var(--dim);--faab-ink:var(--pg)}  /* --text-dim = YILM muted grey #AAB9C7; FAAB tile figures navy */
+html:root{--text-dim:#aab9c7;--dim:var(--text-dim);--faab-ink:var(--pg)}  /* --text-dim = YILM muted grey #AAB9C7 (canonical name, as BBP; --dim is its alias); FAAB tile figures navy */
+html:root{--tier-po:var(--pylon);--rks:52px}  /* token names aligned with BBP (2026-11-04): playoff tier colour (league red) and the rank column width */
 .txv.txq{color:var(--text-dim)}
 .txkt{min-width:0}
 /* footer: total on line 1; "pts since" + WON chip on line 2 (a 3-digit total and the chip do not share a 123px column at 360) */
@@ -1222,3 +1223,5 @@ html:root{--text-dim:var(--dim);--faab-ink:var(--pg)}  /* --text-dim = YILM mute
 .pr.tier-po>span[role="rowheader"] em:not(#z){color:var(--chalk)!important}
 /* YILM: league red marks seed 1 and the playoff line only (as on the standings); seed 2 is body text */
 .pr.tier-bye+.pr.tier-bye>span[role="rowheader"] em:not(#z){color:var(--chalk)!important}
+/* Season sim "#1" label takes the sim label colour like Finish and Playoffs (YILM sim labels are --label); gold marks top seeds only (DESIGN.md §2.3, Nicklaus 2026-11-04) */
+.dpc.so.s1 b:not(#z){color:var(--label)!important}
