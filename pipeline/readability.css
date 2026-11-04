@@ -1044,7 +1044,7 @@ html:root{--row-lt:#2F4B66;--row-divider:#172A3E}
  #dn-full:checked~.board .r{--rpb:15px}
 }
 /* muted text lifted to 4.5:1 on the new lighter row #2F4B66 (same hue): --text-dim #90a3b6 -> #aab9c7, --steel #a5b6c8 -> #a9b9ca */
-html:root{--text-dim:#aab9c7;--steel:#a9b9ca}
+html:root{--text-dim:#aebecc;--steel:#a9b9ca}
 /* the nickname's room comes from the rank cell (rank + face + nickname = one block), not an extra 21px row: a two-line
    name already clears the nickname, so it no longer leaves a gap above the stat lines; stat lines sit 8px under the
    nickname, as BBP's sit under the logo */
@@ -1108,7 +1108,7 @@ html:root{--faab:#4F9FE8}
 .txt.win b{color:var(--win)}
 .txw{justify-self:end;font:700 11px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;font-style:normal;color:var(--win);padding:4px 6px;border-radius:4px;background:color-mix(in srgb,var(--win) 15%,transparent);box-shadow:inset 0 0 0 1px var(--win)}
 .txl{grid-column:1/-1;font:400 11.5px/1.2 var(--body);color:var(--text-dim)}
-html:root{--text-dim:#aab9c7;--faab-ink:var(--pg)}  /* --text-dim = YILM muted grey #AAB9C7 (canonical name, as BBP; --text-dim is its alias); FAAB tile figures navy */
+html:root{--text-dim:#aebecc;--faab-ink:var(--pg)}  /* --text-dim = YILM muted grey #AEBECC (2026-11-04: was #AAB9C7, 4.52:1 on the lighter row; now 4.76:1) (canonical name, as BBP; --text-dim is its alias); FAAB tile figures navy */
 html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (2026-11-04): playoff tier colour (league red) and the rank column width */
 .txv.txq{color:var(--text-dim)}
 .txkt{min-width:0}

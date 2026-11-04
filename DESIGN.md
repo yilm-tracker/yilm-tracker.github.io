@@ -70,13 +70,13 @@ Four steps in one hue; only lightness changes. Reference: bdge.co standings. App
 | Lighter row `--row-lt` | `#243F49` (was `#203841`) | `#2F4B66` (was `#2B445D`) | `LIVE` |
 | `--row-divider` | `#121F24` | `#172A3E` | `LIVE` |
 | Body text `--chalk` | `#ECE6DA` cream | `#FFFFFF` white | `LIVE` |
-| `--text-dim` (labels, units) | `#A0A8B8` | `#AAB9C7` | `LIVE` |
+| `--text-dim` (labels, units) | `#A0A8B8` | `#AEBECC` | `LIVE` |
 | `--steel` | `#ABA497` | `#A9B9CA` | `LIVE` |
 | FAAB tile `--faab` / `--faab-ink` | `#D9D0BC` alabaster, `#101B1F` figures (11.4:1) | `#4F9FE8`, navy `#101D2B` figures (6.05:1) | `LIVE` |
 
 - `--text-dim` and `--steel` meet 4.5:1 on the lighter row (lifted 2026-11-03). Coloured data on the lighter row (position QB pink, tier teal/red, result red) is still under 4.5:1: open item.
 - **Tier text (2026-11-04)** `LIVE`: the playoff tier's text uses the normal text levels. All season sim labels (Finish, #1, Bye, Playoffs) are `--text-dim` on both sites (YILM has no Bye). Desktop table playoff % values: body text (cream / white), header unchanged (same as other headers). Stats › Points by position seed numbers 3-6: body text (**BBP** 1-2 stay gold, 7-12 `--text-dim`; **YILM** seed 1 league red, 2-6 white, 7-12 `--text-dim`, as on the standings). Contrast on the lighter row: `--text-dim` 4.67:1 BBP / 4.52:1 YILM; body text 8.98:1 / 9.06:1. Gold stays only where it marks a top seed (tiles 1-2, Bye line, seed numbers 1-2, the gold projected-finish value 1.0).
-- Two text levels on the standings cards, **both sites** (BBP 2026-11-03, YILM 2026-11-04) `LIVE`: values `--chalk` (BBP cream, YILM white); labels/units `--text-dim` (OPP, ALL-PLAY, LUCK, PF, PA, TOT EFF, /wk, xW, COULD HAVE, Won/Lost, FAAB, DROPPED PTS, SEASON SIM, FINISH, #1, BYE, PLAYOFFS, the "no change" dash). `--text-dim` on the panel / lighter row: BBP 6.05:1 / 4.67:1, YILM 5.83:1 / 4.52:1. Season chart labels unchanged. YILM manager nickname under the face stays `--label`.
+- Two text levels on the standings cards, **both sites** (BBP 2026-11-03, YILM 2026-11-04) `LIVE`: values `--chalk` (BBP cream, YILM white); labels/units `--text-dim` (OPP, ALL-PLAY, LUCK, PF, PA, TOT EFF, /wk, xW, COULD HAVE, Won/Lost, FAAB, DROPPED PTS, SEASON SIM, FINISH, #1, BYE, PLAYOFFS, the "no change" dash). `--text-dim` on the panel / lighter row: BBP 6.05:1 / 4.67:1, YILM 6.14:1 / 4.76:1 (`#AEBECC` since 2026-11-04; `#AAB9C7` gave 5.83:1 / 4.52:1, too close to the limit). Season chart labels unchanged. YILM manager nickname under the face stays `--label`.
 - **BBP** kit palette (Standings Redesign Spec, 2026-11-03), at the end of BBP `readability.css`: tiers match the live rank pack (2026-11-04): `--tier-bye #E2CF93` (gold), `--tier-po #E4DDCD` (alabaster; was teal `#19B5C4`), `--tier-ch #006778` (teal; was `#CDA74B`; no visible text uses it, and it fails text contrast, 2.2:1 on the panel) (labels, sub-labels and rules at full colour); season chart `--chart-po-line #0097A7`, `--chart-po-fill #023442`, `--chart-po-val #19B5C4`, `--chart-nfl-bye #5A6870`; `--row-alt #203841` (FAAB pills). `--accent` (was `--pylon`) and `--sky` are NOT redefined (used across other tabs); standings/chart uses are overridden one by one. Unchanged by design: status colours (form dots, streaks, arrows, rank chips), the position colours (TE stays orange). `LIVE`
 - **YILM** palette: logo blue `#4F9FE8`, logo red `#EC5F70`, league red `--accent #FB637A`.
 
@@ -94,7 +94,7 @@ Four steps in one hue; only lightness changes. Reference: bdge.co standings. App
 | Body text, values | `--chalk` | `#ECE6DA` | `#FFFFFF` |
 | Secondary labels, table headers | `--label` | `#CFC6B6` | `#D3DFEB` |
 | Muted figures | `--steel` | `#ABA497` | `#A9B9CA` |
-| Dim text: labels, units | `--text-dim` | `#A0A8B8` | `#AAB9C7` |
+| Dim text: labels, units | `--text-dim` | `#A0A8B8` | `#AEBECC` |
 | Dark text on light tiles | `--ink` | `#0F1C20` | `#15263A` |
 | Site accent | `--accent` | `#FF7A1A` orange (The Wire sort arrow, chart playoff weeks) | `#FB637A` league red (also seed 1 and, via `--tier-po`, the playoff line) |
 | Second accent | `--sky` | `#7FA6FF` | `#259FD6` |
@@ -139,7 +139,7 @@ Four steps in one hue; only lightness changes. Reference: bdge.co standings. App
 
 ### Rank numerals (YILM) `LIVE`
 - Own fixed 52px column + 9px gap before the face; faces at the same x on every row.
-- Seed 1 league red `#FB637A`; 2-6 white; 7-12 muted (`--text-dim #AAB9C7`). Desktop table seeds unchanged.
+- Seed 1 league red `#FB637A`; 2-6 white; 7-12 muted (`--text-dim #AEBECC`). Desktop table seeds unchanged.
 
 ### FAAB tile `LIVE`
 - Light tile, dark figures, raised by `--sh-hard` (the shadow is its frame; no border). Values in §4.
@@ -216,6 +216,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-04 · YILM `--text-dim` `#AAB9C7` → `#AEBECC`: 4.76:1 on the lighter row, 6.14:1 on the darker row (verified on the built page at 402/360), still clearly dimmer than white values (1.90:1 to white) · 4.52:1 was too close to the 4.5:1 limit.
 - 2026-11-04 · On-demand tabs on both sites: tabs built from content-hashed chunk files when opened (Matchups by week, Playoffs by panel), Matchups/Compare/Rosters dropped after leaving with state restored, hidden tabs out of the document, one width-only resize dispatcher, live scores poll only while the current week is on the page; budget added to §7 · Safari used 3.5-4.3 GB on 434k elements; first view and every tab unchanged.
 - 2026-11-04 · YILM labels and units step down to `--text-dim` like BBP's (same elements; 5.83:1 panel, 4.52:1 lighter row); values stay white · two text levels on both sites.
 - 2026-11-04 · Token cleanup: `--hair`→`--line`, `--dim`→`--text-dim`, `--plate`→`--frame`, `--dsh`/`--dsh2`→`--sh-hard`, `--pylon`→`--accent` (both sites), unused `--bg`/`--surface`/`--fg`/`--muted`/`--faint` deleted; every tab pixel-identical before/after (one YILM screenshot off by 1/255 in 28 pixels) · one name per role, no aliases.
