@@ -1243,3 +1243,20 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 @media(min-width:1100px){.tnav .lbc.tsub{margin-top:8px}.tnav .tsub label{flex:1 1 0}.tnav .tsub.tfl label{flex:1 1 auto}}
 
 /* 2026-11-05 nav level 2 polish: track height = group button height (subFit sets --tsv; CSS values are the Chromium fit), 8px under the group row at every width. */
+
+/* 2026-11-05 (Nicklaus) MATCHUPS LINEUP LINES: rows flush, no frame, shadow or gap (was 1px --frame border, --sh-hard, 5px gap);
+   the removed 1px border becomes 1px padding, so row height and content stay where they were.
+   A 1px --row-divider only where the league's slot group changes (.lgs, from Sleeper roster_positions in mu_build.py).
+   Centre: projection cells lose their own 1px side lines; the one centre line (::after, 1px --line, full row height) sits exactly
+   between the two projection columns. Bench: --pg strip, BENCH in --text-dim, 1px --line rule, note right. Matchups only. */
+.pane-mu .cr.lu{border-width:0!important;box-shadow:none!important;margin-block:0!important;padding:9px calc(var(--bw) + var(--bg2) + 1px)!important}
+.pane-mu .cr.lu .cv.pjc{margin-top:-9px!important;padding-block:1px!important;background:rgba(255,255,255,.035)}  /* projection fill runs the full row height; its figures stay where they were (1px inner padding) */
+.pane-mu .cr.lu:not(:has(.sln)) .cv.pjc{margin-bottom:-9px!important}
+.pane-mu .cr.lu .cv .fs.pj{box-shadow:none!important;background:none!important}
+.pane-mu .cr.lu::after{left:calc(50% - .5px);top:0;bottom:0;width:1px;background:var(--line);z-index:1}
+.pane-mu .cr.lu.lgs::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--row-divider);z-index:2}
+.pane-mu .lbh{display:flex;align-items:center;gap:14px;margin:0 -10.5px;padding:11px 16px;background:var(--pg);border:0!important;font:700 11.5px/1 var(--display);letter-spacing:.2em;text-transform:uppercase;white-space:nowrap}
+.pane-mu .lbh b{font-weight:700;color:var(--text-dim)}
+.pane-mu .lbh i{flex:1;min-width:12px;height:1px;background:var(--line)}
+.pane-mu .lbh small{flex:none;font:500 11px/1 var(--body);letter-spacing:0;text-transform:none;color:var(--steel);text-align:right}
+@media (min-width:1100px){.pane-mu .lbh{margin-inline:0}}

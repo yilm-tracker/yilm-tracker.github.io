@@ -172,6 +172,13 @@ All: one panel per section; rows edge to edge, alternating shades + `--row-divid
 - **C. Matchup + players rows:** week + team; "vs" + seed chip + opponent; players below as unbreakable units (pill + name) that wrap; never overlap. (Bye exposure, Two or more starters out.)
 - Audit sent 2026-11-03 with four open questions (split multi-list sub-tabs into one panel each; Team Hub tiles to pattern A; keep matrices with a dim "Tap a cell" note; neutral margin chips). Only Trades (below) is applied.
 
+### Matchups lineup `LIVE`
+- (2026-11-05) Player rows run flush: no frame, no hard shadow, no gap (was a 1px `--frame` border, `--sh-hard` and 5px between rows). The removed 1px border became 1px of padding, so row height (63.55px) and every element inside stay where they were.
+- Slot groups from the league's own Sleeper `roster_positions` (BBP `pull8a.json`, YILM `league.json`): a 1px `--row-divider` only above the first row of a new group, none between players of the same group. **BBP**: QB | RB RB | WR WR | TE | FLEX | K | DEF (6 dividers). **YILM**: QB | RB RB | WR WR WR | TE | FLEX | SUPER_FLEX (shown SFLX) (5 dividers; the league starts no K/DEF). Same groups in the Optimal lineup; bench rows have none.
+- Centre: projection cells have no side lines; their `rgba(255,255,255,.035)` fill runs the full row height (figures unmoved, 1px inner padding). One 1px `--line` line, full row height, centred between the two projection columns: delta 0px at 360P/402P/440P/956L/1440, both sites. Final boxes (green/red sides, "boxed = final") unchanged.
+- Bench: `--pg` strip as wide as the rows (cutoff-line geometry: 11px 16px padding, Barlow 700 11.5px, .2em caps), BENCH in `--text-dim` (7.9:1 BBP, 8.95:1 YILM), a 1px `--line` rule, note right-aligned in `--steel`, flush to the rows above and below.
+- Matchups only (`.pane-mu`); the Playoffs tab's lineups keep their framed rows.
+
 ### Trades `LIVE`
 Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" right), centre swap badge (vs/@ tile style) with vertical divider, per-side "RECEIVED" rule, footer with totals (winner green + WON chip, other `--text-dim`). Team names in the side headers ellipsise (Nicklaus's choice: clean truncation here). **YILM** 3-team trades stack below 760px.
 
@@ -242,6 +249,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-05 · Matchups lineup: rows flush (no frame/shadow/gap), 1px --row-divider only between Sleeper slot groups, one centred 1px --line centre line, projection side lines removed, bench as a --pg strip with --text-dim label and --line rule; content unmoved · §2.4 no card-in-panel.
 - 2026-11-05 · Phone scale 0.85 via viewport meta (initial-scale=0.85, pinch-zoom kept), both sites; test widths = device 360/402/440 at 0.85 + 874L/956L; layouts equal the 85%-Safari-zoom renders Nicklaus used · same look without setting Safari zoom per site.
 - 2026-11-05 · Nav level 2 polish: track edges = group row edges, track height = group button height (text size unchanged, 4px inset all sides), 8px gap under the groups at every width; no spacing token exists, value literal · one band, one height.
 - 2026-11-05 · Navigation: groups ordered Game Day, Front Office, The Lab; level 2 tabs are the H2H/Median toggle across the content width (equal segments, else each follows its label), both sites · one component for switches; Front Office before The Lab.

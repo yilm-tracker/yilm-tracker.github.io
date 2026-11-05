@@ -117,6 +117,8 @@ def _age(pid):
     if not b:return None
     y,m,dd=map(int,b.split('-'));return (_d.today()-_d(y,m,dd)).days/365.25
 SLOTS=[lg.SLAB.get(x,x) for x in lg.SLOTS]
+# 2026-11-05: a 1px --row-divider above the first row of each new slot group (QB | RB | WR ...); none inside a group
+def lgs(r,i):return r.replace('<div class="cr lu','<div class="cr lu lgs',1) if 0<i<len(SLOTS) and SLOTS[i]!=SLOTS[i-1] else r
 INJ={'Questionable':'Q','Doubtful':'D','Out':'O','IR':'IR'}
 from statline import statline as _sl, fumbles as _fl, fumbles_kept as _fk, detail as _dx
 def lval(p):
@@ -287,8 +289,8 @@ def ptsrow(sa,sb,big=True,ra=None,rb=None):
                 f'<em>Points</em><span class="{"up" if ub else ""}"{db}><span class="ltr"><b class="lt-v">{fb}</b><small class="lpg" title="Pre-game projection">({pb:.1f})</small></span>{lvb}</span></div>')
     return (f'<div class="mcr {"ltot" if big else "ltot2"}"><span class="{"up" if ua else ""}"{da}><b class="lt-v">{fa}</b> <small>({pa:.1f})</small></span>'
             f'<em>Points <i class=pj>(projected)</i></em><span class="{"up" if ub else ""}"{db}><small>({pb:.1f})</small> <b class="lt-v">{fb}</b></span></div>')
-BH_CUR='<div class="msh lbh">Bench<small>active players with a game</small></div>'
-BH_HIST='<div class="msh lbh">Bench<small>points left on the bench</small></div>'
+BH_CUR='<div class="msh lbh"><b>Bench</b><i></i><small>active players with a game</small></div>'
+BH_HIST='<div class="msh lbh"><b>Bench</b><i></i><small>points left on the bench</small></div>'
 def optblock(sa,sb,pool_a,pool_b,ta,tb,proj=False,bhead='',bkeep=lambda p:True,bsl=''):
     oa,ob=optimal(pool_a),optimal(pool_b)
     sid_a={p[0] for p in sa};sid_b={p[0] for p in sb}
@@ -300,8 +302,8 @@ def optblock(sa,sb,pool_a,pool_b,ta,tb,proj=False,bhead='',bkeep=lambda p:True,b
     o=[f'<div class="mcr ltot"><span class="{"up" if va>vb else ""}">{va:.1f}</span><em>{lab}</em><span class="{"up" if vb>va else ""}">{vb:.1f}</span></div>',
        ptsrow(sa,sb,False),res]
     o.append('<div class="lpv">')
-    for x,y in zip(oa,ob):
-        r=lrow(x,y,'')
+    for i,(x,y) in enumerate(zip(oa,ob)):
+        r=lgs(lrow(x,y,''),i)
         if x and x[0] not in sid_a:r=r.replace('<span class="cn a">','<span class="cn a swp">',1)
         if y and y[0] not in sid_b:r=r.replace('<span class="cn b">','<span class="cn b swp">',1)
         o.append(r)
@@ -322,7 +324,7 @@ def lineups(a,b):
     oa_,ob_=sum(p[4] for p in A['st']),sum(p[4] for p in B['st'])
     hdr=f'<div class="msh lsh">Lineups</div>{CTL([(VSW,'Order','Lineup',LSW),(LDW,'Stats','Rank',RKW),(LCW,'Colors','','')])}<div class="lnote">boxed = final · grey = projected</div>'
     o=[ptsrow(A['st'],B['st'],True,RID[a],RID[b])]
-    o+=['<div class="lpv">']+[lrow(pa,pb,sl if sl!='FLEX' else 'FLX') for pa,pb,sl in zip(A['st'],B['st'],SLOTS)]+['</div>',sview(A['st'],B['st'])]
+    o+=['<div class="lpv">']+[lgs(lrow(pa,pb,sl if sl!='FLEX' else 'FLX'),i) for i,(pa,pb,sl) in enumerate(zip(A['st'],B['st'],SLOTS))]+['</div>',sview(A['st'],B['st'])]
     keep=lambda p:_TAG.get(p[0],'')=='' and p[4]>0 or (p[3] in DONEG and p[5]>0)
     bn=lambda X:sorted([p for p in X['bn'] if keep(p)],key=lambda p:-lval(p)[0])
     ba,bb=bn(A),bn(B)
