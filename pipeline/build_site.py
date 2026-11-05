@@ -14,7 +14,7 @@ UPD=('<div id="upd" role="status" hidden><span>New scores</span><button type="bu
  '<script>(function(){var V="'+ver+'",el=document.getElementById("upd");function chk(){if(document.visibilityState!=="visible"||!el.hidden)return;'
  'fetch("build.json?"+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j.v&&j.v!==V)el.hidden=false}).catch(function(){})}'
  'setInterval(chk,120000);document.addEventListener("visibilitychange",chk)})()</script>')
-head=('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+head=('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=0.85, viewport-fit=cover">\n'
       '<meta name="robots" content="noindex">\n')
 s=head+s.replace('<meta charset="utf-8">\n','',1)
 if PAST:UPD=''  # a finished season never changes: no update poller, no live scores

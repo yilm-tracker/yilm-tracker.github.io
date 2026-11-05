@@ -196,6 +196,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 ## 7. Spacing and testing
 
+- **Phone scale 0.85** (2026-11-05) `LIVE`: every page sets `<meta viewport width=device-width, initial-scale=0.85>` (pinch-zoom kept; desktop browsers ignore it). On a phone the layout is points / 0.85: **test widths = device 360 / 402 / 440 portrait at scale 0.85** (`tools/device.py` tokens `360P 402P 440P` = 423 / 472 / 517 CSS px in Chromium; Safari may round to 424 / 473 / 518) and landscape `874L 956L` (1028 / 1124 CSS px: 874 = phone layout, 956 = the >=1100px desktop layout). Consequences: the `max-width:380px` rules no longer apply on any phone; `max-width:430px` applies at 360 only. Plain CSS widths (402, 440, 360) are still checked as before for the CSS steps. 1 CSS px = 0.85 pt on a phone: text under 11.76 CSS px renders under 10 pt (list kept, no change yet, §8).
 - Widths: 402 (primary), 440, 360 (floor); desktop 1100 and 1440 (navigation also 760, 1099, 1920). Use available width; no dead space.
 - 16px between content and any panel edge; 12px between text and any column divider; equal gaps both sides of a divider.
 - Nothing clipped, wrapped or ellipsised at 360/390 (agreed exceptions: Trades side headers ellipsise; Paper Trail last-move team names fall back to the logo); no sideways scroll; rows breathe.
@@ -228,6 +229,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 ## 8. Features in progress and open items
 
+- Text under 10 pt at phone scale 0.85 (2026-11-05): ~120 selector/size combinations per site, 7.5-11.6 CSS px (6.4-9.9 pt), Players `u` labels (SNP% etc.) 9.5px (8.1 pt, ~500 elements), Standings rank-chip digits `.ch .ct` 7.5px (6.4 pt), `small` 8.5-9px. Listed, not changed; awaiting a brief.
 - **Paper Trail**: `LIVE` (Phases 1-4 built 2026-11-04). Data notes in `CLAUDE.md`.
 - **Navigation three levels** (§5): `PENDING`.
 - **List patterns** cleanup of Stats and Team Hub (§6): `BRIEFED`, four questions open.
@@ -240,6 +242,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-05 · Phone scale 0.85 via viewport meta (initial-scale=0.85, pinch-zoom kept), both sites; test widths = device 360/402/440 at 0.85 + 874L/956L; layouts equal the 85%-Safari-zoom renders Nicklaus used · same look without setting Safari zoom per site.
 - 2026-11-05 · Nav level 2 polish: track edges = group row edges, track height = group button height (text size unchanged, 4px inset all sides), 8px gap under the groups at every width; no spacing token exists, value literal · one band, one height.
 - 2026-11-05 · Navigation: groups ordered Game Day, Front Office, The Lab; level 2 tabs are the H2H/Median toggle across the content width (equal segments, else each follows its label), both sites · one component for switches; Front Office before The Lab.
 

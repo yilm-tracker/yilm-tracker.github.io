@@ -2,7 +2,7 @@ import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).r
 import json,re
 P=__DTP__+''
 L=json.load(open(P+'lists.json')); s=open(P+'standings.html').read()
-head='<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+head='<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=0.85, viewport-fit=cover">\n'
 i=s.index('<style>'); s=head+s[:i]+s[i:]
 j=s.index('</style>')+len('</style>'); s=s[:j]+'\n</head>\n<body>'+s[j:]+'\n</body>\n</html>\n'
 a=s.index('<div class="tg"'); b=s.index('</div>',a)+6

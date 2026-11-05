@@ -241,7 +241,7 @@ function fit(){
   for(const j of jobs){j.mid=j.pb.getBoundingClientRect().bottom-j.cap*j.zc/2}  // read after sizing, so the line has settled: the figure's real baseline (a zero-size marker on it), not one estimated from font metrics: those are rounded differently by layout
   for(const j of jobs)j.pb.remove();
   for(const j of jobs){  // centre every tile on the figure's cap height (a flex row centres on the line box, which sits lower)
-    const tr=j.t.getBoundingClientRect(),d=(j.mid-(tr.top+tr.bottom)/2)/j.z;if(Math.abs(d)>0.1)j.t.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important')}
+    const tr=j.t.getBoundingClientRect(),d=(j.mid-(tr.top+tr.bottom)/2)/j.z;if(Math.abs(d)>0.01)j.t.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important')}
 }
 // size one rank tile from the digits' ink: outer height H, the same gap from ink to edge on top and bottom, the same on
 // left and right, never closer than 1.75px to the frame (the number shrinks to make room); width fixed for two digits so a column lines up
