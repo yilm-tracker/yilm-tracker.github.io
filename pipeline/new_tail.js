@@ -396,11 +396,12 @@ document.fonts&&document.fonts.ready.then(()=>requestAnimationFrame(simGap));add
  document.querySelectorAll('input.tabr,input.tgr').forEach(i=>{i.tabIndex=-1;i.setAttribute('aria-hidden','true')});
  function aria(){const rows=[nav.querySelector('nav.tabs'),nav.querySelector('.tsub')];
    rows.forEach(row=>{if(!row)return;const L=[...row.querySelectorAll('label')];L.forEach(l=>{const on=!!document.getElementById(l.htmlFor)?.checked;l.setAttribute('aria-selected',on);l.tabIndex=on?0:-1})})}
- function subFit(){const row=nav.querySelector('.tsub');if(!row)return;['--tsp','--tsl','--tsg'].forEach(k=>row.style.removeProperty(k));row.classList.remove('tfl');
+ function subFit(){const row=nav.querySelector('.tsub');if(!row)return;['--tsp','--tsl','--tsg','--tsv'].forEach(k=>row.style.removeProperty(k));row.classList.remove('tfl');
    // level 2 tabs = the H2H/Median toggle across the content width (2026-11-05): equal segments when the widest label plus its
    // padding fits an equal share; otherwise each segment follows its label (.tfl) and the row is still filled
    const L=[...row.querySelectorAll('label')].filter(l=>l.offsetParent);if(!L.length)return;
-   const rs=getComputedStyle(row),inner=row.clientWidth-parseFloat(rs.paddingLeft)-parseFloat(rs.paddingRight),gap=parseFloat(rs.columnGap)||0,
+   {const g=nav.querySelector('nav.tabs label');if(g){const gh=g.getBoundingClientRect().height,rh=row.getBoundingClientRect().height,pv=parseFloat(getComputedStyle(L[0]).paddingTop);if(Math.abs(gh-rh)>.001){let v=Math.max(0,pv+(gh-rh)/2);row.style.setProperty('--tsv',v+'px');for(let i=0;i<6&&row.getBoundingClientRect().height>gh+.001;i++){v-=1/128;row.style.setProperty('--tsv',v+'px')}}}}
+       const rs=getComputedStyle(row),inner=row.clientWidth-parseFloat(rs.paddingLeft)-parseFloat(rs.paddingRight),gap=parseFloat(rs.columnGap)||0,
      p0=parseFloat(getComputedStyle(L[0]).paddingLeft),R=document.createRange(),tw=L.map(l=>{R.selectNodeContents(l);return R.getBoundingClientRect().width});
    if(Math.max(...tw)+2*p0>(inner-gap*(L.length-1))/L.length)row.classList.add('tfl');
    // then the one-line fit rule (DESIGN.md §5), only if still needed: padding to 6px, the gap to 5px, padding to 4px
