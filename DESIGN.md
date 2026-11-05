@@ -112,19 +112,19 @@ Four steps in one hue; only lightness changes. Reference: bdge.co standings. App
 
 ## 5. Navigation
 
-**Groups and tabs** `LIVE`
+**Groups and tabs** `LIVE` (group order GAME DAY, FRONT OFFICE, THE LAB since 2026-11-05)
 - GAME DAY: Standings, Matchups, Playoffs
-- THE LAB: Stats, Leaderboards, Compare, Team Hub
 - FRONT OFFICE: Rosters, Players, The Wire, Drafts, Paper Trail (**YILM**: Drafts appears when the season's draft data is built)
+- THE LAB: Stats, Leaderboards, Compare, Team Hub
 - Default on load: Game Day › Standings; once Week 14 is done (weeks 15-17, current season only): Game Day › Playoffs.
 - Switching group opens its first tab (Game Day opens Playoffs in weeks 15-17). No remembering last tab.
 - Deep links always win over defaults (`#standings`, `#the-wire`, `#paper-trail`, `#paper-trail/pick/…`, `#paper-trail/player/…`).
-- Sub-tab row fits on one line down to 360: padding 12 → 6px, then letter-spacing, then gap 8 → 5px, then padding to 4px.
+- One-line fit rule for the level 2 row (applied only when a row would not fit): segment padding down to 6px, then the gap down to 5px (the toggle's gap is 2px, so this step does nothing), then padding to 4px. Letter-spacing is not reduced (the toggle has none). It engages only for the five Front Office tabs: padding 8 → 6px at 360, 10 → 9px at 402, 15 → 11px at 440; nowhere else.
 
-**Three levels, three forms** `PENDING`
-- Level 1, groups: big buttons, full width.
-- Level 2, tabs: existing segmented toggle (H2H/Median track) stretched full width, equal segments. (Live today: the Stats pill row.)
-- Level 3, sections (e.g. 14 Stats sections), grouped under headings (Team / Moves / Results / Roster):
+**Three levels, three forms**
+- Level 1, groups: big buttons, full width. `LIVE`
+- **Level 2, tabs: the H2H/Median segmented toggle across the content width** (same left and right edges as the group buttons) `LIVE` (2026-11-05). Same track, active segment, text size, weight and height as `.pane-st .tg`, no new tokens: track = the toggle's background on each site (**BBP** `--deck`, **YILM** `--ink`), 1px `--frame` border, 10px radius, 3px padding, 2px gap, no shadow; segments 8px radius, IBM Plex Sans 600, no capitals, active `--chalk` fill with `--ink` text (14.0:1 BBP, 15.3:1 YILM), inactive `--steel` text, no fill; size steps as the toggle: 15px text, 9px / 15px padding (row 43.25px); ≤430px 14px, 8 / 10px (40.09px); ≤380px 13px, 7 / 8px (36.94px). **Width rule** (`subFit()`): equal segments when the widest label plus its padding fits an equal share; otherwise each segment's width follows its label and the row is still filled (extra space shared equally); never wraps, clips or ellipsises. Checked on both sites at 360, 402, 440, 874, 956 (landscape), 1100, 1440 and 1920: every group fills the row, one line, no sideways scroll, same row height in every group.
+- Level 3, sections `PENDING` (e.g. 14 Stats sections), grouped under headings (Team / Moves / Results / Roster):
   - content ≥ 1100px: sticky sidebar list (~200px) left of the section panel;
   - content < 1100px: one section-picker button ("POSITIONS ▾") opening an inline grid (2 cols < 520px, 3 cols 520-1099px).
   - Switch by content width, not device; no scroll jump or lost selection when resizing.
@@ -239,6 +239,8 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 ## 9. Decision log
 
 Newest first. One line per decision: date · what · why.
+
+- 2026-11-05 · Navigation: groups ordered Game Day, Front Office, The Lab; level 2 tabs are the H2H/Median toggle across the content width (equal segments, else each follows its label), both sites · one component for switches; Front Office before The Lab.
 
 - 2026-11-05 · BBP rank tiles -> scoreboard pack (white/teal/charcoal), --rt 49 to keep the 44px visible tile, Playoff line teal #19B5C4 · Nicklaus's choice.
 

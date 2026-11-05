@@ -1229,3 +1229,15 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
    5.83:1 on the panel, 4.52:1 on the lighter row); values stay white. */
 .board .r em.lb,.board .r .chl,.board .r .cw,.board .r i.pw,.board .r .lku,.board .r .fab small,.board .r .mv.eq,.board .r .dpc.so.s0>b{color:var(--text-dim)!important}
 .board .r .cw b,.board .r .pw b{color:var(--chalk)!important}
+
+/* 2026-11-05 (Nicklaus) LEVEL 2 TABS = the H2H/Median toggle (.pane-st .tg) across the content width (same left/right edges as the
+   group buttons). Same track as .tg on each site (background var(--ink); BBP's --deck via its .pseg,.tg rule), 1px --frame border,
+   10px radius, 3px padding, 2px gap, no shadow; segments 8px radius, IBM Plex Sans 600 (no capitals), active --chalk on --ink,
+   inactive --steel; size and padding follow .pane-st .tg: 15px, 9px 15px; <=430px 14px, 8px 10px; <=380px 13px, 7px 8px.
+   subFit() (new_tail.js): equal segments, else .tfl = each segment follows its label; then the one-line fit rule if needed. */
+.tnav .lbc.tsub{display:flex;flex-wrap:nowrap;overflow:visible;gap:var(--tsg,2px);margin:6px 0 0;padding:3px;background:var(--ink);border:1px solid var(--frame);border-radius:10px;box-shadow:none}
+.tnav .tsub label{flex:1 1 0;margin:0;border:0!important;border-radius:8px;background:none;box-shadow:none;color:var(--steel);font:600 15px/1.15 var(--body);letter-spacing:normal;text-transform:none;white-space:nowrap;text-align:center;padding:9px var(--tsp,15px)}
+.tnav .tsub.tfl label{flex:1 1 auto}
+@media(max-width:430px){.tnav .tsub label{font-size:14px;padding:8px var(--tsp,10px)}}
+@media(max-width:380px){.tnav .tsub label{font-size:13px;padding:7px var(--tsp,8px)}}
+@media(min-width:1100px){.tnav .lbc.tsub{margin-top:8px}.tnav .tsub label{flex:1 1 0}.tnav .tsub.tfl label{flex:1 1 auto}}

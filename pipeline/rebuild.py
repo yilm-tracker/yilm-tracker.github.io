@@ -231,7 +231,7 @@ def _navgroups(h):
     m=_re.search(r'<nav class="tabs" aria-label="Sections">(.*?)</nav>',h,_re.S)
     if not m:return h
     labs=dict((a,b) for a,b in _re.findall(r'<label for="(tab-[a-z]+)"[^>]*>([^<]+)</label>',m.group(1)))
-    GR=[('gd','Game Day',['tab-st','tab-mu','tab-po']),('lab','The Lab',['tab-sx','tab-lb','tab-cm','tab-th']),('fo','Front Office',['tab-ro','tab-pl','tab-wr','tab-df','tab-pt'])]
+    GR=[('gd','Game Day',['tab-st','tab-mu','tab-po']),('fo','Front Office',['tab-ro','tab-pl','tab-wr','tab-df','tab-pt']),('lab','The Lab',['tab-sx','tab-lb','tab-cm','tab-th'])]  # order 2026-11-05
     GR=[(g,n,[t for t in ts if t in labs]) for g,n,ts in GR];GR=[x for x in GR if x[2]]
     po=1 if (DONE>=14 and _dt_os.environ.get('DT_PAST')!='1') else 0
     rad=''.join(f'<input type="radio" name="tgrp" id="grp-{g}" class="lr tgr"{" checked" if i==0 else ""}>' for i,(g,n,ts) in enumerate(GR))

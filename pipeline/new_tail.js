@@ -396,11 +396,18 @@ document.fonts&&document.fonts.ready.then(()=>requestAnimationFrame(simGap));add
  document.querySelectorAll('input.tabr,input.tgr').forEach(i=>{i.tabIndex=-1;i.setAttribute('aria-hidden','true')});
  function aria(){const rows=[nav.querySelector('nav.tabs'),nav.querySelector('.tsub')];
    rows.forEach(row=>{if(!row)return;const L=[...row.querySelectorAll('label')];L.forEach(l=>{const on=!!document.getElementById(l.htmlFor)?.checked;l.setAttribute('aria-selected',on);l.tabIndex=on?0:-1})})}
- function subFit(){const row=nav.querySelector('.tsub');if(!row)return;row.style.removeProperty('--tsp');row.style.removeProperty('--tsl');row.style.removeProperty('--tsg');
-   if(innerWidth>=1100)return;let p=12,ls=.06;const over=()=>row.scrollWidth>row.clientWidth+.5;
+ function subFit(){const row=nav.querySelector('.tsub');if(!row)return;['--tsp','--tsl','--tsg'].forEach(k=>row.style.removeProperty(k));row.classList.remove('tfl');
+   // level 2 tabs = the H2H/Median toggle across the content width (2026-11-05): equal segments when the widest label plus its
+   // padding fits an equal share; otherwise each segment follows its label (.tfl) and the row is still filled
+   const L=[...row.querySelectorAll('label')].filter(l=>l.offsetParent);if(!L.length)return;
+   const rs=getComputedStyle(row),inner=row.clientWidth-parseFloat(rs.paddingLeft)-parseFloat(rs.paddingRight),gap=parseFloat(rs.columnGap)||0,
+     p0=parseFloat(getComputedStyle(L[0]).paddingLeft),R=document.createRange(),tw=L.map(l=>{R.selectNodeContents(l);return R.getBoundingClientRect().width});
+   if(Math.max(...tw)+2*p0>(inner-gap*(L.length-1))/L.length)row.classList.add('tfl');
+   // then the one-line fit rule (DESIGN.md §5), only if still needed: padding to 6px, the gap to 5px, padding to 4px
+   const over=()=>row.scrollWidth>row.clientWidth+.5;let p=p0;
    while(over()&&p>6){p-=1;row.style.setProperty('--tsp',p+'px')}
-   while(over()&&ls>0){ls=Math.max(0,+(ls-.01).toFixed(2));row.style.setProperty('--tsl',ls+'em')}
-   let g=8;while(over()&&g>5){g-=1;row.style.setProperty('--tsg',g+'px')}while(over()&&p>4){p-=1;row.style.setProperty('--tsp',p+'px')}}
+   let g=gap;while(over()&&g>5){g-=1;row.style.setProperty('--tsg',g+'px')}
+   while(over()&&p>4){p-=1;row.style.setProperty('--tsp',p+'px')}}
  function sync(){const t=document.querySelector('input[name=tab]:checked'),g=(t&&grpOf(t.id))||'gd',r=document.getElementById('grp-'+g);
    if(r&&!r.checked)r.checked=true;aria();subFit()}
  function pick(id){const t=id&&document.getElementById(id);if(!t)return;if(!t.checked){t.checked=true;t.dispatchEvent(new Event('change',{bubbles:true}))}sync()}
