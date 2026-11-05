@@ -1,12 +1,13 @@
 # QA: every rank tile beside a figure spans exactly the figure's cap height: tile top = the figure's digit-ink top,
 # tile bottom = its baseline (tolerance TOL px, default 0.05). Both trackers, any widths, Dumb and Nerd.
 # Usage: python3 tools/tilechk.py 402 440 360 1440        -> expects 0 violations everywhere
+#        python3 tools/tilechk.py 874L 956L               (iPhone landscape as on Nicklaus's device; tokens in device.py)
 #        TOL=0.1 python3 tools/tilechk.py 402             (looser tolerance, e.g. while experimenting)
 # Exact by construction: the baseline is read from a zero-size inline-block placed on it (font-metric estimates are off by
 # up to ~0.9px at zoomed widths), cap height = digit ink ascent x the element's real CSS zoom. A tile in a stat line that
 # is NOT level with its figure is a violation too ("off line"), not silently skipped. Tiles stacked under their number
 # (flex-column cells: Dropped pts, Stats table) are not beside a figure and are not checked.
-import os,sys;sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)));import realfonts
+import os,sys;sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)));import realfonts,device
 from playwright.sync_api import sync_playwright
 TOL=float(os.environ.get('TOL','0.05'))
 JS='''(tol)=>{const out=[];let n=0;const C=document.createElement('canvas').getContext('2d');
@@ -32,8 +33,8 @@ bad=0
 with sync_playwright() as p:
     b=p.chromium.launch()
     for k,u in U.items():
-      for w in [int(a) for a in (sys.argv[1:] or ['402','440','360','1440'])]:
-        pg=b.new_page(viewport={'width':w,'height':1800});pg.route('**/api.sleeper.app/**',lambda r:r.abort());realfonts.setup(pg);pg.goto('file://'+u);pg.wait_for_timeout(1500)
+      for w in (sys.argv[1:] or ['402','440','360','1440']):
+        pg,_d=device.new_page(b,w,1800);pg.route('**/api.sleeper.app/**',lambda r:r.abort());realfonts.setup(pg);pg.goto('file://'+u);pg.wait_for_timeout(1500)
         for st in ('Dumb','Nerd'):  # the page loads in Dumb; click the other level and check again
           pg.click('label[for="%s"]'%('dn-lean' if st=='Dumb' else 'dn-full'));pg.wait_for_timeout(800)
           res=pg.evaluate(JS,TOL);bad+=len(res['out'])

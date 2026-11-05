@@ -1,5 +1,6 @@
 # QA: full-page captures of every tab (plus Standings with Nerd on) for before/after pixel comparison.
 # Usage: python3 tools/shots.py <site url> <out dir> [widths...]      e.g. shots.py http://localhost:8801/index.html /tmp/before 402 1440
+#        widths may be device tokens (874L 956L 402P ..., see device.py): iPhone Safari emulation incl. page zoom
 #        python3 tools/shots.py --cmp <dir a> <dir b>                  -> per capture: identical / N pixels differ; exit 1 on any difference
 # Serve the built site over http (chunks are fetched): python3 -m http.server in site/ (YILM .season/2026/site/). Real fonts via realfonts.
 import os, sys, hashlib
@@ -25,7 +26,7 @@ def shoot(url, out, widths):
     with sync_playwright() as p:
         b = p.chromium.launch()
         for w in widths:
-            pg = b.new_page(viewport={'width': w, 'height': 900}); realfonts.setup(pg)
+            import device; pg, _d = device.new_page(b, w, 900); realfonts.setup(pg)
             pg.goto(url); pg.evaluate('()=>document.fonts.ready'); pg.wait_for_timeout(1500)
             tabs = pg.evaluate("()=>[...document.querySelectorAll('input[name=tab]')].map(i=>i.id)")
             states = [(t, t) for t in tabs] + [('tab-st', 'tab-st-nerd')]
@@ -41,4 +42,4 @@ def shoot(url, out, widths):
 
 if __name__ == '__main__':
     if sys.argv[1] == '--cmp': sys.exit(1 if cmp(sys.argv[2], sys.argv[3]) else 0)
-    shoot(sys.argv[1], sys.argv[2], [int(x) for x in sys.argv[3:]] or [402, 1440])
+    shoot(sys.argv[1], sys.argv[2], sys.argv[3:] or ['402', '1440'])
