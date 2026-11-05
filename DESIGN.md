@@ -26,7 +26,7 @@ Last reconciled against the built pages: 2026-11-04, after the data bar / opacit
 
 1. **Tokens only.** No new colour, shadow, radius or font size inline; a new value = a new token, and say so. `LIVE`
 2. **Surface order:** frame (darkest) < page < panel < alternate row. Nothing nested is lighter than its container (except the alternate row's one step; text, chips and data excepted). `LIVE`
-3. **One job per colour.** Tier colours = tiers; green/red = results only; YILM league red = #1 seed and the playoff line. Gold = top seeds (bye) only, never playoff text. **Alabaster is a surface colour (tiles, cutoff rule), not a text colour; tier identity in text comes from position and labels, not colour.** `LIVE`
+3. **One job per colour.** Tier colours = tiers; green/red = results only; YILM league red = #1 seed and the playoff line. Gold = top seeds (bye) only, never playoff text. **Alabaster is a surface colour (BBP FAAB tile), not a text colour; tier identity in text comes from position and labels, not colour.** `LIVE`
 4. **Flat.** No gradients, glows, blurred shadows, top-edge highlights, accent rails/bars, edge fades, or cards inside cards. Depth only via hard offset shadow (no blur) in the frame colour: `--sh-hard` = `1px 3px 0 0 var(--frame)`. `LIVE`
 5. **Dividers recede:** always darker than what they separate. `LIVE`
 6. **Reuse** the nearest existing component before styling anything new.
@@ -77,7 +77,7 @@ Four steps in one hue; only lightness changes. Reference: bdge.co standings. App
 - `--text-dim` and `--steel` meet 4.5:1 on the lighter row (lifted 2026-11-03). Coloured data on the lighter row (position QB pink, tier teal/red, result red) is still under 4.5:1: open item.
 - **Tier text (2026-11-04)** `LIVE`: the playoff tier's text uses the normal text levels. All season sim labels (Finish, #1, Bye, Playoffs) are `--text-dim` on both sites (YILM has no Bye). Desktop table playoff % values: body text (cream / white), header unchanged (same as other headers). Stats › Points by position seed numbers 3-6: body text (**BBP** 1-2 stay gold, 7-12 `--text-dim`; **YILM** seed 1 league red, 2-6 white, 7-12 `--text-dim`, as on the standings). Contrast on the lighter row: `--text-dim` 4.67:1 BBP / 4.52:1 YILM; body text 8.98:1 / 9.06:1. Gold stays only where it marks a top seed (tiles 1-2, Bye line, seed numbers 1-2, the gold projected-finish value 1.0).
 - Two text levels on the standings cards, **both sites** (BBP 2026-11-03, YILM 2026-11-04) `LIVE`: values `--chalk` (BBP cream, YILM white); labels/units `--text-dim` (OPP, ALL-PLAY, LUCK, PF, PA, TOT EFF, /wk, xW, COULD HAVE, Won/Lost, FAAB, DROPPED PTS, SEASON SIM, FINISH, #1, BYE, PLAYOFFS, the "no change" dash). `--text-dim` on the panel / lighter row: BBP 6.05:1 / 4.67:1, YILM 6.14:1 / 4.76:1 (`#AEBECC` since 2026-11-04; `#AAB9C7` gave 5.83:1 / 4.52:1, too close to the limit). Season chart labels unchanged. YILM manager nickname under the face stays `--label`.
-- **BBP** kit palette (Standings Redesign Spec, 2026-11-03), at the end of BBP `readability.css`: tiers match the live rank pack (2026-11-04): `--tier-bye #E2CF93` (gold), `--tier-po #E4DDCD` (alabaster; was teal `#19B5C4`), `--tier-ch #006778` (teal; was `#CDA74B`; no visible text uses it, and it fails text contrast, 2.2:1 on the panel) (labels, sub-labels and rules at full colour); season chart `--chart-po-line #0097A7`, `--chart-po-fill #023442`, `--chart-po-val #19B5C4`, `--chart-nfl-bye #5A6870`; `--row-alt #203841` (FAAB pills). `--accent` (was `--pylon`) and `--sky` are NOT redefined (used across other tabs); standings/chart uses are overridden one by one. Unchanged by design: status colours (form dots, streaks, arrows, rank chips), the position colours (TE stays orange). `LIVE`
+- **BBP** kit palette (Standings Redesign Spec, 2026-11-03), at the end of BBP `readability.css`: tiers match the live rank pack (2026-11-05): `--tier-bye #E2CF93` (gold), `--tier-po #19B5C4` (teal; Playoff line label 7.59:1 on `--pg`, its 75% rule 4.71:1; was alabaster `#E4DDCD` 2026-11-04), `--tier-ch #2A2E33` (charcoal; was teal `#006778`; nothing visible uses it, checked 2026-11-05) (labels, sub-labels and rules at full colour); season chart `--chart-po-line #0097A7`, `--chart-po-fill #023442`, `--chart-po-val #19B5C4`, `--chart-nfl-bye #5A6870`; `--row-alt #203841` (FAAB pills). `--accent` (was `--pylon`) and `--sky` are NOT redefined (used across other tabs); standings/chart uses are overridden one by one. Unchanged by design: status colours (form dots, streaks, arrows, rank chips), the position colours (TE stays orange). `LIVE`
 - **YILM** palette: logo blue `#4F9FE8`, logo red `#EC5F70`, league red `--accent #FB637A`.
 
 **Token names: one name per role on both sites** (2026-11-04) `LIVE`. Every token below is defined on both sites under the same name and does the same job; values differ per site. No aliases.
@@ -98,7 +98,7 @@ Four steps in one hue; only lightness changes. Reference: bdge.co standings. App
 | Dark text on light tiles | `--ink` | `#0F1C20` | `#15263A` |
 | Site accent | `--accent` | `#FF7A1A` orange (The Wire sort arrow, chart playoff weeks) | `#FB637A` league red (also seed 1 and, via `--tier-po`, the playoff line) |
 | Second accent | `--sky` | `#7FA6FF` | `#259FD6` |
-| Playoff tier | `--tier-po` | `#E4DDCD` alabaster | `var(--accent)` |
+| Playoff tier | `--tier-po` | `#19B5C4` teal | `var(--accent)` |
 | Results | `--win` / `--loss` (+ `-bg`) | | |
 | Hard shadows | `--sh-hard`, `--sh-1` | | |
 | Panel corners | `--r-panel` | 6px | 6px |
@@ -132,10 +132,11 @@ Four steps in one hue; only lightness changes. Reference: bdge.co standings. App
 ## 6. Components
 
 ### Rank tiles and numerals (BBP) `LIVE`
-- **Live pack: `rank_tiles_gold_alabaster_teal.zip`, `no_buffer/rounded`** (split-flap tiles, 272×320 WebP, lossless): 1-2 brushed gold (`1_bye_gold`; highlight `#F4E3A8`, trim `#806E3A`, teal extrusion), 3-6 alabaster face `#E4DDCD` (`2_playoff_alabaster`; gold trim `#CDA74B`), 7-12 teal face `#006778` (`3_chasing_teal`; extrusion `#023442`). No margin, depth baked into the art (no CSS shadow). Served byte-for-byte from `ranknum/r1-12.webp` (identical to the pack's `RNI_snippet.js`); never cropped or re-encoded. Replaced `scoreboard_rank_tiles_final.zip` on 2026-11-04.
-- CSS: `.rni{display:block;height:var(--rt);width:auto;max-width:none;margin:0}`; one rule, `--rt` 44px (tile 37.4px wide), no per-tier size/filter/opacity; fixed 52px rank column (`--rks`), centred; tile centre level with the logo centre (within 0.3px at 402 and 360). `alt` + `aria-label` per seed. Team Hub uses the same tiles at 44px; the desktop standings table at 24px.
-- Other packs offered (not live): `rank_numerals_keyline.zip` (free-standing; `--rt` 32px desktop / 44px mobile, 40px column); the earlier `scoreboard_rank_tiles_final.zip`.
-- Section label colours match the live pack's tiers: Bye line gold `--tier-bye`; Playoff line label and rule alabaster `--tier-po` (it reads as a tier marker by its position and its pairing with the gold Bye line). No other text uses alabaster (§2.3).
+- **Live pack: `scoreboard_rank_tiles_final.zip`, `square/`** (flip-scoreboard cards, lossless WebP 240×320 for 1-9, 280×320 for 10-12; `RNI_snippet.js` sha256 `524af2caec1cdc95…`): 1-2 white face `#FCFCFA` with gold frame `#CDA74B` (`1_bye_white`), 3-6 teal face `#006778` (`2_playoff_teal`), 7-12 charcoal face `#2A2E33` (`3_chasing_dark`). Each image carries a 4px transparent margin (the tile is 72 of 80px at 1x), so the CSS height is 49/44.1 of the visible tile. Served byte-for-byte from `ranknum/r1-12.webp` (identical to the snippet, and to the files live until 2026-11-04, `9f05cc4^`); the build inlines them from those files; never cropped, re-encoded, filtered or transformed. Replaced `rank_tiles_gold_alabaster_teal.zip` on 2026-11-05 (that pack had replaced this one on 2026-11-04).
+- **1 and 11 are centred on their stems by design** (approved by Nicklaus 2026-11-05); exception to the visible-ink centring rule. Do not re-centre.
+- CSS: `.rni{display:block;height:var(--rt);width:auto;max-width:none;margin:0}`; one rule, no per-tier size/filter/opacity. `--rt` **49px** (visible tile 44.1px; 10-12 are 42.9px wide, inside the 52px rank column `--rks`), **48px at ≤380px** (visible 43.2px: the logo is 44px there and the tile is never taller than the logo). Team Hub 49px. Desktop standings table **27px** (visible 24.3px; margin −3.5px so it takes the same 20px in the row as before). Tile centre level with the logo centre: ≤0.16px at 360/402/440 (3x), 0.24px at 1440 (2x); `rniSnap` snaps the art to device pixels, so a 1x screen shows up to 0.5px. `alt="N"` + `aria-label="Rank N"` per seed.
+- Other packs offered (not live): `rank_numerals_keyline.zip` (free-standing; `--rt` 32px desktop / 44px mobile, 40px column); `rank_tiles_gold_alabaster_teal.zip` (live 2026-11-04 to 2026-11-05).
+- Section label colours match the live pack's tiers: Bye line gold `--tier-bye`; Playoff line label and rule teal `--tier-po` (`#19B5C4`, 2026-11-05; was alabaster). Gold stays on the Bye line and Stats seeds 1-2 only.
 
 ### Rank numerals (YILM) `LIVE`
 - Own fixed 52px column + 9px gap before the face; faces at the same x on every row.
@@ -238,6 +239,8 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 ## 9. Decision log
 
 Newest first. One line per decision: date · what · why.
+
+- 2026-11-05 · BBP rank tiles -> scoreboard pack (white/teal/charcoal), --rt 49 to keep the 44px visible tile, Playoff line teal #19B5C4 · Nicklaus's choice.
 
 - 2026-11-05 · Safari memory 471-503 -> 99.8 MB on load, 160.2 MB after every tab (fitter first-pass skip, batched tile sizing, Playoffs/live/HTML leak fixes) · under the 300 MB budget; visited tabs stay built.
 - 2026-11-05 · Safari memory test pages removed (`/debug/mem/`, their generator and `robots.txt`) · figures reported.
