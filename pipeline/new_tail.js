@@ -1,3 +1,6 @@
+// FL(): the web fonts are still loading. The page stays hidden until they have loaded and the fitters have run on them, and every
+// fitter runs again on fonts.ready, so a fitter's first pass while they load is never seen: it is skipped (2026-11-04, WebKit memory).
+const FL=()=>!!(document.fonts&&document.fonts.status==='loading');
 const fn=n=>n;  // data files use full team names
 const OPEN=new Set();
 const MAX=Math.max(...Object.values(T).map(d=>d[3]));
@@ -138,7 +141,7 @@ list.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.
 const bh=document.getElementById('bh'),bm=document.getElementById('bm');
 function set(med){bh.setAttribute('aria-pressed',!med);bm.setAttribute('aria-pressed',med);draw(med);dtab(med)}
 bh.onclick=()=>set(false);bm.onclick=()=>set(true);
-draw(false);dtab(false);
+draw(false);if(!FL())dtab(false);
 if(typeof AVR!=='undefined')document.querySelectorAll('.pav[data-avt]').forEach(e=>{const r=AVR[e.dataset.avt];if(r)e.classList.add('av','av-'+r);else e.classList.add('nl')});
 function pfit(){document.querySelectorAll('.pr .pav.av+.psn').forEach(el=>{if(!el.offsetParent)return;el.style.fontSize='';let f=parseFloat(getComputedStyle(el).fontSize);while((el.scrollHeight>el.clientHeight+1||el.scrollWidth>el.clientWidth+1)&&f>9){f-=0.5;el.style.fontSize=f+'px'}})}
 pfit();document.addEventListener('change',()=>requestAnimationFrame(pfit));
@@ -169,7 +172,7 @@ function tnFit(){
 function tabFit(){const L=[...document.querySelectorAll('nav.tabs label')].filter(l=>l.offsetParent);if(!L.length)return;L.forEach(l=>l.style.fontSize='');
 let k=1;L.forEach(l=>{const rg=document.createRange();rg.selectNodeContents(l);const tw=rg.getBoundingClientRect().width;const ls=parseFloat(getComputedStyle(l).letterSpacing)||0;const room=l.getBoundingClientRect().width-2-16;const w=tw-ls;if(w>room)k=Math.min(k,room/w)});
 if(k<1){const f=parseFloat(getComputedStyle(L[0]).fontSize)*k;L.forEach(l=>l.style.fontSize=(Math.floor(f*4)/4)+'px')}}
-tabFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(tabFit);document.fonts&&document.fonts.addEventListener('loadingdone',()=>{tabFit();tnFit()});addEventListener('resize',()=>requestAnimationFrame(tabFit));
+if(!FL())tabFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(tabFit);document.fonts&&document.fonts.addEventListener('loadingdone',()=>{tabFit();tnFit()});addEventListener('resize',()=>requestAnimationFrame(tabFit));
 // standings logo: top on the team name's cap line, bottom on the Hi/Lo/Avg baseline (measured from the glyphs, per row)
 const _cv=document.createElement('canvas').getContext('2d');
 function _ink(el,txt){const c=getComputedStyle(el);_cv.font=c.fontStyle+' '+c.fontWeight+' '+c.fontSize+' '+c.fontFamily;const m=_cv.measureText(txt);const rg=document.createRange();rg.selectNodeContents(el);const r=rg.getClientRects()[0]||el.getBoundingClientRect();
@@ -183,30 +186,36 @@ function ravFit(){let mx=0;const bd=document.querySelector('.board');document.qu
 // text and dots jump between full size and the floor on a 1px width change.
 const SBQ=matchMedia('(min-width:1100px)');
 function sbLines(bd){return [...bd.querySelectorAll('.sb .stx:not(.spl)')].filter(x=>x.offsetParent&&!(SBQ.matches&&x.closest('.s-lu')))}
-function sbFit(){document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;bd.classList.add('sbm');bd.style.setProperty('--sbs','1');const L=sbLines(bd);let k=1;
-  bd.style.removeProperty('--stw2');const ov=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);while(k>.68&&ov()){k-=.02;bd.style.setProperty('--sbs',k.toFixed(2))}
-  if(k<1&&ov()){k=1;bd.style.setProperty('--sbs','1')}
+// The scale and text column are set on the elements that use them (.sb / .st lines), not on the board (2026-11-04): a custom
+// property or class on .board restyles all ~3,500 board elements at every step, and WebKit keeps that peak (Safari +400 MB on load).
+// Same computed values: every consumer of --sbs / --stw2 / --s2s sits in one of these elements; .sbm is set on the .sb blocks themselves.
+const sbEls=bd=>bd.querySelectorAll('.r .sb,.r .st'),sbBlk=bd=>bd.querySelectorAll('.r>.sb');
+function sbSet(bd,k){bd.__sbs=k;const v=typeof k==='number'?k.toFixed(2):k;sbEls(bd).forEach(e=>e.style.setProperty('--sbs',v))}
+function sbFit(){document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;const B=sbBlk(bd);B.forEach(e=>e.classList.add('sbm'));sbSet(bd,'1');const L=sbLines(bd);let k=1;
+  B.forEach(e=>e.style.removeProperty('--stw2'));const ov=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);while(k>.68&&ov()){k-=.02;sbSet(bd,k)}
+  if(k<1&&ov()){k=1;sbSet(bd,'1')}
   // then the text column shrinks to the longest line, so the dots sit just after the text (all lines aligned)
   const mw=Math.max(0,...L.filter(x=>x.closest('.sb')).map(x=>{const rg=document.createRange();rg.selectNodeContents(x);const a=rg.getBoundingClientRect(),b=x.getBoundingClientRect();return a.right-b.left}));
-  if(mw)bd.style.setProperty('--stw2',Math.ceil(mw+2)+'px');bd.classList.remove('sbm')});if(typeof tileFit==='function'){tileFit();
+  if(mw)B.forEach(e=>e.style.setProperty('--stw2',Math.ceil(mw+2)+'px'));B.forEach(e=>e.classList.remove('sbm'))});if(typeof tileFit==='function'){tileFit();
   // the rank tiles resize with the text: if a line now overflows, step the scale down again (a few passes at most)
   for(let n=0;n<4;n++){let again=false;document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;const L=sbLines(bd);
-    if(L.some(x=>x.scrollWidth>x.clientWidth+.5)){const k=parseFloat(bd.style.getPropertyValue('--sbs')||'1')-.02;if(k>.66){bd.style.setProperty('--sbs',k.toFixed(2));again=true}}});if(!again)break;tileFit()}}}
+    if(L.some(x=>x.scrollWidth>x.clientWidth+.5)){const k=parseFloat(bd.__sbs||'1')-.02;if(k>.66){sbSet(bd,k);again=true}}});if(!again)break;tileFit()}}}
 // Opp rk · All-play · Luck line: its own scale (down to 86%); if it still does not fit, Luck wraps to a second line
-function s2Fit(){document.querySelectorAll('.board').forEach(bd=>{const L=[...bd.querySelectorAll('.r>.st.s2')].filter(x=>x.offsetParent);bd.style.setProperty('--s2s','1');L.forEach(x=>x.classList.remove('wrp'));let k=1;
-  const over=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);while(k>.81&&over()){k-=.02;bd.style.setProperty('--s2s',k.toFixed(2))}
-  if(over()){bd.style.setProperty('--s2s','1');L.forEach(x=>x.classList.add('wrp'))}});if(typeof tileFit==='function')tileFit()}
-s2Fit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(s2Fit);addEventListener('resize',()=>requestAnimationFrame(s2Fit));document.addEventListener('change',()=>requestAnimationFrame(s2Fit));document.fonts&&document.fonts.addEventListener('loadingdone',s2Fit);
+function s2Fit(){document.querySelectorAll('.board').forEach(bd=>{const A=bd.querySelectorAll('.r>.st.s2'),S=v=>A.forEach(e=>e.style.setProperty('--s2s',v));const L=[...A].filter(x=>x.offsetParent);S('1');L.forEach(x=>x.classList.remove('wrp'));let k=1;
+  const over=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);while(k>.81&&over()){k-=.02;S(k.toFixed(2))}
+  if(over()){S('1');L.forEach(x=>x.classList.add('wrp'))}});if(typeof tileFit==='function')tileFit()}
+if(!FL())s2Fit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(s2Fit);addEventListener('resize',()=>requestAnimationFrame(s2Fit));document.addEventListener('change',()=>requestAnimationFrame(s2Fit));document.fonts&&document.fonts.addEventListener('loadingdone',s2Fit);
 // dropdown labels (Compare team pickers etc.): shrink a long name to fit instead of an ellipsis
 function ddFit(){document.querySelectorAll('.dd summary .sv').forEach(v=>{if(!v.offsetParent)return;v.style.fontSize='';let f=parseFloat(getComputedStyle(v).fontSize);while(v.scrollWidth>v.clientWidth+.5&&f>9){f-=.5;v.style.fontSize=f+'px'}})}
-ddFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(ddFit);addEventListener('resize',()=>requestAnimationFrame(ddFit));document.addEventListener('change',()=>requestAnimationFrame(ddFit));document.fonts&&document.fonts.addEventListener('loadingdone',ddFit);
-sbFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(sbFit);addEventListener('resize',()=>requestAnimationFrame(sbFit));document.addEventListener('change',()=>requestAnimationFrame(sbFit));document.fonts&&document.fonts.addEventListener('loadingdone',sbFit);
-ravFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(ravFit);addEventListener('resize',()=>requestAnimationFrame(ravFit));document.addEventListener('change',()=>requestAnimationFrame(ravFit));document.fonts&&document.fonts.addEventListener('loadingdone',ravFit);
-tnFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(tnFit);addEventListener('resize',()=>requestAnimationFrame(tnFit));document.addEventListener('change',()=>requestAnimationFrame(tnFit));
+if(!FL())ddFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(ddFit);addEventListener('resize',()=>requestAnimationFrame(ddFit));document.addEventListener('change',()=>requestAnimationFrame(ddFit));document.fonts&&document.fonts.addEventListener('loadingdone',ddFit);
+if(!FL())sbFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(sbFit);addEventListener('resize',()=>requestAnimationFrame(sbFit));document.addEventListener('change',()=>requestAnimationFrame(sbFit));document.fonts&&document.fonts.addEventListener('loadingdone',sbFit);
+if(!FL())ravFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(ravFit);addEventListener('resize',()=>requestAnimationFrame(ravFit));document.addEventListener('change',()=>requestAnimationFrame(ravFit));document.fonts&&document.fonts.addEventListener('loadingdone',ravFit);
+if(!FL())tnFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(tnFit);addEventListener('resize',()=>requestAnimationFrame(tnFit));document.addEventListener('change',()=>requestAnimationFrame(tnFit));
 // rank tiles never taller than the figure they rank: tile top = the figure's digit top, tile bottom = its baseline
 (function(){
 const FM={};
-function fm(cs){const k=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;if(FM[k])return FM[k];const c=document.createElement('canvas').getContext('2d');c.font=k;const m=c.measureText('0123456789');return FM[k]={cap:m.actualBoundingBoxAscent,asc:m.fontBoundingBoxAscent,desc:m.fontBoundingBoxDescent}}
+const FMC=document.createElement('canvas').getContext('2d');  // one canvas for all metric reads (2026-11-04: a new canvas per font, per run, was ~25 live canvases in Safari)
+function fm(cs){const k=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;if(FM[k])return FM[k];const c=FMC;c.font=k;const m=c.measureText('0123456789');return FM[k]={cap:m.actualBoundingBoxAscent,asc:m.fontBoundingBoxAscent,desc:m.fontBoundingBoxDescent}}
 function txt(n){if(n.nodeType===3)return n;const w=document.createTreeWalker(n,NodeFilter.SHOW_TEXT,{acceptNode:x=>x.textContent.trim()&&!x.parentElement.closest('.lku')?1:3});let l=null,x;while(x=w.nextNode())l=x;return l}
 function ref(t){let n=t.previousSibling;while(n&&n.nodeType===3&&!n.textContent.trim())n=n.previousSibling;
   if(n&&n.nodeType===1&&n.matches('.ch,.rkb,svg,.av,.pav,.pz,.nfl,.pba,img'))return null;
@@ -217,13 +226,17 @@ function fit(){
   const tiles=[...document.querySelectorAll('.ch,.rkb')].filter(t=>t.offsetParent&&!t.closest('.gm,.sxm,.lbr,.hmx,.tqgrid,.mx,.bym'));
   const jobs=[];
   for(const t of tiles)t.style.removeProperty('transform');  // clear old offsets first: a stale one makes a tile look off its line and it would be skipped for good
+  // reads first, writes after (2026-11-04): a marker inserted or an attribute set between two tiles' reads forced a layout per tile,
+  // ~1,900 layouts on load, and WebKit keeps the memory those passes use (Safari +400 MB)
+  const oh=[];
   for(const t of tiles){const r=ref(t);if(!r)continue;const cs=getComputedStyle(r.el),m=fm(cs),z=t.currentCSSZoom||1;
-    if(!t.dataset.oh){const ct0=t.querySelector('.ct')||t;t.dataset.oh=t.getBoundingClientRect().height/z;t.dataset.of=parseFloat(getComputedStyle(ct0).fontSize)}
+    if(!t.dataset.oh){const ct0=t.querySelector('.ct')||t;oh.push([t,t.getBoundingClientRect().height/z,parseFloat(getComputedStyle(ct0).fontSize)])}
     let inline=false;
     if(r.tn){const g=document.createRange();g.selectNodeContents(r.tn);const rr=g.getBoundingClientRect(),tr=t.getBoundingClientRect();inline=tr.bottom>rr.top&&tr.top<rr.bottom}
-    if(!inline)continue;const zz=r.el.currentCSSZoom||z;const pb=document.createElement('i');pb.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';r.tn.after(pb);
-    jobs.push({t,cap:m.cap,pb,zc:zz,z})}
-  for(const j of jobs){const H=Math.floor(j.cap*4)/4;inkTile(j.t,H)}  // as tall as the figure beside it and never taller: tile height = its cap height (to 0.25px)
+    if(!inline)continue;jobs.push({t,cap:m.cap,tn:r.tn,zc:r.el.currentCSSZoom||z,z})}
+  for(const [t,h,f] of oh){t.dataset.oh=h;t.dataset.of=f}
+  for(const j of jobs){const pb=document.createElement('i');pb.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';j.tn.after(pb);j.pb=pb}
+  inkBatch(jobs.map(j=>[j.t,Math.floor(j.cap*4)/4]));  // as tall as the figure beside it and never taller: tile height = its cap height (to 0.25px)
   for(const j of jobs)j.t.style.removeProperty('transform');  // measure from the untransformed spot, so a re-run never stacks offsets
   for(const j of jobs){j.mid=j.pb.getBoundingClientRect().bottom-j.cap*j.zc/2}  // read after sizing, so the line has settled: the figure's real baseline (a zero-size marker on it), not one estimated from font metrics: those are rounded differently by layout
   for(const j of jobs)j.pb.remove();
@@ -233,22 +246,26 @@ function fit(){
 // size one rank tile from the digits' ink: outer height H, the same gap from ink to edge on top and bottom, the same on
 // left and right, never closer than 1.75px to the frame (the number shrinks to make room); width fixed for two digits so a column lines up
 const INK=document.createElement('canvas').getContext('2d');
-function inkTile(t,H){if(!(window.CSS&&CSS.supports('text-box','trim-both cap alphabetic')))return false;
-  const txt=t.textContent.trim();if(!txt)return false;const cs=getComputedStyle(t.querySelector('.ct')||t),fam=cs.fontFamily,wt=cs.fontWeight;
-  {const b=getComputedStyle(t);H-=(parseFloat(b.borderTopWidth)||0)+(parseFloat(b.borderBottomWidth)||0)}  // H is the outer height: a bordered (outlined) tile loses its border from it
+function inkPlan(t,H){if(!(window.CSS&&CSS.supports('text-box','trim-both cap alphabetic')))return null;  // reads only
+  const txt=t.textContent.trim();if(!txt)return null;const cs=getComputedStyle(t.querySelector('.ct')||t),fam=cs.fontFamily,wt=cs.fontWeight;
+  const b=getComputedStyle(t),bw=(parseFloat(b.borderTopWidth)||0)+(parseFloat(b.borderBottomWidth)||0);const Ho=H;H-=bw;  // H is the outer height: a bordered (outlined) tile loses its border from it
   const P=Math.max(1.75,Math.min(3.5,(H-6)/2-1)),cap=H-2*P;  // gap from digit ink to frame: 1.75-3.5px, so the digits fill the tile
   INK.font=`${wt} 100px ${fam}`;const _d=INK.measureText('0123456789');const fs=Math.floor(cap/((_d.actualBoundingBoxAscent+_d.actualBoundingBoxDescent)/100)*4)/4;  // sized on the digits' ink (they can rise above the H cap), so the outer height never exceeds H
   INK.font=`${wt} ${fs}px ${fam}`;const m=INK.measureText(txt),m2=INK.measureText('88'),Hc=INK.measureText('H').actualBoundingBoxAscent;
   const m3=INK.measureText(t.dataset.ref||'88');const iw=m.actualBoundingBoxLeft+m.actualBoundingBoxRight,iw2=Math.max(m2.actualBoundingBoxLeft+m2.actualBoundingBoxRight,m3.actualBoundingBoxLeft+m3.actualBoundingBoxRight),W=Math.max(iw,iw2)+2*(P+0.5);
-  const gl=m.actualBoundingBoxLeft*-1,gr=m.width-m.actualBoundingBoxRight,gt=Hc-m.actualBoundingBoxAscent,gb=-m.actualBoundingBoxDescent;
-  const s=t.style,set=(k,v)=>s.setProperty(k,v,'important');
+  return {t,Ho,P,fs,iw,W,gl:m.actualBoundingBoxLeft*-1,gr:m.width-m.actualBoundingBoxRight,gt:Hc-m.actualBoundingBoxAscent,gb:-m.actualBoundingBoxDescent,z:t.currentCSSZoom||1}}
+function inkPad(p,e){return `${(p.P-p.gt+e).toFixed(2)}px ${((p.W-p.iw)/2-p.gr).toFixed(2)}px ${(p.P-p.gb+e).toFixed(2)}px ${((p.W-p.iw)/2-p.gl).toFixed(2)}px`}
+function inkSet(p){const t=p.t,s=t.style,set=(k,v)=>s.setProperty(k,v,'important');  // writes only
   set('display','inline-block');set('text-box','trim-both cap alphabetic');set('line-height','1');set('height','auto');set('min-height','0');set('min-width','0');set('width','auto');
-  set('box-sizing','content-box');set('font-size',fs+'px');set('letter-spacing','0');set('font-variant-numeric','normal');set('font-feature-settings','normal');set('top','0');set('transform','none');set('vertical-align','baseline');
-  set('padding',`${(P-gt).toFixed(2)}px ${((W-iw)/2-gr).toFixed(2)}px ${(P-gb).toFixed(2)}px ${((W-iw)/2-gl).toFixed(2)}px`);
-  const ct=t.querySelector('.ct');if(ct){for(const [k,v] of [['font-size','inherit'],['line-height','1'],['display','inline'],['height','auto'],['letter-spacing','0'],['font-variant-numeric','normal'],['text-box','none']])ct.style.setProperty(k,v,'important')}
-  {const z=t.currentCSSZoom||1,e=(H+((parseFloat(getComputedStyle(t).borderTopWidth)||0)+(parseFloat(getComputedStyle(t).borderBottomWidth)||0))-t.getBoundingClientRect().height/z)/2;  // outer height exactly H: split the rounding error between top and bottom (frames are inset shadows, inside H)
-   if(Math.abs(e)>0.01)set('padding',`${(P-gt+e).toFixed(2)}px ${((W-iw)/2-gr).toFixed(2)}px ${(P-gb+e).toFixed(2)}px ${((W-iw)/2-gl).toFixed(2)}px`)}
-  return true}
+  set('box-sizing','content-box');set('font-size',p.fs+'px');set('letter-spacing','0');set('font-variant-numeric','normal');set('font-feature-settings','normal');set('top','0');set('transform','none');set('vertical-align','baseline');
+  set('padding',inkPad(p,0));
+  const ct=t.querySelector('.ct');if(ct){for(const [k,v] of [['font-size','inherit'],['line-height','1'],['display','inline'],['height','auto'],['letter-spacing','0'],['font-variant-numeric','normal'],['text-box','none']])ct.style.setProperty(k,v,'important')}}
+// outer height exactly H: split the rounding error between top and bottom (frames are inset shadows, inside H)
+function inkErr(p){return (p.Ho-p.t.getBoundingClientRect().height/p.z)/2}
+function inkFix(p,e){if(Math.abs(e)>0.01)p.t.style.setProperty('padding',inkPad(p,e),'important')}
+// many tiles at once: all reads, all writes, one layout for the heights, all corrections (each tile's height depends only on its own style)
+function inkBatch(list){const ps=list.map(([t,H])=>inkPlan(t,H)).filter(Boolean);ps.forEach(inkSet);const es=ps.map(inkErr);ps.forEach((p,i)=>inkFix(p,es[i]));return ps.length}
+function inkTile(t,H){const p=inkPlan(t,H);if(!p)return false;inkSet(p);inkFix(p,inkErr(p));return true}
 // sim Finish tile: as tall as the projection figures beside it (the 2%), sitting level with them
 function finFit(){document.querySelectorAll('.dso .rkb').forEach(k=>{if(!k.offsetParent)return;const v=k.closest('.dpc').nextElementSibling;const vs=v&&v.querySelector('span');if(!vs)return;
   const cs=getComputedStyle(vs),fm0=fm(cs),z=k.currentCSSZoom||1;if(!inkTile(k,Math.round(fm0.cap*2)/2))return;
@@ -266,7 +283,7 @@ const go=()=>{if(!raf)raf=requestAnimationFrame(upd)};addEventListener('scroll',
 (function(){function f(){document.querySelectorAll('h1.yh').forEach(h=>{h.style.fontSize='';const m=parseFloat(getComputedStyle(h).fontSize);const w=h.clientWidth;if(!w)return;const R=document.createRange();R.selectNodeContents(h);let fs=Math.min(88,m*w/R.getBoundingClientRect().width);h.style.fontSize=fs.toFixed(2)+'px';let i=0;while(h.scrollWidth>h.clientWidth+0.5&&i++<20){fs-=0.5;h.style.fontSize=fs+'px'}})}
 f();addEventListener('resize',f);if(document.fonts)document.fonts.ready.then(f)})();
 let q=0;function sched(){if(q)return;q=requestAnimationFrame(()=>{q=0;fit();finFit();document.querySelectorAll('.tqt[data-h]:not([data-ok])').forEach(t=>{if(inkTile(t,+t.dataset.h))t.dataset.ok=1});document.querySelectorAll('.trc .tro2 b').forEach(el=>{if(!el.offsetParent)return;el.style.fontSize='';let f=parseFloat(getComputedStyle(el).fontSize);while((el.scrollWidth>el.clientWidth+0.5||el.scrollHeight>el.clientHeight+0.5)&&f>10){f-=0.5;el.style.fontSize=f+'px'}})})}
-window.tileFit=fit;window.finFit=finFit;window.inkTile=inkTile;sched();addEventListener('resize',sched);document.addEventListener('change',()=>setTimeout(sched,0));document.addEventListener('click',()=>setTimeout(sched,0));
+window.tileFit=fit;window.finFit=finFit;window.inkTile=inkTile;window.inkBatch=inkBatch;if(!FL())sched();addEventListener('resize',sched);document.addEventListener('change',()=>setTimeout(sched,0));document.addEventListener('click',()=>setTimeout(sched,0));
 if(document.fonts){document.fonts.ready.then(()=>{for(const k in FM)delete FM[k];document.querySelectorAll('.tqt[data-ok]').forEach(t=>delete t.dataset.ok);sched()});document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',()=>{for(const k in FM)delete FM[k];sched()})}
 })();
 addEventListener('resize',()=>requestAnimationFrame(pfit));document.addEventListener('click',()=>requestAnimationFrame(pfit));
@@ -311,7 +328,7 @@ if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener
 /* pcnFit: matrix row labels on phones (face + manager name): shrink a long manager name until it fits its label (floor 10px) */
 (function(){function pcnFit(){document.querySelectorAll('.sxm .mxn .pcn').forEach(function(n){if(!n.offsetParent)return;n.style.fontSize='';var p=n.parentElement,s=parseFloat(getComputedStyle(n).fontSize);
  while((p.scrollWidth>p.clientWidth+.5||n.getBoundingClientRect().right>p.getBoundingClientRect().right+.5)&&s>10){s-=.5;n.style.fontSize=s+'px'}})}
- pcnFit();addEventListener('resize',function(){requestAnimationFrame(pcnFit)});document.addEventListener('change',function(){requestAnimationFrame(pcnFit)});document.fonts&&document.fonts.ready.then(pcnFit)})();
+ if(!FL())pcnFit();addEventListener('resize',function(){requestAnimationFrame(pcnFit)});document.addEventListener('change',function(){requestAnimationFrame(pcnFit)});document.fonts&&document.fonts.ready.then(pcnFit)})();
 
 /* dtPanels (desktop table, standings order): each tier becomes its own raised panel. The table is first laid out whole so
    every column gets one natural width; those widths (visible header cells, CSS zoom removed) become a fixed colgroup on

@@ -203,6 +203,16 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 - Elements must not move between states (Dumb/Nerd, H2H/Median, re-fits on resize).
 - Local QA always with real fonts (`tools/realfonts.py`); measurements without them are wrong.
 - **Performance budget** (Nicklaus, 2026-11-04) `LIVE`: **under 20,000 elements on first load** and **under 300 MB memory** (Safari and Chrome) after visiting every tab, on both trackers. How it is met: only the tab shown on load is in `index.html` (Standings, or Playoffs in Weeks 15-17, or the #hash tab, built before the page is revealed); every other tab is fetched the first time it is opened from a file named by its content hash. Matchups, Compare and Rosters are rebuilt on each visit and dropped ~1.5s after leaving (switches, selections and scroll come back); Matchups builds only the selected week; Playoffs builds only the selected bracket game / team panel. A tab that takes over 300ms shows its empty panel frame (no spinner); on failure the frame reads "Couldn't load. Tap to retry" in `--text-dim`. No visual change: every tab at 402 and 1440 pixel-identical to the one-file page. Check before shipping anything that adds markup: element count on load and Chromium memory after Standings and after every tab (local QA over http, not file://).
+- **WebKit (Safari's engine) figures** (2026-11-04; Ubuntu WebKitGTK 2.52 and Chromium, private memory of the page's process, `tools/mem/`; Safari on macOS reports more, e.g. 471-503 MB on Standings in Activity Monitor). Measured before → after the fitter changes below; single runs, noise about ±2 MB at 402 and ±5 MB at 1440:
+
+  | | Blank page | Standings on load | After every tab |
+  |---|---|---|---|
+  | **BBP** WebKit 402 / 1440 | 149 / 176 | 274 → 252 / 323 → 314 | 466 → 421 / 568 → 564 |
+  | **YILM** WebKit 402 / 1440 | 148 / 171-176 | 268 → 245 / 327 → 308 | 456 → 438 / 569 → 557 |
+  | **BBP** Chromium 402 / 1440 | 30 / 31 | 173 → 153 / 173 → 134 | 184 → 186 / 242 → 192 |
+  | **YILM** Chromium 402 / 1440 | 31 / 31 | 170 → 156 / 166 → 140 | 197 → 209 / 201 → 198 |
+
+  Budget status: Chromium meets it. **WebKit does not**: over 300 MB on load at 1440 and after every tab at both widths (open item, §8). Where the Standings cost sits in WebKit (bisect by removal, 402 / 1440, MB vs the full page): all CSS removed −52 / −62; CSS unused on load removed −12 / +6 (noise); `body *` / `:not(#z)` override rules removed 0 / +18 (noise); web fonts removed +38 / +60 (system fallback costs more); data URIs in script removed −10 / −10; reveal removed +6 / +8; header, year strip, nav band emptied within ±5; Standings board not drawn −78 / −107; fitters disabled −37 / −27, of which JavaScript heap −32 (garbage from repeated fitting passes, held until collection). Shipping each tab's CSS with its chunk would save about 10 MB, so it was not done.
 - **Live data** (checked 2026-11-04) `LIVE`: only Matchups updates in place during games (the current week's lineups, scores, totals and game picker), and it polls whenever that week is on the page. Standings, projected finish, sim odds and headers change only through the site rebuild (every 10 min in game windows); the "New scores · Refresh" pill announces it. That pill's check is in `index.html` and runs on every tab, every 2 min. This was already true before on-demand tabs, so nothing outside Matchups lost live updates.
 
 ## 8. Features in progress and open items
@@ -211,6 +221,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 - **Navigation three levels** (§5): `PENDING`.
 - **List patterns** cleanup of Stats and Team Hub (§6): `BRIEFED`, four questions open.
 - **Shadow cap** for panels/cards over 60px and the eight audited elements (§2.12): decision pending. Re-measured 2026-11-04 at 402: unchanged. Since the audit, Paper Trail's inactive Picks/Players switch (34px; rule 2px) and its search box (41px; rule 2px) also carry the full 3px.
+- **WebKit / Safari memory over budget** (2026-11-04): after the fitter changes, WebKit is still over 300 MB after visiting every tab (421-564 MB) and at 1440 on load (308-314 MB). Safari on macOS measured 400+ MB above its baseline on Standings alone; the Linux WebKit used here shows 97-156 MB above its blank page for the same page (before 120-156, after 97-138), so most of Safari's "Page" category is macOS-specific (candidates: CoreText font instances per size and fallback fonts, compiled script) and can only be located by measuring in Safari itself. Memory also climbs with each tab visited and is not given back when a tab is dropped.
 - **BBP desktop table in Median mode overflows at 1100-1239px** (found 2026-11-04, predates the re-draw fix; not changed): the W-L cell's second line widens the table to 1068px at 1100 (1020px in H2H), so the page scrolls 8px sideways; 1175px at 1240. YILM fits (1027px at 1100).
 - **Coloured data contrast** on the lighter row (§4): open.
 - **Reduced opacity still used** (found 2026-11-04, not changed; decide per item): stacked-bar fills `.sbar i` 0.55; season chart OPP tile background 0.55 and playoff values `.wkc .wv.pov` 0.9; Rosters position labels `.cr .pq .pqi>span` 0.85/0.9; lineup-call figures `.dln2 em` 0.9; `.lu .cv .fs small` 0.75; out-of-contention stat values `.out .st .v` 0.85; bye tile `.stc.bye` 0.6; Drafts board cells (`.dfct i` 0.7, `.dfcn small` 0.78, `.dfcr` 0.82, `.dfcs>span` 0.75).
@@ -218,6 +229,8 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 ## 9. Decision log
 
 Newest first. One line per decision: date · what · why.
+
+- 2026-11-04 · Fitters made cheaper, no visual change: first pass skipped while web fonts load (the page is hidden and they re-run on fonts.ready), rank tiles sized in one batch (reads, then writes; layouts on load 1,864 → 941 at 402, 2,103 → 867 at 1440), stat-line scale set on the stat lines instead of the whole board, one font-metrics canvas; WebKit −9 to −24 MB on load, Chromium −14 to −39 MB; 50 captures identical · Safari measured 400+ MB on Standings; the WebKit bisect put the reproducible part in the fitters' JavaScript churn, not in CSS.
 
 - 2026-11-04 · Desktop standings table re-draws fit the rank chips before pinning column widths; resize lands on the load layout exactly (0px, 1100/1440, H2H and Median, both sites) · a resize left the chips unfitted (13.5px instead of 8.75px), shifting columns by up to 2.4px.
 - 2026-11-04 · Live polling left as built: nothing outside Matchups updates in place; Standings/sim/headers come from the rebuild and the site-wide refresh pill · confirmed against the pre-chunk live.js.

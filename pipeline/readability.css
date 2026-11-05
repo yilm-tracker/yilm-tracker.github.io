@@ -674,7 +674,7 @@ header:has(h1.yh) .clock{grid-row:1!important;align-self:end}header:has(h1.yh) h
 .sb.s-sk{grid-template-columns:minmax(0,1fr)!important}
 .pane-st .tgl{margin-bottom:12px!important;text-box:trim-both cap alphabetic}
 /* sbFit measures every stat line (Nerd rows too) so the dots sit in the same place in Dumb and Nerd */
-.board.sbm .r>.sb{display:grid!important}
+.board .r>.sb.sbm{display:grid!important}
 /* mid-rank dots a step brighter so they read against the panel */
 .seg10:not(.g):not(.b) i.on{background:#aab5bc!important}
 .seg10.gold:not(.g):not(.b) i.on{background:var(--win)!important}

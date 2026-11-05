@@ -50,6 +50,9 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 
 ### Fitting functions in new_tail.js (each owns one thing)
 
+- **Memory rules for fitters** (2026-11-04, Safari/WebKit memory): (1) `FL()` (top of new_tail.js) is true while the web fonts load; each fitter's immediate first call is `if(!FL())X();` and its `fonts.ready.then(X)` call does the real pass (the page is hidden until then). (2) Never interleave layout reads and DOM/style writes per element: read everything, then write (`fit` and `inkBatch`). (3) Never set a custom property or class on `.board` in a loop: it restyles ~3,500 elements per step; set it on the elements that use it (`sbSet`: `--sbs` on `.r .sb, .r .st`, `--stw2` and `.sbm` on `.r>.sb`; `--s2s` on `.r>.st.s2`). (4) Reuse canvases (`FMC`, `INK`, `_cv`), never one per call. Each repeated fitting pass leaves JavaScript garbage that WebKit holds (all fitters off = −32 MB of JS heap). A `loadingdone` gate was tried and gave nothing measurable; not kept.
+- `inkTile(t,H)` = `inkPlan` (reads only) + `inkSet` (writes) + `inkErr`/`inkFix` (one height read, one write). `inkBatch([[t,H],...])` does many tiles with one layout for all heights; `window.inkBatch` for other fitters.
+
 - `tabFit`: tab labels. `ddFit`: dropdown labels.
 - `tnFit`: standings names. First sets every row's name padding-right to clear the widest record tile (W3 4-3) + 6px, and gives all FAAB tiles one width. Then per name: one line if ≥85% of full size (22px, 19px ≤380), else two lines at the largest fitting size, three only when two would be <15px and three fit within 52px; never a cut word.
 - `mvAl`: position-change arrow (inside the name text, after the last word, `.68em`) set on the name's cap centre via vertical-align; name block nudged so the name's cap top is level with the logo/face top.
@@ -151,5 +154,7 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 ## QA tools (tools/)
 
 - `realfonts.py`: real fonts in Playwright (required).
+- `shots.py`: full-page captures of every tab + Standings with Nerd on, per width (`shots.py <url> <dir> 402 1440`), and `--cmp <a> <b>` (identical / pixel count and max channel difference). Two runs of the same YILM build differ by up to 2/255 in the sticky nav band on Matchups and Stats at 402 (raster noise); compare against a second "before" run when that shows up.
+- `mem/`: WebKit (WebKitGTK via apt; Playwright's WebKit download is blocked by the sandbox allowlist) and Chromium memory per tab; see `tools/mem/README.md`.
 - `tilechk.py`: every tile beside a figure spans exactly its cap height (real baseline via a zero-size marker, real CSS zoom, tolerance 0.05px, `TOL=` to loosen); stat-line tiles off their line count as violations; Dumb and Nerd; both trackers, any widths; exit code 1 on any violation. Against the pre-2026-11-02 fitter it fails 80-98% of tiles; the old version passed them all.
 - `fab.py`: per-row name size/height/clip report + crops. `shot.py`: name-block-only screenshots at 402/440.
