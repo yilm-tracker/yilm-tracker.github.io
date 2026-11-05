@@ -105,13 +105,13 @@ def lineup(a,b,w,k='p'):
     src='Sleeper projections' if PROJ else f'projection = points per game, Weeks 1–{G} until Sleeper projections are pulled'
     hdr=f'<div class="msh lsh">Lineups</div>{MB.CTL([(MB.VSW,'Order','Lineup',MB.LSW)])}<div class="lnote">set lineup = starters as set in Sleeper now · {src}</div>'
     o=[MB.ptsrow(sa,sb)]
-    o+=['<div class="lpv">']+[MB.lrow(x,y,'') for x,y in zip(sa,sb)]+['</div>',MB.sview([x for x in sa if x],[y for y in sb if y])]
+    o+=['<div class="lpv">']+[MB.lgs(MB.lrow(x,y,''),i) for i,(x,y) in enumerate(zip(sa,sb))]+['</div>',MB.sview([x for x in sa if x],[y for y in sb if y])]
     sida={p[0] for p in sa if p};sidb={p[0] for p in sb if p}
     ba=sorted([p for p in pa if p[0] not in sida and p[4]>0],key=lambda p:-p[4]);bb=sorted([p for p in pb if p[0] not in sidb and p[4]>0],key=lambda p:-p[4])
     if ba or bb:
-        o.append('<div class="msh lbh">Bench<small>active players, projected</small></div>')
+        o.append('<div class="msh lbh"><b>Bench</b><i></i><small>active players, projected</small></div>')
         o+=[MB.lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,'') for k in range(max(len(ba),len(bb)))]
-    h=('<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+MB.optblock([p for p in sa if p],[p for p in sb if p],pa,pb,ta,tb,True,'<div class="msh lbh">Bench<small>active players, projected</small></div>',lambda p:p[4]>0)+'</div>')
+    h=('<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+MB.optblock([p for p in sa if p],[p for p in sb if p],pa,pb,ta,tb,True,'<div class="msh lbh"><b>Bench</b><i></i><small>active players, projected</small></div>',lambda p:p[4]>0)+'</div>')
     return h.replace('for="lo-a"',f'for="{k}lo-a"').replace('for="lo-o"',f'for="{k}lo-o"').replace('for="lv-p"',f'for="{k}lv-p"').replace('for="lv-s"',f'for="{k}lv-s"')
 def form(t,n=5):return ''.join(f'<i class="fm {"w" if x[2]>x[3] else "l"}"></i>' for x in WK[t][-n:])
 def card(a,b,w,label):
@@ -168,7 +168,7 @@ def flineup(a,b,w):
     A_,B_=ACT['w'][str(w)][str(RIDN[a])],ACT['w'][str(w)][str(RIDN[b])];MB.HW[0]=w
     sa=[MB.hp(x) for x in A_[2].split(',')];sb=[MB.hp(x) for x in B_[2].split(',')]
     hdr=f'<div class="msh lsh">Lineups</div>{MB.CTL([(MB.VSW,'Order','Lineup',MB.LSW)])}<div class="lnote">green = beat projection · red = fell short</div>'
-    o=[MB.ptsrow(sa,sb)]+['<div class="lpv">']+[MB.lrow(x,y,'') for x,y in zip(sa,sb)]+['</div>',MB.sview(sa,sb)]
+    o=[MB.ptsrow(sa,sb)]+['<div class="lpv">']+[MB.lgs(MB.lrow(x,y,''),i) for i,(x,y) in enumerate(zip(sa,sb))]+['</div>',MB.sview(sa,sb)]
     ba=sorted([MB.hp(x) for x in A_[3].split(',') if x],key=lambda q:-q[5]);bb=sorted([MB.hp(x) for x in B_[3].split(',') if x],key=lambda q:-q[5])
     if ba or bb:o+=[MB.BH_HIST]+[MB.lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,'') for k in range(max(len(ba),len(bb)))]
     h='<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+MB.optblock(sa,sb,sa+ba,sb+bb,A_[1],B_[1],False,MB.BH_HIST)+'</div>'

@@ -200,7 +200,7 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .cr.lu .cv .fs{width:100%!important;height:auto!important;min-height:0!important;border-radius:0!important;gap:4px!important}
 .cr.lu .cv .fs.up{box-shadow:inset 1px 0 0 rgba(63,214,155,.38),inset -1px 0 0 rgba(63,214,155,.38)!important}
 .cr.lu .cv .fs.dn{box-shadow:inset 1px 0 0 rgba(255,93,115,.38),inset -1px 0 0 rgba(255,93,115,.38)!important}
-.cr.lu .cv .fs.pj{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;background:rgba(255,255,255,.035);box-shadow:inset 1px 0 0 var(--line),inset -1px 0 0 var(--line)}
+.cr.lu .cv .fs.pj{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;background:var(--proj-fill);box-shadow:inset 1px 0 0 var(--line),inset -1px 0 0 var(--line)}
 .cr.lu .cv .fs small{font-family:var(--display);font-weight:600;font-size:8.5px;letter-spacing:.1em;opacity:.75}
 .cr.lu .cv.pjc .fs small{color:var(--text-dim);opacity:1}
 .cr.lu{grid-template-areas:"na va vb nb" "sa va vb sb"!important}
@@ -1248,15 +1248,17 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
    the removed 1px border becomes 1px padding, so row height and content stay where they were.
    A 1px --row-divider only where the league's slot group changes (.lgs, from Sleeper roster_positions in mu_build.py).
    Centre: projection cells lose their own 1px side lines; the one centre line (::after, 1px --line, full row height) sits exactly
-   between the two projection columns. Bench: --pg strip, BENCH in --text-dim, 1px --line rule, note right. Matchups only. */
-.pane-mu .cr.lu{border-width:0!important;box-shadow:none!important;margin-block:0!important;padding:9px calc(var(--bw) + var(--bg2) + 1px)!important}
-.pane-mu .cr.lu .cv.pjc{margin-top:-9px!important;padding-block:1px!important;background:rgba(255,255,255,.035)}  /* projection fill runs the full row height; its figures stay where they were (1px inner padding) */
-.pane-mu .cr.lu:not(:has(.sln)) .cv.pjc{margin-bottom:-9px!important}
-.pane-mu .cr.lu .cv .fs.pj{box-shadow:none!important;background:none!important}
-.pane-mu .cr.lu::after{left:calc(50% - .5px);top:0;bottom:0;width:1px;background:var(--line);z-index:1}
-.pane-mu .cr.lu.lgs::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--row-divider);z-index:2}
-.pane-mu .lbh{display:flex;align-items:center;gap:14px;margin:0 -10.5px;padding:11px 16px;background:var(--pg);border:0!important;font:700 11.5px/1 var(--display);letter-spacing:.2em;text-transform:uppercase;white-space:nowrap}
-.pane-mu .lbh b{font-weight:700;color:var(--text-dim)}
-.pane-mu .lbh i{flex:1;min-width:12px;height:1px;background:var(--line)}
-.pane-mu .lbh small{flex:none;font:500 11px/1 var(--body);letter-spacing:0;text-transform:none;color:var(--steel);text-align:right}
-@media (min-width:1100px){.pane-mu .lbh{margin-inline:0}}
+   between the two projection columns. Bench: --pg strip, BENCH in --text-dim, 1px --line rule, note right. Matchups and Playoffs (2026-11-05: same rows; the Playoffs schedule grid .psr/.psbh is a different component, excluded).
+   --proj-fill = the projection cell fill, one token on both sites (§4). */
+:root{--proj-fill:rgba(255,255,255,.035)}
+.pane-mu .cr.lu,.pane-po .cr.lu:not(.psr){border-width:0!important;box-shadow:none!important;margin-block:0!important;padding:9px calc(var(--bw) + var(--bg2) + 1px)!important}
+.pane-mu .cr.lu .cv.pjc,.pane-po .cr.lu:not(.psr) .cv.pjc{margin-top:-9px!important;padding-block:1px!important;background:var(--proj-fill)}  /* projection fill runs the full row height; its figures stay where they were (1px inner padding) */
+.pane-mu .cr.lu:not(:has(.sln)) .cv.pjc,.pane-po .cr.lu:not(.psr):not(:has(.sln)) .cv.pjc{margin-bottom:-9px!important}
+.pane-mu .cr.lu .cv .fs.pj,.pane-po .cr.lu:not(.psr) .cv .fs.pj{box-shadow:none!important;background:none!important}
+.pane-mu .cr.lu::after,.pane-po .cr.lu:not(.psr)::after{left:calc(50% - .5px);top:0;bottom:0;width:1px;background:var(--line);z-index:1}
+.pane-mu .cr.lu.lgs::before,.pane-po .cr.lu:not(.psr).lgs::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--row-divider);z-index:2}
+.pane-mu .lbh,.pane-po .lbh:not(.psbh){display:flex;align-items:center;gap:14px;margin:0 -10.5px;padding:11px 16px;background:var(--pg);border:0!important;font:700 11.5px/1 var(--display);letter-spacing:.2em;text-transform:uppercase;white-space:nowrap}
+.pane-mu .lbh b,.pane-po .lbh:not(.psbh) b{font-weight:700;color:var(--text-dim)}
+.pane-mu .lbh i,.pane-po .lbh:not(.psbh) i{flex:1;min-width:12px;height:1px;background:var(--line)}
+.pane-mu .lbh small,.pane-po .lbh:not(.psbh) small{flex:none;font:500 11px/1 var(--body);letter-spacing:0;text-transform:none;color:var(--steel);text-align:right}
+@media (min-width:1100px){.pane-mu .lbh{margin-inline:0}}  /* desktop Matchups rows sit at 0; Playoffs rows keep -10.5px, so its strip does too */
