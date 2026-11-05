@@ -11,7 +11,7 @@ s=s[:a]+'''<input type="radio" name="view" id="vh" class="vr" checked><input typ
 s=s.replace('<div class="board" id="list"></div>','<div class="board lh">'+L['h']+'</div><div class="board lm">'+L['m']+'</div>')
 import os
 if os.path.exists(P+'po_static.html') and '<div class="ppx"' in s:
-    a=s.index('<div class="ppx"');b=s.index('</script>',s.index('id="ppz"'));b=s.index('</script>',b+9)+9
+    a=s.index('<div class="ppx"');b=s.index('</script>',s.index('<script>(function(){var G=null,M=null',a))+9  # the per-team data blocks + the builder's script
     s=s[:a]+open(P+'po_static.html',encoding='utf-8').read()+s[b:]
     s=s.replace('</style>',open(P+'po_static.css').read()+'</style>',1)
 s=re.sub(r'<script>.*?</script>','',s,flags=re.S)

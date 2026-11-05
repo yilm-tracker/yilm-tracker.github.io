@@ -70,7 +70,7 @@ function discard(id){var p=PS[id];if(p.st!=='built'||cur===id)return;saveScroll(
 function load(id){var p=PS[id],el=p.el;p.st='loading';hold(el);var tm=setTimeout(function(){if(p.st==='loading')frame(el)},300);
   return p.pr=get(Z.p[id]).then(function(h){clearTimeout(tm);
     if(cur!==id&&HV[id]){p.st='empty';el.textContent='';unhold(el);return}
-    el.innerHTML=h;p.st='built';init(el,id);if(!HV[id])delete TX[Z.p[id]];
+    el.innerHTML=h;h=null;p.st='built';init(el,id);delete TX[Z.p[id]];  // no copy kept (2026-11-05): a dropped tab is fetched again, from the HTTP cache
     var wk=id==='mu'?week(true):null;fits();putScroll(el,id);
     return Promise.resolve(wk).then(function(){done(el,{pane:id});if(cur!==id){if(HV[id])leave(id);else park(id)}})},
   function(e){clearTimeout(tm);p.st='empty';fail(el,function(){if(cur===id)ensure(id)},e)})}

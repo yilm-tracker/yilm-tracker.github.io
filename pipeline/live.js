@@ -10,7 +10,10 @@
   if(!window.fetch)return;
   var box,cells,W=0,L='1335450123487961088',Y='2026',A='https://api.sleeper.app/v1',S='https://api.sleeper.com';
   var last=0,lastStats=0,stats={},timer=null,on=false,data=null,shown=null;
-  function setup(){box=document.getElementById('mlive');if(!box)return false;W=+box.dataset.w;cells=document.querySelectorAll('.cv[data-p]');return cells.length>0}
+  function setup(){box=document.getElementById('mlive');if(!box){rel();return false}W=+box.dataset.w;cells=document.querySelectorAll('.cv[data-p]');if(!cells.length){rel();return false}return true}
+  // drop the references after each use: a Matchups week left on the page by nothing but these variables stayed in memory after
+  // the tab was dropped (2026-11-05 heap snapshot); setup() finds them again on the next poll
+  function rel(){box=null;cells=null}
   function get(u){return fetch(u,{cache:'no-store'}).then(function(r){if(!r.ok)throw r.status;return r.json()})}
   function f1(x){return (Math.round(x*10)/10).toFixed(1)}
   function grp(lab,nums){return '<span class="sit"><u>'+lab+'</u> '+nums.map(function(n){return typeof n==='number'&&n<0?'(−'+(-n)+')':String(n)}).join('-')+'</span>'}
@@ -50,27 +53,27 @@
     box.textContent=(n>0?'Live · ':'Updated ')+d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
   function tick(){
     if(!setup()){on=false;clearTimeout(timer);return}  // this week's lineups are not on the page: wait for 'panebuilt'
-    if(document.visibilityState!=='visible'){schedule(60000);return}
+    if(document.visibilityState!=='visible'){rel();schedule(60000);return}
     get(S+'/scores/nfl/regular/'+Y+'/'+W).then(function(sc){
       var st={},soon=false,now=Date.now();
       sc.forEach(function(x){var m=x.metadata||{},k=x.status==='in_game'?'in':x.status==='complete'?'post':'pre';
         if(m.home_team)st[m.home_team]=k;if(m.away_team)st[m.away_team]=k;
         var d=Date.parse(m.date_time||'');if(k==='pre'&&d&&d-now<15*60000&&d-now>-6*3600000)soon=true});
       var anyIn=Object.keys(st).some(function(k){return st[k]==='in'});
-      if(!anyIn&&!soon&&last){schedule(600000);return}
+      if(!anyIn&&!soon&&last){rel();schedule(600000);return}
       var needStats=anyIn&&now-lastStats>110000||!lastStats;
       return Promise.all([get(A+'/league/'+L+'/matchups/'+W),needStats?get(S+'/stats/nfl/'+Y+'/'+W+'?season_type=regular'):null]).then(function(r){
         if(r[1]){stats={};r[1].forEach(function(x){if(x.stats&&(x.stats.gp||x.stats.gms_active||x.player&&x.player.position==='DEF'))stats[x.player_id]=x.stats});lastStats=now}
         if(!setup()){on=false;return}
         var n=apply(st,r[0]);last=now;data=[st,r[0],soon];
-        var d=new Date();shown=d;show(n,d);
+        var d=new Date();shown=d;show(n,d);rel();
         schedule(n>0||soon?60000:600000);
       });
-    }).catch(function(){schedule(120000)});
+    }).catch(function(){rel();schedule(120000)});
   }
   function schedule(ms){clearTimeout(timer);timer=setTimeout(tick,ms)}
   function start(){if(!setup())return;
-    if(data){show(apply(data[0],data[1]),shown)}  // the week was built again: last scores back at once
+    if(data){show(apply(data[0],data[1]),shown)}rel();  // the week was built again: last scores back at once
     if(!on){on=true;var age=Date.now()-last;schedule(!data||age>55000?0:Math.max(500,60000-age))}}
   document.addEventListener('visibilitychange',function(){if(on&&document.visibilityState==='visible'&&Date.now()-last>55000)schedule(500)});
   document.addEventListener('panebuilt',start);

@@ -216,14 +216,19 @@ elif WSP:
     _M={f'{i}-{j}-{w}':f'<div class="ppn">{card(H[i],H[j],w,f"Week {w} · {RND[w]}")}{lineup(H[i],H[j],w)}</div>' for i in range(lg.N) for j in range(lg.N) if i!=j for w in WEEKS}
     open(P+'po_static.html','w',encoding='utf-8').write(''.join(f'<div class="ppn pp-{k}">{v[17:]}' for k,v in _M.items()))
     open(P+'po_static.css','w').write(','.join(f'#pa-{i}:checked~#pb-{j}:checked~#pw-{w}:checked~.pp-{i}-{j}-{w}' for i in range(lg.N) for j in range(lg.N) if i!=j for w in WEEKS)+'{display:block}')
-    _Z=base64.b64encode(gzip.compress(json.dumps(_M,separators=(",",":")).encode(),9,mtime=0)).decode()
-    PPX=('<div class="ppx" aria-live="polite"></div><script type="text/plain" id="ppz">'+_Z+'</script>'
-         '<script>(function(){var M=null,P=null,x=document.querySelector(".ppx");'
+    # one gzip block per first team, unpacked only when that team is picked; the page keeps one block at a time
+    # (2026-11-05: unpacking the whole set kept every pairing x week panel in memory, 36 MB BBP / 54 MB YILM of strings)
+    _G={}
+    for k,v in _M.items():_G.setdefault(k.split('-')[0],{})[k]=v
+    _Z={a:base64.b64encode(gzip.compress(json.dumps(g,separators=(",",":")).encode(),9,mtime=0)).decode() for a,g in _G.items()}
+    PPX=('<div class="ppx" aria-live="polite"></div>'+''.join(f'<script type="text/plain" id="ppz-{a}">{z}</script>' for a,z in _Z.items())+
+         '<script>(function(){var G=null,M=null,P=null,x=document.querySelector(".ppx");'
          'function v(n){var r=document.querySelector("input[name="+n+"]:checked");return r?r.id.split("-")[1]:null}'
-         'function load(){if(P)return P;var b=atob(document.getElementById("ppz").textContent),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);'
-         'P=new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream("gzip"))).text().then(function(t){M=JSON.parse(t)});return P}'
+         'function load(a){if(G===a&&P)return P;G=a;M=null;var e=document.getElementById("ppz-"+a);if(!e)return P=Promise.resolve();'
+         'var b=atob(e.textContent),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);'
+         'P=new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream("gzip"))).text().then(function(t){if(G===a)M=JSON.parse(t)});return P}'
          'function draw(){var a=v("pa"),b=v("pb"),w=v("pw");if(a===b){x.innerHTML="";return}'
-         'load().then(function(){x.innerHTML=M[a+"-"+b+"-"+w]||""}).catch(function(){x.innerHTML=\'<div class="psame" style="display:block">This browser cannot open the matchup builder.</div>\'})}'
+         'load(a).then(function(){if(v("pa")!==a||v("pb")!==b||v("pw")!==w)return;x.innerHTML=M&&M[a+"-"+b+"-"+w]||""}).catch(function(){x.innerHTML=\'<div class="psame" style="display:block">This browser cannot open the matchup builder.</div>\'})}'
          'document.addEventListener("change",function(e){var n=e.target&&e.target.name;if(n==="pa"||n==="pb"||n==="pw")draw()});'
          'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",draw);else draw()})()</script>')
 else:
