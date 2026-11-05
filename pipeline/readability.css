@@ -1250,7 +1250,7 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
    Centre: projection cells lose their own 1px side lines; the one centre line (::after, 1px --line, full row height) sits exactly
    between the two projection columns. Bench: --pg strip, BENCH in --text-dim, 1px --line rule, note right. Matchups and Playoffs (2026-11-05: same rows; the Playoffs schedule grid .psr/.psbh is a different component, excluded).
    --proj-fill = the projection cell fill, one token on both sites (§4). */
-:root{--proj-fill:rgba(255,255,255,.035)}
+:root{--proj-fill:rgba(255,255,255,.035);--sched-cell:rgba(255,255,255,.035)}  /* --sched-cell: Playoffs schedule game cells (.psg) */
 .pane-mu .cr.lu,.pane-po .cr.lu:not(.psr){border-width:0!important;box-shadow:none!important;margin-block:0!important;padding:9px calc(var(--bw) + var(--bg2) + 1px)!important}
 .pane-mu .cr.lu .cv.pjc,.pane-po .cr.lu:not(.psr) .cv.pjc{margin-top:-9px!important;padding-block:1px!important;background:var(--proj-fill)}  /* projection fill runs the full row height; its figures stay where they were (1px inner padding) */
 .pane-mu .cr.lu:not(:has(.sln)) .cv.pjc,.pane-po .cr.lu:not(.psr):not(:has(.sln)) .cv.pjc{margin-bottom:-9px!important}

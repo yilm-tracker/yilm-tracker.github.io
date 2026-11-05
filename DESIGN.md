@@ -105,6 +105,7 @@ Four steps in one hue; only lightness changes. Reference: bdge.co standings. App
 | Rank column width | `--rks` | 52px | 52px |
 | FAAB tile / figures | `--faab` / `--faab-ink` | | |
 | Projection cell fill (lineups) | `--proj-fill` | `rgba(255,255,255,.035)` | `rgba(255,255,255,.035)` |
+| Playoffs schedule game cell fill (`.psg`) | `--sched-cell` | `rgba(255,255,255,.035)` | `rgba(255,255,255,.035)` |
 
 - Site-specific by design: **BBP** `--tier-bye`, `--tier-ch`, `--chart-*`, `--rt` (rank tile height), `--ravh` / `--rd` (logo sizes), `--row-alt` (FAAB pills); **YILM** `--nt` / `--np` (layout counts).
 - Removed 2026-11-04 (do not reintroduce): `--hair` (now `--line`), `--dim` (now `--text-dim`), `--plate` (now `--frame`), `--dsh` / `--dsh2` (now `--sh-hard`), `--pylon` (now `--accent`), and the unused `--bg`, `--surface`, `--fg`, `--muted`, `--faint`.
@@ -251,6 +252,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-05 · Playoffs schedule cell fill is token `--sched-cell` (same value; schedule pixel-identical at 402P/1440, both sites) · one name per role.
 - 2026-11-05 · Lineup treatment extended to Playoffs (flush rows, slot-group dividers, one centred centre line, bench strip; schedule grid excluded); projection fill is token `--proj-fill` (same value, Matchups pixel-identical); final-score boxes keep green/red lines · Matchups lineup approved; one component, one look.
 - 2026-11-05 · Matchups lineup: rows flush (no frame/shadow/gap), 1px --row-divider only between Sleeper slot groups, one centred 1px --line centre line, projection side lines removed, bench as a --pg strip with --text-dim label and --line rule; content unmoved · §2.4 no card-in-panel.
 - 2026-11-05 · Phone scale 0.85 via viewport meta (initial-scale=0.85, pinch-zoom kept), both sites; test widths = device 360/402/440 at 0.85 + 874L/956L; layouts equal the 85%-Safari-zoom renders Nicklaus used · same look without setting Safari zoom per site.

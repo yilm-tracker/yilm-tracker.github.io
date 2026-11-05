@@ -93,7 +93,7 @@ def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2,opt=lambda t,w:set()):
          '.psh>span:not(:first-child){text-align:center}.psh>span.psy{color:var(--text-dim)}'
          # each week a pillar: full row height, its own shade, a cut on its left
          '.psg{align-self:stretch;margin:-8px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;line-height:1;'
-         'background:rgba(255,255,255,.035);box-shadow:inset 2px 0 0 var(--ink)}'
+         'background:var(--sched-cell);box-shadow:inset 2px 0 0 var(--ink)}'
          '.psg small{display:flex;justify-content:center}.psg .psl{display:flex;align-items:center;white-space:nowrap;margin:0}.psg>small{margin:0!important;height:16px;align-items:center}.psg.cnm{padding-top:2px;box-sizing:border-box}'
          '.cr.lu.psr{padding-right:0!important}.cnm small.psag{gap:6px!important;height:14px}.psag .nfl{height:15px!important;margin:-1px 0!important;transform:none!important}.psv{display:flex;align-items:center;gap:5px;line-height:1}'
          '.psv .psk2{margin:0;min-width:21px;height:15px;padding:0 4px;font-size:11px;font-weight:700;font-style:normal;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}'
