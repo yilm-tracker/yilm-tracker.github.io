@@ -39,6 +39,7 @@ Last reconciled against the built pages: 2026-11-04, after the data bar / opacit
 13. Never highlight the Bill's Block Party team specially. `LIVE`
 14. **Corners:** outer panels `--r-panel` (6px); inside a panel only chips/pills and avatars are rounded. `LIVE`
 15. **Borders** only where they separate content, in the frame colour (chips and position pills keep their coded outlines). Enforced by the 2026-11-03 cleanup block at the end of both `readability.css` files (a `body *` border rule with chip exclusions). `LIVE`
+16. **Minimum text 11 CSS px = 9.35pt on phones** (scale 0.85), every tab, both sites `LIVE` (2026-11-05). Labels and units 11px; a value keeps its step above its label (raise the value if the label would catch up: Rosters stat lines 13 / 11, The Wire sort words 12.5 / 11). Every fitter's floor is 11px (`pfit`, `pcnFit`, `tnFit`, `ddFit`, Team Hub `.tro2`, Drafts list name and board banner, `--dfz`, Playoffs schedule/columns, BBP history pages); text that cannot fit at 11px is abbreviated (BBP Stats: "Rev. Apache Master" on phones) or the unit moves to the header (YILM Per start: "GP" once in each column header, numbers 11px), never shrunk. Uppercase letter-spaced labels may lose letter-spacing to fit ("PROJ": .1em → .06em). **Exception:** digits inside tiles beside figures follow the tile rule (cap height, ≥ 1.75px gap, equal on all sides) and are never scaled down: the Standings stat-line tiles (10.25px digits beside 15px figures; 8.75px in the 1100-1239px desktop table, whose figures are 13.5px) — and the stat lines themselves are never scaled below 1: Opp rk / All-play / Luck puts Luck on its own line where it does not fit (360P and 402P), PF / PA / Tot Eff wrap the per-week part under the figure (360P). Check: the under-11px scan is empty apart from that exception.
 
 **Deliberate exceptions (do not undo):**
 - Team rows use alternating shades AND a divider (see §3).
@@ -239,7 +240,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 ## 8. Features in progress and open items
 
-- Text under 10 pt at phone scale 0.85 (2026-11-05): ~120 selector/size combinations per site, 7.5-11.6 CSS px (6.4-9.9 pt), Players `u` labels (SNP% etc.) 9.5px (8.1 pt, ~500 elements), Standings rank-chip digits `.ch .ct` 7.5px (6.4 pt), `small` 8.5-9px. Listed, not changed; awaiting a brief.
+- ~~Text under 10 pt at phone scale 0.85~~ closed 2026-11-05: minimum 11 CSS px (§2 rule 16); the only text under 11px is the tile-digit exception.
 - **Paper Trail**: `LIVE` (Phases 1-4 built 2026-11-04). Data notes in `CLAUDE.md`.
 - **Navigation three levels** (§5): `PENDING`.
 - **List patterns** cleanup of Stats and Team Hub (§6): `BRIEFED`, four questions open.
@@ -252,6 +253,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-05 · Text floor: no text under 11 CSS px (9.35pt on phones) on either site; Standings stat lines never scale (Luck wraps at 360P/402P, +16px per row at 402P; PF/PA per-week wraps at 360P), tile digits beside figures exempt (10.25px); Rosters values 13px, Wire sort words 12.5px, YILM GP in the column header, BBP "Rev. Apache Master" on phones; all fitter floors 11px · legibility on phones (Nicklaus's floor).
 - 2026-11-05 · Playoffs schedule cell fill is token `--sched-cell` (same value; schedule pixel-identical at 402P/1440, both sites) · one name per role.
 - 2026-11-05 · Lineup treatment extended to Playoffs (flush rows, slot-group dividers, one centred centre line, bench strip; schedule grid excluded); projection fill is token `--proj-fill` (same value, Matchups pixel-identical); final-score boxes keep green/red lines · Matchups lineup approved; one component, one look.
 - 2026-11-05 · Matchups lineup: rows flush (no frame/shadow/gap), 1px --row-divider only between Sleeper slot groups, one centred 1px --line centre line, projection side lines removed, bench as a --pg strip with --text-dim label and --line rule; content unmoved · §2.4 no card-in-panel.

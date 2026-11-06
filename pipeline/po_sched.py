@@ -126,7 +126,7 @@ def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2,opt=lambda t,w:set()):
     # player names: the largest size (down to 10px) that fits the narrower player column, refitted when a team is picked
     fit=('<script>(function(){function fit(){document.querySelectorAll(".psr .cnm b>span").forEach(function(el){if(!el.clientWidth||el.dataset.fw==el.clientWidth)return;'
          'el.dataset.fw=el.clientWidth;el.style.fontSize="";var f=parseFloat(getComputedStyle(el).fontSize);'
-         'while(el.scrollWidth>el.clientWidth+0.5&&f>10){f-=0.5;el.style.fontSize=f+"px"}})}'
+         'while(el.scrollWidth>el.clientWidth+0.5&&f>11){f-=0.5;el.style.fontSize=f+"px"}})}'
          'document.addEventListener("change",function(){requestAnimationFrame(fit)});window.addEventListener("resize",function(){requestAnimationFrame(fit)});'
          'if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit)})()</script>')
     return radios,pick,'<div class="psx">'+''.join(pan)+'</div>'+fit,css

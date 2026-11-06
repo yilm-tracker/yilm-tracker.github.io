@@ -87,9 +87,9 @@ function draw(med){
       <div class="rk">${i+1}</div>
       ${AVR[t]?`<i class="av rav av-${AVR[t]}" aria-hidden="true"></i>`:""}<div class="nm"><span class="tn">${esc(t)} ${mv}</span>${typeof FAAB!=='undefined'&&FAAB[t]!=null?`<label for="tab-wr" class="fab" title="FAAB left: $${FAAB[t]} of $${FAABB} (opens The Wire)"><b>$${FAAB[t]}</b><small>FAAB</small></label>`:''}</div>
       <span class="hl">${NIK[t]?`<em class="mgr">${esc(NIK[t])}</em>`:""}</span>
-      <div class="sb s-pf"><div class="stx"><em class="lb">PF</em><span class="pf">${d[3].toFixed(2)}</span>${chip(d[4])} <i class="pw">· <b class="pwv">${d[5].toFixed(1)}</b>/wk <b class="psd" title="Weekly spread: standard deviation of the team's weekly scores">±${SDV(t).toFixed(0)}</b></i></div>${seg(d[4])}</div>
-      <div class="sb s-pa"><div class="stx"><em class="lb">PA</em><span class="v">${d[6].toFixed(2)}</span>${chip(d[7])} <i class="pw">· <b class="pwv">${d[8].toFixed(1)}</b>/wk</i></div>${seg(d[7])}</div>
-      <div class="sb s-lu"><div class="stx"><em class="lb">Tot Eff</em><span class="v">${EF[t][0].toFixed(0)}%</span>${chip(rankEf(t),tiedEf(t))} <i class="pw">· <b class="lw">${EF[t][1].toFixed(1)}</b>/wk</i></div>${seg(rankEf(t))}</div>
+      <div class="sb s-pf"><div class="stx"><em class="lb">PF</em><span class="pf">${d[3].toFixed(2)}</span>${chip(d[4])} <i class="pw"><span class="pws">· </span><b class="pwv">${d[5].toFixed(1)}</b>/wk <b class="psd" title="Weekly spread: standard deviation of the team's weekly scores">±${SDV(t).toFixed(0)}</b></i></div>${seg(d[4])}</div>
+      <div class="sb s-pa"><div class="stx"><em class="lb">PA</em><span class="v">${d[6].toFixed(2)}</span>${chip(d[7])} <i class="pw"><span class="pws">· </span><b class="pwv">${d[8].toFixed(1)}</b>/wk</i></div>${seg(d[7])}</div>
+      <div class="sb s-lu"><div class="stx"><em class="lb">Tot Eff</em><span class="v">${EF[t][0].toFixed(0)}%</span>${chip(rankEf(t),tiedEf(t))} <i class="pw"><span class="pws">· </span><b class="lw">${EF[t][1].toFixed(1)}</b>/wk</i></div>${seg(rankEf(t))}</div>
       <div class="sb s-sk"><div class="stx spl dps"><span class="dpb dpd"><span class="dph"><em class="lb dpl">Dropped pts</em><i class="pw pu">/wk</i></span><span class="dpg">${['QB','RB','WR','TE'].map((k,i)=>LPOS.includes(k)?`<span class="dpc p-${k.toLowerCase()}"><b>${k}</b><span class="${DP[t][i]>=0.05?'':'z'}">${DP[t][i].toFixed(1)}</span>${chip(dpR(i,t),dpT(i,t))}</span>`:'').join('')}</span></span><span class="dpb dso"><span class="dph"><em class="lb dpl">Season sim</em></span><span class="dpg sog">${[['Finish',SO[t][0].toFixed(1)],['#1',pctS(SO[t][1])],['Bye',pctS(SO[t][2])],['Playoffs',pctS(SO[t][3])]].map(([k,v],i)=>k==='Bye'?'':`<span class="dpc so s${i}"><b>${k}</b><span class="${i&&v==='0%'?'z':''}">${i?v:`<span class="sof ${tone(Math.round(SO[t][0]))}">${v}</span>`}</span></span>`).join('')}</span></span></div></div>
       <div class="st s2"><span><em class="lb">Opp<i class="lrk"> rk</i></em><span class="v">${d[9].toFixed(1)}</span>${chip(rankOf(d[9],9,true),tied(d[9],9))}</span><span><em class="lb">All-play</em><span class="v">${d[10]}-${d[11]}</span>${chip(rankOf(d[10],10,false),tied(d[10],10))}</span><span><em class="lb">Luck</em><span class="v">${luck(d[12])}<i class="lku" title="Expected wins (xW): all-play win rate × games played. Luck = actual wins − xW">${(d[10]/(d[10]+d[11])*(d[0]+d[1])).toFixed(2)} xW</i></span>${chip(rankOf(d[12],12,false),tied(d[12],12))}</span></div>
       <div class="side"><div class="rr${(String(rw0)+String(rl0)).length>2?" rr4":""}"><b>${rw0}-${rl0}</b></div><div class="l5r"><span class="sk ${lastR==='W'?'w':'l'}"><span class="ct">${lastR}${n}</span></span><span class="l5d" aria-label="Last 5 results">${WK[t].slice(-5).map(g=>`<i class="${g[2]>g[3]?'w':'l'}"></i>`).join('')}</span></div>${gbH}<div class="subw">${sub}</div></div>
@@ -143,7 +143,7 @@ function set(med){bh.setAttribute('aria-pressed',!med);bm.setAttribute('aria-pre
 bh.onclick=()=>set(false);bm.onclick=()=>set(true);
 draw(false);if(!FL())dtab(false);
 if(typeof AVR!=='undefined')document.querySelectorAll('.pav[data-avt]').forEach(e=>{const r=AVR[e.dataset.avt];if(r)e.classList.add('av','av-'+r);else e.classList.add('nl')});
-function pfit(){document.querySelectorAll('.pr .pav.av+.psn').forEach(el=>{if(!el.offsetParent)return;el.style.fontSize='';let f=parseFloat(getComputedStyle(el).fontSize);while((el.scrollHeight>el.clientHeight+1||el.scrollWidth>el.clientWidth+1)&&f>9){f-=0.5;el.style.fontSize=f+'px'}})}
+function pfit(){document.querySelectorAll('.pr .pav.av+.psn').forEach(el=>{if(!el.offsetParent)return;el.style.fontSize='';let f=parseFloat(getComputedStyle(el).fontSize);while((el.scrollHeight>el.clientHeight+1||el.scrollWidth>el.clientWidth+1)&&f>11){f-=0.5;el.style.fontSize=f+'px'}})}
 pfit();document.addEventListener('change',()=>requestAnimationFrame(pfit));
 // standings card names: shrink a long name just enough to show in full (never an ellipsis)
 // cap-height centre of a text box's line, measured from the bottom of the line box (font metrics via canvas)
@@ -166,7 +166,7 @@ function tnFit(){
   document.querySelectorAll('.board .r .tn').forEach(e=>{if(!e.offsetParent)return;e.style.fontSize='';e.style.whiteSpace='nowrap';e.style.lineHeight='';
   const f0=parseFloat(getComputedStyle(e).fontSize),ov=()=>e.scrollWidth>e.clientWidth+.5;let f=f0;while(ov()&&f>f0*.85){f-=.5;e.style.fontSize=f+'px'}
   if(ov()){e.style.whiteSpace='normal';e.style.lineHeight='1.12';f=f0;e.style.fontSize=f+'px';
-    const fit=n=>{let g=f0;const bad=()=>ov()||e.getBoundingClientRect().height>n*1.12*g+1||(n>2&&n*1.12*g>52);e.style.fontSize=g+'px';while(bad()&&g>10){g-=.5;e.style.fontSize=g+'px'}return g};
+    const fit=n=>{let g=f0;const bad=()=>ov()||e.getBoundingClientRect().height>n*1.12*g+1||(n>2&&n*1.12*g>52);e.style.fontSize=g+'px';while(bad()&&g>11){g-=.5;e.style.fontSize=g+'px'}return g};
     f=fit(2);if(f<15){const g=fit(3);if(g<=f)e.style.fontSize=(f=fit(2))+'px'}}});if(typeof ravFit==='function')ravFit();mvAl()}
 // tabs: one shared font size, shrunk just enough that the longest label keeps at least 8px from its frame on each side
 function tabFit(){const L=[...document.querySelectorAll('nav.tabs label')].filter(l=>l.offsetParent);if(!L.length)return;L.forEach(l=>l.style.fontSize='');
@@ -192,21 +192,21 @@ function sbLines(bd){return [...bd.querySelectorAll('.sb .stx:not(.spl)')].filte
 const sbEls=bd=>bd.querySelectorAll('.r .sb,.r .st'),sbBlk=bd=>bd.querySelectorAll('.r>.sb');
 function sbSet(bd,k){bd.__sbs=k;const v=typeof k==='number'?k.toFixed(2):k;sbEls(bd).forEach(e=>e.style.setProperty('--sbs',v))}
 function sbFit(){document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;const B=sbBlk(bd);B.forEach(e=>e.classList.add('sbm'));sbSet(bd,'1');const L=sbLines(bd);let k=1;
-  B.forEach(e=>e.style.removeProperty('--stw2'));const ov=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);while(k>.68&&ov()){k-=.02;sbSet(bd,k)}
-  if(k<1&&ov()){k=1;sbSet(bd,'1')}
+  B.forEach(e=>{e.style.removeProperty('--stw2');e.classList.remove('sbw')});const ov=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);
+  if(ov())B.forEach(e=>e.classList.add('sbw'))  // 2026-11-05 text floor: stat lines are never scaled below 1; the per-week part wraps under the figure instead
   // then the text column shrinks to the longest line, so the dots sit just after the text (all lines aligned)
   const mw=Math.max(0,...L.filter(x=>x.closest('.sb')).map(x=>{const rg=document.createRange();rg.selectNodeContents(x);const a=rg.getBoundingClientRect(),b=x.getBoundingClientRect();return a.right-b.left}));
   if(mw)B.forEach(e=>e.style.setProperty('--stw2',Math.ceil(mw+2)+'px'));B.forEach(e=>e.classList.remove('sbm'))});if(typeof tileFit==='function'){tileFit();
   // the rank tiles resize with the text: if a line now overflows, step the scale down again (a few passes at most)
   for(let n=0;n<4;n++){let again=false;document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;const L=sbLines(bd);
-    if(L.some(x=>x.scrollWidth>x.clientWidth+.5)){const k=parseFloat(bd.__sbs||'1')-.02;if(k>.66){sbSet(bd,k);again=true}}});if(!again)break;tileFit()}}}
-// Opp rk · All-play · Luck line: its own scale (down to 86%); if it still does not fit, Luck wraps to a second line
+    if(L.some(x=>x.scrollWidth>x.clientWidth+.5)){const B=sbBlk(bd);if(![...B].every(e=>e.classList.contains('sbw'))){B.forEach(e=>e.classList.add('sbw'));again=true}}});if(!again)break;tileFit()}}}
+// Opp rk · All-play · Luck line: full size always; if it does not fit, Luck wraps to a second line (all rows together)
 function s2Fit(){document.querySelectorAll('.board').forEach(bd=>{const A=bd.querySelectorAll('.r>.st.s2'),S=v=>A.forEach(e=>e.style.setProperty('--s2s',v));const L=[...A].filter(x=>x.offsetParent);S('1');L.forEach(x=>x.classList.remove('wrp'));let k=1;
-  const over=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);while(k>.81&&over()){k-=.02;S(k.toFixed(2))}
-  if(over()){S('1');L.forEach(x=>x.classList.add('wrp'))}});if(typeof tileFit==='function')tileFit()}
+  const over=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);  // 2026-11-05 text floor: never scaled below 1
+  if(over())L.forEach(x=>x.classList.add('wrp'))});if(typeof tileFit==='function')tileFit()}
 if(!FL())s2Fit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(s2Fit);addEventListener('resize',()=>requestAnimationFrame(s2Fit));document.addEventListener('change',()=>requestAnimationFrame(s2Fit));document.fonts&&document.fonts.addEventListener('loadingdone',s2Fit);
 // dropdown labels (Compare team pickers etc.): shrink a long name to fit instead of an ellipsis
-function ddFit(){document.querySelectorAll('.dd summary .sv').forEach(v=>{if(!v.offsetParent)return;v.style.fontSize='';let f=parseFloat(getComputedStyle(v).fontSize);while(v.scrollWidth>v.clientWidth+.5&&f>9){f-=.5;v.style.fontSize=f+'px'}})}
+function ddFit(){document.querySelectorAll('.dd summary .sv').forEach(v=>{if(!v.offsetParent)return;v.style.fontSize='';let f=parseFloat(getComputedStyle(v).fontSize);while(v.scrollWidth>v.clientWidth+.5&&f>11){f-=.5;v.style.fontSize=f+'px'}})}
 if(!FL())ddFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(ddFit);addEventListener('resize',()=>requestAnimationFrame(ddFit));document.addEventListener('change',()=>requestAnimationFrame(ddFit));document.fonts&&document.fonts.addEventListener('loadingdone',ddFit);
 if(!FL())sbFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(sbFit);addEventListener('resize',()=>requestAnimationFrame(sbFit));document.addEventListener('change',()=>requestAnimationFrame(sbFit));document.fonts&&document.fonts.addEventListener('loadingdone',sbFit);
 if(!FL())ravFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(ravFit);addEventListener('resize',()=>requestAnimationFrame(ravFit));document.addEventListener('change',()=>requestAnimationFrame(ravFit));document.fonts&&document.fonts.addEventListener('loadingdone',ravFit);
@@ -223,7 +223,7 @@ function ref(t){let n=t.previousSibling;while(n&&n.nodeType===3&&!n.textContent.
   const tn=txt(n);if(!tn||!/[0-9A-Za-z%]/.test(tn.textContent))return null;return {tn,el:tn.parentElement}}
 function fit(){
   for(const k in FM)delete FM[k];  // font metrics are re-read each run: a run before the web fonts load must not leave the fallback font's metrics cached
-  const tiles=[...document.querySelectorAll('.ch,.rkb')].filter(t=>t.offsetParent&&!t.closest('.gm,.sxm,.lbr,.hmx,.tqgrid,.mx,.bym'));
+  const tiles=[...document.querySelectorAll('.ch,.rkb')].filter(t=>t.offsetParent&&!t.closest('.gm,.sxm,.lbr,.hmx,.tqgrid,.mx,.bym,.pskey'));
   const jobs=[];
   for(const t of tiles)t.style.removeProperty('transform');  // clear old offsets first: a stale one makes a tile look off its line and it would be skipped for good
   // reads first, writes after (2026-11-04): a marker inserted or an attribute set between two tiles' reads forced a layout per tile,
@@ -282,7 +282,7 @@ const go=()=>{if(!raf)raf=requestAnimationFrame(upd)};addEventListener('scroll',
 // YILM title: one line, as large as fits the width (max 88px)
 (function(){function f(){document.querySelectorAll('h1.yh').forEach(h=>{h.style.fontSize='';const m=parseFloat(getComputedStyle(h).fontSize);const w=h.clientWidth;if(!w)return;const R=document.createRange();R.selectNodeContents(h);let fs=Math.min(88,m*w/R.getBoundingClientRect().width);h.style.fontSize=fs.toFixed(2)+'px';let i=0;while(h.scrollWidth>h.clientWidth+0.5&&i++<20){fs-=0.5;h.style.fontSize=fs+'px'}})}
 f();addEventListener('resize',f);if(document.fonts)document.fonts.ready.then(f)})();
-let q=0;function sched(){if(q)return;q=requestAnimationFrame(()=>{q=0;fit();finFit();document.querySelectorAll('.tqt[data-h]:not([data-ok])').forEach(t=>{if(inkTile(t,+t.dataset.h))t.dataset.ok=1});document.querySelectorAll('.trc .tro2 b').forEach(el=>{if(!el.offsetParent)return;el.style.fontSize='';let f=parseFloat(getComputedStyle(el).fontSize);while((el.scrollWidth>el.clientWidth+0.5||el.scrollHeight>el.clientHeight+0.5)&&f>10){f-=0.5;el.style.fontSize=f+'px'}})})}
+let q=0;function sched(){if(q)return;q=requestAnimationFrame(()=>{q=0;fit();finFit();document.querySelectorAll('.tqt[data-h]:not([data-ok])').forEach(t=>{if(inkTile(t,+t.dataset.h))t.dataset.ok=1});document.querySelectorAll('.trc .tro2 b').forEach(el=>{if(!el.offsetParent)return;el.style.fontSize='';let f=parseFloat(getComputedStyle(el).fontSize);while((el.scrollWidth>el.clientWidth+0.5||el.scrollHeight>el.clientHeight+0.5)&&f>11){f-=0.5;el.style.fontSize=f+'px'}})})}
 window.tileFit=fit;window.finFit=finFit;window.inkTile=inkTile;window.inkBatch=inkBatch;if(!FL())sched();addEventListener('resize',sched);document.addEventListener('change',()=>setTimeout(sched,0));document.addEventListener('click',()=>setTimeout(sched,0));
 if(document.fonts){document.fonts.ready.then(()=>{for(const k in FM)delete FM[k];document.querySelectorAll('.tqt[data-ok]').forEach(t=>delete t.dataset.ok);sched()});document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',()=>{for(const k in FM)delete FM[k];sched()})}
 })();
@@ -327,7 +327,7 @@ if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener
 
 /* pcnFit: matrix row labels on phones (face + manager name): shrink a long manager name until it fits its label (floor 10px) */
 (function(){function pcnFit(){document.querySelectorAll('.sxm .mxn .pcn').forEach(function(n){if(!n.offsetParent)return;n.style.fontSize='';var p=n.parentElement,s=parseFloat(getComputedStyle(n).fontSize);
- while((p.scrollWidth>p.clientWidth+.5||n.getBoundingClientRect().right>p.getBoundingClientRect().right+.5)&&s>10){s-=.5;n.style.fontSize=s+'px'}})}
+ while((p.scrollWidth>p.clientWidth+.5||n.getBoundingClientRect().right>p.getBoundingClientRect().right+.5)&&s>11){s-=.5;n.style.fontSize=s+'px'}})}
  if(!FL())pcnFit();addEventListener('resize',function(){requestAnimationFrame(pcnFit)});document.addEventListener('change',function(){requestAnimationFrame(pcnFit)});document.fonts&&document.fonts.ready.then(pcnFit)})();
 
 /* dtPanels (desktop table, standings order): each tier becomes its own raised panel. The table is first laid out whole so

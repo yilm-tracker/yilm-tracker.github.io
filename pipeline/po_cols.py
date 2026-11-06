@@ -52,7 +52,7 @@ def build(S,GAMES,win,winp,PT,SHORT,seed,e,tone,final=None,av=lambda t:'',live=N
     html=(f'<div class="prd pbx"><div class="pbk" style="height:{H}px">{hd}{"".join(ln)}{"".join(box)}</div></div>'
           '<script>(function(){function fit(){document.querySelectorAll(".pbt .bn").forEach(function(el){if(!el.clientWidth||el.dataset.fw==el.clientWidth)return;'
           'el.dataset.fw=el.clientWidth;el.style.fontSize="";var f=parseFloat(getComputedStyle(el).fontSize),r=document.createRange();r.selectNodeContents(el);'
-          'while(r.getBoundingClientRect().width>el.clientWidth-0.5&&f>10){f-=0.5;el.style.fontSize=f+"px"}})}'
+          'while(r.getBoundingClientRect().width>el.clientWidth-0.5&&f>11){f-=0.5;el.style.fontSize=f+"px"}})}'
           'fit();document.addEventListener("change",function(){requestAnimationFrame(fit)});window.addEventListener("resize",function(){requestAnimationFrame(fit)});'
           'if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){document.querySelectorAll(".pbt .bn").forEach(function(el){el.dataset.fw=""});fit()})})()</script>'
           f'<div class="rkey"><span><i class="rk-l"></i>{"winning" if final else "projected"} path</span>'

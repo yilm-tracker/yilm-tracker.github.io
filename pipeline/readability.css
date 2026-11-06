@@ -1262,3 +1262,37 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 .pane-mu .lbh i,.pane-po .lbh:not(.psbh) i{flex:1;min-width:12px;height:1px;background:var(--line)}
 .pane-mu .lbh small,.pane-po .lbh:not(.psbh) small{flex:none;font:500 11px/1 var(--body);letter-spacing:0;text-transform:none;color:var(--steel);text-align:right}
 @media (min-width:1100px){.pane-mu .lbh{margin-inline:0}}  /* desktop Matchups rows sit at 0; Playoffs rows keep -10.5px, so its strip does too */
+
+/* 2026-11-05 (Nicklaus) TEXT FLOOR: no text under 11 CSS px (9.35pt on phones at scale 0.85), both sites.
+   Exception: digits inside tiles beside figures follow the tile rule (cap height, >= 1.75px gap) and are never scaled down.
+   Labels/units 11px; values keep their step above the label (Rosters stat lines 12 -> 13, The Wire sort words 11 -> 12.5). */
+.yrs .yb small{font-size:11px!important}
+.board .r .nm .fab small{font-size:11px!important}
+.lgrid .lt{font-size:11px!important}
+.pane-ro .rn small{font-size:13px!important}  /* Rosters stat-line values; Players rows share .rn and keep their size */
+.rn small .gp u,.rn small .by u,.rn small .rsl u{font-size:11px!important}
+.rak em,.rak i{font-size:11px!important}
+.wdd .ddm label i{font-size:11px!important}
+.mpk .stk,.g4 .stk{font-size:11px!important}
+.g4 .g4sim small{font-size:11px!important}
+.lu .cv .fs small,.cr.lu .cv .fs small{font-size:11px!important;letter-spacing:.06em!important}
+.plx .pst u{font-size:11px!important}
+.wsb{font-size:12.5px!important}
+.wsb em,.wsb i{font-size:11px!important}
+.wv.wpj small{font-size:11px!important}
+.winj{font-size:11px!important}
+.dfn span,.ptn span{font-size:11px!important}
+@media (min-width:1100px){.dfgl small,.dfcr,.dfct b{font-size:11px!important}}
+.dfvia i{font-size:11px!important}
+.tqod span,.tqkl,.tqkn,.hx-t{font-size:11px!important}
+.tqhr2 b small{font-size:11px!important}
+.pst{font-size:11px!important}
+.cr.lu .psg.cnm .pst{font-size:clamp(11px,12.5cqw,13px)!important}
+.pr .pgp,.pr .pcr .pgp{font-size:11px!important}
+.lbr .ch,.tqdr,.mus .ch,.pp.sm,.pr .ch,.dpc .ch{font-size:11px!important}
+.lbr .ch .ct,.tqdr .ct,.mus .ch .ct,.pp.sm .ct,.pr .ch .ct,.dpc .ch .ct{font-size:inherit!important}
+.pr .pch .pgp{left:calc(50% + 10px)}  /* header GP over the per-cell numbers: the pill is wider than the 20px rank tile, so measure from the centre */
+/* PF / PA / Tot Eff lines never scale: when a line does not fit, the per-week part wraps under the figure (.sbw, sbFit) */
+.r>.sb.sbw .stx{flex-wrap:wrap}
+.r>.sb.sbw .stx .pw{flex-basis:100%;margin-left:0!important}
+.r>.sb.sbw .pws{display:none}
