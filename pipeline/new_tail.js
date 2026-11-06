@@ -423,4 +423,50 @@ document.fonts&&document.fonts.ready.then(()=>requestAnimationFrame(simGap));add
  addEventListener('resize',()=>requestAnimationFrame(subFit));document.fonts&&document.fonts.ready.then(subFit);
  try{history.scrollRestoration='manual'}catch(_){}
  pick(fromHash()||first('gd'));sync()})();
+// 2026-11-06 (Nicklaus) lineup fit, Matchups + Playoffs lineups: never "…". Per lineup (.lus-a / .lus-o): one name size (--lnf, floor 12px)
+// and one game-line size (--lgf, floor 11px), set on the lineup container. A game line that does not fit at 11px writes its time short
+// ("9:30a", "Sat 8:20p"). A name that does not fit at 12px gets 11px on its own row, then letter-spacing down to -.02em, then its injury tag
+// and then its team logo move to the end of the game line (kept only if the game line still fits), then a fixed approved abbreviation (LUA).
+// A name with no approved form stays at 11px / -.02em and is reported (window.__luReport, needsForm). BN is a line in the position tile.
+const LUA={'Croskey-Merritt':'Croskey-M.','McCaffrey':'McCaff.','Rodriguez':'Rodrig.','Monangai':'Monang.','Henderson':'Henders.'};  // approved by Nicklaus, 2026-11-06
+const LUR=[];  // what the last pass did, for QA (window.__luReport)
+const luOver=e=>e.scrollWidth>e.clientWidth+.5;
+function luShort(g){const w=g.querySelector('.gwhen');if(!w||w.dataset.full)return false;const f=w.textContent,ab=f.replace(/(\d)(?::(\d\d))?\s?([AP])M/,(x,h,mm,ap)=>h+(mm?':'+mm:'')+ap.toLowerCase());
+  if(ab===f)return false;w.dataset.full=f;w.dataset.ab=ab;w.textContent=ab;return true}
+function luShared(C,prop,els,base,floor){  // largest size (0.25px steps) at which every element fits, floor..base; returns it
+  const est=Math.min(base,...els.map(e=>luOver(e)?base*e.clientWidth/e.scrollWidth:base));let k=Math.min(base,Math.max(floor,Math.floor(est*4)/4));
+  if(k<base)C.style.setProperty(prop,k+'px');
+  while(k>floor&&els.some(luOver)){k=Math.max(floor,k-.25);C.style.setProperty(prop,k+'px')}
+  return k}
+function luFit(){LUR.length=0;
+  document.querySelectorAll('.lus-a,.lus-o').forEach(C=>{if(!C.offsetParent)return;
+  const cells=[...C.querySelectorAll('.cr.lu:not(.psr) .cnm')].filter(c=>c.offsetParent&&c.querySelector('b>span'));if(!cells.length)return;
+  C.style.removeProperty('--lnf');C.style.removeProperty('--lgf');
+  for(const c of cells){const s=c.querySelector('b>span'),b=c.querySelector('b'),sm=c.querySelector('small');
+    if(s.dataset.full){s.textContent=s.dataset.full;delete s.dataset.full}
+    s.style.removeProperty('font-size');s.style.removeProperty('letter-spacing');
+    if(sm)[...sm.querySelectorAll(':scope>.lmv')].sort((x,y)=>(x.classList.contains('inj')?0:1)-(y.classList.contains('inj')?0:1)).forEach(x=>{x.classList.remove('lmv');if(x.classList.contains('inj'))b.appendChild(x);else b.insertBefore(x,b.querySelector(':scope>.inj'))});
+    const w=c.querySelector('.gwhen');if(w&&w.dataset.full){if(w.textContent===w.dataset.ab)w.textContent=w.dataset.full;delete w.dataset.full;delete w.dataset.ab}}
+  const S=cells.map(c=>c.querySelector('b>span')),G=cells.map(c=>c.querySelector('.gp')).filter(g=>g&&g.offsetParent);
+  // A. names: one shared size (12px floor)
+  const nb=parseFloat(getComputedStyle(cells[0].querySelector('b')).fontSize),k=luShared(C,'--lnf',S,nb,12);
+  // B. game lines: one shared size (11px floor), then short times
+  const gb=parseFloat(getComputedStyle(cells[0].querySelector('small')).fontSize),gk=G.length?luShared(C,'--lgf',G,gb,11):gb;
+  for(const g of G){if(!luOver(g))continue;const r={lu:C.className,game:g.textContent.trim(),short:null};if(luShort(g))r.short=g.querySelector('.gwhen').textContent;r.over=luOver(g);LUR.push(r)}
+  // C. names that do not fit at the shared size: 11px, letter-spacing, move tags (only if the game line still fits), abbreviate
+  for(const s of S.filter(luOver)){const c=s.closest('.cnm'),sm=c.querySelector('small'),g=c.querySelector('.gp'),r={lu:C.className,name:s.textContent.trim(),size:11,ls:0,moved:[],abbr:null,needsForm:false};
+    s.style.fontSize='11px';
+    const ls=()=>{s.style.removeProperty('letter-spacing');r.ls=0;if(!luOver(s))return;const d=(s.clientWidth-s.scrollWidth)/s.textContent.length;s.style.letterSpacing=Math.max(-0.22,Math.floor(d*100)/100)+'px';r.ls=parseFloat(s.style.letterSpacing)};
+    ls();
+    for(const [sel,lab] of [['b>.inj','injury'],['b>.nfl.tm','logo']]){if(!luOver(s))break;const t=c.querySelector(sel);if(!t||!sm)continue;
+      t.classList.add('lmv');sm.appendChild(t);let sh=false;if(g&&luOver(g))sh=luShort(g);
+      if(g&&luOver(g)){t.classList.remove('lmv');const b=c.querySelector('b');if(lab==='injury')b.appendChild(t);else b.insertBefore(t,b.querySelector(':scope>.inj'));if(sh){const w=g.querySelector('.gwhen');w.textContent=w.dataset.full;delete w.dataset.full;delete w.dataset.ab}r.tried=(r.tried||[]).concat(lab)}
+      else r.moved.push(lab);ls()}
+    if(luOver(s)){const full=s.textContent.trim(),t=LUA[full];if(t){s.dataset.full=full;s.textContent=t;r.abbr=t;ls()}else r.needsForm=true}
+    r.over=luOver(s);LUR.push(r)}
+  LUR.push({lu:C.className,nameSize:parseFloat(C.style.getPropertyValue('--lnf'))||nb,base:nb,gameSize:parseFloat(C.style.getPropertyValue('--lgf'))||gb,gbase:gb,rows:cells.length,
+    gameOver:G.filter(luOver).map(g=>g.textContent.trim())})})
+  window.__luReport=LUR.slice()}
+window.luFit=luFit;
+if(!FL())luFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(luFit);addEventListener('resize',()=>requestAnimationFrame(luFit));document.addEventListener('change',()=>requestAnimationFrame(luFit));document.addEventListener('panebuilt',()=>requestAnimationFrame(luFit));
 </script>

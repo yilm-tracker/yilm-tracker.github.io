@@ -76,9 +76,9 @@
  margin-inline:calc((var(--rs) - 1)*-70px)}
 @media (max-width:419px){.cr.lu{--nfs:14px;--gfs:12px;--sq0:31.8px}}
 @media (max-width:370px){.cr.lu{--nfs:13.5px;--gfs:11.5px;--sq0:32px}}
-.cr.lu .cnm b{font-size:calc(var(--nfs)*var(--rs))!important}
+.cr.lu .cnm b{font-size:var(--lnf,calc(var(--nfs)*var(--rs)))!important}
 .cr.lu .cnm b .nfl.tm{width:calc(22px*var(--rh))!important;height:calc(20px*var(--rh))!important;margin-top:calc(-2px*var(--rh))!important;margin-bottom:calc(-2px*var(--rh))!important}
-.cr.lu .cnm small{font-size:calc(var(--gfs)*var(--rh))!important}
+.cr.lu .cnm small{font-size:var(--lgf,calc(var(--gfs)*var(--rh)))!important}
 .cr.lu .cnm small .nfl.opp{width:calc(22px*var(--rh))!important;height:calc(20px*var(--rh))!important;margin-top:calc(-8px*var(--rh));margin-bottom:calc(-8px*var(--rh));top:calc(-1.4px*var(--rh))}
 .cr.lu .cnm small .gp{padding-block:calc(4px*var(--rh));margin-block:calc(-4px*var(--rh))}
 .cr.lu .cnm b .inj{font-size:calc(12px*var(--rh))!important;padding:calc(1.5px*var(--rs)) calc(3.5px*var(--rs)) calc(3.5px*var(--rs))!important;min-width:calc(19px*var(--rs))}
@@ -101,7 +101,7 @@
 .cnm .gp .gsep{margin:0 3.5px!important}
 .cnm .gp .gha{margin-right:4px}
 .cr.lu{margin-inline:-10.5px}
-@media (max-width:419px){.cr.lu .cnm small{font-size:calc(11.4px*var(--rh))!important}.cnm .gp .gsep{margin:0 2.5px!important}.cnm .gp .gha{margin-right:2.5px}}
+@media (max-width:419px){.cr.lu .cnm small{font-size:var(--lgf,calc(11.4px*var(--rh)))!important}.cnm .gp .gsep{margin:0 2.5px!important}.cnm .gp .gha{margin-right:2.5px}}
 /* ===== position bands (Oct 28): full-height position strip on each player row + subtle row frame =====
    Applies to Matchups / Playoffs / Custom (.cr.lu), Compare (.cr) and Rosters (.rr2). The band replaces the square tile,
    so there is no tile-to-text alignment to maintain. */
@@ -1303,3 +1303,11 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 @media (min-width:1120px) and (max-width:1419px){.dtt td:not(.dtm):not(.dsd){font-size:15px!important}}
 .wrhd .wh0,.wrhd .wh1{font-size:12.5px!important}
 @media (max-width:1099px){.wrhd .wh1{letter-spacing:.05em}}  /* "Matchup" in its 46px column at 760-1099px (874L): 12.5px caps fit with .05em instead of .07em */
+
+/* 2026-11-06 (Nicklaus) LINEUP FIT (Matchups + Playoffs lineups, not the schedule grid): no "…". luFit() (new_tail.js) sets one name size
+   (--lnf, floor 12px) and one game-line size (--lgf, floor 11px) per lineup; a name that still does not fit gets 11px, then letter-spacing
+   down to -.02em, then its injury tag and team logo move to the game line, then a fixed approved abbreviation (full name in title/aria-label). */
+.cr.lu:not(.psr) .cnm b>span,.cr.lu:not(.psr) .cnm .gp{text-overflow:clip!important}
+.cr.lu .cn.swp .cnm b::after{content:none!important}  /* BN is the third line of the position tile (.pbn), not on the name or game line */
+.cr.lu .pq .pqi>.pbn{display:block;font:700 11px/1 var(--display)!important;letter-spacing:.04em;text-box:trim-both cap alphabetic;color:inherit;opacity:1}
+.cr.lu .cnm small>.lmv{flex:none;align-self:center;margin:0!important;transform:none!important}  /* injury tag / team logo moved to the game line */

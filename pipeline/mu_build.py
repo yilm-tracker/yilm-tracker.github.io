@@ -171,9 +171,13 @@ def lcell(p,side):
     if HATILE and opp and _hax(p) in('vs','@'):  # playoffs: vertical HOME / ROAD strip on the inner edge, next to the points
         wd="HOME" if _hax(p)=="vs" else "ROAD"
         hb=f'<i class="hab {"hab-h" if _hax(p)=="vs" else "hab-r"}" aria-label="{wd.title()}">'+''.join(f'<span>{c}</span>' for c in wd)+'</i>'
-    return (f'<span class="cn {side}{" hbx" if hb else ""}">{sq}{flg}<span class="cnm"><b><span>{e(nm)}</span>{mk}{ij}</b>'
+    return (f'<span class="cn {side}{" hbx" if hb else ""}">{sq}{flg}<span class="cnm"><b><span title="{e(name)}" aria-label="{e(name)}">{e(nm)}</span>{mk}{ij}</b>'
             f'<small><span class="gp{" fin" if done else ""}"{dt}>{st}</span></small></span>{hb}</span>'+
             (f'<span class="cv {side} act"{dp}><span class="fs {"up" if act>=proj else "dn"}" title="Projected {proj:.1f}"><em class="fdf">{_dif(act,proj)}</em>{v:.1f}<small>FINAL</small></span></span>' if done else f'<span class="cv {side} pjc"{dp}><span class="fs pj"><em class="fdf"></em>{v:.1f}<small>PROJ</small></span></span>'))
+def _swp(r,side):
+    """Optimal lineup: a bench player moved in. Marks the cell (.swp) and adds BN as the third line of its position tile (2026-11-06)."""
+    i=r.index(f'<span class="cn {side}">');r=r[:i]+f'<span class="cn {side} swp">'+r[i+len(f'<span class="cn {side}">'):]
+    j=r.index('</span></i>',i);return r[:j]+'<b class="pbn">BN</b>'+r[j:]
 def lrow(pa,pb,slot):
     w=''
     if pa and pb:
@@ -257,8 +261,8 @@ def sview(sa,sb,sid_a=None,sid_b=None):
                  f'<div class="mcr slc"><span>{ca:.1f} <small>({pa:.1f})</small>{dl(rda[0] if rda[1] else None)}</span><em>Running total</em><span>{dl(rdb[0] if rdb[1] else None)}{cb:.1f} <small>({pb:.1f})</small></span></div>'+need_row(ki))
         for i in range(max(len(g['a']),len(g['b']))):
             x=g['a'][i] if i<len(g['a']) else None;y=g['b'][i] if i<len(g['b']) else None;r=lrow(x,y,'')
-            if sid_a is not None and x and x[0] not in sid_a:r=r.replace('<span class="cn a">','<span class="cn a swp">',1)
-            if sid_b is not None and y and y[0] not in sid_b:r=r.replace('<span class="cn b">','<span class="cn b swp">',1)
+            if sid_a is not None and x and x[0] not in sid_a:r=_swp(r,'a')
+            if sid_b is not None and y and y[0] not in sid_b:r=_swp(r,'b')
             o.append(r)
         o.append('</div>')
         strip.append(f'<span class="stc {st.lower()}"><b>{g["lab"].split(" ",1)[0]}</b><i>{g["lab"].split(" ",1)[1] if " " in g["lab"] else ""}</i><em>{len(g["a"])}<u>·</u>{len(g["b"])}</em></span>')
@@ -304,8 +308,8 @@ def optblock(sa,sb,pool_a,pool_b,ta,tb,proj=False,bhead='',bkeep=lambda p:True,b
     o.append('<div class="lpv">')
     for i,(x,y) in enumerate(zip(oa,ob)):
         r=lgs(lrow(x,y,''),i)
-        if x and x[0] not in sid_a:r=r.replace('<span class="cn a">','<span class="cn a swp">',1)
-        if y and y[0] not in sid_b:r=r.replace('<span class="cn b">','<span class="cn b swp">',1)
+        if x and x[0] not in sid_a:r=_swp(r,'a')
+        if y and y[0] not in sid_b:r=_swp(r,'b')
         o.append(r)
     sv=sview([x for x in oa if x],[y for y in ob if y],sid_a,sid_b)
     o.append('</div>'+sv)
