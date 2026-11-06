@@ -1291,8 +1291,15 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 .pr .pgp,.pr .pcr .pgp{font-size:11px!important}
 .lbr .ch,.tqdr,.mus .ch,.pp.sm,.pr .ch,.dpc .ch{font-size:11px!important}
 .lbr .ch .ct,.tqdr .ct,.mus .ch .ct,.pp.sm .ct,.pr .ch .ct,.dpc .ch .ct{font-size:inherit!important}
-.pr .pch .pgp{left:calc(50% + 10px)}  /* header GP over the per-cell numbers: the pill is wider than the 20px rank tile, so measure from the centre */
+.pr .pch{width:20px}.pr .pch .pp{flex:none}  /* header tile group = the rows' 20px tile group (pill centred, overhanging), so its GP sits exactly where the numbers do */
 /* PF / PA / Tot Eff lines never scale: when a line does not fit, the per-week part wraps under the figure (.sbw, sbFit) */
 .r>.sb.sbw .stx{flex-wrap:wrap}
 .r>.sb.sbw .stx .pw{flex-basis:100%;margin-left:0!important}
 .r>.sb.sbw .pws{display:none}
+
+/* 2026-11-06 text floor follow-ups: desktop table figures 15px from 1120px (tiles 10.97px, digits 10.25px as at >=1420px;
+   1100-1119px keeps 13.5px: BBP's one-line team names need 196px and the table would pass the content edge by up to 17.7px).
+   The Wire header labels match the 12.5px sort words. */
+@media (min-width:1120px) and (max-width:1419px){.dtt td:not(.dtm):not(.dsd){font-size:15px!important}}
+.wrhd .wh0,.wrhd .wh1{font-size:12.5px!important}
+@media (max-width:1099px){.wrhd .wh1{letter-spacing:.05em}}  /* "Matchup" in its 46px column at 760-1099px (874L): 12.5px caps fit with .05em instead of .07em */
