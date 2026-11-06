@@ -257,6 +257,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-06 · Fix: Paper Trail NFL slot sat 10.24px below the player's baseline (its baseline marker was a flex item, so the fitter aligned the slot's top); slot is now an inline line, baseline delta 0.24px by an independent check (text box + font descent) · a check that reuses the fitter's own markers cannot catch this.
 - 2026-11-06 · Paper Trail picks: trade count and original team move to aligned TRADED / VIA columns (RPTS tile, logo); future rows one line; NFL draft slot on drafted rows (full size -> approved abbreviation -> hidden below 423 CSS px) · left side shows only who picks; columns align row to row.
 - 2026-11-06 · Paper Trail picks: rows name the owner ('via' original), future picks numbered and ordered by projected slot (reverse H2H standings; offseason keeps the previous season's final seeds), GM column dropped in Picks; "·" ink-centred, via-name-only fallback · the round was repeated on every row and the owner was hidden in a 44px logo.
 - 2026-11-06 · Lineups never ellipsise: one shared name size (floor 12px) and game-line size (floor 11px) per lineup, then 11px, −0.02em, tags to the game line, fixed approved abbreviations (Croskey-M., McCaff., Rodrig., Monang., Henders.); BN moved into the position tile as its third line · names readable at 360P/956L without "…".

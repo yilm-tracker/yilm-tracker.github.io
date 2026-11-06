@@ -130,6 +130,7 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 - Baselines estimated from canvas font metrics are off by up to ~0.9px at zoomed widths (1440 has `zoom` 1.1; layout rounds ascent/descent differently): measure with a zero-size inline-block on the baseline. `tilechk.py` now measures this way (it used to allow 0.6px, which hid it).
 - A tile's stale `translateY` once made `fit` think it was off its line, so it was skipped forever (360: PF/PA tiles missing, 3.75px digits). Fixed by clearing transforms before the check.
 - `new_tail.js` ends with `</script>`: append new JS before it.
+- Zero-size baseline markers (`.ptbl`, tilechk's marker) only sit on the baseline in an inline formatting context; inside a flex/grid container they become items at the top. Verify alignment with a method independent of the fitter's own markers (2026-11-06: the Paper Trail NFL slot shipped 10px low and the marker-based check passed it).
 - `const _cv` canvas already exists in new_tail.js: reuse, don't redeclare.
 - YILM `live.js` is copied from BBP; `build_site.py` substitutes the YILM league id and season (was polling BBP's league before 2026-11-02).
 - `live.js` holds no element references between polls (`rel()`, 2026-11-05): its `cells` NodeList kept the last Matchups week (23-27k nodes) alive after the tab was dropped.
