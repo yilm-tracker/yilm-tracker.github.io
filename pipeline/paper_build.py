@@ -116,6 +116,26 @@ if _dt_os.path.exists(P+'history/paper/sleeper_2025.json'):
                 K[key]=[y,r,ti(o),ti(own),used[0] if used else '',used[1] if used else '']
                 C[key]=rows
     TEAMNOW=sorted(set(A.ST.values()))
+    # projected slot of every undrafted pick (2026-11-06): reverse current H2H seed of the ORIGINAL team, from the same
+    # `const H` (data_block.js) the Standings board draws; same slots for every round and year; Median ignored.
+    # Weeks 15-17: H stays the final regular-season order (run.py caps at Week 14). Offseason (G=0, every team 0-0):
+    # the previous season's final seeds, kept in paper_seeds.json (written whenever G>0; weekly runs commit pipeline/).
+    try:
+        _db=open(P+'data_block.js',encoding='utf-8').read()
+        HS=json.loads(re.search(r'const H=(\[.*?\]);',_db).group(1));_G=int(re.search(r'const G=(\d+);',_db).group(1))
+    except Exception:HS,_G=[],0
+    _SF=P+'paper_seeds.json'
+    if _G>0 and HS:
+        _sv={'season':cur,'G':_G,'H':HS}
+        if not _dt_os.path.exists(_SF) or json.load(open(_SF,encoding='utf-8'))!=_sv:
+            json.dump(_sv,open(_SF,'w',encoding='utf-8'),ensure_ascii=False)
+    elif _dt_os.path.exists(_SF):HS=json.load(open(_SF,encoding='utf-8'))['H']
+    else:HS=[]
+    SLOT={t:len(HS)-i for i,t in enumerate(HS)}
+    PAST={v[0] for v in K.values() if v[4]}
+    for k,v in K.items():
+        s=SLOT.get(T[v[2]]) if v[0] not in PAST else None
+        v.append(f'{v[1]}.{s:02d}' if s else '')
 else:
     # ------------------------------------------------------------------ YILM: Sleeper captures, players only
     ROOT=P.split('/.season/')[0]+'/pipeline/' if '/.season/' in P else P
@@ -223,28 +243,36 @@ if PICKS:
         ks=[k for k,v in K.items() if v[0]==y]
         for r in sorted({K[k][1] for k in ks}):
             rk=[k for k in ks if K[k][1]==r]
-            rk.sort(key=lambda k:(K[k][4] or 'z',T[K[k][2]]))
+            rk.sort(key=lambda k:(K[k][4] or K[k][6] or 'z',T[K[k][2]]))  # pick order; future picks by projected slot
             rows=[]
             for k in rk:
-                yy,rr,o,own,lab,sid=K[k];n=sum(1 for x in C[k] if x[2] in('T','M'))
+                yy,rr,o,own,lab,sid,pj=K[k];n=sum(1 for x in C[k] if x[2] in('T','M'))
+                # line 2 items sit in the flex row (6px gaps); "·" is its own item, its margins set by sepFit so the
+                # glyph-ink gap is equal on both sides; only the via team name (.ptln) shrinks, then hides (logo only)
+                sep='<i class="ptsep" aria-hidden="true">·</i>'
+                via=(f'<span class="ptvw">via</span>{av(T[o])}<span class="ptln ptd">{e(T[o])}</span>') if own!=o else ''
                 if lab:
                     pl=PL.get(sid) or ['?','','',-1]
                     tile=f'<i class="ptn{"" if pl[1] in PC else " ptn0"}" style="--pc:{PC.get(pl[1],"var(--row-divider)")}"><b>{lab}</b><span>{e(pl[1])}</span></i>'
-                    sub=f'<span class="ptl2"><span class="ptpn">{e(pl[0])}</span>{badge(pl[2]) if pl[2] else ""}</span>'
+                    sub=(f'<span class="ptl2" title="{e(pl[0])}{(" · via "+e(T[o])) if via else ""}"><span class="ptpn">{e(pl[0])}</span>{badge(pl[2]) if pl[2] else ""}'
+                         +(sep+via if via else '')+'</span>')
                 else:
-                    tile=f'<i class="ptn ptn0"><b>R{rr}</b></i>'
-                    sub=f'<span class="ptl2 ptd">{"Traded "+str(n)+"×" if n else "Not traded"}</span>'
+                    tile=f'<i class="ptn ptn0 ptpj"><b>{pj or "R"+str(rr)}</b></i>'
+                    tt=("Traded "+str(n)+"×") if n else "Not traded"
+                    sub=(f'<span class="ptl2 ptd" title="via {e(T[o])} · {tt}">{via}{sep}<span class="ptrd">{tt}</span></span>' if via
+                         else f'<span class="ptl2 ptd">{tt}</span>')
                 tr=f'<em class="ptc">{n}×</em>' if (lab and n) else ''
-                rows.append(f'<button type="button" class="ptk" data-k="{k}" aria-label="{y} round {rr}, {e(T[o])}\'s pick, history">{tile}'
-                            f'<span class="ptm"><span class="ptl1">{av(T[o])}<b class="ptt">{e(T[o])}</b>{tr}</span>{sub}</span>'
-                            f'<span class="ptg" title="{"Used by" if lab else "Owned by"} {e(T[own])}">{av(T[own])}</span></button>')
-            out.append(f'<div class="ptp"><div class="pthd"><span>R{r}</span><span>Original team</span><span>GM</span></div>{"".join(rows)}</div>')
+                num=(f'pick {lab}' if lab else f'projected pick {pj}' if pj else f'round {rr}')
+                rows.append(f'<button type="button" class="ptk" data-k="{k}" aria-label="{y} round {rr}, {num}, {e(T[own])}{(", via "+e(T[o])) if own!=o else ""}, history">{tile}'
+                            f'<span class="ptm"><span class="ptl1">{av(T[own])}<b class="ptt">{e(T[own])}</b>{tr}</span>{sub}</span></button>')
+            out.append(f'<div class="ptp"><div class="pthd"><span>R{r}</span><span>Team</span></div>{"".join(rows)}</div>')
         out.append('</div>')
     out.append('</div>')
 out.append(f'<div class="ptv ptv-p"{" hidden" if PICKS else ""}><input class="wq ptq" type="search" placeholder="Search player…" aria-label="Search player" autocomplete="off">'
            '<div class="ptp ptpl"><div class="pthd"><span>Moves</span><span>Player · last move</span><span>Date</span><span>GM</span></div><div class="ptlist"></div></div>'
            '<p class="ptmore"></p></div>')
-out.append('<div class="key"><div>'+('<b>Picks</b> each pick is named by its season, round and the team it originally belonged to. The tile shows the pick number once used. '
+out.append('<div class="key"><div>'+('<b>Picks</b> each row names the team that holds or used the pick (\'via\' = original team). '
+           'Future picks show their projected number from the current H2H standings (worst record = 1.01) and update as the standings change. The tile shows the pick number once used. '
            '<b>Moves</b> times the pick changed hands. ' if PICKS else '')
            +'<b>Players</b> every draft, trade, waiver claim, free-agent add and drop, newest first in the list; tap for the full history. '
            +('MyFantasyLeague trades (2021-24) carry the date the commissioner entered them. Rosters carried over to Sleeper in March 2025 are not shown as moves. '
@@ -290,7 +318,7 @@ function show(kind,id,push){let t='',s='',rows=[];
  else{const v=D.K[id];if(!v)return false;rows=D.C[id]||[];
    t='<span class="ptsn">'+v[0]+' · Round '+v[1]+'</span>';
    s='<span class="ptsl">'+av(v[2])+'<span><b>'+esc(T[v[2]])+'</b>’s pick</span></span>'
-     +'<span class="ptsm">'+(v[4]?'Pick '+esc(v[4])+' · used by '+esc(T[v[3]])+' · '+refh('p'+v[5]):(v[3]===v[2]?'Not traded · ':'')+'Owned by '+esc(T[v[3]]))+'</span>';
+     +'<span class="ptsm">'+(!v[4]&&v[6]?'Projected '+esc(v[6])+' · ':'')+(v[4]?'Pick '+esc(v[4])+' · used by '+esc(T[v[3]])+' · '+refh('p'+v[5]):(v[3]===v[2]?'Not traded · ':'')+'Owned by '+esc(T[v[3]]))+'</span>';
    rows=rows.slice().reverse()}
  ST.innerHTML=t;SS.innerHTML=s;SB.innerHTML=body(rows,kind==='pick');SB.scrollTop=0;
  if(S.hidden){back=document.activeElement;S.hidden=false;document.documentElement.classList.add('ptlock')}
@@ -322,8 +350,54 @@ function draw(){const q=(Q.value||'').trim().toLowerCase();const ids=q?ORD.filte
  MORE.textContent=ids.length>50?'Showing 50 of '+ids.length+(q?' matches':' players')+' · search to find any player':'';fitN()}
 function fitN(){if(!X.offsetParent)return;L.querySelectorAll('.ptl2').forEach(b=>{b.style.fontSize='';b.classList.remove('ptlo');let s=parseFloat(getComputedStyle(b).fontSize);while(b.scrollWidth>b.clientWidth+.5&&s>11.5){s-=.25;b.style.fontSize=s+'px'}if(b.scrollWidth>b.clientWidth+.5){b.style.fontSize='';b.classList.add('ptlo')}});L.querySelectorAll('.ptt').forEach(b=>{b.style.fontSize='';const w=b.parentElement;
   const o=()=>w.scrollWidth>w.clientWidth+.5||b.scrollWidth>b.clientWidth+.5;let s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>13){s-=.5;b.style.fontSize=s+'px'}});
+ pkFit();
  X.querySelectorAll('.ptv-k .ptt').forEach(b=>{if(!b.offsetParent)return;b.style.fontSize='';b.style.whiteSpace='';const w=b.parentElement;const o=()=>w.scrollWidth>w.clientWidth+.5;
   let s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>13){s-=.5;b.style.fontSize=s+'px'}if(o()){b.style.whiteSpace='normal'}})}
+// sepFit (2026-11-06): the "·" between items of a Picks line 2 gets equal glyph-ink gaps (SG px) on both sides.
+// Ink: text = canvas bearings of the element's own font (one shared canvas), NFL badge = the logo's visible columns on
+// the row colour under center/contain (lgInk, once per logo and row shade), logo = its circle + 1px ring. Reads first, then writes.
+const SG=6,_ic=document.createElement('canvas').getContext('2d',{willReadFrequently:true});
+const _bu=el=>{const m=/url\("?(.*?)"?\)\s*$/.exec(getComputedStyle(el).backgroundImage||'');return m?m[1]:''};
+// canvas rounds bounding boxes to whole pixels, so text is measured at 50x its size and scaled back (0.02px steps)
+function tInk(el){const t=el.textContent;if(!t)return null;const c=getComputedStyle(el),z=(el.currentCSSZoom||1)/50;_ic.font=c.fontStyle+' '+c.fontWeight+' '+(parseFloat(c.fontSize)*50)+'px '+c.fontFamily;
+ const r=document.createRange();r.selectNodeContents(el);const b=r.getBoundingClientRect(),m=_ic.measureText(t);return [b.left-m.actualBoundingBoxLeft*z,b.left+m.actualBoundingBoxRight*z]}
+function ink(el){const b=el.getBoundingClientRect();
+ if(el.classList.contains('nfl'))return lgInk(el,b)||[b.left,b.right];
+ if(el.classList.contains('pav')){const z=el.currentCSSZoom||1;return [b.left-z,b.right+z]}
+ return tInk(el)}
+// visible ink of an NFL logo: the files are used as they are (never trimmed). The logo is drawn into the shared canvas the
+// way the page draws it (center/contain, at its device-pixel size and sub-pixel position, smoothed) over the row's own
+// colour; ink = the device-pixel columns that differ from that colour by more than 40/255 in any channel, so faint glows,
+// dark outlines and edge columns lost in the downscale don't count. Cached per logo, row shade, size and pixel phase.
+const IM=new Map(),LG=new Map();
+function lgInk(el,b){const u=_bu(el),im=IM.get(u);if(!im||!im.naturalWidth)return null;const bg=getComputedStyle(el.closest('.ptk')).backgroundColor,q=devicePixelRatio||1;
+ const w=im.naturalWidth,h=im.naturalHeight,s=Math.min(b.width/w,b.height/h),X0=Math.floor(b.left*q),Y0=Math.floor(b.top*q);
+ const dx=(b.left+(b.width-w*s)/2)*q-X0,dy=(b.top+(b.height-h*s)/2)*q-Y0,dw=w*s*q,dh=h*s*q,key=[u.length,u.slice(-40),bg,dx.toFixed(3),dy.toFixed(3),dw.toFixed(3)].join('|');
+ let g=LG.get(key);if(g===undefined){const cw=Math.ceil(dx+dw)+1,ch=Math.ceil(dy+dh)+1,cv=_ic.canvas,c=(bg.match(/[\d.]+/g)||[0,0,0]).map(Number);
+  cv.width=cw;cv.height=ch;_ic.fillStyle=bg;_ic.fillRect(0,0,cw,ch);_ic.imageSmoothingEnabled=true;_ic.imageSmoothingQuality='high';_ic.drawImage(im,dx,dy,dw,dh);
+  const a=_ic.getImageData(0,0,cw,ch).data;let l=cw,r=0;
+  for(let y=0;y<ch;y++)for(let x=0;x<cw;x++){const i=(y*cw+x)*4;if(Math.max(Math.abs(a[i]-c[0]),Math.abs(a[i+1]-c[1]),Math.abs(a[i+2]-c[2]))>40){if(x<l)l=x;if(x+1>r)r=x+1}}
+  cv.width=cv.height=1;g=r>l?[l,r]:null;LG.set(key,g)}
+ return g?[(X0+g[0])/q,(X0+g[1])/q]:null}
+function shown(el,d){while(el&&getComputedStyle(el).display==='none')el=el[d];return el}
+function sepFit(R){const S=[...(R||X).querySelectorAll('.ptv-k .ptsep,.ptsep')].filter((s,i,A)=>A.indexOf(s)===i&&s.closest('.ptv-k')).filter(s=>s.offsetParent);S.forEach(s=>{s.style.marginLeft=s.style.marginRight=''});
+ const W=S.map(s=>{const a=shown(s.previousElementSibling,'previousElementSibling'),c=shown(s.nextElementSibling,'nextElementSibling'),z=s.currentCSSZoom||1;
+  if(!a||!c)return null;const d=tInk(s),l=ink(a),r=ink(c);if(!d||!l||!r)return null;return [(SG*z-(d[0]-l[1]))/z,(SG*z-(r[0]-d[1]))/z]});
+ S.forEach((s,i)=>{if(W[i]){s.style.marginLeft=W[i][0].toFixed(3)+'px';s.style.marginRight=W[i][1].toFixed(3)+'px'}})}
+// pkFit, Picks line 2: the "·" is fitted first; then only the via team name shrinks (to 11.5px, the "·" re-fitted at each
+// step), then hides (logo only); the player name never shrinks. Re-run once the NFL logos have decoded (their ink moves the "·").
+function pkFit(){sepFit();
+ X.querySelectorAll('.ptv-k .ptl2').forEach(b=>{if(!b.offsetParent)return;const n=b.querySelector('.ptln');if(!n)return;b.classList.remove('ptlo');n.style.fontSize='';sepFit(b);
+  const o=()=>b.scrollWidth>b.clientWidth+.5;let s=parseFloat(getComputedStyle(n).fontSize);while(o()&&s>11.5){s-=.25;n.style.fontSize=s+'px';sepFit(b)}
+  if(o()){n.style.fontSize='';b.classList.add('ptlo');sepFit(b)}});
+ pjFit();lgLoad()}
+// pjFit: a future pick's number ("1.01") centred in its tile by glyph ink, not by advance box (the "1" bearings)
+function pjFit(){const B=[...X.querySelectorAll('.ptv-k .ptpj b')].filter(b=>b.offsetParent);B.forEach(b=>b.style.transform='');
+ const D=B.map(b=>{const i=tInk(b),t=b.parentElement.getBoundingClientRect(),z=b.currentCSSZoom||1;return i?((t.right-i[1])-(i[0]-t.left))/2/z:0});
+ B.forEach((b,i)=>{if(Math.abs(D[i])>.01)b.style.transform='translateX('+D[i].toFixed(3)+'px)'})}
+function lgLoad(){const ps=[];X.querySelectorAll('.ptv-k .ptl2 .nfl').forEach(el=>{if(!el.offsetParent)return;const u=_bu(el);if(!u||IM.has(u))return;
+  const im=new Image();IM.set(u,im);ps.push(new Promise(res=>{im.onload=im.onerror=res;im.src=u}))});
+ if(ps.length)Promise.all(ps).then(()=>requestAnimationFrame(pkFit))}
 Q&&Q.addEventListener('input',draw);draw();
 X.querySelectorAll('.ptb').forEach(b=>b.addEventListener('click',()=>{X.querySelectorAll('.ptb').forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on)});
  X.querySelectorAll('.ptv').forEach(v=>v.hidden=!v.classList.contains('ptv-'+b.dataset.v));fitN()}));
@@ -350,10 +424,10 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptq{display:block;width:100%;box-sizing:border-box;margin:0 0 14px}'
  # panel and rows: four-step depth (frame, divider, panel, lighter row), 16px inset
  '.ptp{background:var(--deck);border:2px solid var(--frame);border-radius:var(--r-panel);box-shadow:var(--sh-hard);overflow:hidden;margin:0 0 14px}'
- '.pthd{display:grid;grid-template-columns:52px minmax(0,1fr) var(--ptg);column-gap:12px;align-items:center;padding:10px 0 9px;font:700 12px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);background:var(--deck)}'
+ '.pthd{display:grid;grid-template-columns:52px minmax(0,1fr);column-gap:12px;align-items:center;padding:10px 0 9px;font:700 12px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);background:var(--deck)}'
  '.pthd>span:first-child{text-align:center}.pthd>span:last-child{text-align:center}'
  '.ptpl .pthd{grid-template-columns:52px minmax(0,1fr) 46px var(--ptg)}.ptpl .pthd>span:nth-child(3){text-align:right}'
- '.ptk{all:unset;box-sizing:border-box;display:grid;grid-template-columns:52px minmax(0,1fr) var(--ptg);column-gap:12px;align-items:stretch;width:100%;min-height:52px;cursor:pointer;'
+ '.ptk{all:unset;box-sizing:border-box;display:grid;grid-template-columns:52px minmax(0,1fr);column-gap:12px;align-items:stretch;width:100%;min-height:52px;cursor:pointer;'
  'border-top:1px solid var(--row-divider);background:var(--deck)}'
  '.ptp .ptk:nth-of-type(odd){background:var(--row-lt)}'
  '.ptlist .ptk:nth-child(odd){background:var(--row-lt)}.ptlist .ptk:nth-child(even){background:var(--deck)}'
@@ -367,7 +441,10 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptl1 .pav{width:22px;height:22px}'
  '.ptt{font:600 15px/1.15 var(--body);color:var(--chalk);min-width:0}'
  '.ptl2{display:flex;align-items:center;gap:6px;min-width:0;font:400 12.5px/1.25 var(--body);color:var(--chalk)}.ptl2.ptd,.ptd{color:var(--text-dim)}'
- '@media(max-width:380px){.ptx{--ptg:40px}.pthd,.ptk{grid-template-columns:44px minmax(0,1fr) var(--ptg);column-gap:8px}.ptpl .pthd,.ptkp{grid-template-columns:44px minmax(0,1fr) 40px var(--ptg)}.ptpl .pthd>span:first-child{font-size:11px;letter-spacing:.06em}}'
+ '@media(max-width:380px){.ptx{--ptg:40px}.pthd,.ptk{grid-template-columns:44px minmax(0,1fr);column-gap:8px}.ptpl .pthd,.ptkp{grid-template-columns:44px minmax(0,1fr) 40px var(--ptg)}.ptpl .pthd>span:first-child{font-size:11px;letter-spacing:.06em}}'
+ # Picks view (2026-11-06): no GM column (line 1 names the holder), 16px right inset; "via" + 18px logo + original team on line 2
+ '.ptv-k .pthd,.ptv-k .ptk{padding-right:16px}.ptv-k .ptc{padding-right:0}.ptv-k .pthd>span:last-child{text-align:left}'
+ '.ptvw,.ptsep{color:var(--text-dim);font-style:normal}.ptv-k .ptl2>*{flex:none}'
  '.ptpn{min-width:0}.ptl2{white-space:nowrap}.ptl2 .pav{width:18px;height:18px}.ptl2.ptlo .ptln{display:none}'
  '.ptc{margin-left:auto;flex:none;font:700 12px/1 var(--display);letter-spacing:.04em;color:var(--text-dim);font-style:normal;padding-right:2px}'
  '.ptg{display:flex;align-items:center;justify-content:center;border-left:3px solid var(--pg)}'
