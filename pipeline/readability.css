@@ -1311,3 +1311,5 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 .cr.lu .cn.swp .cnm b::after{content:none!important}  /* BN is the third line of the position tile (.pbn), not on the name or game line */
 .cr.lu .pq .pqi>.pbn{display:block;font:700 11px/1 var(--display)!important;letter-spacing:.04em;text-box:trim-both cap alphabetic;color:inherit;opacity:1}
 .cr.lu .cnm small>.lmv{flex:none;align-self:center;margin:0!important;transform:none!important}  /* injury tag / team logo moved to the game line */
+/* 2026-11-06 via box (Drafts .dfvia, Paper Trail picks): box fill and its 1px coded outline (chip exception, §2.15), "VIA" word; coach name --chalk */
+:root{--via-bg:rgba(201,161,90,.12);--via-line:rgba(201,161,90,.45);--via-ink:#E2CF93}

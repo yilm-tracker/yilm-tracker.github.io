@@ -215,8 +215,8 @@ CSS="""
 .dfby{justify-self:stretch;align-self:stretch;justify-content:flex-start;gap:9px;padding:6px 10px 6px 12px;border-left:3px solid var(--pg,#0c1316);background:rgba(0,0,0,.13)}
 .dfby .pav{width:28px;height:28px}
 .dfby span{gap:4px;zoom:var(--dfz,1)}
-.dfvia{display:inline-flex;align-items:baseline;gap:4px;padding:3px 6px 2px;border-radius:4px;background:rgba(201,161,90,.12);box-shadow:inset 0 0 0 1px rgba(201,161,90,.45);font:600 11px/1 var(--display)!important;letter-spacing:.04em;text-transform:uppercase;color:#d9b568!important}
-.dfvia i{font-style:normal;font-weight:700;font-size:9.5px;color:rgba(217,181,104,.7)}
+.dfvia{display:inline-flex;align-items:baseline;gap:4px;padding:3px 6px 2px;border-radius:4px;background:var(--via-bg);box-shadow:inset 0 0 0 1px var(--via-line);font:600 11px/1 var(--display)!important;letter-spacing:.04em;text-transform:uppercase;color:var(--chalk)!important}
+.dfvia i{font-style:normal;font-weight:700;font-size:9.5px;color:var(--via-ink)}
 .dfcp{flex:none;display:inline-flex;align-items:baseline;gap:3px;padding:3px 6px 2px;border-radius:5px;background:var(--deck-2);box-shadow:inset 0 0 0 1px var(--line-strong),0 1px 0 rgba(0,0,0,.35);font-family:var(--display);line-height:1}
 .dfcp b{font:700 12.5px/1 var(--display)!important;color:var(--chalk)!important;font-variant-numeric:tabular-nums}
 .dfcp i{font-style:normal;font-weight:600;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--steel)}
