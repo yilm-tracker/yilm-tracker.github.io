@@ -237,8 +237,8 @@ CSS="""
  .dfgl i{font-style:normal;font-size:12px;line-height:1}
  .dfc{display:flex;flex-direction:column;min-width:0;min-height:96px;border-radius:7px;overflow:hidden;background:var(--pc);color:#0b0e14;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
  .dfc0{background:rgba(238,240,244,.035);box-shadow:inset 0 0 0 1px var(--line)}
- .dfct{flex:none;display:flex;align-items:center;justify-content:center;gap:4px;box-sizing:border-box;height:17px;padding:1px 7px 0;background:#e6cf96;box-shadow:inset 0 -1px 0 rgba(140,104,40,.45);color:#5c4515;font:600 10px/1.1 var(--display);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
- .dfct b{font-weight:700;color:#3b2a08}
+ .dfct{flex:none;display:flex;align-items:center;justify-content:center;gap:4px;box-sizing:border-box;height:17px;padding:1px 7px 0;background:var(--via-bar);box-shadow:inset 0 -1px 0 var(--via-bar-line);color:var(--via-bar-ink);font:600 10px/1.1 var(--display);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+ .dfct b{font-weight:700;color:var(--via-bar-strong)}
  .dfct i{font-style:normal;opacity:.7}
  .dfce{background:transparent;box-shadow:none}
  .dfcn{display:flex;flex-direction:column;gap:1px;padding:6px 7px 0;min-width:0}

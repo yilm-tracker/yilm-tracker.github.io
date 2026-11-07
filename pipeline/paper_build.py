@@ -252,9 +252,8 @@ if PICKS:
             rows=[]
             for k in rk:
                 yy,rr,o,own,lab,sid,pj=K[k];n=sum(1 for x in C[k] if x[2] in('T','M'))
-                # row (2026-11-06): tile | holder (drafted: player on line 2) | TRADED (RPTS-style tile "n×") | VIA (original
-                # team logo, or "–" when the holder is the original team). .ptbl = zero-size marker on the name's baseline
-                # (ptxFit centres the TRADED tile and the dash on the name's cap centre).
+                # row (2026-11-06, bar pass): tile | holder (drafted: player on line 2) | TRADED count "n×" | VIA bar (flush
+                # top-right, traded picks only). .ptbl = zero-size marker on the name's baseline (NFL slot alignment).
                 if lab:
                     pl=PL.get(sid) or ['?','','',-1]
                     tile=f'<i class="ptn{"" if pl[1] in PC else " ptn0"}" style="--pc:{PC.get(pl[1],"var(--row-divider)")}"><b>{lab}</b><span>{e(pl[1])}</span></i>'
@@ -268,15 +267,16 @@ if PICKS:
                     tile=f'<i class="ptn ptn0 ptpj"><b>{pj or "R"+str(rr)}</b></i>'
                     sub='';nsa=''
                 via=own!=o
-                # VIA banner: Drafts' .dfvia with the ORIGINAL team's coach (draft_build.own); rows without one keep its height
+                # VIA bar (2026-11-06): the Drafts board banner (.dfct) flush with the row's top and right edges, "via" + the
+                # ORIGINAL team's coach (draft_build.own); no bar when the holder is the original team
                 coach=(DB.own(T[o]) if DB else T[o])
-                vb=(f'<small class="dfvia ptvb"><i>via</i>{e(coach)}</small>' if via else '<small class="dfvia ptvb ptv0" aria-hidden="true"><i>via</i>X</small>')
+                vb=(f'<small class="ptvb"><i>via</i><b>{e(coach)}</b></small>' if via else '')
                 num=(f'pick {lab}' if lab else f'projected pick {pj}' if pj else f'round {rr}')
                 ttl=(' title="via '+e(T[o])+'"') if via else ''
                 rows.append(f'<button type="button" class="ptk" data-k="{k}"{ttl} aria-label="{y} round {rr}, {num}, {e(T[own])}, traded {n}×{(", via "+e(T[o])) if via else ""}{nsa}, history">{tile}'
                             f'<span class="ptm"><span class="ptl1">{av(T[own])}<b class="ptt"{(' data-ab="'+e(PSN[T[own]])+'" title="'+e(T[own])+'"') if PSN.get(T[own]) else ''}>{e(T[own])}<i class="ptbl"></i></b></span>{sub}</span>'
-                            f'<span class="ptxc">{vb}<i class="ptxn{"" if n else " z"}"><b>{n}</b><small>×</small></i></span></button>')
-            out.append(f'<div class="ptp"><div class="pthd"><span>R{r}</span><span>Team</span><span class="pthx">Traded</span></div>{"".join(rows)}</div>')
+                            f'<i class="ptxn{"" if n else " z"}"><b>{n}</b><small>×</small></i>{vb}</button>')
+            out.append(f'<div class="ptp"><div class="pthd"><span>R{r}</span><span>Team</span><span class="pthx">Traded</span><span class="pthv">Via</span></div>{"".join(rows)}</div>')
         out.append('</div>')
     out.append('</div>')
 out.append(f'<div class="ptv ptv-p"{" hidden" if PICKS else ""}><input class="wq ptq" type="search" placeholder="Search player…" aria-label="Search player" autocomplete="off">'
@@ -409,18 +409,22 @@ function slotFit(){const A=typeof LUA!=='undefined'?LUA:{};window.__ptForm=windo
   if(p.dataset.full){p.firstChild.nodeValue=full;delete p.dataset.full}
   if(innerWidth>=423&&window.__ptForm.indexOf(full)<0)window.__ptForm.push(full);
   n.classList.add('pthide')})}
-// ptxFit (2026-11-06), Picks right-hand stack: VIA banner (Drafts' .dfvia, original team's coach) over the trade count.
-// Column (--ptxa, set on .ptv-k) = the widest of the TRADED header ink, the banners and the counts in the shown year; the
-// banners' boxes and the counts' "×" ink end on the 16px inset; the header label's ink too. Reads, then writes.
+// ptxFit (2026-11-06, bar pass): Picks right-hand columns. TRADED (--ptca) = the widest count's ink in the shown year,
+// each count's "×" ink on the column's right edge, the TRADED header ink ending there too (it may run left into the
+// header's free space). VIA (--ptva) = the widest bar's content + its 7px sides (and the VIA header ink), bars flush
+// with the row's top and right edges, the header label ink-centred over them. Reads, then writes.
 function ptxFit(){const V=X.querySelector('.ptv-k');if(!V||!V.offsetParent)return;const P=[...V.querySelectorAll('.ptp')].filter(p=>p.offsetParent);if(!P.length)return;
- const cnt=[],heads=[],slots=[],bans=[];P.forEach(p=>{p.querySelectorAll('.ptxn').forEach(t=>cnt.push(t));p.querySelectorAll('.pthx').forEach(h=>heads.push(h));p.querySelectorAll('.ptns').forEach(n=>slots.push(n));p.querySelectorAll('.ptvb:not(.ptv0)').forEach(b=>bans.push(b))});
- cnt.forEach(t=>t.style.transform='');heads.forEach(h=>h.style.transform='');slots.forEach(n=>n.style.transform='');
+ const cnt=[],heads=[],vh=[],slots=[],bans=[];P.forEach(p=>{p.querySelectorAll('.ptxn').forEach(t=>cnt.push(t));p.querySelectorAll('.pthx').forEach(h=>heads.push(h));p.querySelectorAll('.pthv').forEach(h=>vh.push(h));p.querySelectorAll('.ptns').forEach(n=>slots.push(n));p.querySelectorAll('.ptvb').forEach(b=>bans.push(b))});
+ cnt.forEach(t=>t.style.transform='');heads.forEach(h=>h.style.transform='');vh.forEach(h=>h.style.transform='');slots.forEach(n=>n.style.transform='');
  const z=(P[0].querySelector('.ptt')||P[0]).currentCSSZoom||1,ci=t=>{const a=tInk(t.querySelector('b')),b=tInk(t.querySelector('small'));return a&&b?[a[0],b[1]]:null};
- const w=Math.max(0,...heads.map(h=>{const i=tInk(h);return i?(i[1]-i[0])/z:0}),...bans.map(b=>b.getBoundingClientRect().width/z),...cnt.map(t=>{const i=ci(t);return i?(i[1]-i[0])/z:0}));
- V.style.setProperty('--ptxa',Math.ceil(w)+'px');
+ const rg=document.createRange(),bw=b=>{rg.selectNodeContents(b);return rg.getBoundingClientRect().width/z+14};
+ const wc=Math.max(0,...cnt.map(t=>{const i=ci(t);return i?(i[1]-i[0])/z:0}));
+ const wv=Math.max(0,...bans.map(bw),...vh.map(h=>{const i=tInk(h);return i?(i[1]-i[0])/z+14:0}));
+ V.style.setProperty('--ptca',Math.ceil(wc)+'px');V.style.setProperty('--ptva',Math.ceil(wv)+'px');
  const W=[];
- cnt.forEach(t=>{const C=t.parentElement.getBoundingClientRect(),i=ci(t);if(i)W.push([t,'translateX('+((C.right-i[1])/z).toFixed(3)+'px)'])});
+ cnt.forEach(t=>{const C=t.getBoundingClientRect(),i=ci(t);if(i)W.push([t,'translateX('+((C.right-i[1])/z).toFixed(3)+'px)'])});
  heads.forEach(h=>{const x=tInk(h),C=h.getBoundingClientRect();if(x)W.push([h,'translateX('+((C.right-x[1])/z).toFixed(3)+'px)'])});
+ vh.forEach(h=>{const x=tInk(h),C=h.getBoundingClientRect();if(x)W.push([h,'translateX('+(((C.left+C.right)/2-(x[0]+x[1])/2)/z).toFixed(3)+'px)'])});
  // NFL slot: last glyph's ink on the name column's right edge, baseline on the player name's baseline
  slots.forEach(n=>{const L=n.parentElement,C=L.getBoundingClientRect(),pb=_bl(L.querySelector('.ptpn')),sb=_bl(n),its=[...n.querySelectorAll('i:not(.ptbl)')],x=tInk(its[its.length-1]);
   if(pb==null||sb==null||!x)return;W.push([n,'translate('+((C.right-x[1])/z).toFixed(3)+'px,'+((pb-sb)/z).toFixed(3)+'px)'])});
@@ -444,13 +448,14 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptx .posh{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}.ptx .wsub{font-size:12.5px;color:var(--steel)}'
  # Picks / Players switch: The Wire's position pill (same font, padding, shadow), two equal halves
  '.ptsw{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:4px 0 14px}'
- '.ptb{font:700 13px/1 var(--display);letter-spacing:.06em;text-transform:uppercase;padding:10px 12px 9px;border-radius:9px;border:1px solid var(--frame);background:var(--deck);color:var(--label);box-shadow:var(--sh-hard);cursor:pointer}'
+ '.ptb{font:700 17px/1.4 var(--display);letter-spacing:.06em;text-transform:uppercase;padding:7px 12px 6px;border-radius:9px;border:1px solid var(--frame);background:var(--deck);color:var(--label);box-shadow:var(--sh-hard);cursor:pointer}'
  '.ptb.on{background:var(--chalk);color:var(--ink)}'
  '.ptv[hidden]{display:none!important}.ptyx{display:none}'
  '@media(min-width:1100px){.ptsw{max-width:420px}.ptyx .ptp{margin:0}#pty-0:checked{}'
  '.ptv-k .ptyx{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px;align-items:start}.ptv-p{max-width:760px}}'
 
  '.ptyb{margin:0 0 14px auto}.ptyb .yb{cursor:pointer}'
+ '.ptyb.yrs .yb b{font-size:15px;padding:7.8px 0 8.2px}.ptyb.yrs .yb small{font-size:12px}'  # 2026-11-06: Paper Trail year buttons larger than the season buttons (15px / 12px); 7.8/8.2 = the season buttons' 6.83/7.17 digit correction scaled to 15px
  '@media(max-width:759px){.ptyb{grid-auto-flow:row;grid-template-columns:repeat(4,minmax(0,1fr));width:100%}}'
  '.ptq{display:block;width:100%;box-sizing:border-box;margin:0 0 14px}'
  # panel and rows: four-step depth (frame, divider, panel, lighter row), 16px inset
@@ -474,15 +479,19 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptl2{display:flex;align-items:center;gap:6px;min-width:0;font:400 12.5px/1.25 var(--body);color:var(--chalk)}.ptl2.ptd,.ptd{color:var(--text-dim)}'
  '@media(max-width:380px){.ptx{--ptg:40px}.pthd,.ptk{grid-template-columns:44px minmax(0,1fr) var(--ptxa,64px);column-gap:8px}.ptpl .pthd,.ptkp{grid-template-columns:44px minmax(0,1fr) 40px var(--ptg)}.ptpl .pthd>span:first-child{font-size:11px;letter-spacing:.06em}}'
  # Picks view (2026-11-06): no GM column (line 1 names the holder), 16px right inset; "via" + 18px logo + original team on line 2
- '.ptv-k .pthd,.ptv-k .ptk{padding-right:16px}.ptv-k .pthd>span:nth-child(2){text-align:left}.ptv-k .pthd>.pthx{text-align:right}.ptv-k .ptl2>*{flex:none}'
+ '.ptv-k .pthd,.ptv-k .ptk{grid-template-columns:52px minmax(0,1fr) var(--ptca,24px) var(--ptva,72px);padding-right:0}.ptv-k .pthd>span:nth-child(2){text-align:left;grid-column:2;grid-row:1}.ptv-k .pthd>.pthx{grid-column:2/4;grid-row:1;text-align:right;white-space:nowrap}.ptv-k .pthd>.pthv{grid-column:4;grid-row:1;text-align:center;white-space:nowrap}.ptv-k .ptl2>*{flex:none}'
+ '@media(max-width:380px){.ptv-k .pthd,.ptv-k .ptk{grid-template-columns:44px minmax(0,1fr) var(--ptca,24px) var(--ptva,72px)}}'
  # Picks rows (2026-11-06): tile | holder (+ player line on drafted rows) | TRADED tile | VIA logo; rows: flexible top/bottom
  # tracks (>= 9px) around line 1 (and line 2), min 52px, so one-line rows centre and the tile spans the full height
- '.ptv-k .ptk{grid-template-rows:minmax(13px,1fr) auto auto minmax(13px,1fr);row-gap:0;min-height:57px}.ptv-k .ptl2{min-height:20px}'  # 57: >= 10px above the VIA banner and below the count; line 2 as tall as an NFL badge on every row
+ '.ptv-k .ptk{grid-template-rows:minmax(13px,1fr) auto auto minmax(13px,1fr);row-gap:0;min-height:57px}.ptv-k .ptl2{min-height:20px}'  # 57: future rows one line, centred; line 2 as tall as an NFL badge on every row
  '.ptv-k .ptn{grid-column:1;grid-row:1/-1}.ptv-k .ptm{display:contents}'
  '.ptv-k .ptl1{grid-column:2;grid-row:2}.ptv-k .ptl2{grid-column:2;grid-row:3;margin-top:5px}'
- # right-hand stack (2026-11-06): VIA banner over the trade count, right-aligned to the 16px inset, centred in the row
- '.ptxc{grid-column:3;grid-row:1/-1;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:4px;min-width:0}'
- '.ptx .ptvb{font-size:11px!important;padding:3px 6px 2px}.ptvb.ptv0{visibility:hidden}'
+ # right-hand columns (2026-11-06, bar pass): count centred in the row, "×" ink on the TRADED column's edge (ptxFit);
+ # VIA bar = the Drafts board banner (.dfct, 17px) flush with the row's top and right edges, one width per year;
+ # "via" in --via-bar-ink at full strength (5.93:1 on --via-bar), coach in --via-bar-strong (9.03:1)
+ '.ptv-k .ptxn{grid-column:3;grid-row:1/-1;align-self:center;justify-self:end}'
+ '.ptv-k .ptvb{grid-column:4;grid-row:1/-1;align-self:start;justify-self:stretch;display:flex;align-items:center;justify-content:center;gap:4px;box-sizing:border-box;height:17px;margin:0;padding:1px 7px 0;background:var(--via-bar);box-shadow:inset 0 -1px 0 var(--via-bar-line);color:var(--via-bar-ink);font:600 10px/1.1 var(--display);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}'
+ '.ptv-k .ptvb b{font-weight:700;font-size:11px;color:var(--via-bar-strong)}.ptv-k .ptvb i{font-style:normal}'
  '.ptxn{display:block;font:700 22px/1 var(--display);font-variant-numeric:tabular-nums;color:var(--chalk);font-style:normal;white-space:nowrap;text-box:trim-both cap alphabetic}'
  '.ptxn b{font-weight:700}.ptxn small{font:700 13px/1 var(--display);color:var(--text-dim)}.ptxn.z b{color:var(--steel)}'
  # NFL draft slot (2026-11-06): Drafts' slot type on one line, right edge of the name column (ink-aligned by ptxFit), >= 12px clear of the logo

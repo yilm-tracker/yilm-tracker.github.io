@@ -410,7 +410,10 @@ document.fonts&&document.fonts.ready.then(()=>requestAnimationFrame(simGap));add
    let g=gap;while(over()&&g>5){g-=1;row.style.setProperty('--tsg',g+'px')}
    while(over()&&p>4){p-=1;row.style.setProperty('--tsp',p+'px')}}
  function sync(){const t=document.querySelector('input[name=tab]:checked'),g=(t&&grpOf(t.id))||'gd',r=document.getElementById('grp-'+g);
-   if(r&&!r.checked)r.checked=true;aria();subFit()}
+   if(r&&!r.checked)r.checked=true;aria();subFit();rp()}
+ // rp (2026-11-06): repaint the whole level-2 row after a tab/group change. iOS Safari left the old pill's bottom pixel row
+ // (Standings, after a refresh) unpainted beside the new, narrower pill until a scroll; a one-frame layer forces a full repaint.
+ function rp(){const s=document.querySelector('.tnav .tsub');if(!s)return;s.style.transform='translateZ(0)';requestAnimationFrame(()=>requestAnimationFrame(()=>{s.style.transform=''}))}
  function pick(id){const t=id&&document.getElementById(id);if(!t)return;if(!t.checked){t.checked=true;t.dispatchEvent(new Event('change',{bubbles:true}))}sync()}
  document.addEventListener('change',e=>{const t=e.target;if(!t||t.type!=='radio')return;
    if(t.name==='tgrp'){const g=t.id.slice(4),cur=document.querySelector('input[name=tab]:checked');if(!cur||grpOf(cur.id)!==g)pick(first(g));else sync()}

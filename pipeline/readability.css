@@ -1313,3 +1313,5 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 .cr.lu .cnm small>.lmv{flex:none;align-self:center;margin:0!important;transform:none!important}  /* injury tag / team logo moved to the game line */
 /* 2026-11-06 via box (Drafts .dfvia, Paper Trail picks): box fill and its 1px coded outline (chip exception, §2.15), "VIA" word; coach name --chalk */
 :root{--via-bg:rgba(201,161,90,.12);--via-line:rgba(201,161,90,.45);--via-ink:#E2CF93}
+/* 2026-11-06: via bar (Drafts board banner, Paper Trail picks), same on both sites */
+:root{--via-bar:#e6cf96;--via-bar-line:rgba(140,104,40,.45);--via-bar-ink:#5c4515;--via-bar-strong:#3b2a08}
