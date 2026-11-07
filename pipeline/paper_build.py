@@ -267,23 +267,23 @@ if PICKS:
                     tile=f'<i class="ptn ptn0 ptpj"><b>{pj or "R"+str(rr)}</b></i>'
                     sub='';nsa=''
                 via=own!=o
-                # VIA column (2026-11-07): the ORIGINAL team's 28px logo on line 1 with its coach (draft_build.own) under it;
-                # a pick held by its original team (never traded, or traded away and back) shows a centred "–" (Nicklaus 2026-11-07).
-                # TIMES TRADED: the count in a tile (Drafts RPTS tile), every row, real count.
+                # VIA column (2026-11-07, 36px pass): the ORIGINAL team's 36px logo on line 1 with its coach (draft_build.own) under
+                # it, only when the holder differs from the original team; otherwise the cell is empty (Nicklaus 2026-11-07).
+                # TIMES TRADED: the count in a light tile for counts >= 1 (real count, incl. picks traded away and back); 0 = empty.
                 coach=(DB.own(T[o]) if DB else T[o])
-                vc=(f'<span class="ptvl">{av(T[o])}<small class="ptvc">{e(coach)}</small></span>' if via else '<span class="ptvl ptv0"><i>–<i class="ptbl"></i></i></span>')
+                vc=(f'<span class="ptvl">{av(T[o])}<small class="ptvc">{e(coach)}</small></span>' if via else '')
                 num=(f'pick {lab}' if lab else f'projected pick {pj}' if pj else f'round {rr}')
                 ttl=(' title="via '+e(T[o])+'"') if via else ''
                 rows.append(f'<button type="button" class="ptk{"" if lab else " ptk1"}" data-k="{k}"{ttl} aria-label="{y} round {rr}, {num}, {e(T[own])}, traded {n} time{"" if n==1 else "s"}{(", via "+e(T[o])) if via else ""}{nsa}, history">{tile}'
                             f'<span class="ptm"><span class="ptl1">{av(T[own])}<b class="ptt"{(' data-ab="'+e(PSN[T[own]])+'" title="'+e(T[own])+'"') if PSN.get(T[own]) else ''}>{e(T[own])}<i class="ptbl"></i></b></span>{sub}</span>'
-                            f'<i class="ptxn{"" if n else " z"}"><b>{n}</b><i class="ptbl"></i></i>{vc}</button>')
+                            f'{f"<i class=ptxn><b>{n}<i class=ptbl></i></b></i>" if n else ""}{vc}</button>')
             out.append(f'<div class="ptp"><div class="pthd"><span>R{r}</span><span>Team</span><span class="pthx"><i>Times</i><i>Traded</i></span><span class="pthv">Via</span></div>{"".join(rows)}</div>')
         out.append('</div>')
     out.append('</div>')
 out.append(f'<div class="ptv ptv-p"{" hidden" if PICKS else ""}><input class="wq ptq" type="search" placeholder="Search player…" aria-label="Search player" autocomplete="off">'
            '<div class="ptp ptpl"><div class="pthd"><span>Moves</span><span>Player · last move</span><span>Date</span><span>GM</span></div><div class="ptlist"></div></div>'
            '<p class="ptmore"></p></div>')
-out.append('<div class="key"><div>'+('<b>Picks</b> each row names the team that holds or used the pick. TIMES TRADED counts the times the pick changed hands; VIA shows the original team\'s logo and coach (– when the original team holds the pick). '
+out.append('<div class="key"><div>'+('<b>Picks</b> each row names the team that holds or used the pick. TIMES TRADED counts the times the pick changed hands; VIA shows the original team\'s logo and coach when another team holds the pick. '
            'Future picks show their projected number from the current H2H standings (worst record = 1.01) and update as the standings change. The tile shows the pick number once used. '
            '' if PICKS else '')
            +'<b>Players</b> every draft, trade, waiver claim, free-agent add and drop, newest first in the list; tap for the full history. '
@@ -389,10 +389,10 @@ function nameFit(){const Y=[...X.querySelectorAll('.ptv-k .ptyx')].find(y=>y.off
  // linear scaling can be a pixel off (kerning, rounding): step down while any full name still overflows
  const ov=()=>N.some(b=>{const l=b.parentElement;return l.scrollWidth>l.clientWidth+.5});while(s>15&&ov()){s-=.25;Y.style.setProperty('--ptnf',s+'px')}}
 // holdFit, Picks line 1 (holder): full size; if it does not fit, the team's approved short form (data-ab, from PSN in
-// pos/build_pos.py: "Rev. Apache Master"); then, below 423 CSS px only, a shrink to 13px (never below).
+// pos/build_pos.py: "Rev. Apache Master"); then, below 423 CSS px only, a shrink to 12px, then 11px (never below).
 function holdFit(){X.querySelectorAll('.ptv-k .ptt').forEach(b=>{if(!b.offsetParent)return;b.style.fontSize='';b.style.whiteSpace='';if(b.dataset.full){b.firstChild.nodeValue=b.dataset.full;delete b.dataset.full}
   const w=b.parentElement,o=()=>w.scrollWidth>w.clientWidth+.5;if(o()&&b.dataset.ab){b.dataset.full=b.firstChild.nodeValue;b.firstChild.nodeValue=b.dataset.ab}
-  if(innerWidth<423){let s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>13){s-=.5;b.style.fontSize=s+'px'}}})}  // 13px shrink only below 423 CSS px (Nicklaus 2026-11-06)
+  if(innerWidth<423){let s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>12){s-=.5;b.style.fontSize=s+'px'}while(o()&&s>11){s-=.5;b.style.fontSize=s+'px'}}})}  // shrink only below 423 CSS px: to 12px, then to 11px (the text floor) only if 12px still overflows (Nicklaus 2026-11-07; was 13px)
 // slotFit (2026-11-06), NFL slot on a drafted row's line 2, per row: full size -> generation suffix dropped (Jr., Sr., II-V)
 // -> the approved abbreviation (LUA, the lineup list in new_tail.js: the matching surname word, on the suffix-less name) ->
 // slot hidden (the pick sheet and aria-label keep it; expected only below 423 CSS px).
@@ -413,27 +413,55 @@ function slotFit(){const A=typeof LUA!=='undefined'?LUA:{};window.__ptForm=windo
 // ptxFit (2026-11-07, VIA column): Picks right-hand columns; reads everything, then writes.
 // TIMES TRADED: tile width --ptcw = the widest count's digit ink in the shown year + 2 x 8px; column --ptca = max(tile,
 // TIMES / TRADED header ink); tiles centred in it; every count's digits ink-centred in its tile (x, and y on the baseline
-// from its .ptbl marker); each header line ink-centred over the column. VIA: column --ptva = max(logo ring ink 30px,
-// widest coach-name ink, VIA header ink), so the widest ink ends on the 16px inset; coach names and the VIA header
-// ink-centred on the logo; "–" ink-centred on the logo slot. NFL slot: last glyph's ink on the name column's right edge,
-// baseline on the player name's.
+// from its .ptbl marker; proportional figures, so canvas ink = rendered ink); each header line ink-centred over the
+// column. VIA: column --ptva = max(36px logo ring ink 38px, widest coach-name ink, VIA header ink), so the widest ink ends
+// on the 16px inset; coach names and the VIA header ink-centred on the logo. NFL slot: last glyph's ink on the name
+// column's right edge, baseline on the player name's.
 function ptxFit(){const V=X.querySelector('.ptv-k');if(!V||!V.offsetParent)return;const P=[...V.querySelectorAll('.ptp')].filter(p=>p.offsetParent);if(!P.length)return;
- const q=s=>P.flatMap(p=>[...p.querySelectorAll(s)]),cnt=q('.ptxn'),hx=q('.pthx i'),vh=q('.pthv'),cv=q('.ptvc'),dz=q('.ptv0>i'),slots=q('.ptns');
- [...cnt,...cnt.map(t=>t.querySelector('b')),...hx,...vh,...cv,...dz,...slots].forEach(e=>e.style.transform='');
+ const q=s=>P.flatMap(p=>[...p.querySelectorAll(s)]),cnt=q('.ptxn'),hx=q('.pthx i'),vh=q('.pthv'),cv=q('.ptvc'),slots=q('.ptns');
+ [...hx,...vh,...cv,...slots].forEach(e=>e.style.transform='');cnt.forEach(t=>{t.style.top=t.style.left='';const b=t.querySelector('b');b.style.left=b.style.top=''});V.style.removeProperty('--ptch');V.style.removeProperty('--ptcf');
  const z=(P[0].querySelector('.ptt')||P[0]).currentCSSZoom||1,iw=e=>{const i=tInk(e);return i?(i[1]-i[0])/z:0},up=v=>(Math.ceil(v*100)/100)+'px';
- const tw=Math.max(0,...cnt.map(t=>iw(t.querySelector('b'))))+16,ca=Math.max(tw,...hx.map(iw)),va=Math.max(30,...cv.map(iw),...vh.map(iw));
+ const tw=Math.max(0,...cnt.map(t=>{const b=t.querySelector('b'),k=dInk(b);return k?(k[1]-k[0])/z:iw(b)}))+16,ca=Math.max(tw,...hx.map(iw)),va=Math.max(38,...cv.map(iw),...vh.map(iw));
  V.style.setProperty('--ptcw',up(tw));V.style.setProperty('--ptca',up(ca));V.style.setProperty('--ptva',up(va));
  const W=[],cx=r=>(r.left+r.right)/2,cy=r=>(r.top+r.bottom)/2,tx=(e,C)=>{const i=tInk(e);if(i)W.push([e,'translateX('+((cx(C)-(i[0]+i[1])/2)/z).toFixed(3)+'px)'])};
- // the tile itself moves so its centre (= the digits' ink centre) is level with the holder name's cap-height centre
- cnt.forEach(t=>{const b=t.querySelector('b'),T=t.getBoundingClientRect(),i=tInk(b),bl=_bl(t),n=t.parentElement.querySelector('.ptt'),nb=n&&_bl(n);if(!i||bl==null)return;const y=yInk(b,bl,b.textContent);
-  W.push([b,'translate('+((cx(T)-(i[0]+i[1])/2)/z).toFixed(3)+'px,'+((cy(T)-(y[0]+y[1])/2)/z).toFixed(3)+'px)'])
-  if(nb!=null){const h=yInk(n,nb,'H');W.push([t,'translateY('+(((h[0]+h[1])/2-cy(T))/z).toFixed(3)+'px)'])}});
  hx.forEach(h=>tx(h,h.parentElement.getBoundingClientRect()));vh.forEach(h=>tx(h,h.getBoundingClientRect()));cv.forEach(c=>tx(c,c.parentElement.getBoundingClientRect()));
- dz.forEach(d=>{const C=d.parentElement.getBoundingClientRect(),i=tInk(d),bl=_bl(d);if(!i||bl==null)return;const y=yInk(d,bl,'–');
-  W.push([d,'translate('+((cx(C)-(i[0]+i[1])/2)/z).toFixed(3)+'px,'+((cy(C)-(y[0]+y[1])/2)/z).toFixed(3)+'px)'])});
  slots.forEach(n=>{const L=n.parentElement,C=L.getBoundingClientRect(),pb=_bl(L.querySelector('.ptpn')),sb=_bl(n),its=[...n.querySelectorAll('i:not(.ptbl)')],x=tInk(its[its.length-1]);
   if(pb==null||sb==null||!x)return;W.push([n,'translate('+((C.right-x[1])/z).toFixed(3)+'px,'+((pb-sb)/z).toFixed(3)+'px)'])});
- W.forEach(([el,v])=>el.style.transform=v)}
+ W.forEach(([el,v])=>el.style.transform=v);tileSnap(V,cnt,z)}
+// BC7: Barlow Condensed 700 digit outlines from the font file (fontTools, 2026-11-07): [xMin, xMax, yMax, -yMin, advance]
+// in em. WebKit's canvas measureText gives no glyph ink (actualBoundingBoxLeft/Right = 0 / advance, seen in WebKitGTK
+// 2.52) and canvas has no tabular figures, so the TIMES TRADED tiles use these fixed outlines, not canvas, for the ink.
+const BC7={"0":[.03,.423,.711,.011,.453],"1":[.009,.248,.7,0,.284],"2":[.024,.421,.708,0,.438],"3":[.023,.404,.7,.008,.436],"4":[.014,.47,.7,0,.484],"5":[.031,.416,.7,.008,.439],"6":[.031,.417,.708,.008,.44],"7":[.013,.397,.7,0,.407],"8":[.03,.41,.713,.008,.44],"9":[.018,.403,.708,.008,.435]};
+// dInk(b) -> [L, R, A, D] in viewport px: ink left / right from the text origin, ink above / below the baseline
+function dInk(b){const t=b.firstChild.nodeValue.trim(),f=parseFloat(getComputedStyle(b).fontSize)*(b.currentCSSZoom||1);let x=0,L=null,R=0,A=0,D=0;
+ for(const c of t){const m=BC7[c];if(!m)return null;if(L==null)L=m[0]*f;R=x+m[1]*f;A=Math.max(A,m[2]*f);D=Math.max(D,m[3]*f);x+=m[4]*f}return [L,R,A,D]}
+// tileSnap (2026-11-07): TIMES TRADED digits centred by ink in screenshots, both engines, by layout (relative left/top, no
+// transforms). Browsers paint tile edges on device pixels and move text vertically in steps: WebKitGTK at DPR 3 by device
+// pixels, headless Chromium at DPR 2-3 by whole CSS px (with the phones' 0.85 page scale, by whole points); horizontally
+// both place glyphs in sub-pixel steps. So: the digits' flat height (.70em, from BC7) is a whole number of units
+// u = 1 / visualViewport.scale (1 CSS px of the unscaled page, a whole number of device pixels at any DPR; size nudged by
+// under half a unit); the baseline sits on the u grid nearest the holder name's cap-height centre; the tile's height and
+// width are whole units with the vertical leftover an even number of them, top = baseline - cap - half of it (equal by
+// construction), left on the u grid (Chromium snaps the tile box to it; a device-pixel grid left the digits up to 1px
+// off there); the origin exactly at the ink-centred x. Reads, writes, read, write.
+function tileSnap(V,cnt,z){if(!cnt.length)return;const sc=(window.visualViewport&&visualViewport.scale)||1,u=1/sc,dp=u,
+  gu=(v,o=scrollY)=>Math.round((v+o)/u)*u-o,gd=v=>gu(v,scrollX);  // grid anchored to the document origin (engines snap in page space)
+ // figure size: the name's size, nudged so the flat-digit height (.70em) is a whole number of units u (FreeType hints a
+ // part-pixel cap to a whole one, CoreText does not: a whole-unit cap reads the same in both)
+ const f0=parseFloat(getComputedStyle(cnt[0]).fontSize)*z,c=Math.max(1,Math.round(.7*f0/u))*u;V.style.setProperty('--ptcf',(c/.7/z).toFixed(4)+'px');
+ const M=cnt.map(t=>{const b=t.querySelector('b'),r=document.createRange();r.selectNodeContents(b.firstChild);const o=r.getBoundingClientRect(),k=dInk(b);
+  if(k)return {t,b,L:k[0],R:k[1]};const i=tInk(b);return {t,b,L:i[0]-o.left,R:i[1]-o.left}});
+ // height: whole units, leftover (H - cap) an even number of them, nearest the nominal 1.15 x --ptnf; width: whole units
+ const Hn=cnt[0].getBoundingClientRect().height,cd=Math.round(c/dp);let hd=Math.round(Hn/dp);if((hd-cd)%2)hd+=(Hn/dp>hd?1:-1);
+ const H=hd*dp,Wd=gd(Math.max(...M.map(m=>m.R-m.L))+16*z);
+ V.style.setProperty('--ptcw',(Wd/z).toFixed(4)+'px');V.style.setProperty('--ptch',(H/z).toFixed(4)+'px');
+ // second pass: baseline on the unit grid nearest the name's cap-height centre + cap/2; tile top = baseline - cap - half the
+ // leftover (whole units); tile left on the grid; origin exactly at the ink-centred x
+ const P2=M.map(m=>{const T=m.t.getBoundingClientRect(),n=m.t.parentElement.querySelector('.ptt'),nb=n&&_bl(n),h=nb!=null?yInk(n,nb,'H'):null,bl=_bl(m.b),r=document.createRange();r.selectNodeContents(m.b.firstChild);
+  return {T,cap:h?(h[0]+h[1])/2:(T.top+T.bottom)/2,bl,ox:r.getBoundingClientRect().left}});
+ M.forEach((m,k)=>{const p=P2[k],B=gu(p.cap+c/2),top=B-c-(H-c)/2,left=gd((p.T.left+p.T.right)/2-Wd/2),O=left+(Wd-m.L-m.R)/2;
+  m.t.style.top=((top-p.T.top)/z).toFixed(4)+'px';m.t.style.left=((left-p.T.left)/z).toFixed(4)+'px';
+  m.b.style.top=((B-(p.bl+top-p.T.top))/z).toFixed(4)+'px';m.b.style.left=((O-(p.ox+left-p.T.left))/z).toFixed(4)+'px'})}
 // pjFit: a future pick's number ("1.01") centred in its tile by glyph ink, not by advance box (the "1" bearings)
 function pjFit(){const B=[...X.querySelectorAll('.ptv-k .ptpj b')].filter(b=>b.offsetParent);B.forEach(b=>b.style.transform='');
  const D=B.map(b=>{const i=tInk(b),t=b.parentElement.getBoundingClientRect(),z=b.currentCSSZoom||1;return i?((t.right-i[1])-(i[0]-t.left))/2/z:0});
@@ -479,7 +507,7 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptn0{background:var(--row-divider);color:var(--chalk)}'
  '.ptm{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:9px 0}'
  '.ptl1{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap}'
- '.ptl1 .pav{width:22px;height:22px}.ptv-k .ptl1 .pav{width:28px;height:28px}.ptv-k .ptt{font-size:var(--ptnf,15px)}.ptv-k .ptn b{font-size:var(--ptnf,15px)}'
+ '.ptl1 .pav{width:22px;height:22px}.ptv-k .ptl1 .pav{width:36px;height:36px}.ptv-k .ptt{font-size:var(--ptnf,15px)}.ptv-k .ptn b{font-size:var(--ptnf,15px)}'
  '.ptt{font:600 15px/1.15 var(--body);color:var(--chalk);min-width:0}'
  '.ptl2{display:flex;align-items:center;gap:6px;min-width:0;font:400 12.5px/1.25 var(--body);color:var(--chalk)}.ptl2.ptd,.ptd{color:var(--text-dim)}'
  '@media(max-width:380px){.ptx{--ptg:40px}.pthd,.ptk{grid-template-columns:44px minmax(0,1fr) var(--ptxa,64px);column-gap:8px}.ptpl .pthd,.ptkp{grid-template-columns:44px minmax(0,1fr) 40px var(--ptg)}.ptpl .pthd>span:first-child{font-size:11px;letter-spacing:.06em}}'
@@ -489,24 +517,27 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptv-k .pthd>.pthx{display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap}.ptv-k .pthx i{display:block;font-style:normal}'  # TIMES over TRADED: header row 46px on every panel
  '.ptv-k .pthd>.pthv{text-align:center;white-space:nowrap}.ptv-k .ptl2>*{flex:none}'
  '@media(max-width:380px){.ptv-k .pthd,.ptv-k .ptk{grid-template-columns:44px minmax(0,1fr) var(--ptca,40px) var(--ptva,48px)}}'
- # rows: flexible top/bottom tracks around line 1 (and line 2). Drafted rows: tracks >= 13px (80px rows). Future rows
- # (.ptk1, one line, centred): tracks >= 23px so the coach name under the VIA logo keeps >= 10px to the row edge (75px)
+ # rows: flexible top/bottom tracks around line 1 (36px logos, and line 2). Drafted rows: tracks >= 13px (88px rows). Future
+ # rows (.ptk1, one line, centred): tracks >= 23px so the coach name under the VIA logo keeps >= 10px to the row edge (83px)
  '.ptv-k .ptk{grid-template-rows:minmax(13px,1fr) auto auto minmax(13px,1fr);row-gap:0;min-height:57px}.ptv-k .ptl2{min-height:20px}'
  '.ptv-k .ptk1{grid-template-rows:minmax(23px,1fr) auto auto minmax(23px,1fr)}'
  '.ptv-k .ptn{grid-column:1;grid-row:1/-1}.ptv-k .ptm{display:contents}'
  '.ptv-k .ptl1{grid-column:2;grid-row:2}.ptv-k .ptl2{grid-column:2;grid-row:3;margin-top:5px}'
- # TIMES TRADED (2026-11-07): the Drafts RPTS tile (--row-divider, 4px, --sh-1, Barlow 700 tabular, --chalk; 0 --steel) on
- # line 1: as tall as the holder name's text box (1.15 x --ptnf), figure at the name's size (Barlow digit cap = Plex cap,
- # .70em); one width per year view (--ptcw = widest digit ink + 2 x 8px), digits ink-centred by ptxFit
- '.ptv-k .ptxn{grid-column:3;grid-row:2;align-self:center;justify-self:center;display:block;box-sizing:border-box;width:var(--ptcw,24px);height:calc(var(--ptnf,15px) * 1.15);padding:0;border-radius:4px;background:var(--row-divider);box-shadow:var(--sh-1);'
- 'font:700 var(--ptnf,15px)/1 var(--display);line-height:calc(var(--ptnf,15px) * 1.15);letter-spacing:0;font-variant-numeric:tabular-nums;color:var(--chalk);font-style:normal;text-align:center;white-space:nowrap}'
- '.ptv-k .ptxn b{display:inline-block;font-weight:700}.ptv-k .ptxn.z b{color:var(--steel)}'
- # VIA (2026-11-07): original team's 28px logo on line 1 (holder logo treatment), coach under it (Barlow 600 11px caps
- # .04em --text-dim, cap top 5px under the logo box), ink-centred on the column by ptxFit; never traded: "–" on the logo centre
- '.ptv-k .ptvl{grid-column:4;grid-row:2;align-self:center;position:relative;display:flex;align-items:center;justify-content:center;height:28px}'
- '.ptv-k .ptvl .pav{width:28px;height:28px}'
+ # TIMES TRADED (2026-11-07, light tile): the FAAB tile's colours (--faab fill, --faab-ink figures, --sh-hard: a light element,
+ # DESIGN.md 2.12), 4px radius, Barlow 700, on line 1: as tall as the holder name's line box (1.15 x --ptnf), figure at the
+ # name's size (Barlow digit cap = Plex cap, .70em); one width per year view (--ptcw = widest digit ink + 2 x 8px), digits
+ # ink-centred by ptxFit. Proportional figures, not tabular: ptxFit measures ink with canvas, which has no tabular-nums, so
+ # tabular digits put the "1" up to 1.6px off centre (seen in Safari and Chromium, 2026-11-07); one number per tile needs none.
+ '.ptv-k .ptxn{grid-column:3;grid-row:2;align-self:center;justify-self:center;display:block;box-sizing:border-box;width:var(--ptcw,24px);height:var(--ptch,calc(var(--ptnf,15px) * 1.15));padding:0;position:relative;display:flex;align-items:center;justify-content:center;border-radius:4px;background:var(--faab);box-shadow:var(--sh-hard);'
+ 'font:700 var(--ptnf,15px)/1 var(--display);line-height:calc(var(--ptnf,15px) * 1.15);font-size:var(--ptcf,var(--ptnf,15px));letter-spacing:0;font-variant-numeric:normal;font-feature-settings:normal;color:var(--faab-ink);font-style:normal;text-align:center;white-space:nowrap}'
+ '.ptv-k .ptxn b{display:block;position:relative;font-weight:700;line-height:1;text-box:trim-both cap alphabetic}'
+ # VIA (2026-11-07): original team's 36px logo on line 1 (holder logo treatment), coach under it (Barlow 600 11px caps
+ # .04em --text-dim, cap top 5px under the logo box), ink-centred on the column by ptxFit; empty when the holder is the original team
+ '.ptv-k .ptvl{grid-column:4;grid-row:2;align-self:center;position:relative;display:flex;align-items:center;justify-content:center;height:36px}'
+ '.ptv-k .ptvl .pav{width:36px;height:36px}'
+ # 36px Picks logos: the halved Paper Trail ring + shadow, blur scaled 3 -> 4px (offsets stay 1px)
+ +('.ptv-k .ptl1 .pav.av,.ptv-k .ptvl .pav.av{box-shadow:0 0 0 1px var(--line-strong),1px 1px 0 .5px rgba(0,0,0,.4),1px 1px 4px .5px rgba(0,0,0,.25)!important}' if PICKS else '')+
  '.ptv-k .ptvc{position:absolute;left:-24px;right:-24px;top:calc(100% + 5px);display:block;text-align:center;font:600 11px/1 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim);white-space:nowrap;text-box:trim-both cap alphabetic}'
- '.ptv-k .ptv0>i{display:inline-block;font:600 var(--ptnf,15px)/1 var(--body);color:var(--text-dim);font-style:normal}'
  # NFL draft slot (2026-11-06): Drafts' slot type on one line, right edge of the name column (ink-aligned by ptxFit), >= 12px clear of the logo
  '.ptns.pthide{display:none}.ptns{margin-left:auto;padding-left:6px;display:block;font:600 11px/1 var(--display);letter-spacing:.04em;text-transform:uppercase;font-variant-numeric:tabular-nums;color:var(--text-dim);white-space:nowrap}.ptns i{font-style:normal}.ptns i+i:not(.ptbl){margin-left:6px}'  # inline, not flex: the .ptbl marker must sit on the baseline
  '.ptbl{display:inline-block;width:0;height:0;vertical-align:baseline}'
