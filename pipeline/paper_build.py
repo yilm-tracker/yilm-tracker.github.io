@@ -267,22 +267,23 @@ if PICKS:
                     tile=f'<i class="ptn ptn0 ptpj"><b>{pj or "R"+str(rr)}</b></i>'
                     sub='';nsa=''
                 via=own!=o
-                # VIA bar (2026-11-06): the Drafts board banner (.dfct) flush with the row's top and right edges, "via" + the
-                # ORIGINAL team's coach (draft_build.own); no bar when the holder is the original team
+                # VIA column (2026-11-07): the ORIGINAL team's 28px logo on line 1 with its coach (draft_build.own) under it;
+                # a pick held by its original team (never traded, or traded away and back) shows a centred "–" (Nicklaus 2026-11-07).
+                # TIMES TRADED: the count in a tile (Drafts RPTS tile), every row, real count.
                 coach=(DB.own(T[o]) if DB else T[o])
-                vb=(f'<small class="ptvb"><i>via</i><b>{e(coach)}</b></small>' if via else '')
+                vc=(f'<span class="ptvl">{av(T[o])}<small class="ptvc">{e(coach)}</small></span>' if via else '<span class="ptvl ptv0"><i>–<i class="ptbl"></i></i></span>')
                 num=(f'pick {lab}' if lab else f'projected pick {pj}' if pj else f'round {rr}')
                 ttl=(' title="via '+e(T[o])+'"') if via else ''
-                rows.append(f'<button type="button" class="ptk" data-k="{k}"{ttl} aria-label="{y} round {rr}, {num}, {e(T[own])}, traded {n}×{(", via "+e(T[o])) if via else ""}{nsa}, history">{tile}'
+                rows.append(f'<button type="button" class="ptk{"" if lab else " ptk1"}" data-k="{k}"{ttl} aria-label="{y} round {rr}, {num}, {e(T[own])}, traded {n} time{"" if n==1 else "s"}{(", via "+e(T[o])) if via else ""}{nsa}, history">{tile}'
                             f'<span class="ptm"><span class="ptl1">{av(T[own])}<b class="ptt"{(' data-ab="'+e(PSN[T[own]])+'" title="'+e(T[own])+'"') if PSN.get(T[own]) else ''}>{e(T[own])}<i class="ptbl"></i></b></span>{sub}</span>'
-                            f'<i class="ptxn{"" if n else " z"}"><b>{n}</b><small>×</small></i>{vb}</button>')
-            out.append(f'<div class="ptp"><div class="pthd"><span>R{r}</span><span>Team</span><span class="pthx">Traded</span><span class="pthv">Via</span></div>{"".join(rows)}</div>')
+                            f'<i class="ptxn{"" if n else " z"}"><b>{n}</b><i class="ptbl"></i></i>{vc}</button>')
+            out.append(f'<div class="ptp"><div class="pthd"><span>R{r}</span><span>Team</span><span class="pthx"><i>Times</i><i>Traded</i></span><span class="pthv">Via</span></div>{"".join(rows)}</div>')
         out.append('</div>')
     out.append('</div>')
 out.append(f'<div class="ptv ptv-p"{" hidden" if PICKS else ""}><input class="wq ptq" type="search" placeholder="Search player…" aria-label="Search player" autocomplete="off">'
            '<div class="ptp ptpl"><div class="pthd"><span>Moves</span><span>Player · last move</span><span>Date</span><span>GM</span></div><div class="ptlist"></div></div>'
            '<p class="ptmore"></p></div>')
-out.append('<div class="key"><div>'+('<b>Picks</b> each row names the team that holds or used the pick. TRADED counts the times the pick changed hands; VIA shows the original team\'s logo. '
+out.append('<div class="key"><div>'+('<b>Picks</b> each row names the team that holds or used the pick. TIMES TRADED counts the times the pick changed hands; VIA shows the original team\'s logo and coach (– when the original team holds the pick). '
            'Future picks show their projected number from the current H2H standings (worst record = 1.01) and update as the standings change. The tile shows the pick number once used. '
            '' if PICKS else '')
            +'<b>Players</b> every draft, trade, waiver claim, free-agent add and drop, newest first in the list; tap for the full history. '
@@ -409,23 +410,27 @@ function slotFit(){const A=typeof LUA!=='undefined'?LUA:{};window.__ptForm=windo
   if(p.dataset.full){p.firstChild.nodeValue=full;delete p.dataset.full}
   if(innerWidth>=423&&window.__ptForm.indexOf(full)<0)window.__ptForm.push(full);
   n.classList.add('pthide')})}
-// ptxFit (2026-11-06, bar pass): Picks right-hand columns. TRADED (--ptca) = the widest count's ink in the shown year,
-// each count's "×" ink on the column's right edge, the TRADED header ink ending there too (it may run left into the
-// header's free space). VIA (--ptva) = the widest bar's content + its 7px sides (and the VIA header ink), bars flush
-// with the row's top and right edges, the header label ink-centred over them. Reads, then writes.
+// ptxFit (2026-11-07, VIA column): Picks right-hand columns; reads everything, then writes.
+// TIMES TRADED: tile width --ptcw = the widest count's digit ink in the shown year + 2 x 8px; column --ptca = max(tile,
+// TIMES / TRADED header ink); tiles centred in it; every count's digits ink-centred in its tile (x, and y on the baseline
+// from its .ptbl marker); each header line ink-centred over the column. VIA: column --ptva = max(logo ring ink 30px,
+// widest coach-name ink, VIA header ink), so the widest ink ends on the 16px inset; coach names and the VIA header
+// ink-centred on the logo; "–" ink-centred on the logo slot. NFL slot: last glyph's ink on the name column's right edge,
+// baseline on the player name's.
 function ptxFit(){const V=X.querySelector('.ptv-k');if(!V||!V.offsetParent)return;const P=[...V.querySelectorAll('.ptp')].filter(p=>p.offsetParent);if(!P.length)return;
- const cnt=[],heads=[],vh=[],slots=[],bans=[];P.forEach(p=>{p.querySelectorAll('.ptxn').forEach(t=>cnt.push(t));p.querySelectorAll('.pthx').forEach(h=>heads.push(h));p.querySelectorAll('.pthv').forEach(h=>vh.push(h));p.querySelectorAll('.ptns').forEach(n=>slots.push(n));p.querySelectorAll('.ptvb').forEach(b=>bans.push(b))});
- cnt.forEach(t=>t.style.transform='');heads.forEach(h=>h.style.transform='');vh.forEach(h=>h.style.transform='');slots.forEach(n=>n.style.transform='');
- const z=(P[0].querySelector('.ptt')||P[0]).currentCSSZoom||1,ci=t=>{const a=tInk(t.querySelector('b')),b=tInk(t.querySelector('small'));return a&&b?[a[0],b[1]]:null};
- const rg=document.createRange(),bw=b=>{rg.selectNodeContents(b);return rg.getBoundingClientRect().width/z+14};
- const wc=Math.max(0,...cnt.map(t=>{const i=ci(t);return i?(i[1]-i[0])/z:0}));
- const wv=Math.max(0,...bans.map(bw),...vh.map(h=>{const i=tInk(h);return i?(i[1]-i[0])/z+14:0}));
- V.style.setProperty('--ptca',Math.ceil(wc)+'px');V.style.setProperty('--ptva',Math.ceil(wv)+'px');
- const W=[];
- cnt.forEach(t=>{const C=t.getBoundingClientRect(),i=ci(t);if(i)W.push([t,'translateX('+((C.right-i[1])/z).toFixed(3)+'px)'])});
- heads.forEach(h=>{const x=tInk(h),C=h.getBoundingClientRect();if(x)W.push([h,'translateX('+((C.right-x[1])/z).toFixed(3)+'px)'])});
- vh.forEach(h=>{const x=tInk(h),C=h.getBoundingClientRect();if(x)W.push([h,'translateX('+(((C.left+C.right)/2-(x[0]+x[1])/2)/z).toFixed(3)+'px)'])});
- // NFL slot: last glyph's ink on the name column's right edge, baseline on the player name's baseline
+ const q=s=>P.flatMap(p=>[...p.querySelectorAll(s)]),cnt=q('.ptxn'),hx=q('.pthx i'),vh=q('.pthv'),cv=q('.ptvc'),dz=q('.ptv0>i'),slots=q('.ptns');
+ [...cnt,...cnt.map(t=>t.querySelector('b')),...hx,...vh,...cv,...dz,...slots].forEach(e=>e.style.transform='');
+ const z=(P[0].querySelector('.ptt')||P[0]).currentCSSZoom||1,iw=e=>{const i=tInk(e);return i?(i[1]-i[0])/z:0},up=v=>(Math.ceil(v*100)/100)+'px';
+ const tw=Math.max(0,...cnt.map(t=>iw(t.querySelector('b'))))+16,ca=Math.max(tw,...hx.map(iw)),va=Math.max(30,...cv.map(iw),...vh.map(iw));
+ V.style.setProperty('--ptcw',up(tw));V.style.setProperty('--ptca',up(ca));V.style.setProperty('--ptva',up(va));
+ const W=[],cx=r=>(r.left+r.right)/2,cy=r=>(r.top+r.bottom)/2,tx=(e,C)=>{const i=tInk(e);if(i)W.push([e,'translateX('+((cx(C)-(i[0]+i[1])/2)/z).toFixed(3)+'px)'])};
+ // the tile itself moves so its centre (= the digits' ink centre) is level with the holder name's cap-height centre
+ cnt.forEach(t=>{const b=t.querySelector('b'),T=t.getBoundingClientRect(),i=tInk(b),bl=_bl(t),n=t.parentElement.querySelector('.ptt'),nb=n&&_bl(n);if(!i||bl==null)return;const y=yInk(b,bl,b.textContent);
+  W.push([b,'translate('+((cx(T)-(i[0]+i[1])/2)/z).toFixed(3)+'px,'+((cy(T)-(y[0]+y[1])/2)/z).toFixed(3)+'px)'])
+  if(nb!=null){const h=yInk(n,nb,'H');W.push([t,'translateY('+(((h[0]+h[1])/2-cy(T))/z).toFixed(3)+'px)'])}});
+ hx.forEach(h=>tx(h,h.parentElement.getBoundingClientRect()));vh.forEach(h=>tx(h,h.getBoundingClientRect()));cv.forEach(c=>tx(c,c.parentElement.getBoundingClientRect()));
+ dz.forEach(d=>{const C=d.parentElement.getBoundingClientRect(),i=tInk(d),bl=_bl(d);if(!i||bl==null)return;const y=yInk(d,bl,'–');
+  W.push([d,'translate('+((cx(C)-(i[0]+i[1])/2)/z).toFixed(3)+'px,'+((cy(C)-(y[0]+y[1])/2)/z).toFixed(3)+'px)'])});
  slots.forEach(n=>{const L=n.parentElement,C=L.getBoundingClientRect(),pb=_bl(L.querySelector('.ptpn')),sb=_bl(n),its=[...n.querySelectorAll('i:not(.ptbl)')],x=tInk(its[its.length-1]);
   if(pb==null||sb==null||!x)return;W.push([n,'translate('+((C.right-x[1])/z).toFixed(3)+'px,'+((pb-sb)/z).toFixed(3)+'px)'])});
  W.forEach(([el,v])=>el.style.transform=v)}
@@ -478,22 +483,30 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptt{font:600 15px/1.15 var(--body);color:var(--chalk);min-width:0}'
  '.ptl2{display:flex;align-items:center;gap:6px;min-width:0;font:400 12.5px/1.25 var(--body);color:var(--chalk)}.ptl2.ptd,.ptd{color:var(--text-dim)}'
  '@media(max-width:380px){.ptx{--ptg:40px}.pthd,.ptk{grid-template-columns:44px minmax(0,1fr) var(--ptxa,64px);column-gap:8px}.ptpl .pthd,.ptkp{grid-template-columns:44px minmax(0,1fr) 40px var(--ptg)}.ptpl .pthd>span:first-child{font-size:11px;letter-spacing:.06em}}'
- # Picks view (2026-11-06): no GM column (line 1 names the holder), 16px right inset; "via" + 18px logo + original team on line 2
- '.ptv-k .pthd,.ptv-k .ptk{grid-template-columns:52px minmax(0,1fr) var(--ptca,24px) var(--ptva,72px);padding-right:0}.ptv-k .pthd>span:nth-child(2){text-align:left;grid-column:2;grid-row:1}.ptv-k .pthd>.pthx{grid-column:2/4;grid-row:1;text-align:right;white-space:nowrap}.ptv-k .pthd>.pthv{grid-column:4;grid-row:1;text-align:center;white-space:nowrap}.ptv-k .ptl2>*{flex:none}'
- '@media(max-width:380px){.ptv-k .pthd,.ptv-k .ptk{grid-template-columns:44px minmax(0,1fr) var(--ptca,24px) var(--ptva,72px)}}'
- # Picks rows (2026-11-06): tile | holder (+ player line on drafted rows) | TRADED tile | VIA logo; rows: flexible top/bottom
- # tracks (>= 9px) around line 1 (and line 2), min 52px, so one-line rows centre and the tile spans the full height
- '.ptv-k .ptk{grid-template-rows:minmax(13px,1fr) auto auto minmax(13px,1fr);row-gap:0;min-height:57px}.ptv-k .ptl2{min-height:20px}'  # 57: future rows one line, centred; line 2 as tall as an NFL badge on every row
+ # Picks view (2026-11-07, VIA column): tile | holder | TIMES TRADED tile | VIA logo + coach; 12px gaps, 16px right inset
+ # (the VIA column's widest ink ends on it). Column widths per year view from ptxFit (--ptca, --ptva, tile --ptcw).
+ '.ptv-k .pthd,.ptv-k .ptk{grid-template-columns:52px minmax(0,1fr) var(--ptca,40px) var(--ptva,48px);padding-right:16px}.ptv-k .pthd>span:nth-child(2){text-align:left}.ptv-k .pthd{padding-top:8.72px;padding-bottom:10.28px}'  # 46px header, cap ink 11.28px from top and bottom
+ '.ptv-k .pthd>.pthx{display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap}.ptv-k .pthx i{display:block;font-style:normal}'  # TIMES over TRADED: header row 46px on every panel
+ '.ptv-k .pthd>.pthv{text-align:center;white-space:nowrap}.ptv-k .ptl2>*{flex:none}'
+ '@media(max-width:380px){.ptv-k .pthd,.ptv-k .ptk{grid-template-columns:44px minmax(0,1fr) var(--ptca,40px) var(--ptva,48px)}}'
+ # rows: flexible top/bottom tracks around line 1 (and line 2). Drafted rows: tracks >= 13px (80px rows). Future rows
+ # (.ptk1, one line, centred): tracks >= 23px so the coach name under the VIA logo keeps >= 10px to the row edge (75px)
+ '.ptv-k .ptk{grid-template-rows:minmax(13px,1fr) auto auto minmax(13px,1fr);row-gap:0;min-height:57px}.ptv-k .ptl2{min-height:20px}'
+ '.ptv-k .ptk1{grid-template-rows:minmax(23px,1fr) auto auto minmax(23px,1fr)}'
  '.ptv-k .ptn{grid-column:1;grid-row:1/-1}.ptv-k .ptm{display:contents}'
  '.ptv-k .ptl1{grid-column:2;grid-row:2}.ptv-k .ptl2{grid-column:2;grid-row:3;margin-top:5px}'
- # right-hand columns (2026-11-06, bar pass): count centred in the row, "×" ink on the TRADED column's edge (ptxFit);
- # VIA bar = the Drafts board banner (.dfct, 17px) flush with the row's top and right edges, one width per year;
- # "via" in --via-bar-ink at full strength (5.93:1 on --via-bar), coach in --via-bar-strong (9.03:1)
- '.ptv-k .ptxn{grid-column:3;grid-row:1/-1;align-self:center;justify-self:end}'
- '.ptv-k .ptvb{grid-column:4;grid-row:1/-1;align-self:start;justify-self:stretch;display:flex;align-items:center;justify-content:center;gap:4px;box-sizing:border-box;height:17px;margin:0;padding:1px 7px 0;background:var(--via-bar);box-shadow:inset 0 -1px 0 var(--via-bar-line);color:var(--via-bar-ink);font:600 10px/1.1 var(--display);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}'
- '.ptv-k .ptvb b{font-weight:700;font-size:11px;color:var(--via-bar-strong)}.ptv-k .ptvb i{font-style:normal}'
- '.ptxn{display:block;font:700 22px/1 var(--display);font-variant-numeric:tabular-nums;color:var(--chalk);font-style:normal;white-space:nowrap;text-box:trim-both cap alphabetic}'
- '.ptxn b{font-weight:700}.ptxn small{font:700 13px/1 var(--display);color:var(--text-dim)}.ptxn.z b{color:var(--steel)}'
+ # TIMES TRADED (2026-11-07): the Drafts RPTS tile (--row-divider, 4px, --sh-1, Barlow 700 tabular, --chalk; 0 --steel) on
+ # line 1: as tall as the holder name's text box (1.15 x --ptnf), figure at the name's size (Barlow digit cap = Plex cap,
+ # .70em); one width per year view (--ptcw = widest digit ink + 2 x 8px), digits ink-centred by ptxFit
+ '.ptv-k .ptxn{grid-column:3;grid-row:2;align-self:center;justify-self:center;display:block;box-sizing:border-box;width:var(--ptcw,24px);height:calc(var(--ptnf,15px) * 1.15);padding:0;border-radius:4px;background:var(--row-divider);box-shadow:var(--sh-1);'
+ 'font:700 var(--ptnf,15px)/1 var(--display);line-height:calc(var(--ptnf,15px) * 1.15);letter-spacing:0;font-variant-numeric:tabular-nums;color:var(--chalk);font-style:normal;text-align:center;white-space:nowrap}'
+ '.ptv-k .ptxn b{display:inline-block;font-weight:700}.ptv-k .ptxn.z b{color:var(--steel)}'
+ # VIA (2026-11-07): original team's 28px logo on line 1 (holder logo treatment), coach under it (Barlow 600 11px caps
+ # .04em --text-dim, cap top 5px under the logo box), ink-centred on the column by ptxFit; never traded: "–" on the logo centre
+ '.ptv-k .ptvl{grid-column:4;grid-row:2;align-self:center;position:relative;display:flex;align-items:center;justify-content:center;height:28px}'
+ '.ptv-k .ptvl .pav{width:28px;height:28px}'
+ '.ptv-k .ptvc{position:absolute;left:-24px;right:-24px;top:calc(100% + 5px);display:block;text-align:center;font:600 11px/1 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim);white-space:nowrap;text-box:trim-both cap alphabetic}'
+ '.ptv-k .ptv0>i{display:inline-block;font:600 var(--ptnf,15px)/1 var(--body);color:var(--text-dim);font-style:normal}'
  # NFL draft slot (2026-11-06): Drafts' slot type on one line, right edge of the name column (ink-aligned by ptxFit), >= 12px clear of the logo
  '.ptns.pthide{display:none}.ptns{margin-left:auto;padding-left:6px;display:block;font:600 11px/1 var(--display);letter-spacing:.04em;text-transform:uppercase;font-variant-numeric:tabular-nums;color:var(--text-dim);white-space:nowrap}.ptns i{font-style:normal}.ptns i+i:not(.ptbl){margin-left:6px}'  # inline, not flex: the .ptbl marker must sit on the baseline
  '.ptbl{display:inline-block;width:0;height:0;vertical-align:baseline}'
