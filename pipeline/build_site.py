@@ -94,7 +94,7 @@ if len(YEARS)>1:
       '.yrs a.yb:active b{transform:translate(2px,3px);box-shadow:1px 1px 0 rgba(0,0,0,.6),0 3px 6px -2px rgba(0,0,0,.5)}'
       '.yrs .yb.on b{background:var(--chalk);color:var(--ink)}.yrs a.yb:not(.on):hover b{color:var(--chalk)}'
       '.yrs .yb.na{cursor:default}.yrs .yb.na b{color:var(--steel)}'
-      '.yrs .yb small{display:block;padding:0 4px;white-space:nowrap;font:600 10.5px/1.15 var(--body);color:#c9a15a;text-align:center}'
+      '.yrs .yb small{display:block;padding:0 4px;white-space:nowrap;font:600 10.5px/1.15 var(--body);color:var(--text-dim);text-align:center}'
       '.yrs .yb.on small{color:var(--steel)}.yrs .yb small:empty{display:none}.yrs .cs{display:none}'
       '@supports not (text-box:trim-both cap alphabetic){.yrs .yb b{padding:6px 0 5px}}'
       '@media(max-width:640px){.yrs.n4,.yrs.n5,.yrs.n6,.yrs.n7,.yrs.n8{width:100%;gap:8px 7px}.yrs.n4 .cf,.yrs.n5 .cf,.yrs.n6 .cf,.yrs.n7 .cf,.yrs.n8 .cf{display:none}'

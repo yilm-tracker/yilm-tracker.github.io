@@ -167,7 +167,7 @@ def section(years=None,idp='df'):
     radios=''.join(f'<input type="radio" name="{idp}y" id="{idp}-{y}" class="lr"{" checked" if y==ys[-1] else ""}>' for y in ys)
     btn=''.join(f'<label class="yb" for="{idp}-{y}"><b>{y}</b><small>{"Startup" if D[y].get("type")=="startup" else "Rookie"}</small></label>' for y in ys)
     pans=''.join(f'<div class="dfx dfx-{y}">{year_panel(y,D[y])}</div>' for y in ys)
-    css=''.join(f'#{idp}-{y}:checked~.dfyb label[for="{idp}-{y}"] b{{background:var(--chalk);color:var(--ink)}}#{idp}-{y}:checked~.dfx-{y}{{display:block}}' for y in ys)
+    css=''.join(f'#{idp}-{y}:checked~.dfyb label[for="{idp}-{y}"] b{{background:var(--chalk);color:var(--ink)}}#{idp}-{y}:checked~.dfyb label[for="{idp}-{y}"] small{{color:var(--steel)}}#{idp}-{y}:checked~.dfx-{y}{{display:block}}' for y in ys)
     if len(ys)==1:return f'<section class="dfs">{radios}{pans}</section>',css  # one season (archive pages): no year buttons
     return (f'<section class="dfs" aria-labelledby="{idp}h">{radios}<div class="posh"><b id="{idp}h">Drafts</b><span class="wsub">Every draft since the {ys[0]} startup · pick, player and who made it</span></div>'
             f'<div class="dfyb yrs n{len(ys)}" role="group" aria-label="Draft year">{btn}</div>{pans}</section>'),css

@@ -1315,3 +1315,23 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 :root{--via-bg:rgba(201,161,90,.12);--via-line:rgba(201,161,90,.45);--via-ink:#E2CF93}
 /* 2026-11-06: via bar (Drafts board banner, Paper Trail picks), same on both sites */
 :root{--via-bar:#e6cf96;--via-bar-line:rgba(140,104,40,.45);--via-bar-ink:#5c4515;--via-bar-strong:#3b2a08}
+
+/* 2026-11-06 (Nicklaus) LEGIBILITY PASS: header, navigation and Paper Trail controls one visible step larger (sizes reused, no new value).
+   Chart legend 11 -> 13px (= the week numbers; 14px >= 1100 like them). Group buttons 17 -> 18.5px, padding 7/6 -> 5/6 and a fixed 25.8px line so the button keeps its 38.8px
+   height (the level 2 track follows it via subFit). Level 2 tabs 15/14/13 -> 16.5/15.5/14.5px. Section subtitles (.wsub: Paper Trail, Drafts,
+   The Wire) 12.5 -> 14px. (Paper Trail switch: 17px since the same day's Paper Trail pass, not overridden here.) Year strips (.yrs: season strip, Drafts, Paper Trail) 12.5/13 -> 14/14.5px, sub-labels
+   11 -> 12.5px; sub-label colour --text-dim (was gold #c9a15a in build_site.py), selected year --steel. */
+.season .weeks-k{font-size:13px}
+@media(min-width:1100px){.season .weeks-k{font-size:14px}}
+.tnav nav.tabs>label{font-size:18.5px;line-height:25.8px;padding:5px 4px 6px}
+@media(max-width:370px){.tnav nav.tabs>label{font-size:17.5px}}
+.tnav .tsub label{font-size:16.5px;padding:var(--tsv,5.9px) var(--tsp,15px)}
+@media(max-width:430px){.tnav .tsub label{font-size:15.5px;padding:var(--tsv,6.48px) var(--tsp,10px)}}
+@media(max-width:380px){.tnav .tsub label{font-size:14.5px;padding:var(--tsv,6.33px) var(--tsp,8px)}}
+.posh>span.wsub{font-size:14px;text-wrap:balance}
+.yrs .yb b{font-size:14.5px}
+@media(max-width:640px){.yrs .yb b{font-size:14px}}
+.yrs .yb small{font-size:12.5px!important}
+/* season strips of 4-8 years: the full team names need ~98px per button at 12.5px; below 1100px the strip is capped at the 528px content width (78px buttons),
+   so it spans the content width with the short coach names there, as phones in portrait already did below 640px */
+@media(max-width:1099px){nav.yrs.n4,nav.yrs.n5,nav.yrs.n6,nav.yrs.n7,nav.yrs.n8{width:100%;gap:8px 7px}nav.yrs.n4 .cf,nav.yrs.n5 .cf,nav.yrs.n6 .cf,nav.yrs.n7 .cf,nav.yrs.n8 .cf{display:none}nav.yrs.n4 .cs,nav.yrs.n5 .cs,nav.yrs.n6 .cs,nav.yrs.n7 .cs,nav.yrs.n8 .cs{display:inline}}
