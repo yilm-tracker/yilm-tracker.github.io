@@ -359,7 +359,11 @@ function draw(){const q=(Q.value||'').trim().toLowerCase();const ids=q?ORD.filte
  MORE.textContent=ids.length>50?'Showing 50 of '+ids.length+(q?' matches':' players')+' · search to find any player':'';fitN()}
 function fitN(){if(!X.offsetParent)return;L.querySelectorAll('.ptl2').forEach(b=>{b.style.fontSize='';b.classList.remove('ptlo');let s=parseFloat(getComputedStyle(b).fontSize);while(b.scrollWidth>b.clientWidth+.5&&s>11.5){s-=.25;b.style.fontSize=s+'px'}if(b.scrollWidth>b.clientWidth+.5){b.style.fontSize='';b.classList.add('ptlo')}});L.querySelectorAll('.ptt').forEach(b=>{b.style.fontSize='';const w=b.parentElement;
   const o=()=>w.scrollWidth>w.clientWidth+.5||b.scrollWidth>b.clientWidth+.5;let s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>13){s-=.5;b.style.fontSize=s+'px'}});
- holdFit();slotFit();ptxFit();pjFit();
+ nameFit();holdFit();slotFit();ptxFit();
+ // the name size sets the TRADED tile, the tile the column, the column the room: re-check line 1 after ptxFit and step down
+ {const Y=[...X.querySelectorAll('.ptv-k .ptyx')].find(y=>y.offsetParent);for(let i=0;Y&&i<8;i++){const s=parseFloat(Y.style.getPropertyValue('--ptnf'))||15;
+  if(s<=15||![...Y.querySelectorAll('.ptl1')].some(l=>l.scrollWidth>l.clientWidth+.5))break;Y.style.setProperty('--ptnf',(s-.25)+'px');holdFit();slotFit();ptxFit()}}
+ pjFit();
 }
 // Shared ink helpers: one canvas (_ic); text measured at 50x its size because canvas rounds bounding boxes to whole
 // pixels; uppercase and letter-spacing aware; vertical ink from a zero-size .ptbl marker on the text's baseline.
@@ -375,13 +379,24 @@ const _bl=el=>{const m=el.querySelector('.ptbl');return m?m.getBoundingClientRec
 // widest "n×" ink + 2 x 3px (one width per round); its "n×" centred by glyph ink; the tile and the VIA dash centred on
 // the name's cap centre; TRADED / VIA header labels centred over their columns by ink. Columns: TRADED = max(header
 // ink, widest tile), VIA = max(22px logo, header ink). Reads, writes sizes, reads again, writes positions.
+// nameFit (2026-11-06), Picks: one holder-name size per year view (--ptnf on .ptyx-YYYY, also the pick number and the
+// "–"): the largest size in 0.25px steps, 15-19px, at which every full holder name fits line 1 beside its 28px logo; under
+// 15 the size stays 15 and holdFit gives the row its approved short form. Widths scale linearly with the size.
+function nameFit(){const Y=[...X.querySelectorAll('.ptv-k .ptyx')].find(y=>y.offsetParent);if(!Y)return;Y.style.setProperty('--ptnf','15px');
+ const N=[...Y.querySelectorAll('.ptt')];N.forEach(b=>{b.style.fontSize='';b.style.whiteSpace='';if(b.dataset.full){b.firstChild.nodeValue=b.dataset.full;delete b.dataset.full}});
+ let s=19;N.forEach(b=>{const l=b.parentElement,a=l.querySelector('.pav'),cs=getComputedStyle(l),room=l.clientWidth-(a?a.getBoundingClientRect().width/(b.currentCSSZoom||1)+parseFloat(cs.columnGap||cs.gap||0):0),
+  r=document.createRange();r.selectNodeContents(b.firstChild);const w=r.getBoundingClientRect().width/(b.currentCSSZoom||1);if(w>0)s=Math.min(s,Math.floor(15*room/w*4)/4)});
+ s=Math.max(15,s);Y.style.setProperty('--ptnf',s+'px');
+ // linear scaling can be a pixel off (kerning, rounding): step down while any full name still overflows
+ const ov=()=>N.some(b=>{const l=b.parentElement;return l.scrollWidth>l.clientWidth+.5});while(s>15&&ov()){s-=.25;Y.style.setProperty('--ptnf',s+'px')}}
 // holdFit, Picks line 1 (holder): full size; if it does not fit, the team's approved short form (data-ab, from PSN in
-// pos/build_pos.py: "Rev. Apache Master"); only then the old shrink (13px floor) and wrap, which no test width reaches.
+// pos/build_pos.py: "Rev. Apache Master"); then, below 423 CSS px only, a shrink to 13px (never below).
 function holdFit(){X.querySelectorAll('.ptv-k .ptt').forEach(b=>{if(!b.offsetParent)return;b.style.fontSize='';b.style.whiteSpace='';if(b.dataset.full){b.firstChild.nodeValue=b.dataset.full;delete b.dataset.full}
   const w=b.parentElement,o=()=>w.scrollWidth>w.clientWidth+.5;if(o()&&b.dataset.ab){b.dataset.full=b.firstChild.nodeValue;b.firstChild.nodeValue=b.dataset.ab}
-  let s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>13){s-=.5;b.style.fontSize=s+'px'}if(o()){b.style.whiteSpace='normal'}})}
-// slotFit (2026-11-06), NFL slot on a drafted row's line 2, per row: full size -> the player's approved abbreviation
-// (LUA, the lineup list in new_tail.js: the matching surname word) -> slot hidden (the pick sheet and aria-label keep it).
+  if(innerWidth<423){let s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>13){s-=.5;b.style.fontSize=s+'px'}}})}  // 13px shrink only below 423 CSS px (Nicklaus 2026-11-06)
+// slotFit (2026-11-06), NFL slot on a drafted row's line 2, per row: full size -> generation suffix dropped (Jr., Sr., II-V)
+// -> the approved abbreviation (LUA, the lineup list in new_tail.js: the matching surname word, on the suffix-less name) ->
+// slot hidden (the pick sheet and aria-label keep it; expected only below 423 CSS px).
 // Fits when >= 12px separate the NFL logo's box (its ink lies inside) from the slot's first glyph ink once the slot's
 // last glyph sits on the name column's right edge. Names that would need an unapproved form go to window.__ptForm.
 function slotFit(){const A=typeof LUA!=='undefined'?LUA:{};window.__ptForm=window.__ptForm||[];
@@ -390,21 +405,26 @@ function slotFit(){const A=typeof LUA!=='undefined'?LUA:{};window.__ptForm=windo
  const gap=n=>{const L=n.parentElement,its=[...n.querySelectorAll('i:not(.ptbl)')],a=tInk(its[0]),b=tInk(its[its.length-1]),d=L.querySelector('.nfl')||L.querySelector('.ptpn'),z=n.currentCSSZoom||1;
   return a&&b?((L.getBoundingClientRect().right-(b[1]-a[0]))-d.getBoundingClientRect().right)/z:99};
  const G=N.map(gap);
- N.forEach((n,i)=>{if(G[i]>=12)return;const p=n.parentElement.querySelector('.ptpn'),full=p.firstChild.nodeValue,w=full.split(' '),j=w.findIndex(x=>A[x]);
-  if(j>=0){p.dataset.full=full;w[j]=A[w[j]];p.firstChild.nodeValue=w.join(' ');if(gap(n)>=12)return;p.firstChild.nodeValue=full;delete p.dataset.full}
-  else if(innerWidth>=423&&window.__ptForm.indexOf(full)<0)window.__ptForm.push(full);
+ N.forEach((n,i)=>{if(G[i]>=12)return;const p=n.parentElement.querySelector('.ptpn'),full=p.firstChild.nodeValue,set=t=>{p.dataset.full=full;p.firstChild.nodeValue=t;return gap(n)>=12};
+  let w=full.split(' ');const sx=w.length>2&&/^(Jr\.?|Sr\.?|II|III|IV|V)$/.test(w[w.length-1]);if(sx){w=w.slice(0,-1);if(set(w.join(' ')))return}  // generation suffix dropped
+  const j=w.findIndex(x=>A[x]);if(j>=0){w[j]=A[w[j]];if(set(w.join(' ')))return}                                         // approved abbreviation
+  if(p.dataset.full){p.firstChild.nodeValue=full;delete p.dataset.full}
+  if(innerWidth>=423&&window.__ptForm.indexOf(full)<0)window.__ptForm.push(full);
   n.classList.add('pthide')})}
-const XG=3;
+const XG=3,XP=8;
 function ptxFit(){const V=X.querySelector('.ptv-k');if(!V||!V.offsetParent)return;const P=[...V.querySelectorAll('.ptp')].filter(p=>p.offsetParent);if(!P.length)return;
  const tiles=[],dashes=[],heads=[];P.forEach(p=>{p.querySelectorAll('.ptxt').forEach(t=>tiles.push(t));p.querySelectorAll('.ptxd').forEach(d=>dashes.push(d));p.querySelectorAll('.pthx').forEach(h=>heads.push(h))});
  const slots=[];P.forEach(p=>p.querySelectorAll('.ptns').forEach(n=>slots.push(n)));slots.forEach(n=>n.style.transform='');
  tiles.forEach(t=>{t.style.transform='';t.firstChild.style.transform=''});dashes.forEach(d=>d.style.transform='');heads.forEach(h=>h.style.transform='');
  const nm=V.querySelector('.ptp .ptt'),z=nm.currentCSSZoom||1,cs=getComputedStyle(nm);_ic.font=cs.fontStyle+' '+cs.fontWeight+' '+(parseFloat(cs.fontSize)*50)+'px '+cs.fontFamily;
- const cap=_ic.measureText('H').actualBoundingBoxAscent/50;  // CSS px
+ const cap=_ic.measureText('H').actualBoundingBoxAscent/50;  // CSS px, at the fitted name size
+ // TRADED figure: its digit ink ("0", the tallest) as tall as the name's cap, so the tile's 3px top / bottom padding is the ink gap
+ const fb=getComputedStyle(V.querySelector('.ptxt'));_ic.font=fb.fontStyle+' 700 50px '+fb.fontFamily;const d0=_ic.measureText('0'),F=cap/((d0.actualBoundingBoxAscent+d0.actualBoundingBoxDescent)/50);
+ V.style.setProperty('--ptxf',F.toFixed(3)+'px');
  const hw=heads.slice(0,2).map(h=>{const i=tInk(h);return i?(i[1]-i[0])/z:0});
  const pw=P.map(p=>Math.max(0,...[...p.querySelectorAll('.ptxt em')].map(e=>{const a=tInk(e.querySelector('b')),b=tInk(e.querySelector('small'));return a&&b?(b[1]-a[0])/z:0})));
- const tw=pw.map(w=>Math.ceil((w+2*XG)*4)/4);
- V.style.setProperty('--ptxh',(cap+2*XG).toFixed(3)+'px');V.style.setProperty('--ptxa',Math.ceil(Math.max(hw[0]||0,...tw))+'px');V.style.setProperty('--ptxb',Math.ceil(Math.max(24,hw[1]||0))+'px');
+ const tw=pw.map(w=>Math.ceil(Math.max(w+2*XP,1.5*F+2*XP)*4)/4);  // RPTS tile: 8px sides, at least 3 characters (.5em each)
+ V.style.setProperty('--ptxh',(cap+2*XG).toFixed(3)+'px');V.style.setProperty('--ptxa',Math.ceil(Math.max(hw[0]||0,...tw))+'px');V.style.setProperty('--ptxb',Math.ceil(Math.max(30,hw[1]||0))+'px');
  P.forEach((p,i)=>p.style.setProperty('--ptxw',tw[i]+'px'));
  const W=[];
  tiles.forEach(t=>{const r=t.closest('.ptk'),e=t.firstChild,T=t.getBoundingClientRect(),nb=_bl(r.querySelector('.ptt')),eb=_bl(e),a=tInk(e.querySelector('b')),b=tInk(e.querySelector('small'));
@@ -447,10 +467,10 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptq{display:block;width:100%;box-sizing:border-box;margin:0 0 14px}'
  # panel and rows: four-step depth (frame, divider, panel, lighter row), 16px inset
  '.ptp{background:var(--deck);border:2px solid var(--frame);border-radius:var(--r-panel);box-shadow:var(--sh-hard);overflow:hidden;margin:0 0 14px}'
- '.pthd{display:grid;grid-template-columns:52px minmax(0,1fr) var(--ptxa,48px) var(--ptxb,24px);column-gap:12px;align-items:center;padding:10px 0 9px;font:700 12px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);background:var(--deck)}'
+ '.pthd{display:grid;grid-template-columns:52px minmax(0,1fr) var(--ptxa,48px) var(--ptxb,30px);column-gap:12px;align-items:center;padding:10px 0 9px;font:700 12px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);background:var(--deck)}'
  '.pthd>span:first-child{text-align:center}.pthd>span:last-child{text-align:center}'
  '.ptpl .pthd{grid-template-columns:52px minmax(0,1fr) 46px var(--ptg)}.ptpl .pthd>span:nth-child(3){text-align:right}'
- '.ptk{all:unset;box-sizing:border-box;display:grid;grid-template-columns:52px minmax(0,1fr) var(--ptxa,48px) var(--ptxb,24px);column-gap:12px;align-items:stretch;width:100%;min-height:52px;cursor:pointer;'
+ '.ptk{all:unset;box-sizing:border-box;display:grid;grid-template-columns:52px minmax(0,1fr) var(--ptxa,48px) var(--ptxb,30px);column-gap:12px;align-items:stretch;width:100%;min-height:52px;cursor:pointer;'
  'border-top:1px solid var(--row-divider);background:var(--deck)}'
  '.ptp .ptk:nth-of-type(odd){background:var(--row-lt)}'
  '.ptlist .ptk:nth-child(odd){background:var(--row-lt)}.ptlist .ptk:nth-child(even){background:var(--deck)}'
@@ -461,23 +481,23 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptn0{background:var(--row-divider);color:var(--chalk)}'
  '.ptm{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:9px 0}'
  '.ptl1{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap}'
- '.ptl1 .pav{width:22px;height:22px}'
+ '.ptl1 .pav{width:22px;height:22px}.ptv-k .ptl1 .pav{width:28px;height:28px}.ptv-k .ptt{font-size:var(--ptnf,15px)}.ptv-k .ptn b{font-size:var(--ptnf,15px)}'
  '.ptt{font:600 15px/1.15 var(--body);color:var(--chalk);min-width:0}'
  '.ptl2{display:flex;align-items:center;gap:6px;min-width:0;font:400 12.5px/1.25 var(--body);color:var(--chalk)}.ptl2.ptd,.ptd{color:var(--text-dim)}'
- '@media(max-width:380px){.ptx{--ptg:40px}.pthd,.ptk{grid-template-columns:44px minmax(0,1fr) var(--ptxa,48px) var(--ptxb,24px);column-gap:8px}.ptpl .pthd,.ptkp{grid-template-columns:44px minmax(0,1fr) 40px var(--ptg)}.ptpl .pthd>span:first-child{font-size:11px;letter-spacing:.06em}}'
+ '@media(max-width:380px){.ptx{--ptg:40px}.pthd,.ptk{grid-template-columns:44px minmax(0,1fr) var(--ptxa,48px) var(--ptxb,30px);column-gap:8px}.ptpl .pthd,.ptkp{grid-template-columns:44px minmax(0,1fr) 40px var(--ptg)}.ptpl .pthd>span:first-child{font-size:11px;letter-spacing:.06em}}'
  # Picks view (2026-11-06): no GM column (line 1 names the holder), 16px right inset; "via" + 18px logo + original team on line 2
  '.ptv-k .pthd,.ptv-k .ptk{padding-right:16px}.ptv-k .pthd>span:nth-child(2){text-align:left}.ptv-k .pthd>.pthx{text-align:center}.ptv-k .ptl2>*{flex:none}'
  # Picks rows (2026-11-06): tile | holder (+ player line on drafted rows) | TRADED tile | VIA logo; rows: flexible top/bottom
  # tracks (>= 9px) around line 1 (and line 2), min 52px, so one-line rows centre and the tile spans the full height
- '.ptv-k .ptk{grid-template-rows:minmax(9px,1fr) auto auto minmax(9px,1fr);row-gap:0}.ptv-k .ptn{grid-column:1;grid-row:1/-1}.ptv-k .ptm{display:contents}'
+ '.ptv-k .ptk{grid-template-rows:minmax(13px,1fr) auto auto minmax(13px,1fr);row-gap:0;min-height:55px}.ptv-k .ptn{grid-column:1;grid-row:1/-1}.ptv-k .ptm{display:contents}'
  '.ptv-k .ptl1{grid-column:2;grid-row:2}.ptv-k .ptl2{grid-column:2;grid-row:3;margin-top:5px}'
- '.ptxc,.ptxv{grid-row:2;display:flex;align-items:center;justify-content:center;min-width:0}.ptxc{grid-column:3}.ptxv{grid-column:4}.ptxv .pav{width:22px;height:22px}'
+ '.ptxc,.ptxv{grid-row:2;display:flex;align-items:center;justify-content:center;min-width:0}.ptxc{grid-column:3}.ptxv{grid-column:4}.ptxv .pav{width:28px;height:28px}'
  # TRADED tile = the Drafts RPTS tile (--row-divider, 4px, --sh-1, Barlow 700 15px tabular); size and ink centring by ptxFit
- '.ptxt{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:var(--ptxw,22px);height:var(--ptxh,16.5px);border-radius:4px;background:var(--row-divider);box-shadow:var(--sh-1);font:700 15px/1 var(--display);font-variant-numeric:tabular-nums;color:var(--chalk);font-style:normal}'
+ '.ptxt{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:var(--ptxw,22px);height:var(--ptxh,16.5px);border-radius:4px;background:var(--row-divider);box-shadow:var(--sh-1);font:700 var(--ptxf,15px)/1 var(--display);font-variant-numeric:tabular-nums;color:var(--chalk);font-style:normal}'
  '.ptxt em{display:block;font-style:normal;white-space:nowrap;line-height:1}.ptxt b{font-weight:700}.ptxt small{font:700 11px/1 var(--display);color:var(--text-dim)}.ptxt.z b{color:var(--steel)}'
  # NFL draft slot (2026-11-06): Drafts' slot type on one line, right edge of the name column (ink-aligned by ptxFit), >= 12px clear of the logo
  '.ptns.pthide{display:none}.ptns{margin-left:auto;padding-left:6px;display:block;font:600 11px/1 var(--display);letter-spacing:.04em;text-transform:uppercase;font-variant-numeric:tabular-nums;color:var(--text-dim);white-space:nowrap}.ptns i{font-style:normal}.ptns i+i:not(.ptbl){margin-left:6px}'  # inline, not flex: the .ptbl marker must sit on the baseline
- '.ptxd{display:block;font:600 15px/1 var(--body);color:var(--text-dim);font-style:normal}.ptbl{display:inline-block;width:0;height:0;vertical-align:baseline}'
+ '.ptxd{display:block;font:600 var(--ptnf,15px)/1 var(--body);color:var(--text-dim);font-style:normal}.ptbl{display:inline-block;width:0;height:0;vertical-align:baseline}'
  '.ptpn{min-width:0}.ptl2{white-space:nowrap}.ptl2 .pav{width:18px;height:18px}.ptl2.ptlo .ptln{display:none}'
  '.ptc{margin-left:auto;flex:none;font:700 12px/1 var(--display);letter-spacing:.04em;color:var(--text-dim);font-style:normal;padding-right:2px}'
  '.ptg{display:flex;align-items:center;justify-content:center;border-left:3px solid var(--pg)}'
