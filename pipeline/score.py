@@ -18,12 +18,14 @@ if 'starters' in L:
             if not i or i=='0' or i in have:continue
             if i in L.get('extra',{}):have[i]=list(L['extra'][i])
             elif i in rows:have[i]=list(rows[i][1])
-            if i in rows and rows[i][0]!=rid and i not in ST.get(rows[i][0],()):
-                Y=wk['out'][rows[i][0]];Y['st']=[p for p in Y['st'] if p[0]!=i];Y['bn']=[p for p in Y['bn'] if p[0]!=i]  # off his old roster
             if i in have:continue
             have[i]=[i,'','Player '+i,'',0,0,None,None];print('WARNING score.py: no data for starter',i,'of roster',rid,file=sys.stderr)
         X['st']=[have[i] for i in ids if i in have]
         X['bn']=[p for k,p in have.items() if k not in ids]
+    # a player who starts for one roster is on no other roster's rows (his old roster's bench row goes)
+    OWN={i:r for r,ids in ST.items() for i in ids}
+    for r,X in wk['out'].items():
+        X['st']=[p for p in X['st'] if OWN.get(p[0],r)==r];X['bn']=[p for p in X['bn'] if OWN.get(p[0],r)==r]
 for rid,X in wk['out'].items():
     for p in X['st']+X['bn']:
         v=L['pp'].get(p[0])
