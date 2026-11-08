@@ -384,12 +384,22 @@ if(typeof dtab==='function'){const _dt0=dtab;dtab=function(){const r=_dt0.apply(
 document.fonts&&document.fonts.ready.then(()=>requestAnimationFrame(simGap));addEventListener('resize',()=>setTimeout(simGap,200));
 // Navigation groups (Nicklaus, 2026-11-03). Group follows the selected tab (labels, the FAAB tile, code, #hash);
 // picking a group opens its first tab (Game Day opens Playoffs once Week 14 is done, current season only).
-// Defaults: Game Day > Standings (Playoffs in the playoffs); a #hash deep link wins. No tab is remembered.
+// Defaults: Game Day > Standings (Playoffs in the playoffs); a #hash deep link wins. The current tab is kept in the URL hash
+// (2026-11-08, Nicklaus): every tab change after load writes its hash with replaceState (Back never steps through tabs), so a
+// refresh reopens it; a plain URL opens the defaults. A year button carries the tab's hash when the URL has one.
 (function(){const nav=document.querySelector('.tnav');if(!nav)return;
  const GR={gd:['tab-st','tab-mu','tab-po'],lab:['tab-sx','tab-lb','tab-cm','tab-th'],fo:['tab-ro','tab-pl','tab-wr','tab-df','tab-pt']};
  const has=id=>!!document.getElementById(id),grpOf=id=>Object.keys(GR).find(g=>GR[g].includes(id)),PO=nav.dataset.po==='1';
  const first=g=>(g==='gd'&&PO&&has('tab-po'))?'tab-po':GR[g].find(has);
  const SLUG={standings:'tab-st',matchups:'tab-mu',playoffs:'tab-po',stats:'tab-sx',leaderboards:'tab-lb',compare:'tab-cm','team-hub':'tab-th',teamhub:'tab-th',hub:'tab-th',rosters:'tab-ro',players:'tab-pl','the-wire':'tab-wr',wire:'tab-wr',drafts:'tab-df','paper-trail':'tab-pt',papertrail:'tab-pt'};
+ const CANON={'tab-st':'standings','tab-mu':'matchups','tab-po':'playoffs','tab-sx':'stats','tab-lb':'leaderboards','tab-cm':'compare','tab-th':'team-hub','tab-ro':'rosters','tab-pl':'players','tab-wr':'the-wire','tab-df':'drafts','tab-pt':'paper-trail'};
+ let live=false;
+ function hBase(){let h='';try{h=decodeURIComponent(location.hash.slice(1)).trim().toLowerCase()}catch(_){}return h.split('/')[0]}
+ // keep(): the tab's canonical hash, unless the URL already names this tab (an alias such as #wire, or a #paper-trail/... sheet)
+ function keep(id){if(!live||!CANON[id])return;const h=hBase();if(h&&(SLUG[h]===id||h===id))return;
+   try{history.replaceState(history.state,'',location.pathname+location.search+'#'+CANON[id])}catch(_){}}
+ document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('.yrs a.yb[href]');if(!a||!location.hash)return;
+   const t=document.querySelector('input[name=tab]:checked');if(t&&CANON[t.id])a.setAttribute('href',a.getAttribute('href').split('#')[0]+'#'+CANON[t.id])},true);
  function fromHash(){let h='';try{h=decodeURIComponent(location.hash.slice(1)).trim().toLowerCase()}catch(_){}if(!h)return null;h=h.split('/')[0];
    const id=SLUG[h]||(/^tab-[a-z]{2}$/.test(h)?h:null);return id&&has(id)&&grpOf(id)?id:null}
  const tabs=()=>[...nav.querySelectorAll('[role=tab]')];
@@ -410,7 +420,7 @@ document.fonts&&document.fonts.ready.then(()=>requestAnimationFrame(simGap));add
    let g=gap;while(over()&&g>5){g-=1;row.style.setProperty('--tsg',g+'px')}
    while(over()&&p>4){p-=1;row.style.setProperty('--tsp',p+'px')}}
  function sync(){const t=document.querySelector('input[name=tab]:checked'),g=(t&&grpOf(t.id))||'gd',r=document.getElementById('grp-'+g);
-   if(r&&!r.checked)r.checked=true;aria();subFit();rp()}
+   if(r&&!r.checked)r.checked=true;aria();subFit();rp();if(t)keep(t.id)}
  // rp (2026-11-06): repaint the whole level-2 row after a tab/group change. iOS Safari left the old pill's bottom pixel row
  // (Standings, after a refresh) unpainted beside the new, narrower pill until a scroll; a one-frame layer forces a full repaint.
  function rp(){const s=document.querySelector('.tnav .tsub');if(!s)return;s.style.transform='translateZ(0)';requestAnimationFrame(()=>requestAnimationFrame(()=>{s.style.transform=''}))}
@@ -425,7 +435,7 @@ document.fonts&&document.fonts.ready.then(()=>requestAnimationFrame(simGap));add
  addEventListener('hashchange',()=>{const id=fromHash();if(id)pick(id)});
  addEventListener('resize',()=>requestAnimationFrame(subFit));document.fonts&&document.fonts.ready.then(subFit);
  try{history.scrollRestoration='manual'}catch(_){}
- pick(fromHash()||first('gd'));sync()})();
+ pick(fromHash()||first('gd'));sync();live=true})();
 // 2026-11-06 (Nicklaus) lineup fit, Matchups + Playoffs lineups: never "…". Per lineup (.lus-a / .lus-o): one name size (--lnf, floor 12px)
 // and one game-line size (--lgf, floor 11px), set on the lineup container. A game line that does not fit at 11px writes its time short
 // ("9:30a", "Sat 8:20p"). A name that does not fit at 12px gets 11px on its own row, then letter-spacing down to -.02em, then its injury tag
