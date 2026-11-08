@@ -8,8 +8,8 @@ n=0
 if 'starters' in L:
     # A starter may be missing from his roster's rows: added after wk{W}.json was written, possibly from another
     # roster (2026-11-08: Malik Washington, dropped by roster 1 and added by roster 7, still on roster 1's bench in
-    # wk9.json, so pullLive did not send him as extra and roster 7 was 3.10 short). Take his row from the roster that
-    # still lists him (and take it off there), else from extra, else a minimal row; never drop a starter.
+    # wk9.json, so pullLive did not send him as extra and roster 7 was 3.10 short). Take his row from extra, else from the
+    # roster that still lists him, else a minimal row (never drop a starter), and take him off his old roster.
     rows={p[0]:(r,p) for r,X in wk['out'].items() for p in X['st']+X['bn']}
     ST={r:set(i for i in ids if i and i!='0') for r,ids in L['starters'].items()}
     for rid,ids in L['starters'].items():
@@ -17,10 +17,11 @@ if 'starters' in L:
         for i in ids:
             if not i or i=='0' or i in have:continue
             if i in L.get('extra',{}):have[i]=list(L['extra'][i])
-            elif i in rows:
-                r0,p0=rows[i];have[i]=list(p0)
-                if i not in ST.get(r0,()):Y=wk['out'][r0];Y['bn']=[p for p in Y['bn'] if p[0]!=i]
-            else:have[i]=[i,'','Player '+i,'',0,0,None,None];print('WARNING score.py: no data for starter',i,'of roster',rid,file=sys.stderr)
+            elif i in rows:have[i]=list(rows[i][1])
+            if i in rows and rows[i][0]!=rid and i not in ST.get(rows[i][0],()):
+                Y=wk['out'][rows[i][0]];Y['st']=[p for p in Y['st'] if p[0]!=i];Y['bn']=[p for p in Y['bn'] if p[0]!=i]  # off his old roster
+            if i in have:continue
+            have[i]=[i,'','Player '+i,'',0,0,None,None];print('WARNING score.py: no data for starter',i,'of roster',rid,file=sys.stderr)
         X['st']=[have[i] for i in ids if i in have]
         X['bn']=[p for k,p in have.items() if k not in ids]
 for rid,X in wk['out'].items():
