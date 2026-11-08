@@ -61,7 +61,8 @@ if (cmd === 'state') {
   console.log('playoff pull ok');
 } else if (cmd === 'live') {
   const wk = JSON.parse(fs.readFileSync(path.join(DIR, `wk${arg}.json`), 'utf8'));
-  const known = new Set(Object.values(wk.out).flatMap(X => [...X.st, ...X.bn].map(p => p[0])));
+  // per roster: a player listed on another roster in wk W (moved since it was written) still needs a row (2026-11-08)
+  const known = Object.fromEntries(Object.entries(wk.out).map(([r, X]) => [r, new Set([...X.st, ...X.bn].map(p => p[0]))]));
   const x = await pullLive(get, +arg, known);
   out('live.json', x);
   console.log('live pull ok: final', x.done.length / 2, 'games, live', x.live.length / 2, ', new starters', Object.keys(x.extra).length);

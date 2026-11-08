@@ -145,8 +145,10 @@ export async function pullLive(get, W, known) {
     S_[pid] = a.join('.');
   }
   const pz = {}; for (const [k, v] of Object.entries(pp)) if (v) pz[k] = v;
-  // starters the build has never seen (added after the weekly refresh): give score.py a full row
-  const extra = {}, need = Object.values(sts).flat().filter(id => id && id != '0' && !known.has(id));
+  // starters not on their own roster's rows (added after the weekly refresh, even from another roster): give score.py
+  // a full row. known = {roster id: Set of ids} (a single Set is still accepted)
+  const kn = r => known instanceof Set ? known : (known[r] || new Set());
+  const extra = {}, need = [...new Set(Object.entries(sts).flatMap(([r, ids]) => (ids || []).filter(id => id && id != '0' && !kn(String(r)).has(id))))];
   if (need.length) {
     const [lg, players, pj] = await Promise.all([get(L), get(`${A}/players/nfl`), get(projURL(W))]);
     const ss = lg.scoring_settings, P = Object.fromEntries(pj.map(r => [r.player_id, r]));

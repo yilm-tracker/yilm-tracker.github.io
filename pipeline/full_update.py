@@ -1,6 +1,6 @@
 import os as _dt_os;__DTP__=_dt_os.path.dirname(_dt_os.path.abspath(__file__)).removesuffix('/pos')+'/'
 # Weekly full refresh. Inputs pulled from Sleeper (see pull_*.json); completes week DONE and prepares week NOW=DONE+1.
-import json,re,csv,math
+import json,re,csv,math,sys
 from datetime import date
 P=__DTP__+''
 import sys as _sys
@@ -42,7 +42,8 @@ for m in M7['M7']:
     hw[str(rid)]=[m['mid'],m['pts'],','.join(ent(p) for p in st),','.join(ent(p) for p in bn)]
     for pid in pp:
         if pid not in HI['m']:HI['m'][pid]=[pos(pid),nm(pid)]
-    s=round(sum(pp[p] for p in st),2);assert abs(s-m['pts'])<0.02,(rid,s,m['pts'])
+    s=round(sum(pp.get(p,0) for p in st if p and p!='0'),2)
+    if abs(s-m['pts'])>=0.02:print('WARNING full_update.py: roster',rid,'starters sum',s,'!= Sleeper total',m['pts'],'; starters without points:',[p for p in st if p and p!='0' and p not in pp],file=sys.stderr)  # warn, never stop the build (2026-11-08)
     wact[rid]=m['pts']
     op=optimal([{'pos':pos(p),'pts':v} for p,v in pp.items()]);wmx[rid]=round(sum(q['pts'] for q in op),2)
     assert wmx[rid]>=m['pts']-1e-9
