@@ -1335,3 +1335,14 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 /* season strips of 4-8 years: the full team names need ~98px per button at 12.5px; below 1100px the strip is capped at the 528px content width (78px buttons),
    so it spans the content width with the short coach names there, as phones in portrait already did below 640px */
 @media(max-width:1099px){nav.yrs.n4,nav.yrs.n5,nav.yrs.n6,nav.yrs.n7,nav.yrs.n8{width:100%;gap:8px 7px}nav.yrs.n4 .cf,nav.yrs.n5 .cf,nav.yrs.n6 .cf,nav.yrs.n7 .cf,nav.yrs.n8 .cf{display:none}nav.yrs.n4 .cs,nav.yrs.n5 .cs,nav.yrs.n6 .cs,nav.yrs.n7 .cs,nav.yrs.n8 .cs{display:inline}}
+
+/* 2026-11-10 MEDIAN TABLE FIT (desktop standings table, both sites). The Median record's second line set the W-L column at 104.5px
+   (H2H 30-32px) and pushed the table 43-70px past the content column on BBP (sideways scroll at 1100-1109, 1120-1149, 1240-1243, 956L).
+   Now values only, "8-0 · 7-1" (H2H then Top-N, the order of the card's Breakdown; full wording in the title), in the small display
+   style of the Paper Trail NFL slot (Barlow 600 11px, .04em, tabular; was Plex 500 10.5px, under the 11px floor); the trailing
+   letter-spacing is taken off so its last digit ends where the record above ends. Cell padding 4 -> 3px at 1100-1239px (every column,
+   H2H and Median alike), and the sim column header "Proj finish" -> "Finish" (new_tail.js; it sits under 20K SIMULATIONS, and the
+   header alone held the column 21-28px wider than its tile): together the room 15px figures need from 1120px once records and
+   all-play reach "10-3" / "100-17". */
+.dtt td.dwl small.wlb{font:600 11px/1 var(--display);letter-spacing:.04em;margin-right:-.04em;font-variant-numeric:tabular-nums}
+@media (min-width:1100px) and (max-width:1239px){.dtt td,.dtt th{padding-left:3px!important;padding-right:3px!important}}

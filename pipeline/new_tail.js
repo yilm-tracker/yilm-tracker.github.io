@@ -114,7 +114,7 @@ function dtab(med){
   const rows=o.map((t,i)=>{const d=T[t],[w,l]=wl(t),r=WK[t].map(g=>g[2]>g[3]?'W':'L'),lr=r[r.length-1];let n=0;for(let k=r.length-1;k>=0&&r[k]===lr;k--)n++;
     return {t,i,w,l,hw:d[0],hl:d[1],mw:d[2],pf:d[3],pfr:d[4],pw:d[5],sd:sd(t),pa:d[6],par:d[7],paw:d[8],apw:d[10],apl:d[11],apr:rankOf(d[10],10,false),xw:d[10]/Math.max(1,d[10]+d[11])*G,lk:d[12],ef:EF[t][0],st:lr+n,l5:WK[t].slice(-5).map(g=>g[2]>g[3]),s:so(t)}});
   const cols=[['seed','',r=>r.i],['team','Team',r=>r.t],['wl','W-L',r=>r.w-r.l/100],['st','Strk',null],['l5','Last 5',null],['pf','PF',r=>r.pf],['pw','Per wk ±',r=>r.pw],
-    ['pa','PA',r=>r.pa],['paw','PA/wk',r=>r.paw],['ap','All-play',r=>r.apw],['xw','xWins',r=>r.xw],['lk','Luck',r=>r.lk],['ef','Tot eff',r=>r.ef],['fin','Proj finish',r=>r.s?-r.s[0]:0],['top','#1',r=>r.s?r.s[1]:0],['po','Playoffs',r=>r.s?r.s[3]:0]];
+    ['pa','PA',r=>r.pa],['paw','PA/wk',r=>r.paw],['ap','All-play',r=>r.apw],['xw','xWins',r=>r.xw],['lk','Luck',r=>r.lk],['ef','Tot eff',r=>r.ef],['fin','Finish',r=>r.s?-r.s[0]:0],['top','#1',r=>r.s?r.s[1]:0],['po','Playoffs',r=>r.s?r.s[3]:0]];
   const key=box.dataset.k||'seed',dir=+(box.dataset.d||1);
   const f=cols.find(c=>c[0]===key)[2];
   const sorted=key==='seed'?rows:[...rows].sort((a,b)=>dir*((key==='team'?a.t.localeCompare(b.t):f(b)-f(a))));
@@ -124,7 +124,7 @@ function dtab(med){
     if(key==='seed'&&tier(r.i)!==lt){const pv=lt;lt=tier(r.i);if(pv){const pl=pv==='bye'?['bye','Bye line','Top '+BY+' bye']:['po','Playoff line','Top '+PN+' in'];h+=`<tr class="dtl"><td colspan="${cols.length}"><div class="pline pl-${pl[0]}" role="separator"><b>${pl[1]}</b><i></i><span>${pl[2]}</span></div></td></tr>`}}
     const k_=(h.match(/class="dtr /g)||[]).length;
     h+=`<tr class="dtr ${tier(r.i)}${k_%2?'':' dra'}" data-t="${esc(r.t)}"><td class="dsd">${typeof RNI!=='undefined'&&RNI[r.i+1]?`<img class="rni dri" src="${RNI[r.i+1]}" alt="${r.i+1}" aria-label="Rank ${r.i+1}">`:r.i+1}</td><td class="dtm"><span>${av(r.t)}${esc(r.t)}</span></td>`+
-       `<td class="dwl"><b>${r.w}-${r.l}</b>${med?`<small class="wlb">H2H ${r.hw}-${r.hl} · Top-${N/2} ${r.mw}-${G-r.mw}</small>`:''}</td><td><i class="dsk ${r.st[0]==='W'?'w':'l'}">${r.st}</i></td><td><span class="dl5">${r.l5.map(x=>`<i class="${x?'w':'l'}"></i>`).join('')}</span></td>`+
+       `<td class="dwl"><b>${r.w}-${r.l}</b>${med?`<small class="wlb" title="H2H ${r.hw}-${r.hl} · Top-${N/2} ${r.mw}-${G-r.mw}">${r.hw}-${r.hl} · ${r.mw}-${G-r.mw}</small>`:''}</td><td><i class="dsk ${r.st[0]==='W'?'w':'l'}">${r.st}</i></td><td><span class="dl5">${r.l5.map(x=>`<i class="${x?'w':'l'}"></i>`).join('')}</span></td>`+
        `<td>${r.pf.toFixed(1)}${chip(r.pfr)}</td><td><b>${r.pw.toFixed(1)}</b><small>±${r.sd.toFixed(0)}</small></td><td>${r.pa.toFixed(1)}${chip(r.par)}</td><td><b>${r.paw.toFixed(1)}</b></td>`+
        `<td>${r.apw}-${r.apl}${chip(r.apr)}</td><td><b>${r.xw.toFixed(2)}</b></td><td class="${r.lk>=0.05?'up':r.lk<=-0.05?'dn':''}">${(r.lk>=0?'+':'−')+Math.abs(r.lk).toFixed(2)}</td><td>${r.ef.toFixed(0)}%</td>`+
        (r.s?`<td class="dfin">${rkt(r.s[0],1)}</td><td class="c1">${pc(r.s[1])}</td><td class="c3">${pc(r.s[3])}</td>`:'<td class="dfin"></td><td></td><td></td>')+'</tr>'}
