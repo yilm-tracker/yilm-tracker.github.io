@@ -226,6 +226,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 ### Desktop standings table `LIVE`
 - Equal gaps (≥ 16px) on both sides of the 20K SIMULATIONS divider, measured by visible glyphs; only TEAM gives up width.
 - Every re-draw (resize, font load, sort, H2H/Median) lands on exactly the load layout: the rank chips are fitted before the column widths are pinned. Checked 2026-11-04 at 1100 and 1440, H2H and Median, both sites: every cell 0px apart, screenshots identical (after one matched repaint on both sides; the only residue without it is Chromium re-rasterising a repainted panel, 1 corner pixel at 1/255).
+- Resize re-check 2026-11-09 across the 1120px figure step and 1100px (1440<->1110, 1119<->1120, 1121->1119->1121, 1100->1240->1100, 1000->1110/1130/1124, a fast 1440->1105 drag, phone rotation 440P/402P->956L->back; H2H and Median start; each followed by H2H<->Median, Nerd and a sort): every cell 0px from a fresh load at the final width, both sites (Chromium; WebKitGTK at plain widths); figures and tile digits switch 13.5/8.75 <-> 15/10.25px correctly in both directions.
 
 ### Paper Trail `LIVE`
 - Front Office tab after Drafts. **BBP**: Picks / Players switch; **YILM**: players only.
@@ -274,7 +275,9 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 - **Navigation three levels** (§5): `PENDING`.
 - **List patterns** cleanup of Stats and Team Hub (§6): `BRIEFED`, four questions open.
 - **Shadow cap** for panels/cards over 60px and the eight audited elements (§2.12): decision pending. Re-measured 2026-11-04 at 402: unchanged. Since the audit, Paper Trail's inactive Picks/Players switch (38.8px since 2026-11-06; rule 2px) and its search box (41px; rule 2px) also carry the full 3px.
-- **BBP desktop table in Median mode overflows at 1100-1239px** (found 2026-11-04, predates the re-draw fix; not changed): the W-L cell's second line widens the table to 1068px at 1100 (1020px in H2H), so the page scrolls 8px sideways; 1175px at 1240. YILM fits (1027px at 1100).
+- **BBP desktop table in Median mode overflows sideways** (found 2026-11-04; re-measured 2026-11-09; not fixed, next in the queue): sideways overflow 9px at 1100, 4px at 1105, 0 at 1110-1119, 20-30px at 1120-1130 (table 1106.14px; the 1120px figure step added about 41px), 3px at 1240, 26px at 956L. YILM never overflows (1060.53px at 1120).
+- **H2H/Median toggle does not re-run s2Fit**: at 360P and 402P the Luck line stays on one line and is cut until a resize (found 2026-11-09, both trackers presumably; not fixed).
+- **Rank-tile height depends on canvas rounding of digit height at the real font size**: true ink beside 15px figures is 10.78px; Chromium rounds to 11 (tile 0.19px taller than the digits), WebKitGTK to 10 (tile 0.78px short, 8.75px digits); Safari unverified; tilechk uses the same rounded value so cannot see it; proposed fix (measure at 1000px and scale) not applied.
 - **Coloured data contrast** on the lighter row (§4): open.
 - **Shotgun tally icon in Chromium** (found 2026-11-08, not fixed): headless Chromium paints the SVG mug and the digits on whole CSS px by different rounding, so the mug sits up to 0.77px off the count's cap line depending on the row's y (desktop Chrome may show it); WebKitGTK at 3x is within one device pixel (0.33px) in all but one row (0.71px at 360). Horizontally WebKitGTK snaps the inline SVG box to whole CSS px (round to nearest; measured with a 0.1px margin sweep), so its label → mug gap reads 16px − 0.56 to + 0.47 depending on the row's x (Chromium 16.00-16.17). Tried and rejected: the icon as a background image (both engines drew it at whole-px sizes, 7.1 / 8.0 instead of 7.7) and a JS grid snap (WebKit: count a device pixel off the FAAB label).
 - **Paper Trail TIMES TRADED digits in Chromium phone emulation** (found 2026-11-07): with the phones' 0.85 page scale, headless Chromium's text grid does not line up with its box grid; digits measured up to ~1.5px off vertically (0.4-0.7px horizontally) in 360P / 402P / 440P screenshots. Android Chrome may show it; Safari (WebKit) and Chromium without page scale are within 0.25px. Not fixed.
@@ -285,6 +288,8 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-09 · Retro tracker theme sandbox at /retro/tracker/ (BBP): a themed copy of Classic's built pages, rules in retro/RETRO.md; DESIGN.md rules apply to Classic only and are unchanged; Standings on phones first.
+- 2026-11-09 · Desktop table resize recheck across 1120px: no drift (0px, both sites, both engines); no code change · the 2026-11-04 check predated the 1120px figure step and the shotgun tally.
 - 2026-11-09 · Retro edition lives in retro/ with its own RETRO.md; every rule in this file applies to Classic only and is unchanged.
 - 2026-11-08 · Shotgun tally: FAAB label to mug gap 8 -> 16px · label read as part of the tally (Nicklaus)
 - 2026-11-08 · BBP Standings shotgun tally: beer-mug icon + count of starters at ≤ 0 (and empty slots), completed weeks, on the cards' FAAB line (13px count, mug at its cap height, 8px / 4px ink gaps) and inline after the name in the desktop table; nothing shown at 0; title/aria list; nothing else moves · league house rule (Nicklaus); BBP only.

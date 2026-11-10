@@ -34,6 +34,7 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 - Modes (`pipeline/run.py <mode>`): `weekly` (pull completed week + full rebuild; push events use this), `live` (scores now), `build` (no network), `history`.
 - Live runs do not commit data; weekly runs commit `pipeline/*.json` ("Save season data"). Workflow rebases with `-X theirs` on data conflicts.
 - **Retro edition (BBP only):** retro/ reads data_block.js, wk*.json, champions.json, history/teams.json and avatars/, plus `FN` in new_tail.js and `SH` in full_update.py (as text). After any change to those formats, run retro/build.py and check the page.
+- **Retro tracker theme (BBP only):** retro/theme_build.py reads the built site/ and writes site/retro/tracker/ (Classic's pages + retro/theme.css); after any change to Classic's page shell (head, reveal script, year buttons, style order) run it and check the 7 patches still apply.
 - **BBP local build:** `cd pipeline && python3 run.py build` → `site/index.html`.
 - **YILM local build:** `cd pipeline && python3 season_replay.py 2026 --build-only` → `.season/2026/site/index.html`. YILM builds by replaying its saved Sleeper data (`history/raw/<year>/*.json.gz`, refreshed in CI by `pull_season.mjs`) in a workspace copy `.season/<year>/pipeline`. Past seasons set `DT_PAST=1`.
 - The sandbox has no network to Sleeper/MFL; data for local builds comes from the committed JSON (pull from origin first).
@@ -155,7 +156,7 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 
 
 - At 360 BBP, "Mandingoes" fits only at 16px (with FAAB below the name it is better than before; recheck).
-- BBP desktop table in Median mode is 1068px wide at 1100 (8px sideways scroll); see DESIGN.md §8.
+- BBP desktop table in Median mode overflows sideways: 9px at 1100, 4px at 1105, 0 at 1110-1119, 20-30px at 1120-1130 (table 1106.14px), 3px at 1240, 26px at 956L (measured 2026-11-09); YILM never overflows; see DESIGN.md §8.
 - Converting the MFL seasons (2021-24) into full tracker pages like 2025 was offered.
 - `anthropic-skills:dynasty-tracker-design` skill describes an older version; this file supersedes it.
 
