@@ -285,6 +285,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-09 · Retro edition lives in retro/ with its own RETRO.md; every rule in this file applies to Classic only and is unchanged.
 - 2026-11-08 · Shotgun tally: FAAB label to mug gap 8 -> 16px · label read as part of the tally (Nicklaus)
 - 2026-11-08 · BBP Standings shotgun tally: beer-mug icon + count of starters at ≤ 0 (and empty slots), completed weeks, on the cards' FAAB line (13px count, mug at its cap height, 8px / 4px ink gaps) and inline after the name in the desktop table; nothing shown at 0; title/aria list; nothing else moves · league house rule (Nicklaus); BBP only.
 - 2026-11-08 · Refresh keeps the current tab on both sites: each tab change writes its canonical hash with `replaceState`; a plain URL still opens the defaults; year buttons carry the hash · refreshing Matchups jumped to Standings.
