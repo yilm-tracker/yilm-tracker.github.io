@@ -12,7 +12,9 @@ import re,hashlib,os,json,shutil
 _SCAN=re.compile(r'<script\b.*?</script>|<style\b.*?</style>|<!--.*?-->|<div\b|</div>',re.S)
 _STYLE=re.compile(r'<style\b.*?</style>',re.S)
 HEAVY=('mu','cm','ro')   # rebuilt on each visit and discarded ~1.5s after leaving (lazy.js)
-SUBS={'po':(('bkp','bk'),('psp','ps'))}  # pane: (panel class, radio prefix): <div class="bkp bkp-qf1"> shown by #bk-qf1
+SUBS={'po':(('bkp','bk'),('psp','ps')),'th':(('tqp','thx'),)}  # pane: (panel class, radio prefix): <div class="bkp bkp-qf1"> shown by #bk-qf1
+DROP=('tqp',)             # panels emptied again when another of their group is selected (Team Hub, 2026-11-10: one team at a time on the page)
+if os.environ.get('DT_TH_ONE')=='1':SUBS.pop('th')  # QA: Team Hub as one chunk, to compare against
 KEEP_BUILDS=6            # chunk files of the last N changed builds stay published (pages left open across a deploy)
 
 
@@ -48,7 +50,7 @@ def _subcut(pid,h,files,styles):
             rid=f'{pfx}-{m.group(1)}'
             if m.start()<j or rid in on:continue
             e=_close(h,m.end());sub=_strip_styles(h[m.end():e],styles);fn=_name(f'{pid}-{cls}-{m.group(1)}',sub);files[fn]=sub
-            parts.append(h[j:m.start()]+f'<div class="{cls} {cls}-{m.group(1)}"{m.group(2)} data-lzs="{fn}" data-lzr="{rid}">');j=e
+            parts.append(h[j:m.start()]+f'<div class="{cls} {cls}-{m.group(1)}"{m.group(2)} data-lzs="{fn}" data-lzr="{rid}"{' data-lzx="1"' if cls in DROP else ''}>');j=e
         parts.append(h[j:]);h=''.join(parts)
     return h
 

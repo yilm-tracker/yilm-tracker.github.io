@@ -37,8 +37,13 @@ function init(root,key){  // what the page does at load for content that is in t
 /* panels cut one level deeper (Playoffs bracket games, team panels): built when their radio is checked */
 function subs(root){root.querySelectorAll('[data-lzs]').forEach(function(b){if(b.dataset.lzd)return;var r=root===D?D.getElementById(b.dataset.lzr):root.querySelector('#'+CSS.escape(b.dataset.lzr));if(r&&r.checked)sub(b)})}
 function sub(b){if(b.dataset.lzd||b._pr)return b._pr;var u=b.dataset.lzs,tm=setTimeout(function(){if(!b.dataset.lzd)frame(b)},300);
-  return b._pr=get(u).then(function(h){clearTimeout(tm);b._pr=null;b.innerHTML=h;b.dataset.lzd='1';init(b,u);delete TX[u];fits();done(b,{panel:b.dataset.lzr})},
+  return b._pr=get(u).then(function(h){clearTimeout(tm);b._pr=null;
+    if(b.dataset.lzx){var r=D.getElementById(b.dataset.lzr);if(r&&!r.checked){unhold(b);return}}  // another team was picked while this one loaded
+    b.innerHTML=h;b.dataset.lzd='1';init(b,u);delete TX[u];drop(b);fits();putScroll(b,u);done(b,{panel:b.dataset.lzr})},
   function(e){clearTimeout(tm);b._pr=null;unhold(b);fail(b,function(){sub(b)},e)})}
+/* Team Hub (data-lzx): one team's panel at a time; the others are emptied (inner scroll kept) and fetched again from the HTTP cache */
+function drop(b){if(!b.dataset.lzx)return;var c=b.className.split(' ')[0];b.parentNode.querySelectorAll(':scope>.'+c+'[data-lzx][data-lzd]').forEach(function(x){if(x===b)return;
+  var r=D.getElementById(x.dataset.lzr);if(r&&r.checked)return;saveScroll(x,x.dataset.lzs);x.textContent='';delete x.dataset.lzd})}
 function fits(){if(W.__fitAll)W.__fitAll()}
 /* scroll: inner scrollers are remembered by their path from the pane (or week); positions are read as they scroll,
    never on a tab switch (a layout read there would cut the page short before the new tab is held open) */
@@ -72,7 +77,8 @@ function load(id){var p=PS[id],el=p.el;p.st='loading';hold(el);var tm=setTimeout
     if(cur!==id&&HV[id]){p.st='empty';el.textContent='';unhold(el);return}
     el.innerHTML=h;h=null;p.st='built';init(el,id);delete TX[Z.p[id]];  // no copy kept (2026-11-05): a dropped tab is fetched again, from the HTTP cache
     var wk=id==='mu'?week(true):null;fits();putScroll(el,id);
-    return Promise.resolve(wk).then(function(){done(el,{pane:id});if(cur!==id){if(HV[id])leave(id);else park(id)}})},
+    var sp=[].slice.call(el.querySelectorAll('[data-lzx]')).map(function(b){return b._pr}).filter(Boolean);  // a restored team's panel is built before the tab is shown
+    return Promise.all([wk].concat(sp.map(function(x){return x.catch(function(){})}))).then(function(){done(el,{pane:id});if(cur!==id){if(HV[id])leave(id);else park(id)}})},
   function(e){clearTimeout(tm);p.st='empty';fail(el,function(){if(cur===id)ensure(id)},e)})}
 function ensure(id){var p=PS[id];if(!p)return Promise.resolve();clearTimeout(p.dt);
   if(p.st==='parked'){unpark(id);return Promise.resolve()}
@@ -104,7 +110,9 @@ D.addEventListener('click',function(){setTimeout(function(){var t=D.querySelecto
 W.addEventListener('hashchange',function(){setTimeout(function(){var t=D.querySelector('input[name=tab]:checked');if(t&&t.id.slice(4)!==cur)show(t.id.slice(4))},0)});
 /* prefetch on hover / touch / focus of a tab or group button */
 var GF={gd:Z.po?'po':'st',lab:'sx',fo:'ro'};
-function pre(e){var l=e.target&&e.target.closest&&e.target.closest('label[for]');if(!l)return;var f=l.htmlFor,id=f.indexOf('tab-')===0?f.slice(4):f.indexOf('grp-')===0?GF[f.slice(4)]:null;
+function pre(e){var l=e.target&&e.target.closest&&e.target.closest('label[for]');if(!l)return;var f=l.htmlFor,
+  sb=f.indexOf('thx-')===0?D.querySelector('[data-lzx][data-lzr="'+CSS.escape(f)+'"]'):null;if(sb){if(!sb.dataset.lzd&&!sb._pr)get(sb.dataset.lzs).catch(function(){});return}
+  var id=f.indexOf('tab-')===0?f.slice(4):f.indexOf('grp-')===0?GF[f.slice(4)]:null;
   var p=id&&PS[id];if(!p||p.st!=='empty'||!Z.p[id])return;get(Z.p[id]).catch(function(){});
   if(id==='mu'){var n=null;SEL.forEach(function(x){if(/^mw-\d+$/.test(x))n=x.slice(3)});n=n||Z.cw;if(Z.w[n])get(Z.w[n]).catch(function(){})}}
 ['pointerover','touchstart','focusin'].forEach(function(t){D.addEventListener(t,pre,{passive:true,capture:true})});
