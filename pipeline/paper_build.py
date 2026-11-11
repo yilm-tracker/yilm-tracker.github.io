@@ -32,6 +32,19 @@ H=collections.defaultdict(list)   # sid -> rows [season, date, kind, a, b, x]
 K={};C={}    # picks: key -> [year, round, orig idx, owner idx, used label, used sid]; key -> chain rows
 SRC={}       # season -> 'MFL' | 'Sleeper'
 PICKS=False
+def sides(moves,m,ref,tix):
+    """Trade step as two columns from the receiving team's side (2026-11-10): [got, gave] = every asset of the trade that
+    m's receiving team (m[3]) received / sent, the opened item included; players, then picks (year, round), then FAAB.
+    moves = (kind, id, from, to). An entry is a ref string, or [ref, team idx] when its other team is not the row's
+    From team (three-team trades), so the sheet can name it."""
+    to,frm=m[3],m[2];o={'player':0,'pick':1,'faab':2}
+    def col(i,j):
+        r=[]
+        for mm in sorted((mm for mm in moves if mm[i]==to),key=lambda mm:(o.get(mm[0],3),str(ref(mm)) if mm[0]=='pick' else '')):
+            x=ref(mm)
+            if x:r.append(x if mm[j]==frm else [x,tix(mm[j])])
+        return r
+    return [col(3,2),col(2,3)]
 
 if _dt_os.path.exists(P+'history/paper/sleeper_2025.json'):
     # ------------------------------------------------------------------ BBP: MFL + Sleeper, picks and players
@@ -41,6 +54,12 @@ if _dt_os.path.exists(P+'history/paper/sleeper_2025.json'):
     try:  # approved short team names (DESIGN.md §2.16), single source: PSN in pos/build_pos.py
         import ast;PSN=ast.literal_eval(re.search(r'^PSN=(\{.*?\})',open(P+'pos/build_pos.py',encoding='utf-8').read(),re.M).group(1))
     except Exception:PSN={}
+    # short team names for pick labels in the sheet's trade columns only (approved by Nicklaus 2026-11-11): the pipeline's
+    # own SH map in full_update.py (roster id -> short name), read as a literal like PSN above (single source; never
+    # retyped). Emitted once as PT.N (team name -> short form, only where it differs). PSN / data-ab are not touched.
+    try:_SH=ast.literal_eval(re.search(r'^SH=(\{.*?\})',open(P+'full_update.py',encoding='utf-8').read(),re.M).group(1))
+    except Exception:_SH={}
+    TSH={A.ST[int(k)]:v for k,v in _SH.items() if int(k) in A.ST and v and v!=A.ST[int(k)]}
     try:import draft_build as DB  # Drafts' NFL draft slot lookup (nflslot: same data, matching and UDFA rule)
     except Exception:DB=None
     SP=A.SP
@@ -81,9 +100,7 @@ if _dt_os.path.exists(P+'history/paper/sleeper_2025.json'):
             if m[0]!='player':continue
             sid=str(m[1]);pinfo(sid)
             if ty=='trade':
-                ret=[x for x in (ref(mm) for mm in ev['moves'] if m[2] is not None and mm[3]==m[2]) if x]
-                wth=[x for x in (ref(mm) for mm in ev['moves'] if mm is not m and mm[2]==m[2] and mm[3]==m[3]) if x]
-                H[sid].append([y,d,'T',ti(m[3]),ti(m[2]),ret,wth])
+                H[sid].append([y,d,'T',ti(m[3]),ti(m[2]),*sides(ev['moves'],m,ref,ti)])
             elif ty=='draft':
                 kd={'startup':'s','rookie':'r','import':'i','supplemental':'p'}.get(ev.get('kind'),'r')
                 q=pkey(ev['pick']) if ev.get('pick') else None
@@ -114,9 +131,7 @@ if _dt_os.path.exists(P+'history/paper/sleeper_2025.json'):
                         sid=str(ev['moves'][0][1]);pinfo(sid);used=[dlabel(ev),sid]
                         rows.append([ev['season'],d,'U',ti(by),-1,[dlabel(ev),sid]]);continue
                     if m[2]!=own:rows.append([ev['season'],d,'M',ti(m[2]),ti(own),[]])
-                    ret=[x for x in (ref(mm) for mm in ev['moves'] if mm[3]==m[2]) if x]
-                    wth=[x for x in (ref(mm) for mm in ev['moves'] if mm is not m and mm[2]==m[2] and mm[3]==m[3]) if x]
-                    rows.append([ev['season'],d,'T',ti(m[3]),ti(m[2]),ret,wth]);own=m[3]
+                    rows.append([ev['season'],d,'T',ti(m[3]),ti(m[2]),*sides(ev['moves'],m,ref,ti)]);own=m[3]
                 if y<=cur and not used and y<2025 and not rows:continue
                 K[key]=[y,r,ti(o),ti(own),used[0] if used else '',used[1] if used else '']
                 C[key]=rows
@@ -205,11 +220,18 @@ else:
         d=day(t.get('status_updated') or t.get('created'));ty=t['type'];RN_=lambda rid:RT.get((y,rid))
         adds=t.get('adds') or {};drops=t.get('drops') or {}
         if ty=='trade':
-            for sid,rid in adds.items():
-                pinfo(sid);frm=drops.get(sid)
-                ret=['p'+s2 for s2,r2 in adds.items() if frm is not None and r2==frm]+[f'${w["amount"]:g}' for w in t.get('waiver_budget') or [] if frm is not None and w['receiver']==frm]
-                wth=['p'+s2 for s2,r2 in adds.items() if s2!=sid and r2==rid and drops.get(s2)==frm]
-                H[sid].append([y,d,'T',ti(RN_(rid)),ti(RN_(frm)) if frm else -1,ret,wth])
+            # every asset of the trade as (kind, id, from roster, to roster): players, FAAB, and draft picks (plain text 'x' refs:
+            # a redraft league has no pick sheets; none traded so far)
+            mv=[('player',s2,drops.get(s2),r2) for s2,r2 in adds.items()]
+            mv+=[('pick',f'{dp["season"]} R{dp["round"]} ({RN_(dp["roster_id"])})',dp['previous_owner_id'],dp['owner_id']) for dp in t.get('draft_picks') or []]
+            mv+=[('faab',w['amount'],w['sender'],w['receiver']) for w in t.get('waiver_budget') or []]
+            rf=lambda mm:'p'+mm[1] if mm[0]=='player' else ('x'+mm[1] if mm[0]=='pick' else f'${mm[1]:g}')
+            for mm in mv:
+                if mm[0]=='player':pinfo(mm[1])
+            for m in mv:
+                if m[0]!='player':continue
+                sid,frm,rid=m[1],m[2],m[3]
+                H[sid].append([y,d,'T',ti(RN_(rid)),ti(RN_(frm)) if frm else -1,*sides(mv,m,rf,lambda r:ti(RN_(r)) if r else -1)])
             continue
         for sid,rid in adds.items():
             pinfo(sid);k={'waiver':'W','free_agent':'A','commissioner':'CA'}.get(ty,'A')
@@ -221,7 +243,7 @@ else:
 
 # every row in date order (stable: a draft or claim before a same-day drop)
 for sid in H:H[sid].sort(key=lambda r:(r[1],{'R':0,'T':1,'W':2,'A':2,'CA':2,'M':3,'D':4,'CD':4,'U':5}.get(r[2],3)))
-PT=dict(T=T,S={str(k):v for k,v in SRC.items()},P=PL,H=H,K=K,C=C,Z={t:slug(t) for t in T})
+PT=dict(T=T,S={str(k):v for k,v in SRC.items()},P=PL,H=H,K=K,C=C,Z={t:slug(t) for t in T},N={t:v for t,v in (TSH if PICKS else {}).items() if t in TI})
 _js=json.dumps(PT,separators=(',',':'),ensure_ascii=False)
 if __name__=='__main__' and '--stats' in sys.argv:
     print('teams',len(T),'players',len(PL),'rows',sum(len(v) for v in H.values()),'picks',len(K),'chain rows',sum(len(v) for v in C.values()),'json',len(_js))
@@ -305,8 +327,22 @@ const refh=r=>{const c=r[0],v=r.slice(1);if(c==='p'){const p=D.P[v];return '<but
  if(c==='k')return '<button type="button" class="ptr" data-k="'+esc(v)+'">'+esc(KN(v))+'</button>';if(c==='$')return '<span class="ptr0">$'+esc(v)+' FAAB</span>';return ''};
 const lst=a=>a.length?a.join(', '):'nothing';
 const dk={s:'Startup draft',r:'Rookie draft',i:'Sleeper import',p:'Supplemental draft',d:'Draft'};
-function line(r,isPick){const[y,d,k,a,b,x,w]=r,ta=a>=0?T[a]:'',tb=b>=0?T[b]:'';let l1='',l2='',who=a;
- if(k==='T'){l1='Traded to <b>'+esc(ta)+'</b>';l2=(tb?'From '+esc(tb)+' · ':'')+(w&&w.length?'with '+w.map(refh).join(', ')+' · ':'')+'for '+lst(x.map(refh))}
+// Trade step (2026-11-10): line 1 and "From" as before, then two columns from the receiving team's side: left = every
+// asset it received (+), right = every asset it sent (−). x / w = [got, gave] (sides() in the build): a ref, or
+// [ref, team] when the item's other team is not the row's From team (three-team trades: named under the item).
+// me = the open sheet's own ref: bold, not a link. Pick = "2029 R1 " + "(original team)" (.pttot never breaks inside;
+// data-ab = the SH short team name, PT.N). trFit() picks the forms.
+function titem(q,sg,me){const r=typeof q==='string'?q:q[0],o=typeof q==='string'?-1:q[1],c=r[0],v=r.slice(1);let h='';
+ if(c==='p'){const p=D.P[v],n=esc(p?p[0]:v);h=r===me?'<b class="pttme" data-n="'+n+'">'+n+'</b>':'<button type="button" class="ptr" data-p="'+esc(v)+'" data-n="'+n+'">'+n+'</button>'}
+ else if(c==='k'){const kv=D.K[v],tn=kv?T[kv[2]]:'',ab=tn&&D.N&&D.N[tn],n=kv?kv[0]+' R'+kv[1]+' <span class="pttot"'+(ab?' data-ab="('+esc(ab)+')" data-f="('+esc(tn)+')"':'')+'>('+esc(tn)+')</span>':esc(v);
+  h=r===me?'<b class="pttme">'+n+'</b>':'<button type="button" class="ptr" data-k="'+esc(v)+'"'+(kv?' aria-label="'+esc(KN(v))+'"':'')+'>'+n+'</button>'}
+ else if(c==='$')h='<span class="ptr0">$'+esc(v)+' FAAB</span>';
+ else if(c==='x'){const m=/^(.*?) (\(.*\))$/.exec(v);h='<span class="ptr0">'+(m?esc(m[1])+' <span class="pttot">'+esc(m[2])+'</span>':esc(v))+'</span>'}
+ return '<span class="ptti"><i class="pttk '+(sg>0?'pttkp':'pttkn')+'">'+(sg>0?'+':'−')+'</i><span class="pttx">'+h+(o>=0?'<small class="pttcp">'+(sg>0?'from ':'to ')+esc(T[o])+'</small>':'')+'</span></span>'}
+function tcols(x,w,me){const col=(a,sg,lab)=>'<span class="pttc" role="group" aria-label="'+lab+'">'+(a&&a.length?a.map(q=>titem(q,sg,me)).join(''):'<span class="ptti pttno"><i class="pttk"></i><span class="pttx">Nothing</span></span>')+'</span>';
+ return '<span class="pttr">'+col(x,1,'Received')+col(w,-1,'Sent')+'</span>'}
+function line(r,isPick,me){const[y,d,k,a,b,x,w]=r,ta=a>=0?T[a]:'',tb=b>=0?T[b]:'';let l1='',l2='',l3='',who=a;
+ if(k==='T'){l1='Traded to <b>'+esc(ta)+'</b>';l2=(tb?'From '+esc(tb):'')+((x||[]).concat(w||[]).some(q=>typeof q!=='string')?(tb?' · ':'')+'3-team trade':'');l3=tcols(x,w,me)}
  else if(k==='W'){l1='Claimed by <b>'+esc(ta)+'</b>';l2='Waivers'+(x[0]?' · $'+esc(x[0])+' FAAB':'')}
  else if(k==='A'){l1='Added by <b>'+esc(ta)+'</b>';l2='Free agent'}
  else if(k==='CA'){l1='Added by <b>'+esc(ta)+'</b>';l2='Commissioner'}
@@ -316,9 +352,9 @@ function line(r,isPick){const[y,d,k,a,b,x,w]=r,ta=a>=0?T[a]:'',tb=b>=0?T[b]:'';l
  else if(k==='U'){l1='Used by <b>'+esc(ta)+'</b>';l2=esc(x[0])+' · '+refh('p'+x[1])}
  else if(k==='M'){l1='Moved to <b>'+esc(ta)+'</b>';l2='From '+esc(tb)+' · commissioner, no trade logged'}
  const m=+d.slice(5,7),dd=+d.slice(8,10);
- return '<div class="pte"><span class="ptdt"><i>'+MO[m-1]+'</i><b>'+dd+'</b></span>'+av(who)+'<span class="ptx1"><span class="pta">'+l1+'</span>'+(l2?'<span class="ptb2">'+l2+'</span>':'')+'</span></div>'}
-function body(rows,isPick){let h='',cur=null;
- for(const r of rows){const y=r[0];if(y!==cur){cur=y;h+='<div class="ptsy"><span>'+y+'</span><span>'+esc(D.S[y]==='MFL'?'MyFantasyLeague':'Sleeper')+'</span></div>'}h+=line(r,isPick)}
+ return '<div class="pte"><span class="ptdt"><i>'+MO[m-1]+'</i><b>'+dd+'</b></span>'+av(who)+'<span class="ptx1"><span class="pta">'+l1+'</span>'+(l2?'<span class="ptb2">'+l2+'</span>':'')+'</span>'+l3+'</div>'}
+function body(rows,isPick,me){let h='',cur=null;
+ for(const r of rows){const y=r[0];if(y!==cur){cur=y;h+='<div class="ptsy"><span>'+y+'</span><span>'+esc(D.S[y]==='MFL'?'MyFantasyLeague':'Sleeper')+'</span></div>'}h+=line(r,isPick,me)}
  return h||'<p class="ptnone">No moves yet.</p>'}
 const S=document.querySelector('.pts'),ST=S.querySelector('.ptst'),SS=S.querySelector('.ptss'),SB=S.querySelector('.ptsb');let back=null,pushed=false;
 function show(kind,id,push){let t='',s='',rows=[];
@@ -332,13 +368,32 @@ function show(kind,id,push){let t='',s='',rows=[];
    s='<span class="ptsl">'+av(v[2])+'<span><b>'+esc(T[v[2]])+'</b>’s pick</span></span>'
      +'<span class="ptsm">'+(!v[4]&&v[6]?'Projected '+esc(v[6])+' · ':'')+(v[4]?'Pick '+esc(v[4])+' · used by '+esc(T[v[3]])+' · '+refh('p'+v[5]):(v[3]===v[2]?'Not traded · ':'')+'Owned by '+esc(T[v[3]]))+'</span>';
    rows=rows.slice().reverse()}
- ST.innerHTML=t;SS.innerHTML=s;SB.innerHTML=body(rows,kind==='pick');SB.scrollTop=0;
+ ST.innerHTML=t;SS.innerHTML=s;SB.innerHTML=body(rows,kind==='pick',(kind==='pick'?'k':'p')+id);SB.scrollTop=0;
  if(S.hidden){back=document.activeElement;S.hidden=false;document.documentElement.classList.add('ptlock')}
+ trFit();
  const h='#paper-trail/'+kind+'/'+id;if(push&&location.hash!==h){history.pushState({pt:1},'',h);pushed=true}
- requestAnimationFrame(()=>{fitT();S.querySelector('.ptsx').focus({preventScroll:true})});return true}
+ requestAnimationFrame(()=>{fitT();trFit();S.querySelector('.ptsx').focus({preventScroll:true})});return true}
 function hide(fromPop){if(S.hidden)return;S.hidden=true;document.documentElement.classList.remove('ptlock');
  if(!fromPop){if(pushed&&history.state&&history.state.pt){history.back()}else history.replaceState(null,'','#paper-trail')}pushed=false;
  if(back&&back.focus)back.focus({preventScroll:true})}
+// trFit (2026-11-10), trade columns of the open sheet, per item: one line at full form -> approved short form (pick:
+// the team's SH short name from full_update.py, PT.N; player: generation suffix dropped, then the LUA abbreviation, as
+// slotFit) -> the item wraps inside its own column under its text (the mark column gives the hanging indent; a pick
+// breaks before its "(team)": the full name again when that fits the column on its own line, else the short one, which
+// itself wraps only if it is wider than the column). Never shrinks, clips or ellipsises. Reads, then writes.
+function trFit(){if(S.hidden)return;const A=typeof LUA!=='undefined'?LUA:{},N=[...SB.querySelectorAll('.pttx')];if(!N.length)return;
+ N.forEach(n=>{n.classList.remove('pttwr','pttwr2');const o=n.querySelector('.pttot[data-f]');if(o)o.textContent=o.dataset.f;const p=n.querySelector('[data-n]');if(p){p.textContent=p.dataset.n;p.removeAttribute('title')}});
+ const ov=n=>{const e=n.firstElementChild;return e?e.getBoundingClientRect().width>n.getBoundingClientRect().width+.05:false};
+ const O=N.filter(ov);
+ O.forEach(n=>{const o=n.querySelector('.pttot[data-ab]'),p=n.querySelector('[data-n]');
+  if(o){o.textContent=o.dataset.ab;if(!ov(n))return}
+  if(p){const full=p.dataset.n;let w=full.split(' ');const set=t=>{p.textContent=t;p.title=full;return !ov(n)};
+   const sx=w.length>2&&/^(Jr\.?|Sr\.?|II|III|IV|V)$/.test(w[w.length-1]);if(sx){w=w.slice(0,-1);if(set(w.join(' ')))return}
+   const j=w.findIndex(x=>A[x]);if(j>=0){w[j]=A[w[j]];if(set(w.join(' ')))return}
+   p.textContent=full;p.removeAttribute('title')}
+  n.classList.add('pttwr');const q=n.querySelector('.pttot'),wd=()=>q.getBoundingClientRect().width>n.getBoundingClientRect().width+.05;
+  if(q&&q.dataset.f){q.textContent=q.dataset.f;if(wd())q.textContent=q.dataset.ab}
+  if(q&&wd())n.classList.add('pttwr2')})}
 function fitT(){const n=ST.querySelector('.ptsn');if(!n)return;n.style.fontSize='';let s=parseFloat(getComputedStyle(n).fontSize);while(ST.scrollWidth>ST.clientWidth+.5&&s>17){s-=.5;n.style.fontSize=s+'px'}}
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-k],[data-p]');
  if(b&&(X.contains(b)||S.contains(b))){if(b.classList.contains('ptb'))return;ev.preventDefault();b.dataset.k?show('pick',b.dataset.k,true):show('player',b.dataset.p,true)}});
@@ -469,7 +524,7 @@ function pjFit(){const B=[...X.querySelectorAll('.ptv-k .ptpj b')].filter(b=>b.o
 Q&&Q.addEventListener('input',draw);draw();
 X.querySelectorAll('.ptb').forEach(b=>b.addEventListener('click',()=>{X.querySelectorAll('.ptb').forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on)});
  X.querySelectorAll('.ptv').forEach(v=>v.hidden=!v.classList.contains('ptv-'+b.dataset.v));fitN()}));
-document.addEventListener('change',()=>requestAnimationFrame(fitN));addEventListener('resize',()=>requestAnimationFrame(()=>{fitN();if(!S.hidden)fitT()}));document.fonts&&document.fonts.ready.then(()=>{fitN();route()});
+document.addEventListener('change',()=>requestAnimationFrame(fitN));addEventListener('resize',()=>requestAnimationFrame(()=>{fitN();if(!S.hidden){fitT();trFit()}}));document.fonts&&document.fonts.ready.then(()=>{fitN();route()});
 route();
 })</script>'''
 SEC=''.join(out)+f'<script>window.PT={_js};</script>'+JS
@@ -575,6 +630,18 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptr{all:unset;cursor:pointer;color:var(--chalk);text-decoration:underline;text-decoration-color:var(--text-dim);text-underline-offset:2px}'
  '.ptr:focus-visible{outline:2px solid var(--chalk);outline-offset:1px}.ptr0{color:var(--chalk)}'
  '.ptsm .ptr{font-weight:600}'
+ # trade step, two columns (2026-11-10): row 2 of the sheet row, under the action lines, in the content column. Equal
+ # columns, 16px apart; item = mark column (8px) + 5px + text; items 5px apart (the action lines' gap); text = the detail
+ # line's 12.5px/1.35; the open sheet's own item bold --chalk, no underline; marks --text-dim (the sign is the cue; --loss is 2.92:1 on YILM's
+ #   lighter row, under 3:1, and green/red are results colours, DESIGN.md 2.3).
+ '.pte>.pttr{grid-column:3;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;align-items:start;margin-top:8px}'
+ '.pttc{display:flex;flex-direction:column;gap:5px;min-width:0}'
+ '.ptti{display:grid;grid-template-columns:8px minmax(0,1fr);column-gap:5px;align-items:start;font:400 12.5px/1.35 var(--body);color:var(--chalk)}'
+ '.pttk{font:600 12.5px/1.35 var(--body);font-style:normal;text-align:center}.pttk{color:var(--text-dim)}'
+ '.pttx{min-width:0;white-space:nowrap}.pttx.pttwr{white-space:normal}.pttot{white-space:nowrap}.pttx.pttwr2 .pttot{white-space:normal}'
+ '.pttx>*{display:inline-block;max-width:none}.pttx.pttwr>*{display:inline}'
+ '.pttme{font-weight:600;color:var(--chalk)}.pttno{color:var(--text-dim)}'
+ '.pttx>.pttcp,.pttx.pttwr>.pttcp{display:block;font:400 11px/1.3 var(--body);color:var(--text-dim);white-space:normal;margin-top:1px}'
  '.ptx .nfl,.pts .nfl{flex:none}'
  +yrs_css)
 if __name__=='__main__':
