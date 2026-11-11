@@ -482,4 +482,13 @@ function luFit(){LUR.length=0;
   window.__luReport=LUR.slice()}
 window.luFit=luFit;
 if(!FL())luFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(luFit);addEventListener('resize',()=>requestAnimationFrame(luFit));document.addEventListener('change',()=>requestAnimationFrame(luFit));document.addEventListener('panebuilt',()=>requestAnimationFrame(luFit));
+// Remaining schedule (Stats matrix and Team Hub, 2026-11-10): the opponents' points-for rank chips are sized by the rank-tile
+// sizer at 16px (digits ink-centred, 3.5px from the frame, one width for one or two digits) where they sit beside the picture with
+// the average under them. In the one-line desktop cell (Stats, >=1100px) the chip sits beside the average, so its height is that
+// figure's cap height (Barlow Condensed .7em), like the Standings stat-line tiles.
+(function(){function sosFit(){if(!window.inkBatch)return;const c=[...document.querySelectorAll('.sosm .sox .ch')].filter(t=>t.offsetParent);if(!c.length)return;
+  const one=innerWidth>=1100,H=new Map();c.forEach(t=>{let h=16;if(one&&t.closest('.sos1:not(.tqgrid)')){const a=t.parentNode.querySelector('.soa');if(a)h=Math.round(parseFloat(getComputedStyle(a).fontSize)*70)/100}H.set(t,h)});
+  inkBatch(c.map(t=>[t,H.get(t)]))}
+let q=0;function sch(){if(q)return;q=requestAnimationFrame(()=>{q=0;sosFit()})}
+if(!FL())sosFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(sosFit);addEventListener('resize',sch);document.addEventListener('change',sch);document.addEventListener('panebuilt',sch);window.sosFit=sosFit})();
 </script>

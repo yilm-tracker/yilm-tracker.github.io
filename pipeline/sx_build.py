@@ -108,7 +108,7 @@ def m_sched():
     lmx=max([abs(T[x][0]-av[x]) for x in TEAMS]+[0.1])  # bar scale = the largest luck either way (a fixed 1.2 capped most bars at full length)
     lr=[[nmb(a,dvb(T[a][0]-av[a],lmx)),f'<span class="sxv">{T[a][0]}</span>',f'<span class="sxv">{av[a]:.1f}</span>',f'<span class="sxv b {"up" if T[a][0]-av[a]>=0.5 else "dn" if T[a][0]-av[a]<=-0.5 else ""}">{sgn(T[a][0]-av[a])}</span>'] for a in sorted(TEAMS,key=lambda a:-(T[a][0]-av[a]))]
     return (head('Schedule swap',f'Wins through Week {G} with each team\'s schedule')+mat+
-            head('Schedule luck',f'Actual wins vs average across all {len(TEAMS)} schedules')+table([('Team',''),('Wins','42px'),('Avg','42px'),('Luck','46px')],lr))
+            head('Schedule luck',f'Actual wins vs average across all {len(TEAMS)} schedules')+table([('Team',''),('Wins','42px'),('Avg','42px'),('Luck','46px')],lr)+sos_block())
 EW=D.everyweek()
 def _rec(r):return f'{r[0]}-{r[1]}'+(f'-{r[2]}' if r[2] else '')
 def m_everyweek():
@@ -175,11 +175,7 @@ def m_lineups():
         def ln(q,lab,cls):return f'<div class="dln dln2"><span class="dlb">{lab}</span><span class="dnm">{pz(q["pos"])}<b>{e(q["name"])}</b></span><em class="{cls}">{q["pts"]:.1f}</em></div>'
         li.append(f'<div class="dcl dcl2"><div class="dch dch2"><i class="dwk">Wk {r["w"]}</i><span class="dtm">{e(r["team"])}</span><span class="dsw"><b>+{r["swing"]:.1f}</b><small>pts lost</small></span></div>'
                   +ln(r['bench'],'Bench','up')+ln(r['start'],'Started','dn')+(f'<div class="dft">{flip}</div>' if flip else '')+'</div>')
-    mxl=max(v['lost'] for v in PER.values())
-    rows=[[nmb(t,hbar(PER[t]['lost'],mxl,'am')),f'<span class="sxv">{PER[t]["lost"]:.1f}</span>',f'<span class="sxv">{PER[t]["lost"]/G:.1f}</span>',f'<span class="sxv b {"dn" if PER[t]["flip"] else "z"}">{PER[t]["flip"]}</span>'] for t in sorted(TEAMS,key=lambda t:(-PER[t]['flip'],-PER[t]['lost']))]
-    return (head('Costliest lineup calls','Biggest single bench-for-starter swaps')+''.join(li)+
-            head('Winnable losses','Losses the best lineup on the roster would have won')+
-            table([('Team',''),('Dropped','56px'),('Per wk','46px'),('Winnable','58px')],rows))
+    return ((perfect_block() if G else '')+head('Costliest lineup calls','Biggest single bench-for-starter swaps')+''.join(li)+lineups_table())
 # ---------- 5 Projections
 TM,HI,LO=D.projections()
 def m_proj():
@@ -194,8 +190,8 @@ CL,CLG,BLG=D.close()
 def m_close():
     rows=[[nmb(t,dvb(CL[t]['avgm'],45)),f'<span class="sxv">{CL[t]["close"][0]}-{CL[t]["close"][1]}</span>',f'<span class="sxv">{CL[t]["blow"][0]}-{CL[t]["blow"][1]}</span>',f'<span class="sxv b {"up" if CL[t]["avgm"]>=0.05 else "dn"}">{sgn(CL[t]["avgm"])}</span>'] for t in sorted(TEAMS,key=lambda t:-CL[t]['avgm'])]
     def gl(gs,cls):return ''.join(f'<div class="gml"><span class="gwk">Wk {g["w"]}</span><span class="gtm"><span><b class="gln"><i class="wl w">W</i>{e(g["win"])}</b><em>{g["ws"]:.2f}</em></span><span><span class="gln"><i class="wl l">L</i>{e(g["lose"])}</span><em>{g["ls"]:.2f}</em></span></span><b class="gmv {cls}">{g["m"]:.2f}</b></div>' for g in gs)
-    return (head('Margins',f'Close = under 10 pts · blowout = 30+ pts')+table([('Team',''),('Close','46px'),('Blowout','56px'),('Avg','46px')],rows)+
-            head('Closest games','Winner on top · margin on the right')+gl(CLG,'cl')+head('Biggest blowouts','Winner on top · margin on the right')+gl(BLG,'bo'))
+    return (head('Margins',f'Close = 10 pts or less · blowout = 30+ pts')+table([('Team',''),('Close','46px'),('Blowout','56px'),('Avg','46px')],rows)+
+            close_list()+head('Biggest blowouts','Winner on top · margin on the right')+gl(BLG,'bo'))
 # ---------- Consistency: how much each team's weekly score swings
 import statistics as _st
 def m_cons():
@@ -400,15 +396,109 @@ def m_homeroad():
     o.append(head('Points per start by team','Each team\'s starters at home and on the road · sorted by the gap'))
     o.append(table([('Team',''),(HT,'56px'),(RT,'56px'),('Diff','52px')],rows,'hx-tb'))
     return ''.join(o)
-MODS=[('pos','Positions',None),('odds','Odds',m_odds),*([('drf','Draft',m_draft)] if 'pick' in next(iter(PS['teams'].values())) else []),('sch','Schedules',m_sched),('ew','Every week',m_everyweek),('trd','Trades',m_trades),('lu','Lineups',m_lineups),('prj','Projections',m_proj),
-      ('mg','Margins',m_close),('cs','Consistency',m_cons),('st','Stars',m_stars),('yo','Age',m_youth),('rk','Ranks',m_heat),('by','Byes',m_byes),('hr','Home / Road',m_homeroad)]
+# ---------- 2026-11-10 Form, remaining schedule, prime-time sweat, perfect-lineup record (identical in both repos)
+FM=D.form();SO=D.sos();SWL=D.sweats('live');SWA=D.sweats('any');PFX=D.perfect();CGM=D.closegames();CHX=D.couldhave()
+def _tone(r):n=len(TEAMS);return 'gold' if r==1 else 'g' if r<=3 else 'b last' if r==n else 'b' if r>n-3 else ''   # the stat rank chip's colours
+def rchip(r):return f'<i class="ch {_tone(r)}"><span class="ct">{r}</span></i>'
+def soscell(o,w,i):
+    """one opponent: picture + points-for rank chip, his points per week under them (weeks past the 5th are desktop-only)"""
+    return (f'<span class="sox{" sxl" if i>=5 else ""}" title="Wk {w}: {e(o)} · {ordinal(T[o][4])} in points for · {SO["pfw1"][o]:.1f} per wk"><i class="pav" data-avt="{e(o)}" aria-hidden="true"></i>'
+            f'{rchip(T[o][4])}<b class="soa">{SO["pfw1"][o]:.1f}</b></span>')
+def ordinal(n):return f'{n}{"th" if 10<=n%100<=20 else {1:"st",2:"nd",3:"rd"}.get(n%10,"th")}'
+PASTS=_dt_os.environ.get('DT_PAST')=='1'
+FORMT='Late-season form' if PASTS else 'Current form'   # a past season's last weeks are not current
+def sd_(n):return ('+' if n>0 else '−' if n<0 else '')+str(abs(n))   # signed whole number, neutral colour
+def s1_(x):return ('+' if x>0 else '−' if x<0 else '')+f'{abs(x):.1f}'
+def _wr(a):return f'{a[0]}-{a[1]}'+(f'-{a[2]}' if len(a)>2 and a[2] else '')
+def _wkr(w):return f'Wk {w[0]}–{w[-1]}' if len(w)>1 else f'Wk {w[0]}'
+def m_form():
+    wk=FM['weeks'];n=len(wk);mx=max(r['tot'] for r in FM['rows']) or 1
+    rows=[[nmb(r['team'],hbar(r['tot'],mx,'am')),f'<span class="sxv b fm2"><b>{r["tot1"]:.1f}</b><i class="fma"><b>{r["avg1"]:.1f}</b> /wk</i></span>',
+           f'<span class="sxv">{r["rank"]}</span>',f'<span class="sxv">{r["seed"]}</span>',f'<span class="sxv b{" z" if not r["diff"] else ""}">{sd_(r["diff"])}</span>'] for r in FM['rows']]
+    return (head(FORMT,f'Points over the last {n} week{"s" if n>1 else ""} ({_wkr(wk)}), highest first, with the per-week average · Diff = seed minus form rank')
+            +table([('Team',''),(f'Last {n}','54px'),('Form','32px'),('Seed','32px'),('Diff','30px')],rows,'nsf'))
+def soshd(wk):return '<span></span>'+''.join(f'<span{" class=sxl" if i>=5 else ""}>W{w}</span>' for i,w in enumerate(wk))+'<span>Avg</span>'
+def sos_block():
+    wk=SO['weeks']
+    if not wk:return ''
+    hd=soshd(wk)
+    rows=''.join(f'<div class="sxr">{mxn(r["team"])}'+''.join(soscell(o,w,i) for i,(w,o) in enumerate(zip(wk,r['opp'])))+f'<span class="hav">{r["v1"]:.1f}</span></div>' for r in SO['rows'])
+    more=f' · phones show the next 5 of {len(wk)} weeks' if len(wk)>5 else ''
+    return (head('Remaining schedule',f'Hardest first · each opponent with his points-for rank and points per week · Avg = the opponents\' points per week, {_wkr(wk)} · league average {SO["lg1"]:.1f}{more}')
+            +f'<div class="sxm hmx sosm{" sos1" if len(wk)<=8 else ""}" style="--n:{len(wk)};--n5:{min(len(wk),5)}"><div class="sxr sxhd">{hd}</div>{rows}</div>')
+LCAP=25   # a league-wide game list shows every game up to this many rows; past it, the newest LCAP ("N of M shown"); Team Hub has each team's full lists
+def _cap(gs):
+    m=len(gs);return sorted(gs,key=lambda g:-g['w'])[:LCAP],(str(m) if m<=LCAP else f'{LCAP} of {m} shown')
+def gmrow(w,win,ws,lose,ls,chip,best=None):   # the Margins "closest games" row: winner on top, loser under, the deciding figure at the right
+    # best=(winner's, loser's best-lineup points): a second figure column beside the actual scores (Could-have games)
+    def nm(v,i):return f'<em>{v:.2f}</em>' if not best else f'<span class="gnm"><em>{v:.2f}</em><em class="gbx">{best[i]:.2f}</em></span>'
+    return (f'<div class="gml{" gm2" if best else ""}"><span class="gwk">Wk {w}</span><span class="gtm"><span><b class="gln"><i class="wl w">W</i>{e(win)}</b>{nm(ws,0)}</span>'
+            f'<span><span class="gln"><i class="wl l">L</i>{e(lose)}</span>{nm(ls,1)}</span></span><b class="gmv cl">{chip}</b></div>')
+def close_list():
+    gs,cnt=_cap([dict(g,team=t) for t in TEAMS for g in CGM[t] if g['win']]);gs.sort(key=lambda g:(g['m'],-g['w']))
+    return (head(f'Close games · {cnt}','Every game decided by 10.00 or less · winner on top · margin on the right · closest first')
+            +(''.join(gmrow(g['w'],g['team'],g['me'],g['opp'],g['them'],f'{g["m"]:.2f}') for g in gs) or '<div class="tqnone">None yet</div>'))
+def could_list():
+    # one row per game: it is the loser's winnable loss and the winner's losable win (the same test, read from either side)
+    gs,cnt=_cap([dict(g,team=t) for t in TEAMS for g in CHX[t]['won']]);gs.sort(key=lambda g:(g['best']-g['them'],-g['w']))
+    hd='<div class="gml gm2 gmh"><span></span><span class="gtm"><span><span></span><span class="gnm"><em>Actual</em><em>Best</em></span></span></span><b>Flips by</b></div>'
+    return (head(f'Could-have games · {cnt}','Each game is the loser\'s winnable loss and the winner\'s losable win · Actual = the score · Best = each side\'s best lineup · Flips by = the loser\'s best lineup over the winner\'s actual score · smallest first')
+            +(hd+''.join(gmrow(g['w'],g['opp'],g['them'],g['team'],g['me'],f'{D.q2(D._fx(g["best"])-D._fx(g["them"])):.2f}',(g['obest'],g['best'])) for g in gs) if gs else '<div class="tqnone">None yet</div>'))
+def lineups_table():
+    mxl=max(v['bench'] for v in PFX.values()) or 1
+    def cn(v):return f'<span class="sxv b{"" if v else " z"}">{v}</span>'
+    rows=[[nmb(t,hbar(PFX[t]['bench'],mxl,'am')),f'<span class="sxv b fm2"><b>{PFX[t]["bench1"]:.1f}</b><i class="fma"><b>{D.q2(D._fx(PFX[t]["bench"])/G,1):.1f}</b> /wk</i></span>',cn(len(CHX[t]['won'])),cn(len(CHX[t]['lost']))]
+          for t in sorted(TEAMS,key=lambda t:(-len(CHX[t]['won']),-len(CHX[t]['lost']),-PFX[t]['bench']))]
+    return (head('Winnable losses · Losable wins','Winnable = losses the best lineup on the roster would have won · Losable = wins the opponent\'s best lineup would have taken · Dropped = points left on the bench')
+            +table([('Team',''),('Dropped','54px'),('Winnable','52px'),('Losable','46px')],rows,'nsl')+could_list())
+def _swg():
+    seen=set();g=[]
+    for t in TEAMS:
+        for x in SWL['per'][t]['games']:
+            k=(x['w'],frozenset((t,x['opp'])))
+            if k in seen or not (x['win'] or x['me']==x['them']):continue
+            seen.add(k);g.append(dict(x,team=t))
+    return sorted(g,key=lambda x:(-x['w'],abs(x['m'])))
+def m_prime():
+    per=SWL['per']
+    order=sorted(TEAMS,key=lambda t:(-per[t]['n'],-(per[t]['w']-per[t]['l']),D.seed(t)))
+    def nz(v,b=''):return f'<span class="sxv{b}{"" if v else " z"}">{v}</span>'
+    rows=[[nmb(t,''),f'<span class="sxv b{"" if per[t]["n"] else " z"}">{per[t]["w"]}-{per[t]["l"]}</span>',nz(per[t]['cb']),nz(per[t]['co']),
+           f'<span class="sxv">{s1_(per[t]["avg1"])}</span>' if per[t]['n'] else '<span class="sxv z">–</span>'] for t in order]
+    gs,cnt=_cap(_swg());gs.sort(key=lambda g:(-g['w'],abs(g['m'])))
+    gl=''.join(gmrow(g['w'],g['team'],g['pre'],g['opp'],g['opre'],f'{abs(g["m"]):.2f}') for g in gs)
+    return (head('Prime-time sweat',f'Still in reach at Monday Night Football kickoff: the side behind had starters left and trailed by no more than they were projected to score, plus any game turned around anyway · {SWL["n"]} of {SWL["of"]} matchups ({SWA["n"]} had any starter left)')
+            +table([('Team',''),('W-L','36px'),('Back','32px'),('Blown','38px'),('Avg in','44px')],rows,'nsp')
+            +'<p class="odnote nsn">W-L = record in those matchups · Back = trailed at kickoff and won · Blown = led at kickoff and lost · Avg in = average lead at kickoff.</p>'
+            +(head(f'Live sweats · {cnt}','Score at Monday kickoff · winner on top · gap on the right · newest first')+gl if gl else '<div class="tqnone">No Monday night sweats yet</div>'))
+def perfect_block():
+    mxd=max([abs(v['dw']) for v in PFX.values()]+[1])
+    rows=[[nmb(t,dvb(PFX[t]['dw'],mxd)),f'<span class="sxv">{_wr(PFX[t]["a"])}</span>',f'<span class="sxv b">{_wr(PFX[t]["o"])}</span>',
+           f'<span class="sxv b {"up" if PFX[t]["dw"]>0 else "dn" if PFX[t]["dw"]<0 else "z"}">{sd_(PFX[t]["dw"])}</span>',f'<span class="sxv">{PFX[t]["eff"]:.1f}</span>']
+          for t in sorted(TEAMS,key=lambda t:(-PFX[t]['o'][0],PFX[t]['o'][1],-PFX[t]['opt']))]
+    return (head('Perfect-lineup record','Record if every team had started its best lineup every week · Eff % = points scored as a share of the best lineup')
+            +table([('Team',''),('Actual','40px'),('Perfect','44px'),('Diff','30px'),('Eff %','38px')],rows,'nsx'))
+NSCSS=('.sxm.sosm .sxr>span.sox{display:grid;grid-template-columns:auto auto;justify-content:center;align-items:center;column-gap:3px;row-gap:5px;height:auto;background:none;border-radius:0}'
+       '.sosm .sox .pav{display:block;flex:none;width:22px;height:22px;border-radius:50%;background-color:var(--deck-2);background-position:center;background-size:cover;background-repeat:no-repeat}'
+       '.sosm .sox .ch{margin:0;font-family:var(--display);font-weight:700;font-style:normal}'
+       '.sosm .sox .soa{grid-column:1 / -1;justify-self:center;font-family:var(--display);font-weight:600;font-size:13px;line-height:1;font-variant-numeric:tabular-nums;color:var(--chalk);text-box:trim-both cap alphabetic}'
+       '.sxm.sosm .sxr:not(.sxhd){padding:8px 0}.sxm.sosm .sxr:not(.sxhd)+.sxr{box-shadow:inset 0 1px 0 var(--row-divider)}'
+       '@media (max-width:1099px){.sxm.hmx.sosm:not(.tqgrid) .sxr{grid-template-columns:78px repeat(var(--n5),minmax(0,1fr)) 44px}.sxm.hmx.sosm.tqgrid .sxr{grid-template-columns:58px repeat(var(--n5),minmax(0,1fr)) 38px}.sosm .sxl{display:none!important}}'
+       '@media (max-width:430px){.sosm .sox .pav{width:20px;height:20px}}'
+       '@media (min-width:1100px){.sxm.hmx.sosm.sos1:not(.tqgrid) .sxr{grid-template-columns:220px repeat(var(--n),minmax(0,112px)) 60px}.sosm.sos1 .sxr>span.sox{grid-template-columns:auto auto auto;column-gap:5px}.sosm.sos1:not(.tqgrid) .sox .soa{grid-column:auto;margin-left:3px;font-size:15px}.sosm .sox .pav{width:24px;height:24px}}'
+       '.sxv.fm2{display:flex;flex-direction:column;align-items:flex-end;gap:7px;line-height:1}.fm2>b{font:inherit;text-box:trim-both cap alphabetic}.fm2 .fma{font-style:normal;font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.02em;color:var(--text-dim);white-space:nowrap;text-box:trim-both cap alphabetic}.fm2 .fma b{font-weight:600;font-size:13px;letter-spacing:0;color:var(--chalk)}'
+       '.odnote.nsn{margin:10px 0 0;color:var(--text-dim)}.gnm{display:flex;flex:none;gap:8px;align-items:baseline}.gnm em{width:40px;text-align:right}@media (max-width:430px){.gml.gm2{grid-template-columns:30px minmax(0,1fr) 54px;gap:6px;font-size:13px}.gm2 .gnm{gap:6px}.gm2 .gnm em{width:38px}.gml.gm2.gmh{font-size:11px}}.gtm>span .gnm em.gbx{color:var(--text-dim)!important}.gtm>span+span .gnm em.gbx{color:var(--chalk)!important;font-weight:700}.gml.gmh{padding:0 0 6px;font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim)}.gml.gmh .gtm>span .gnm em{font:inherit;color:inherit!important}.gml.gmh .gnm em{width:auto;min-width:40px}.gml.gmh>b{justify-self:end;font-weight:600;white-space:nowrap}'
+       '.tqgn{display:flex;align-items:center;min-width:0;font-size:14px;font-weight:500;color:var(--chalk);line-height:1.25}.tqgn small{flex:none;width:34px;font-family:var(--display);font-weight:600;font-size:13px;color:var(--text-dim)}.tqgn .wl{flex:none}'
+       '.tqcg{margin-top:8px}.tqcg+.tqnone{color:var(--text-dim)}.tqcg.tqce{margin-bottom:0}')
+MODS=[('pos','Positions',None),('odds','Odds',m_odds),*([('drf','Draft',m_draft)] if 'pick' in next(iter(PS['teams'].values())) else []),*([('frm','Form',m_form)] if FM['rows'] else []),('sch','Schedules',m_sched),('ew','Every week',m_everyweek),('trd','Trades',m_trades),('lu','Lineups',m_lineups),('prj','Projections',m_proj),
+      ('mg','Margins',m_close),*([('pt','Prime time',m_prime)] if SWL['of'] else []),('cs','Consistency',m_cons),('st','Stars',m_stars),('yo','Age',m_youth),('rk','Ranks',m_heat),('by','Byes',m_byes),('hr','Home / Road',m_homeroad)]
 if NOW>14:MODS=[m for m in MODS if m[0]!='by']  # regular season over: no byes ahead
 def build():
     radios=''.join(f'<input type="radio" name="sxs" id="sx-{k}" class="lr"{" checked" if i==0 else ""}>' for i,(k,_,_) in enumerate(MODS))
     nav='<div class="lbc sxnav" role="tablist" aria-label="Stats">'+''.join(f'<label for="sx-{k}">{lab}</label>' for k,lab,_ in MODS)+'</div>'
     pans=''.join(f'<div class="sxp sxp-{k}">'+('POS_SECTION' if f is None else f'<section class="sxc">{f()}</section>')+'</div>' for k,_,f in MODS)
     css=''.join(f'#sx-{k}:checked~.sxnav label[for="sx-{k}"]{{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}}#sx-{k}:checked~.sxp-{k}{{display:block}}' for k,_,_ in MODS)
-    css+=HXCSS+'.ssm{position:relative}.ssm .mx[data-w]{cursor:pointer;-webkit-tap-highlight-color:transparent}.ssm .mx.on{box-shadow:inset 0 0 0 1.5px var(--chalk)}.ssb{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;column-gap:14px;height:68px;margin:0 0 10px;padding:0 12px 0 14px;box-sizing:border-box;border-radius:8px;background:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}.ssb.on{box-shadow:inset 0 0 0 1px var(--line-strong)}.ssb .ssh{grid-column:1/-1;text-align:center;font-size:12.5px;font-weight:500;color:var(--text-dim)}.ssb .ssn,.ssb .ssw,.ssb .ssd{display:none}.ssb.on .ssh{display:none}.ssb.on .ssn,.ssb.on .ssw{display:flex}.ssb.on .ssd{display:inline-flex}.ssn{flex-direction:column;gap:4px;min-width:0}.ssn>*{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ssa{font-size:14.5px;font-weight:600;line-height:1.15;color:var(--chalk)}.ssn .sso{font-size:12px;font-weight:500;line-height:1.2;color:var(--steel);white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.ssw{flex-direction:column;align-items:center;gap:4px}.ssw small{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;line-height:1;color:var(--text-dim)}.ssv{display:flex;align-items:baseline;gap:6px;font-family:var(--display);font-weight:700;font-variant-numeric:tabular-nums;line-height:1}.ssv i{font-style:normal}.ss0{font-size:16px;color:var(--steel)}.ssr{font-size:13px;color:var(--text-dim)}.ss1{font-size:20px;color:var(--chalk)}.ssb.own .ssr{display:none}.ssd{align-items:center;justify-content:center;min-width:46px;height:28px;padding:0 8px;box-sizing:border-box;border-radius:7px;font-family:var(--display);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;line-height:1;background:var(--line);color:var(--steel)}.ssb.up .ssd{background:var(--win-bg);color:var(--win)}.ssb.dn .ssd{background:var(--loss-bg);color:var(--loss)}.ssb.own .ssd{font-family:var(--body);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase}.ewm{position:relative}.ewm .mx[data-w]{cursor:pointer;-webkit-tap-highlight-color:transparent}.ewm .mx.on{box-shadow:inset 0 0 0 1.5px var(--chalk)}.ewb{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;column-gap:12px;height:42px;margin:0 0 10px;padding:0 12px;box-sizing:border-box;border-radius:8px;background:var(--ink);box-shadow:inset 0 0 0 1px var(--line);font-size:13.5px;font-weight:600;line-height:1.2;color:var(--label)}.ewb .ewa,.ewb .ewo{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ewb .ewa{text-align:right}.ewb .ewo{text-align:left}.ewb .ewr{font-weight:500;font-size:12.5px;color:var(--text-dim);white-space:nowrap}.ewb.on{box-shadow:inset 0 0 0 1px var(--line-strong);color:var(--chalk)}.ewb.on .ewr{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.02em;font-variant-numeric:tabular-nums;color:var(--chalk)}.sxm .sxr>span.ewd{background:var(--line-strong);opacity:.55}.ewl .sxr>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.ewl .sxr>span:nth-child(2){text-align:center}'+('.bnl .bnt{display:flex;flex-direction:column;gap:3px;white-space:nowrap;overflow:visible}'
+    css+=NSCSS+HXCSS+'.ssm{position:relative}.ssm .mx[data-w]{cursor:pointer;-webkit-tap-highlight-color:transparent}.ssm .mx.on{box-shadow:inset 0 0 0 1.5px var(--chalk)}.ssb{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;column-gap:14px;height:68px;margin:0 0 10px;padding:0 12px 0 14px;box-sizing:border-box;border-radius:8px;background:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}.ssb.on{box-shadow:inset 0 0 0 1px var(--line-strong)}.ssb .ssh{grid-column:1/-1;text-align:center;font-size:12.5px;font-weight:500;color:var(--text-dim)}.ssb .ssn,.ssb .ssw,.ssb .ssd{display:none}.ssb.on .ssh{display:none}.ssb.on .ssn,.ssb.on .ssw{display:flex}.ssb.on .ssd{display:inline-flex}.ssn{flex-direction:column;gap:4px;min-width:0}.ssn>*{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ssa{font-size:14.5px;font-weight:600;line-height:1.15;color:var(--chalk)}.ssn .sso{font-size:12px;font-weight:500;line-height:1.2;color:var(--steel);white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.ssw{flex-direction:column;align-items:center;gap:4px}.ssw small{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;line-height:1;color:var(--text-dim)}.ssv{display:flex;align-items:baseline;gap:6px;font-family:var(--display);font-weight:700;font-variant-numeric:tabular-nums;line-height:1}.ssv i{font-style:normal}.ss0{font-size:16px;color:var(--steel)}.ssr{font-size:13px;color:var(--text-dim)}.ss1{font-size:20px;color:var(--chalk)}.ssb.own .ssr{display:none}.ssd{align-items:center;justify-content:center;min-width:46px;height:28px;padding:0 8px;box-sizing:border-box;border-radius:7px;font-family:var(--display);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;line-height:1;background:var(--line);color:var(--steel)}.ssb.up .ssd{background:var(--win-bg);color:var(--win)}.ssb.dn .ssd{background:var(--loss-bg);color:var(--loss)}.ssb.own .ssd{font-family:var(--body);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase}.ewm{position:relative}.ewm .mx[data-w]{cursor:pointer;-webkit-tap-highlight-color:transparent}.ewm .mx.on{box-shadow:inset 0 0 0 1.5px var(--chalk)}.ewb{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;column-gap:12px;height:42px;margin:0 0 10px;padding:0 12px;box-sizing:border-box;border-radius:8px;background:var(--ink);box-shadow:inset 0 0 0 1px var(--line);font-size:13.5px;font-weight:600;line-height:1.2;color:var(--label)}.ewb .ewa,.ewb .ewo{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ewb .ewa{text-align:right}.ewb .ewo{text-align:left}.ewb .ewr{font-weight:500;font-size:12.5px;color:var(--text-dim);white-space:nowrap}.ewb.on{box-shadow:inset 0 0 0 1px var(--line-strong);color:var(--chalk)}.ewb.on .ewr{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.02em;font-variant-numeric:tabular-nums;color:var(--chalk)}.sxm .sxr>span.ewd{background:var(--line-strong);opacity:.55}.ewl .sxr>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.ewl .sxr>span:nth-child(2){text-align:center}'+('.bnl .bnt{display:flex;flex-direction:column;gap:3px;white-space:nowrap;overflow:visible}'
       '.bnl .bop{font-size:11.5px;font-weight:500;color:var(--steel)}.bnl .bop em{font-style:normal;font-family:var(--display);font-weight:700;color:var(--label);margin:0 1px}'
       '.bnl .bop em{display:inline-flex;align-items:center;justify-content:center;width:20px;height:16px;padding-bottom:1px;box-sizing:border-box;margin:0 4px 0 3px;border-radius:3px;background:rgba(238,240,244,.08);font-size:11px;vertical-align:1px}'
       '.bnl .bop em.gold{color:#e8c15a;background:rgba(232,193,90,.14)}.bnl .bop em.g{color:var(--win);background:rgba(63,214,155,.12)}.bnl .bop em.b{color:#ff8a9a;background:rgba(255,93,115,.12)}'

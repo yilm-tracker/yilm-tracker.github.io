@@ -1346,3 +1346,10 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
    all-play reach "10-3" / "100-17". */
 .dtt td.dwl small.wlb{font:600 11px/1 var(--display);letter-spacing:.04em;margin-right:-.04em;font-variant-numeric:tabular-nums}
 @media (min-width:1100px) and (max-width:1239px){.dtt td,.dtt th{padding-left:3px!important;padding-right:3px!important}}
+
+/* 2026-11-10 GP HEADER (Points by position, Per start; YILM shows games played, BBP has no GP). The header tile group is a
+   20px box with the pill centred on it, so the pill (--ppw wide) overhangs it by (--ppw - 20px)/2 each side; GP used to
+   start 3px after the 20px box, i.e. behind the pill's right end. Now the header GP and every row's number share one
+   14px centred box that starts 4px of ink after the pill; GP's baseline is level with the pill label's (.48px). */
+.pt-start .pcr .pgp{display:block!important;width:14px;margin-left:calc((var(--ppw,30px) - 20px)/2 + 4px - 1.5px);text-align:center}
+.pt-start .pch .pgp{text-indent:.1em;transform:translateY(calc(-50% - .48px))}

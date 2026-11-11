@@ -109,6 +109,16 @@ def data_view(t):
              +kpi('Lineup efficiency',f'{EF[t][0]:.0f}<small>%</small>',crank(EFR,t))+kpi('Left on bench',f'{EF[t][1]:.1f}<small>/wk</small>',crank({u:EF[u][1] for u in TEAMS},t,low=True))
              +kpi('Highest / lowest seed',f"{ordn(min(SER[t]['stand']))} <small>/</small> {ordn(max(SER[t]['stand']))}",None,'<span class="tqkn">standings range, Wk 1 on</span>')+kpi('Average seed',f"{sum(SER[t]['stand'])/len(SER[t]['stand']):.1f}",None,'<span class="tqkn">across the weeks played</span>')
              +'</div>')
+    # current form (2026-11-10): points over the last weeks against the seed
+    fr=next((r for r in SB.FM['rows'] if r['team']==t),None)
+    if fr:
+        fw=SB.FM['weeks'];fn=len(fw)
+        o.append(sec(SB.FORMT,f'Points over the last {fn} week{"s" if fn>1 else ""} · {SB._wkr(fw)}'))
+        o.append('<div class="tqkg tq3">'+kpi(f'Last {fn}',f'{fr["tot1"]:.1f}',None,f'<span class="tqkn">{fr["avg1"]:.1f} per wk</span>')
+                 +kpi('Form rank',ordn(fr['rank']),None,f'<span class="tqkn">seed {ordn(fr["seed"])}</span>')
+                 +kpi('Form vs seed',SB.sd_(fr['diff']),None,'<span class="tqkn">places</span>')+'</div>')
+        o.append(f'<div class="sxm bym tqgrid tqfw" style="--n:{fn}"><div class="sxr sxhd"><span></span>{"".join(f"<span>W{w}</span>" for w in fw)}</div>'
+                 f'<div class="sxr"><span class="mxn">Points</span>{"".join(f"<span>{v:.2f}</span>" for v in fr["wk"])}</div></div>')
     # positions
     pr=PROWS[t];rows=''
     best={p:max(float(PROWS[u][f'avg_{p}']) for u in TEAMS) for p in ORD}
@@ -146,10 +156,39 @@ def data_view(t):
     dmax=max(max(v for v,p in zip(DP[u],ORD) if p not in ('K','DEF')) for u in TEAMS) or 1
     o.append(sec('Dropped points','Per week: bench points that should have started, by position'))
     o.append('<div class="tqdp">'+''.join(f'<div><i class="pz p-{p.lower()}">{p}</i><b class="tqv{" z" if DP[t][i]<0.05 else ""}">{DP[t][i]:.1f}</b>{(lambda r,tie:f'<i class="ch tqdr {tone(r)}"><span class="ct">{"T" if tie else ""}{r}</span></i>')(crank({u:DP[u][i] for u in TEAMS},t,True),sum(1 for u in TEAMS if u!=t and abs(DP[u][i]-DP[t][i])<1e-9)>0)}<span class="tqmini"><i class="p-{p.lower()}" style="height:{100*DP[t][i]/dmax:.1f}%"></i></span></div>' for i,p in enumerate(ORD) if p not in ('K','DEF'))+'</div>')
+    # perfect-lineup record and could-have games (2026-11-10): weekly Max PF, the Standings card's Could have
+    pf_=SB.PFX[t];cx=SB.CHX[t]
+    o.append(sec('Perfect-lineup record','If every team had started its best lineup every week'))
+    o.append('<div class="tqkg">'+kpi('Perfect-lineup record',SB._wr(pf_['o']),None,f'<span class="tqkn">actual {SB._wr(pf_["a"])}</span>')
+             +kpi('Win difference',SB.sd_(pf_['dw']),None,'<span class="tqkn">perfect minus actual</span>')
+             +kpi('Could have won',str(len(cx['won'])),None,'<span class="tqkn">winnable losses</span>')
+             +kpi('Could have lost',str(len(cx['lost'])),None,'<span class="tqkn">losable wins</span>')+'</div>')
+    for ttl,lab,gs in (('Could have won','Best',cx['won']),('Could have lost','Opp best',cx['lost'])):
+        o.append(SB.table([(ttl,''),('Score','92px'),(lab,'70px')],[[f'<span class="tqgn"><small>Wk {g["w"]}</small><i class="wl {"w" if g["me"]>g["them"] else "l"}">{"W" if g["me"]>g["them"] else "L"}</i>{e(g["opp"])}</span>',
+                 f'<span class="sxv">{g["me"]:.2f}–{g["them"]:.2f}</span>',f'<span class="sxv b fm2"><b>{g["best"]:.2f}</b><i class="fma"><b>{g["bench"]:.2f}</b> bench</i></span>'] for g in gs],'tqcg'+('' if gs else ' tqce')))
+        if not gs:o.append('<div class="tqnone">None</div>')
     # margins
     c=CLS[t];am={u:CLS[u]['avgm'] for u in TEAMS}
-    o.append(sec('Margins','Close = under 10 pts · blowout = 30+ pts'))
+    o.append(sec('Margins','Close = 10 pts or less · blowout = 30+ pts'))
     o.append('<div class="tqkg tq3">'+kpi('Close games',f'{c["close"][0]}-{c["close"][1]}')+kpi('Blowouts',f'{c["blow"][0]}-{c["blow"][1]}')+kpi('Avg margin',f'<span class="{"up" if c["avgm"]>=0.05 else "dn" if c["avgm"]<=-0.05 else ""}">{sg(c["avgm"])}</span>',crank(am,t))+'</div>')
+    cg=SB.CGM[t]
+    if cg:
+        o.append(SB.table([('Close games',''),('Score','96px'),('Margin','50px')],[[f'<span class="tqgn"><small>Wk {g["w"]}</small><i class="wl {"w" if g["win"] else "l"}">{"W" if g["win"] else "L"}</i>{e(g["opp"])}</span>',
+                 f'<span class="sxv">{g["me"]:.2f}–{g["them"]:.2f}</span>',f'<span class="sxv b">{g["m"]:.2f}</span>'] for g in cg],'tqcg'))
+    else:o.append('<div class="tqnone">No games decided by 10 points or less</div>')
+    # prime-time sweat (2026-11-10)
+    if SB.SWL['of']:
+        sp=SB.SWL['per'][t]
+        o.append(sec('Prime-time sweat','Still in reach when Monday Night Football kicked off, or turned around after it'))
+        o.append('<div class="tqkg">'+kpi('Sweats',str(sp['n']),None,f'<span class="tqkn">{sp["w"]}-{sp["l"]} in them</span>' if sp['n'] else '<span class="tqkn">none yet</span>')
+                 +kpi('Avg margin in',SB.s1_(sp['avg1']) if sp['n'] else '–',None,'<span class="tqkn">average lead at kickoff</span>')
+                 +kpi('Comebacks',str(sp['cb']),None,'<span class="tqkn">trailed at kickoff, won</span>')
+                 +kpi('Collapses',str(sp['co']),None,'<span class="tqkn">led at kickoff, lost</span>')+'</div>')
+        if sp['games']:
+            o.append(SB.table([('Sweats',''),('At kickoff','64px'),('Final','64px')],[[f'<span class="tqgn"><small>Wk {g["w"]}</small><i class="wl {"w" if g["win"] else "l"}">{"W" if g["win"] else "L"}</i>{e(g["opp"])}</span>',
+                     f'<span class="sxv">{sg(g["m"],2)}</span>',f'<span class="sxv b">{sg(g["me"]-g["them"],2)}</span>'] for g in sp['games']],'tqcg'))
+        else:
+            o.append(SB.table([('Sweats',''),('At kickoff','64px'),('Final','64px')],[],'tqcg tqce'));o.append('<div class="tqnone">None</div>')
     # home / road
     h=HRT[t];hs={u:HRT[u]['h']/(HRT[u]['h']+HRT[u]['r']) for u in TEAMS}
     ah,ar=avg(h['ph']),avg(h['pr'])
@@ -161,6 +200,13 @@ def data_view(t):
              f'<div class="sxr sxhd"><span></span><span>{SB.HT}</span><span>{SB.RT}</span><span>Diff</span></div>'
              f'<div class="sxr"><span>Points per start</span>{vh}{vr}{dd}</div>'
              f'<div class="sxr"><span>Record when more starters</span><span class="sxv">{SB._hrrec(h["lh"])}</span><span class="sxv">{SB._hrrec(h["lr"])}</span><span></span></div></div>')
+    # remaining schedule (2026-11-10): each opponent left with his points-for rank chip and points per week
+    sr=next((r for r in SB.SO['rows'] if r['team']==t),None)
+    if sr:
+        sw_=SB.SO['weeks']
+        o.append(sec('Remaining schedule',f"Each opponent's points-for rank and points per week · {ordn(sr['rank'])} hardest of {N}"+(f' · phones show the next 5 of {len(sw_)} weeks' if len(sw_)>5 else '')))
+        o.append(f'<div class="sxm hmx tqgrid sosm" style="--n:{len(sw_)};--n5:{min(len(sw_),5)}"><div class="sxr sxhd">{SB.soshd(sw_)}</div>'
+                 f'<div class="sxr"><span class="mxn">Opp</span>{"".join(SB.soscell(u,w,i) for i,(w,u) in enumerate(zip(sw_,sr["opp"])))}<span class="hav">{sr["v1"]:.1f}</span></div></div>')
     # byes (none once the regular season is over)
     wk=list(range(D.NOW,15));B=BYS[t]
     if not wk:return ''.join(o)
