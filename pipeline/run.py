@@ -32,9 +32,13 @@ if mode=='weekly':
     subprocess.run(['node',P+'pull.mjs','wire',str(G())],cwd=P)  # THE WIRE (never fatal)
     subprocess.run(['node',P+'pull.mjs','top',str(G())],cwd=P)  # Players tab: top players by position (never fatal)
     sh('node',P+'pull.mjs','detail',f'1-{G()+1}')  # full stat lines for the Detailed view (all played weeks + current)
+    # current NFL teams (trades/signings since the last completed-week pull) into the current week's files; never fatal
+    if subprocess.run(['node',P+'pull.mjs','teams',str(G()+1),'full'],cwd=P).returncode==0:subprocess.run(['python3',P+'teams.py'],cwd=P)
     build()
 elif mode=='live':
     W=G()+1
+    # NFL team changes since the last weekly run (players map read only when week W's projections differ); never fatal
+    if subprocess.run(['node',P+'pull.mjs','teams',str(W)],cwd=P).returncode==0:subprocess.run(['python3',P+'teams.py'],cwd=P)
     sh('node',P+'pull.mjs','live',str(W))
     subprocess.run(['node',P+'pull.mjs','detail',str(W)],cwd=P)  # Detailed view; never fatal
     subprocess.run(['node',P+'pull.mjs','faab'],cwd=P)  # FAAB balances; never fatal

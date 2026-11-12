@@ -67,14 +67,26 @@ export async function pullWeekly(get, D) {
   // projections (week N), player meta for rostered players, schedule N..14, kickoffs N
   // rostered now, plus everyone in the week D and week N lineups (a player dropped since keeps his name)
   const ids = new Set([...ro.flatMap(r => r.players || []), ...mD.flatMap(x => x.players || []), ...mN.flatMap(x => x.players || [])]);
-  const [pj, players, K8] = await Promise.all([get(projURL(N)), get(`${A}/players/nfl`), kickoffs(get, N)]);
+  const [pj, players, K8, sN] = await Promise.all([get(projURL(N)), get(`${A}/players/nfl`), kickoffs(get, N),
+    get(`${S}/stats/nfl/${SEASON}/${N}?season_type=regular`).catch(() => [])]);
+  // week N's NFL team. Week N not complete (the live case): his current team (players map). Week N complete (a season
+  // replay, whose players map is today's, so a player traded since would take his new team into weeks he played for the
+  // old one, 2026-11-12): the team of his week N stat line, else of his week N projection (when it names an opponent),
+  // else his last team in weeks 1..D, else the players map.
+  const doneN = (() => { const g = sch.filter(x => x.week == N); return g.length > 0 && g.every(x => x.status == 'complete'); })();
+  const TN = {};
+  if (doneN) {
+    for (const [id, e] of Object.entries(P)) if (e[1]) TN[id] = e[1];
+    for (const r of pj) if (r.team && r.opponent) TN[r.player_id] = r.team;
+    for (const r of sN) if (r.team && r.stats && r.stats.gp > 0) TN[r.player_id] = r.team;
+  }
   const PJ = {};
   for (const r of pj) if (ids.has(r.player_id)) PJ[r.player_id] = [leagueScore(r.stats, ss), r.opponent || null];
   for (const id of ids) if (!(id in PJ)) PJ[id] = [0, null];
   const META = {};
   for (const id of ids) {
     const p = players[id];
-    META[id] = p ? [p.full_name || `${p.first_name} ${p.last_name}`, p.position, p.team || null, p.injury_status || null, p.birth_date || null] : null;
+    META[id] = p ? [p.full_name || `${p.first_name} ${p.last_name}`, p.position, (/^\d+$/.test(id) && TN[id]) || p.team || null, p.injury_status || null, p.birth_date || null] : null;
   }
   const S8 = sch.filter(x => x.week >= N && x.week <= 14).map(x => [x.week, x.away, x.home]);
   const pull8 = { PJ, META, S8, K8 };
@@ -152,14 +164,37 @@ export async function pullLive(get, W, known) {
   if (need.length) {
     const [lg, players, pj] = await Promise.all([get(L), get(`${A}/players/nfl`), get(projURL(W))]);
     const ss = lg.scoring_settings, P = Object.fromEntries(pj.map(r => [r.player_id, r]));
+    const TW = {}; for (const r of st) if (r.team && r.stats && (r.stats.gp > 0 || r.stats.gms_active)) TW[r.player_id] = r.team;  // played this week: that team
     const INJ = new Set(['Questionable', 'Doubtful', 'Out', 'IR', 'PUP', 'Sus']);
     for (const id of need) {
       const p = players[id] || {}, q = P[id];
       const inj = p.injury_status && INJ.has(p.injury_status) ? p.injury_status : null;
-      extra[id] = [id, p.position || '', p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || id, p.team || '', q ? leagueScore(q.stats, ss) : 0, 0, q ? q.opponent || null : null, inj];
+      extra[id] = [id, p.position || '', p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || id, TW[id] || p.team || '', q ? leagueScore(q.stats, ss) : 0, 0, q ? q.opponent || null : null, inj];
     }
   }
   return { w: W, done, live, left, tp, pp: pz, S: S_, starters: sts, extra };
+}
+
+// Current NFL team of the players on the week-W page, for runs that do not re-pull the week (mid-week weekly runs,
+// live runs): a player traded or signed since the weekly pull takes his new team and its week-W opponent (teams.py
+// applies it). The players map is the source; it is meant to be read about once a day, so unless full is set it is read
+// only when week W's projections name a different team than the files (cur = {id: [teams in the files]}). Team
+// defenses and players with no team now are left out. 2026-11-12 (Downs IND -> KC, Allen IND -> SF).
+export async function pullTeams(get, W, cur, full) {
+  const sch = await get(`${S}/schedule/nfl/regular/${SEASON}`);
+  const OPP = {}; for (const g of sch.filter(x => x.week == W)) { OPP[g.home] = g.away; OPP[g.away] = g.home; }
+  const ids = Object.keys(cur).filter(id => /^\d+$/.test(id));
+  let why = 'full';
+  if (!full) {
+    const pj = await get(projURL(W)), X = {};
+    for (const r of pj) if (r.team && r.player_id in cur) X[r.player_id] = r.team;
+    const d = ids.filter(id => X[id] && cur[id].some(t => t !== X[id]));
+    if (!d.length) return { w: W, src: 'projections agree', T: {} };
+    why = 'projections differ: ' + d.join(',');
+  }
+  const pl = await get(`${A}/players/nfl`), T = {};
+  for (const id of ids) { const t = pl[id] && pl[id].team; if (t) T[id] = [t, OPP[t] || null]; }
+  return { w: W, src: why, T };
 }
 
 // Full stat lines for the Detailed lineup view. Keeps every stat the league scores (so a points breakdown can be
@@ -216,7 +251,9 @@ export async function pullTop(get, D, keep = 60) {
   for (const id of pick) {
     const e = X[id], p = players[id] || {};
     const name = e.pos === 'DEF' ? `${p.first_name || id} ${p.last_name || ''}`.trim() : (p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || id);
-    P[id] = [name, e.pos, e.team || p.team || null, e.w, e.t, own[id] || null, p.birth_date || null];
+    // current team from the players map (the stat lines' team is the last one he played for: traded players kept it,
+    // 2026-11-12); a player with no team now (free agent) keeps his last one
+    P[id] = [name, e.pos, (e.pos === 'DEF' ? e.team : p.team) || e.team || null, e.w, e.t, own[id] || null, p.birth_date || null];
   }
   return { D, minGp, P };
 }
