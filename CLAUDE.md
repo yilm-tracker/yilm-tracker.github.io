@@ -34,7 +34,7 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 - Modes (`pipeline/run.py <mode>`): `weekly` (pull completed week + full rebuild; push events use this), `live` (scores now), `build` (no network), `history`.
 - Live runs do not commit data; weekly runs commit `pipeline/*.json` ("Save season data"). Workflow rebases with `-X theirs` on data conflicts.
 - **Retro edition (BBP only):** retro/ reads data_block.js, wk*.json, champions.json, history/teams.json and avatars/, plus `FN` in new_tail.js and `SH` in full_update.py (as text). After any change to those formats, run retro/build.py and check the page.
-- **Retro tracker theme (BBP only):** retro/theme_build.py reads the built site/ and writes site/retro/tracker/ (Classic's pages + retro/theme.css); after any change to Classic's page shell (head, reveal script, year buttons, style order) run it and check the 8 patches still apply.
+- **Retro tracker theme (BBP only):** retro/theme_build.py reads the built site/ and writes site/retro/tracker/ (Classic's pages + retro/theme.css); after any change to Classic's page shell (head, reveal script, year buttons, style order) run it and check the 9 patches still apply.
 - **BBP local build:** `cd pipeline && python3 run.py build` → `site/index.html`.
 - **YILM local build:** `cd pipeline && python3 season_replay.py 2026 --build-only` → `.season/2026/site/index.html`. YILM builds by replaying its saved Sleeper data (`history/raw/<year>/*.json.gz`, refreshed in CI by `pull_season.mjs`) in a workspace copy `.season/<year>/pipeline`. Past seasons set `DT_PAST=1`.
 - The sandbox has no network to Sleeper/MFL; data for local builds comes from the committed JSON (pull from origin first).
