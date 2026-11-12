@@ -7,6 +7,11 @@ on:
     paths: ['pipeline/**', '.github/workflows/site.yml']
   schedule:
     - cron: '17 10 * * 2'         # Tuesday morning: week complete
+    # daily full data refresh at 8:30 AM New York time, all year (full replay + capture commit; 2026-11-12). Cron is UTC with
+    # no daylight saving: 12:30 UTC = 8:30 EDT, 13:30 UTC = 8:30 EST; the gate job runs only the one that matches the
+    # current New York offset (-0400 / -0500), so exactly one fires each day, even if GitHub starts it late.
+    - cron: '30 12 * * *'
+    - cron: '30 13 * * *'
     - cron: '*/10 0-5 * * 5'      # Thursday night
     - cron: '*/10 13-23 * * 0'    # Sunday
     - cron: '*/10 0-5 * * 1'      # Sunday night
@@ -24,12 +29,31 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: site
-  cancel-in-progress: false
-
 jobs:
+  gate:
+    # skipped runs end here and never enter the build's concurrency group, so a skipped daily cron or a pre-game live run
+    # cannot displace a queued run (a new pending run in a group cancels the older pending one)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      go: ${{ steps.go.outputs.go }}
+    steps:
+      - name: Daily-run and pre-game gate
+        id: go
+        run: |
+          s="${{ github.event.schedule }}"; z=$(TZ=America/New_York date +%z); h=$(TZ=America/New_York date +%H); g=1
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "$s" = "30 12 * * *" ]; then [ "$z" = "-0400" ] || g=0;
+            elif [ "$s" = "30 13 * * *" ]; then [ "$z" = "-0500" ] || g=0;
+            elif [ "$s" != "17 10 * * 2" ] && [ "$h" = "08" ]; then g=0; fi  # live window runs in New York's 8 AM hour (Sunday 13:xx UTC in EST): no game starts before 9:30 AM ET
+          fi
+          echo "go=$g" >> "$GITHUB_OUTPUT"; echo "go=$g (schedule '$s', New York $(TZ=America/New_York date '+%F %H:%M %z'))"
   build:
+    needs: gate
+    if: needs.gate.outputs.go == '1'
+    concurrency:
+      group: site
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -93,9 +117,9 @@ jobs:
             mkdir -p site/$Y && cp archive/$Y/index.html site/$Y/index.html
           done
       - name: Save the current season's capture to the repo
-        # Tuesday weekly run, pushes and manual runs only (not the 10-minute game-window runs), so the repo always holds
+        # Tuesday weekly run, the daily 8:30 AM ET run, pushes and manual runs only (not the 10-minute game-window runs), so the repo always holds
         # the latest completed week for local builds and checks. [skip ci] keeps it from triggering another build.
-        if: github.event_name != 'schedule' || github.event.schedule == '17 10 * * 2'
+        if: github.event_name != 'schedule' || github.event.schedule == '17 10 * * 2' || github.event.schedule == '30 12 * * *' || github.event.schedule == '30 13 * * *'
         continue-on-error: true
         run: |
           CUR=$(python3 -c "import json;print(json.load(open('pipeline/seasons.json'))['current'])")
