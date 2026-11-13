@@ -179,7 +179,7 @@ def data_view(t):
     # prime-time sweat (2026-11-10)
     if SB.SWL['of']:
         sp=SB.SWL['per'][t]
-        o.append(sec('Prime-time sweat','Still in reach when Monday Night Football kicked off, or turned around after it'))
+        o.append(sec('Prime-time sweat','Still in reach when the final prime-time game kicked off, or turned around after it'))
         o.append('<div class="tqkg">'+kpi('Sweats',str(sp['n']),None,f'<span class="tqkn">{sp["w"]}-{sp["l"]} in them</span>' if sp['n'] else '<span class="tqkn">none yet</span>')
                  +kpi('Avg margin in',SB.s1_(sp['avg1']) if sp['n'] else '–',None,'<span class="tqkn">average lead at kickoff</span>')
                  +kpi('Comebacks',str(sp['cb']),None,'<span class="tqkn">trailed at kickoff, won</span>')

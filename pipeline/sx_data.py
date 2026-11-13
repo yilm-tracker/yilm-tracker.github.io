@@ -274,17 +274,36 @@ def sos():
     rows.sort(key=lambda r:(-r['x'],seed(r['team'])))
     for r in rows:r['rank']=1+sum(1 for u in rows if u['x']>r['x'])
     return dict(weeks=wk,rows=rows,lg=q2(sum(pfw.values())/len(TEAMS)),lg1=q2(sum(pfw.values())/len(TEAMS),1),pfw={t:q2(v) for t,v in pfw.items()},pfw1={t:q2(v,1) for t,v in pfw.items()},pfw0={t:int(q2(v,0)) for t,v in pfw.items()})
-# prime-time sweat: who still had starters to play when the week's first Monday night game kicked off (kick.json: the
-# week's NFL kickoffs by team, written by full_update.py from Sleeper's schedule; a team without a game is on bye)
+# prime-time sweat (2026-11-13): who still had starters to play when the matchup's last game with a starter of either
+# side kicked off, if that game is prime time (kick.json: the week's NFL kickoffs by team, written by full_update.py from Sleeper's schedule; a team
+# without a game is on bye)
 try:KICKS=json.load(open(P+'kick.json'))
 except Exception:KICKS={}
 try:
     from zoneinfo import ZoneInfo as _ZI;_ET=_ZI('America/New_York')
 except Exception:_ET=timezone(timedelta(hours=-5))
-def mnf_kick(w):
-    ks=sorted({datetime.fromisoformat(v[0]) for v in KICKS.get(str(w),{}).values() if v and v[0]})
-    m=[k for k in ks if k.astimezone(_ET).weekday()==0 and k.astimezone(_ET).hour>=17]
-    return m[0] if m else None
+PRIME_H=19                     # a prime-time game kicks off at or after 7:00 PM ET (Thu, Sun, Mon, Saturdays in December)
+OVERLAP=timedelta(hours=3.5)   # a starter's game that kicked off less than this before the snapshot may still be on
+def _kicks(t,w):
+    """kickoffs of the games in which team t has a starter in week w (bye players: none)"""
+    K=KICKS.get(str(w),{});out=set()
+    for x in HI['w'][str(w)][str(RID[t])][2].split(','):
+        if not x:continue
+        k=K.get(x.split('|')[1])
+        if k and k[0]:out.add(datetime.fromisoformat(k[0]))
+    return out
+def prime_kick(a,b,w):
+    """snapshot of matchup a v b in week w: kickoff of the matchup's last game with a starter of either side, when that game
+    is prime time, moved back to an earlier starter's kickoff that may still be in progress (less than OVERLAP before it);
+    None = not a candidate (no starter with a game, or the last such game is not prime time, e.g. a Thursday-night
+    starter with Sunday-afternoon starters still to come)"""
+    ks=_kicks(a,w)|_kicks(b,w)
+    if not ks or max(ks).astimezone(_ET).hour<PRIME_H:return None
+    cut=max(ks)
+    while True:
+        e=[k for k in ks if cut-OVERLAP<k<cut]
+        if not e:return cut
+        cut=min(e)
 def _side(t,w,cut):
     d=HI['w'][str(w)][str(RID[t])];pre=_F(0);left=[];K=KICKS.get(str(w),{})
     for x in d[2].split(','):
@@ -295,9 +314,10 @@ def _side(t,w,cut):
     return pre,left
 LIVE_X=1   # a live sweat: the side behind needs no more than LIVE_X times its remaining starters' projection
 def sweats(kind='live',mult=None):
-    """per matchup of every completed week with a Monday night game.
-    kind 'any'  : not settled at MNF kickoff = at least one starter on either side still to play (bye players are done)
-    kind 'trail': the side behind at MNF kickoff (either side when level) still had a starter to play
+    """per matchup of every completed week, at its snapshot (prime_kick: kickoff of the matchup's last game with a starter,
+    when that game is prime time; otherwise not a candidate). 'of' = every matchup of those weeks.
+    kind 'any'  : not settled at the snapshot = at least one starter on either side still to play (bye players are done)
+    kind 'trail': the side behind at the snapshot (either side when level) still had a starter to play
     kind 'live' : 'trail' and the gap was no more than LIVE_X times what that side's remaining starters were projected to score
                   (Sleeper projections; a level game with a starter left on either side counts), plus any game the side
                   behind went on to win anyway, so no comeback is ever left out
@@ -305,13 +325,13 @@ def sweats(kind='live',mult=None):
     kind 'swing': hindsight: the gap was no more than the points all remaining starters went on to score"""
     per={t:dict(n=0,w=0,l=0,cb=0,co=0,mg=[],games=[]) for t in TEAMS};ng=0;tot=0
     for w in range(1,G+1):
-        cut=mnf_kick(w)
-        if cut is None:continue
         seen=set()
         for a in TEAMS:
             b=_op(a,w)
             if a in seen:continue
             seen|={a,b};tot+=1
+            cut=prime_kick(a,b,w)
+            if cut is None:continue
             pa,la=_side(a,w,cut);pb,lb=_side(b,w,cut)
             if not (la or lb):continue
             gap=abs(pa-pb);tl=la if pa<pb else lb if pb<pa else la+lb
@@ -326,7 +346,7 @@ def sweats(kind='live',mult=None):
                 fa,fb=_sc(t,w),_sc(o,w);p=per[t];won=fa>fb;p['n']+=1;p['w' if won else 'l']+=fa!=fb and 1 or 0
                 p['mg'].append(x-y)
                 cb=x<y and won;co=x>y and fa<fb;p['cb']+=cb;p['co']+=co
-                p['games'].append(dict(w=w,opp=o,pre=q2(x),opre=q2(y),m=q2(x-y),left=len(lt),oleft=len(lo),me=q2(fa),them=q2(fb),win=won,cb=cb,co=co))
+                p['games'].append(dict(w=w,ko=cut.isoformat(),opp=o,pre=q2(x),opre=q2(y),m=q2(x-y),left=len(lt),oleft=len(lo),me=q2(fa),them=q2(fb),win=won,cb=cb,co=co))
     for p in per.values():p['avg']=q2(sum(p['mg'])/len(p['mg'])) if p['mg'] else None;p['avg1']=q2(sum(p['mg'])/len(p['mg']),1) if p['mg'] else None;p['mg']=[q2(x) for x in p['mg']]
     return dict(per=per,n=ng,of=tot)
 def perfect():

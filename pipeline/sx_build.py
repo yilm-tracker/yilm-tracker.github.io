@@ -467,10 +467,10 @@ def m_prime():
            f'<span class="sxv">{s1_(per[t]["avg1"])}</span>' if per[t]['n'] else '<span class="sxv z">–</span>'] for t in order]
     gs,cnt=_cap(_swg());gs.sort(key=lambda g:(-g['w'],abs(g['m'])))
     gl=''.join(gmrow(g['w'],g['team'],g['pre'],g['opp'],g['opre'],f'{abs(g["m"]):.2f}') for g in gs)
-    return (head('Prime-time sweat',f'Still in reach at Monday Night Football kickoff: the side behind had starters left and trailed by no more than they were projected to score, plus any game turned around anyway · {SWL["n"]} of {SWL["of"]} matchups ({SWA["n"]} had any starter left)')
+    return (head('Prime-time sweat',f'{SWL["n"]} of {SWL["of"]} matchups were still undecided going into the final prime-time game')
             +table([('Team',''),('W-L','36px'),('Back','32px'),('Blown','38px'),('Avg in','44px')],rows,'nsp')
             +'<p class="odnote nsn">W-L = record in those matchups · Back = trailed at kickoff and won · Blown = led at kickoff and lost · Avg in = average lead at kickoff.</p>'
-            +(head(f'Live sweats · {cnt}','Score at Monday kickoff · winner on top · gap on the right · newest first')+gl if gl else '<div class="tqnone">No Monday night sweats yet</div>'))
+            +(head(f'Live sweats · {cnt}','Score at the final prime-time kickoff · winner on top · gap on the right · newest first')+gl if gl else '<div class="tqnone">No prime-time sweats yet</div>'))
 def perfect_block():
     mxd=max([abs(v['dw']) for v in PFX.values()]+[1])
     rows=[[nmb(t,dvb(PFX[t]['dw'],mxd)),f'<span class="sxv">{_wr(PFX[t]["a"])}</span>',f'<span class="sxv b">{_wr(PFX[t]["o"])}</span>',
