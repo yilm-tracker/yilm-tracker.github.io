@@ -166,6 +166,7 @@ def lcell(p,side):
     mk=_badge(tm).replace('<em class="nfl','<em class="nfl tm',1) if tm else ''
     cur=(p[10] if len(p)>10 else W)==W and tm and opp  # current week, has a game: the page's live updater may patch it
     dp=f' data-p="{pid}" data-j="{proj:.2f}"' if cur else ''
+    if (p[10] if len(p)>10 else W)==W:dp+=f' data-x="{_lx(p)[0]:.3f}"'   # build's live projection for this row (live.js falls back to it)
     dt=f' data-t="{tm}"' if cur else ''
     hb=''
     if HATILE and opp and _hax(p) in('vs','@'):  # playoffs: vertical HOME / ROAD strip on the inner edge, next to the points
@@ -219,24 +220,17 @@ def sview(sa,sb,sid_a=None,sid_b=None):
             s=_slate(_pw(p),p[3]);k=s[0] if s else ('9','~');lab=s[1] if s else 'No game'
             g=groups.setdefault(k,{'lab':lab,'a':[],'b':[]});g[side].append(p)
     o=[];ca=cb=pa=pb=0.0;strip=[];rda=[0.0,False];rdb=[0.0,False]
-    # Needs over projection, on every slate: going into the slate, how far the trailing team's starters from this slate on
-    # must beat their projections to catch up, if the leader's do exactly theirs. Earlier slates count actual scores (live:
-    # max(actual, projection)). Filled for finished slates and the next one to finish; later slates keep an empty line.
-    def _ev(p):
-        if lval(p)[1]:return p[5]
-        if p[3] in LIVEG and _pw(p)==W:return max(p[4],p[5])
-        return p[4]
-    KS=sorted(groups)
-    nxt=next((k for k in KS if groups[k]['lab']!='No game' and not all(lval(p)[1] for p in groups[k]['a']+groups[k]['b'])),None)
-    upto=KS.index(nxt) if nxt is not None else len(KS)-1
-    def need_row(ki):
+    # Needs over proj (2026-11-13): one figure for the matchup = the gap between the two teams' live projections (the
+    # Points band's small figure .llv, _llv() below, as shown to 0.1), on the trailing team's side of every slate not yet
+    # finished (live or upcoming), the same on each. Finished slates and No game: empty line. Level (under 0.05): empty.
+    # Trailing team with no starter left to play (every starter with a game has finished): '–'. live.js patches it too.
+    KS=sorted(groups);LA,LB=_llr(sa),_llr(sb);LD=round(LA-LB,1)
+    def need_row(st):
         cell=['','']
-        if ki<=upto:
-            ea=sum(_ev(p) for k2 in KS[:ki] for p in groups[k2]['a'])+sum(p[4] for k2 in KS[ki:] for p in groups[k2]['a'])
-            eb=sum(_ev(p) for k2 in KS[:ki] for p in groups[k2]['b'])+sum(p[4] for k2 in KS[ki:] for p in groups[k2]['b'])
-            tr=0 if ea<eb-0.05 else 1 if eb<ea-0.05 else None
+        if st not in('Final','Bye'):
+            tr=0 if LD<=-0.05 else 1 if LD>=0.05 else None
             if tr is not None:
-                cell[tr]=f'<i class="dlt dn">+{abs(ea-eb):.1f}</i>' if any(groups[k2]['ab'[tr]] for k2 in KS[ki:]) else '–'
+                cell[tr]=f'<i class="dlt dn">+{abs(LD):.1f}</i>' if _left((sa,sb)[tr]) else '–'
         return f'<div class="mcr slc sltw"><span>{cell[0]}</span><em>Needs over proj</em><span>{cell[1]}</span></div>'
     for ki,k in enumerate(KS):
         g=groups[k]
@@ -258,7 +252,7 @@ def sview(sa,sb,sid_a=None,sid_b=None):
             return f'<i class="dlt {c}">{"+" if v>=0.05 else "−" if v<=-0.05 else "±"}{abs(v):.1f}</i>'
         fa=lambda x,j:(f'{x:.1f}' if started else '–')+f' <small>({j:.1f})</small>'
         o.append(f'<div class="slx sx-{st.lower()}"><div class="slg"><b>{g["lab"]}</b><em>{len(g["a"])}<u>·</u>{len(g["b"])} starters</em><i class="ss {st.lower()}">{st}</i></div><div class="mcr slh"><span class="{"up" if started and xa>xb else ""}">{fa(xa,ja)}{dl(sda)}</span><em>Slate</em><span class="{"up" if started and xb>xa else ""}">{dl(sdb)}{fa(xb,jb)}</span></div>'
-                 f'<div class="mcr slc"><span>{ca:.1f} <small>({pa:.1f})</small>{dl(rda[0] if rda[1] else None)}</span><em>Running total</em><span>{dl(rdb[0] if rdb[1] else None)}{cb:.1f} <small>({pb:.1f})</small></span></div>'+need_row(ki))
+                 f'<div class="mcr slc"><span>{ca:.1f} <small>({pa:.1f})</small>{dl(rda[0] if rda[1] else None)}</span><em>Running total</em><span>{dl(rdb[0] if rdb[1] else None)}{cb:.1f} <small>({pb:.1f})</small></span></div>'+need_row(st))
         for i in range(max(len(g['a']),len(g['b']))):
             x=g['a'][i] if i<len(g['a']) else None;y=g['b'][i] if i<len(g['b']) else None;r=lrow(x,y,'')
             if sid_a is not None and x and x[0] not in sid_a:r=_swp(r,'a')
@@ -285,7 +279,7 @@ def ptsrow(sa,sb,big=True,ra=None,rb=None):
     ua=big and (a_ or b_) and va>vb;ub=big and (a_ or b_) and vb>va
     da=f' data-r="{ra}"' if ra else '';db=f' data-r="{rb}"' if rb else ''
     if big:  # scoreboard band: live points large, the pre-game projection under each
-        la,lb=sum(_lx(p)[0] for p in sa),sum(_lx(p)[0] for p in sb)   # live projection: points so far plus what is left to play
+        la,lb=_llv(sa),_llv(sb)   # live projection: points so far plus what is left to play
         fin=lambda X:bool(X) and all(lval(p)[1] for p in X)   # every starter on that side has finished
         lva=('<small class="llv fz">Final</small>' if fin(sa) else f'<small class="llv" title="Live projection">{la:.1f}</small>')
         lvb=('<small class="llv fz">Final</small>' if fin(sb) else f'<small class="llv" title="Live projection">{lb:.1f}</small>')
@@ -398,6 +392,33 @@ def _lx(p):
     if lval(p)[1]:return p[5],0.0
     if p[3] in LIVEG:f=float(_LEFT.get(p[3],0.5));return p[5]+p[4]*f,f
     return p[4],1.0
+def _llv(X):return sum(_lx(p)[0] for p in X if p)   # a lineup's live projection: the Points band's small figure (.llv)
+def _llr(X):return float(f'{_llv(X):.1f}')          # ... as the page shows it (one decimal)
+def _left(X):return any(p and p[6] and not lval(p)[1] for p in X)   # a starter with a game still to finish
+def needchk(h,where):
+    import sys
+    """build check (2026-11-13), never fatal: in every lineup with a Points band, each 'Needs over proj' figure equals
+    |llv A - llv B| as shown (a side whose band says Final reads its total), on the trailing side, to 0.1"""
+    n=bad=0
+    for seg in re.split(r'(?=<div class="mcr ltot lsb">)',h)[1:]:
+        seg=seg.split('<div class="lus-o">')[0]
+        m=re.match(r'<div class="mcr ltot lsb">(.*?)<em>Points</em>(.*?)</div>',seg)
+        if not m:continue
+        def lv(x):
+            v=re.search(r'class="llv[^"]*"[^>]*>([^<]*)<',x).group(1)
+            return float(re.search(r'class="lt-v">([^<]*)<',x).group(1).replace('–','0')) if v=='Final' else float(v)
+        la,lb=lv(m.group(1)),lv(m.group(2))
+        for sl in seg.split('<div class="slx ')[1:]:
+            sx=sl[:sl.index('"')];ca,cb=re.search(r'<div class="mcr slc sltw"><span>(.*?)</span><em>Needs over proj</em><span>(.*?)</span></div>',sl).groups()
+            if sx in('sx-final','sx-bye') and (ca or cb):
+                bad+=1;print(f'WARNING needs-check {where}: {sx} slate shows "{ca}{cb}"',file=sys.stderr)
+            for side,c,tr in (('a',ca,la<lb),('b',cb,lb<la)):
+                f=re.search(r'\+([\d.]+)<',c)
+                if not f:continue
+                n+=1
+                if abs(float(f.group(1))-abs(la-lb))>0.1+1e-9 or not tr:
+                    bad+=1;print(f'WARNING needs-check {where}: side {side} shows +{f.group(1)}, |llv A - llv B| = {abs(la-lb):.2f} ({la} vs {lb})',file=sys.stderr)
+    print(f'needs-check {where}: {n} figures checked, {bad} off',file=sys.stderr)   # stderr: the build runs this with stdout discarded
 def _lp(t):
     st=[p for p in LW['out'][str(RID[t])]['st'] if p];x=[_lx(p) for p in st];s2=sum(p[4]**2 for p in st)
     return sum(e for e,_ in x),(TSD**2*sum(w*p[4]**2 for (_,w),p in zip(x,st))/s2 if s2 else 0.0)
@@ -552,6 +573,7 @@ css+=('.mpk{grid-template-columns:1fr!important;gap:8px}.mpk label:last-child:nt
       'font-style:normal;font-family:var(--display);font-weight:600;font-size:11px;font-variant-numeric:tabular-nums;background:var(--line);color:var(--steel)}'
       '.g4 .gsd.gold{color:#e8c15a;background:rgba(232,193,90,.14)}.g4 .gsd.g{color:var(--win);background:rgba(63,214,155,.12)}.g4 .gsd.b{color:#ff8a9a;background:rgba(255,93,115,.12)}'
       '@media(max-width:384px){.mpk label.g4{padding:10px 8px 9px;column-gap:5px}.g4 .g4vs{width:26px}.g4 .gn{font-size:15px}.g4 .sc{font-size:17.5px}.g4 .g4a{width:26px;height:26px}.g4 .g4t{column-gap:3px}.g4 .g4o{font-size:10.5px}.g4 .g4p{font-size:11.5px}.g4 .gfm{display:none}}')
+if __name__=='__main__':needchk(sec,'Matchups')   # once per build (po_build imports this file)
 open(P+'mu_section.html','w',encoding='utf-8').write(sec);open(P+'mu_css.css','w',encoding='utf-8').write(css)
 if __name__=='__main__':
     for a,b in games: print(a,'v',b,len(byes(a,W)),len(byes(b,W)))

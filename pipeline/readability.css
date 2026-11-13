@@ -1353,3 +1353,8 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
    14px centred box that starts 4px of ink after the pill; GP's baseline is level with the pill label's (.48px). */
 .pt-start .pcr .pgp{display:block!important;width:14px;margin-left:calc((var(--ppw,30px) - 20px)/2 + 4px - 1.5px);text-align:center}
 .pt-start .pch .pgp{text-indent:.1em;transform:translateY(calc(-50% - .48px))}
+
+/* 2026-11-13 NEEDS OVER PROJ ROW HEIGHT (Nicklaus, option A): an empty figure slot holds one no-break space in the slot's
+   own font (Barlow 600 14px), so its line box is the same strut a "+x.x" or "–" sits on: every need row is the filled
+   height whether the build or live.js leaves it empty or fills it. No new element, no token. */
+.sltw>span:empty::before{content:"\00a0"}

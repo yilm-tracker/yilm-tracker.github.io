@@ -279,6 +279,7 @@ css+=('.pox .pfph{margin-top:22px;display:flex;justify-content:space-between;ali
       '.pfpr>b{font-weight:600;color:var(--chalk);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
       '.pfpr .pfprc{color:var(--steel);font-variant-numeric:tabular-nums;font-size:.92em}'
       '.pfpr.pfp1>em{color:#e8c15a}.pfpr>.ch{justify-self:start}') if FINAL else ''
+MB.needchk(sec+''.join(_M.values()) if '_M' in globals() else sec,'Playoffs')
 open(P+'po_section.html','w',encoding='utf-8').write(sec);open(P+'po_css.css','w',encoding='utf-8').write(css)
 if __name__=='__main__':
     print('seeds',[SHORT[t] for t in S],'WSP',WSP,'size',len(sec))
