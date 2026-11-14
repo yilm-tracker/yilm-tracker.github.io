@@ -64,7 +64,7 @@ h1{grid-column:1;margin:0;font-family:var(--display);font-weight:700;font-size:5
 .tier em{margin-left:auto;font-style:normal;font-weight:600;font-size:13px;letter-spacing:.1em;color:var(--label)}
 
 /* Team row */
-.r{display:grid;grid-template-columns:30px minmax(0,1fr) 84px 78px;column-gap:9px;row-gap:4px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer;-webkit-tap-highlight-color:transparent;position:relative}
+.r:where(:not(.gha)){display:grid;grid-template-columns:30px minmax(0,1fr) 84px 78px;column-gap:9px;row-gap:4px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer;-webkit-tap-highlight-color:transparent;position:relative}
 .tier+.r,.tier+.xp+.r{border-top:0}
 .r:focus-visible{outline:2px solid var(--sky);outline-offset:2px;border-radius:6px}
 .rk{grid-column:1;grid-row:1 / span 2;font-family:var(--display);font-weight:700;font-size:32px;line-height:1;text-align:center;color:var(--tc)}
