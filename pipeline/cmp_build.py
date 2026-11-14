@@ -111,17 +111,22 @@ def scoring(a,b):
 TOPN={'QB':12,'RB':24,'WR':24,'TE':12,'K':12,'DEF':12}
 def positions(a,b):
     ps=''.join(row(ppt(p),f'{PS[a][p]:.1f}',f'{PS[b][p]:.1f}',PS[a][p],PS[b][p]) for p in POS)
-    def best(t,p):
-        r=[q for q in active(t) if q[2]==p and rk(q)];return min(r,key=rk) if r else None
-    bs=''
-    for p in POS:
-        pa,pb=best(a,p),best(b,p)
-        bs+=f'<div class="cr cbp">{cn(pa,"a")}<em>{p}</em>{cn(pb,"b")}</div>'
-    cnt=lambda t,p:sum(1 for q in active(t) if q[2]==p and rk(q) and rk(q)<=TOPN[p])
-    st=''.join(row(ppt(p,f'{p} ≤{TOPN[p]}'),str(cnt(a,p)),str(cnt(b,p)),cnt(a,p),cnt(b,p)) for p in POS)
-    ta,tb=sum(cnt(a,p) for p in POS),sum(cnt(b,p) for p in POS)
-    st+=row('Total',str(ta),str(tb),ta,tb)
-    return f'<div class="cs cs-po">{sec("Points per start",ps)}{f'<div class="msh">Best player<small>by position rank</small></div><div class="cbpw">{bs}</div>'}{sec("Startable players",st,"top 12 QB, TE, K, DEF · top 24 RB, WR")}</div>'
+    # Best player and Startable players follow Compare's Pts / Gm switch (brief A6): position rank by points or per game (3+ games)
+    def blocks(mode):
+        rf=rk if mode=='p' else (lambda q:PG[q[0]][0] if PG.get(q[0]) and PG[q[0]][1]>=3 else None)
+        def best(t,p):
+            r=[q for q in active(t) if q[2]==p and rf(q)];return min(r,key=rf) if r else None
+        bs=''
+        for p in POS:
+            pa,pb=best(a,p),best(b,p)
+            bs+=f'<div class="cr cbp">{cn(pa,"a",mode)}<em>{p}</em>{cn(pb,"b",mode)}</div>'
+        cnt=lambda t,p:sum(1 for q in active(t) if q[2]==p and rf(q) and rf(q)<=TOPN[p])
+        st=''.join(row(ppt(p,f'{p} ≤{TOPN[p]}'),str(cnt(a,p)),str(cnt(b,p)),cnt(a,p),cnt(b,p)) for p in POS)
+        ta,tb=sum(cnt(a,p) for p in POS),sum(cnt(b,p) for p in POS)
+        st+=row('Total',str(ta),str(tb),ta,tb)
+        return (f'<div class="cpl cpl-{mode}"><div class="msh">Best player<small>by position rank</small></div><div class="cbpw">{bs}</div>'
+                +sec("Startable players",st,"top 12 QB, TE, K, DEF · top 24 RB, WR")+'</div>')
+    return f'<div class="cs cs-po">{sec("Points per start",ps)}<div class="cpg pseg" role="group" aria-label="Player points"><label for="cs-p">Pts</label><label for="cs-g">/ Gm</label></div>{blocks("p")}{blocks("g")}</div>'
 # ---------- Players (mirrored, one line each)
 PG=json.load(open(P+'ro_pg.json'))
 def cn(p,side,mode='p'):
@@ -152,7 +157,7 @@ def players(a,b,mode):
             o.append(f'<div class="cr{w}">{cell(pa,"a",mode)}{cell(pb,"b",mode)}</div>')
     return ''.join(o)
 def playersec(a,b):
-    return f'<div class="cs cs-pl"><div class="cpg pseg" role="group" aria-label="Player points"><label for="cs-p">Pts</label><label for="cs-g">Pts/g</label></div><div class="cpl cpl-p">{players(a,b,"p")}</div><div class="cpl cpl-g">{players(a,b,"g")}</div></div>'
+    return f'<div class="cs cs-pl"><div class="cpg pseg" role="group" aria-label="Player points"><label for="cs-p">Pts</label><label for="cs-g">/ Gm</label></div><div class="cpl cpl-p">{players(a,b,"p")}</div><div class="cpl cpl-g">{players(a,b,"g")}</div></div>'
 # ---------- Depth
 def depth(a,b):
     ba,bb=stt.mean(X['bench'][a]),stt.mean(X['bench'][b])
