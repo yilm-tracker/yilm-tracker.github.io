@@ -31,26 +31,28 @@ for t in ([] if FIN else H):
     o=FULL[FUT[t][0][1]];assert FULL[FUT[o][0][1]]==t;seen|={t,o};games.append((t,o))
 assert FIN or len(games)==lg.N//2
 import sx_data as _SD
-def card(a,b):
+def card(a,b,w=None):
+    """w: a future week (2026-11-13): that week's byes, the season sim's game and the set lineup's home / road count"""
+    wk=w or W
     def side(x,cl):
-        bl=byes(x,W)
+        bl=byes(x,wk)
         lst=''.join(f'<div class="mbr"><i class="pp sm p-{p[2].lower()}"><span class="ct">{p[2]}</span></i><span>{e(p[1])}</span></div>' for p in bl) or '<div class="mbr none">None</div>'
         return (f'<div class="mus {cl}">{chip(seed(x))}<b>{e(x)}</b><span class="mrec">{rec(x)}</span><span class="mform">{form(x)}</span></div>',
                 f'<div class="mbl {cl}">{lst}</div>')
     sa,ba=side(a,'msl');sb,bb=side(b,'msr')
-    ma,mb,pw=_pre(a,b);pa=round(pw*100);pb=100-pa
+    ma,mb,pw=_pre(a,b) if w is None else _fsim(a,b,w);pa=round(pw*100);pb=100-pa
     rows=[('Sim pts',f'{ma:.1f}',f'{mb:.1f}',ma,mb),('Sim win',f'{pa}%',f'{pb}%',pa,pb),
           ('PF / wk',f'{T[a][5]:.1f}',f'{T[b][5]:.1f}',T[a][5],T[b][5]),
           ('PF rank',f'#{T[a][4]}',f'#{T[b][4]}',-T[a][4],-T[b][4]),
           ('All-play',f'{T[a][10]}-{T[a][11]}',f'{T[b][10]}-{T[b][11]}',T[a][10],T[b][10]),
           ('Every-week H2H',*(lambda w,l:(f'{w}-{l}',f'{l}-{w}',w,l))(sum(p[2]>q[2] for p,q in zip(WK[a],WK[b])),sum(p[2]<q[2] for p,q in zip(WK[a],WK[b])))),
           ('Luck',f'{T[a][12]:+.2f}',f'{T[b][12]:+.2f}',None,None),
-          ('On bye',str(len(byes(a,W))),str(len(byes(b,W))),-len(byes(a,W)),-len(byes(b,W))),
-          (HRLAB,*[hrval(hr_count(LW['out'][str(RID[x])]['st']),hr_count(optimal(_rpool(LW['out'][str(RID[x])])))) for x in (a,b)],None,None)]
+          ('On bye',str(len(byes(a,wk))),str(len(byes(b,wk))),-len(byes(a,wk)),-len(byes(b,wk))),
+          (HRLAB,*[hrval(hr_count(X['st']),hr_count(optimal(_rpool(X)))) for X in (_lux(a,w),_lux(b,w))],None,None)]
     cmp=''.join(f'<div class="mcr"><span class="{"up" if va is not None and va>vb else ""}">{x}</span><em>{l}</em><span class="{"up" if va is not None and vb>va else ""}">{y}</span></div>' for l,x,y,va,vb in rows)
     prev=[x for x in WK[a] if FULL[x[1]]==b]
     pv=''.join(f'<div class="mprev">Week {x[0]}: <b class="{"w" if x[2]>x[3] else "l"}">{e(a) if x[2]>x[3] else e(b)}</b> won {max(x[2],x[3]):.1f}–{min(x[2],x[3]):.1f}</div>' for x in prev)
-    return (f'<div class="mcard"><div class="mch"><span>Week {W}</span></div>'
+    return (f'<div class="mcard"><div class="mch"><span>Week {wk}</span></div>'
             f'<div class="mvs">{sa}<span class="mv2">vs</span>{sb}</div><div class="mcmp">{cmp}</div>{pv}<div class="mbys">{ba}{bb}</div></div>')
 def sched(t):
     o=['<div class="msh"><span>Results</span></div>'];ww=wl=0
@@ -74,6 +76,19 @@ from datetime import date as _d
 LW=json.load(open(P+f'wk{W}.json'));DONEG=set(LW['done']);LIVEG=set(LW.get('live',[]));HOME=set(LW['home'])
 _X=json.load(open(P+'cmp_extra.json',encoding='utf-8'));RID={v:int(k) for k,v in _X['rn'].items()};RN2={int(k):v for k,v in _X['rn'].items()}
 _K=json.load(open(P+'ro_ranks.json'));_K.pop('_bye',None);_PG=json.load(open(P+'ro_pg.json'))
+# ---------- future weeks (2026-11-13, brief A5): the rest of the regular season, each team's lineup as set in Sleeper now,
+# re-projected for that week (fut_lu.py, shared with the Playoffs builder); no results and nothing for live.js to patch
+import fut_lu as _FL
+FW=sorted({x[0] for t in H for x in FUT[t] if x[0]>W}) if not FIN else []
+_FXC={}
+def _fx(t,w):
+    """team t's week-w lineup in the current week's shape: starters as set in Sleeper now ('st', slot order, None for an
+    empty slot), the rest of the roster except IR / taxi on the bench ('bn'), each with week w's projection and game"""
+    if (t,w) not in _FXC:
+        st=[_FL.mp(q,w) for q in _FL.setlineup(t,w)];ids={p[0] for p in st if p}
+        _FXC[(t,w)]={'st':st,'bn':[_FL.mp(q,w) for q in _FL.pool(t,w) if q['pid'] not in ids]}
+    return _FXC[(t,w)]
+def _lux(t,w=None):return LW['out'][str(RID[t])] if w is None else _fx(t,w)
 # Opponent in the game line ("@ NYJ", "vs CLE"): show the team logo when pipeline/logos/{CODE}.png|svg|webp exists
 # (same files rebuild.py embeds as CSS for the .nfl.tm badges); otherwise keep the plain text code.
 _NICK={'ARI':'Cardinals','ATL':'Falcons','BAL':'Ravens','BUF':'Bills','CAR':'Panthers','CHI':'Bears','CIN':'Bengals','CLE':'Browns',
@@ -93,7 +108,7 @@ def hrval(c,co=None):
     """home · road count for the actual lineup; with co, the optimal lineup's count too (shown when Optimal is picked)"""
     if co is None:return _hrv(c)
     return f'<span class="hrv-a">{_hrv(c)}</span><span class="hrv-o">{_hrv(co)}</span>'
-def _rpool(X):return X['st']+[p for p in X['bn'] if _TAG.get(p[0],'') not in('IR','TX') and (p[4]>0 or p[5]!=0)]
+def _rpool(X):return [p for p in X['st'] if p]+[p for p in X['bn'] if _TAG.get(p[0],'') not in('IR','TX') and (p[4]>0 or p[5]!=0)]
 def hr_count(st):
     hs=[_hax(p) for p in st if p];return sum(x=='vs' for x in hs),sum(x=='@' for x in hs)
 def _gline(ha,opp):
@@ -162,7 +177,8 @@ def lcell(p,side):
     v,done=lval(p)
     ha=_gline((p[9] if len(p)>9 else ('vs' if tm in HOME else '@')),opp)
     # finished games: the points tile already says FINAL, so the game line is just home/away + opponent
-    st='BYE' if not opp else ha if done else f'{ha}<i class="gsep">·</i><span class="gwhen">{_when(p,done)}</span>'
+    wn=_when(p,done)
+    st='BYE' if not opp else ha if done or (opp=='TBD' and wn=='TBD') else f'{ha}<i class="gsep">·</i><span class="gwhen">{wn}</span>'   # a week whose games are not known yet: "TBD" once (2026-11-13)
     mk=_badge(tm).replace('<em class="nfl','<em class="nfl tm',1) if tm else ''
     cur=(p[10] if len(p)>10 else W)==W and tm and opp  # current week, has a game: the page's live updater may patch it
     dp=f' data-p="{pid}" data-j="{proj:.2f}"' if cur else ''
@@ -211,7 +227,7 @@ def _slate(w,tm):
     t='4 PM' if late else (d.strftime('%-I:%M %p').replace(':00 ',' '))
     return key,f'{d:%a} {t}'
 def _pw(p):return p[10] if len(p)>10 else W
-def sview(sa,sb,sid_a=None,sid_b=None):
+def sview(sa,sb,sid_a=None,sid_b=None,fut=False):
     """Starters grouped by slate. sa/sb: player lists (None allowed). Shows per-slate actual (projected) and running totals."""
     groups={}
     for side,L in (('a',sa),('b',sb)):
@@ -235,6 +251,7 @@ def sview(sa,sb,sid_a=None,sid_b=None):
         return 'Final' if all(dn) else ('Live' if any(dn) else 'Upcoming')
     STS={k:_st(k) for k in KS}
     CUR=next((k for k in KS if STS[k] not in('Final','Bye')),None)   # None: every slate finished
+    if fut:CUR=()   # a projected week (Matchups future weeks 2026-11-13, Playoffs 2026-11-14): no current slate, every slate is later (no need line, running total "– (proj)")
     def _G(L,k):   # G_X(S) for the finished slate k, to 0.1 as shown
         return _r1(sum((p[5] if (_slk(p)<=k and STS[_slk(p)]!='Bye') else p[4]) for p in L if p))
     def _slk(p):
@@ -308,7 +325,7 @@ def ptsrow(sa,sb,big=True,ra=None,rb=None):
             f'<em>Points <i class=pj>(projected)</i></em><span class="{"up" if ub else ""}"{db}><small>({pb:.1f})</small> <b class="lt-v">{fb}</b></span></div>')
 BH_CUR='<div class="msh lbh"><b>Bench</b><i></i><small>active players with a game</small></div>'
 BH_HIST='<div class="msh lbh"><b>Bench</b><i></i><small>points left on the bench</small></div>'
-def optblock(sa,sb,pool_a,pool_b,ta,tb,proj=False,bhead='',bkeep=lambda p:True,bsl=''):
+def optblock(sa,sb,pool_a,pool_b,ta,tb,proj=False,bhead='',bkeep=lambda p:True,bsl='',fut=False):
     oa,ob=optimal(pool_a),optimal(pool_b)
     sid_a={p[0] for p in sa};sid_b={p[0] for p in sb}
     va=sum(lval(p)[0] for p in oa if p);vb=sum(lval(p)[0] for p in ob if p)
@@ -324,7 +341,7 @@ def optblock(sa,sb,pool_a,pool_b,ta,tb,proj=False,bhead='',bkeep=lambda p:True,b
         if x and x[0] not in sid_a:r=_swp(r,'a')
         if y and y[0] not in sid_b:r=_swp(r,'b')
         o.append(r)
-    sv=sview([x for x in oa if x],[y for y in ob if y],sid_a,sid_b)
+    sv=sview([x for x in oa if x],[y for y in ob if y],sid_a,sid_b,fut)
     o.append('</div>'+sv)
     oid_a={p[0] for p in oa if p};oid_b={p[0] for p in ob if p}
     ba=sorted([p for p in pool_a if p[0] not in oid_a and (bkeep(p) or p[0] in sid_a)],key=lambda p:-lval(p)[0])
@@ -333,15 +350,17 @@ def optblock(sa,sb,pool_a,pool_b,ta,tb,proj=False,bhead='',bkeep=lambda p:True,b
         o.append(bhead)
         o+=[lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,bsl) for k in range(max(len(ba),len(bb)))]
     return '<div class="lus-o">'+''.join(o)+'</div>'
-def lineups(a,b):
-    A,B=LW['out'][str(RID[a])],LW['out'][str(RID[b])]
-    tot=lambda X:sum(lval(p)[0] for p in X['st'])
-    sc=lambda X:sum(p[5] for p in X['st'])
+def lineups(a,b,w=None):
+    """w: a future week (2026-11-13): the set lineup re-projected for week w (_fx), the Playoffs builder's note line, no
+    data-r / data-p hooks (live.js never touches it), every slate a later slate"""
+    A,B=_lux(a,w),_lux(b,w)
+    nn=lambda L:[p for p in L if p]
+    tot=lambda X:sum(lval(p)[0] for p in nn(X['st']))
     ta,tb=tot(A),tot(B)
-    oa_,ob_=sum(p[4] for p in A['st']),sum(p[4] for p in B['st'])
-    hdr=f'<div class="msh lsh">Lineups</div>{CTL([(VSW,'Order','Lineup',LSW),(LDW,'Stats','Rank',RKW),(LCW,'Colors','','')])}<div class="lnote">boxed = final · grey = projected</div>'
-    o=[ptsrow(A['st'],B['st'],True,RID[a],RID[b])]
-    o+=['<div class="lpv">']+[lgs(lrow(pa,pb,sl if sl!='FLEX' else 'FLX'),i) for i,(pa,pb,sl) in enumerate(zip(A['st'],B['st'],SLOTS))]+['</div>',sview(A['st'],B['st'])]
+    note='boxed = final · grey = projected' if w is None else f'set lineup = starters as set in Sleeper now · {_FL.src(w)}'
+    hdr=f'<div class="msh lsh">Lineups</div>{CTL([(VSW,'Order','Lineup',LSW),(LDW,'Stats','Rank',RKW),(LCW,'Colors','','')])}<div class="lnote">{note}</div>'
+    o=[ptsrow(nn(A['st']),nn(B['st']),True,*((RID[a],RID[b]) if w is None else (None,None)))]
+    o+=['<div class="lpv">']+[lgs(lrow(pa,pb,sl if sl!='FLEX' else 'FLX'),i) for i,(pa,pb,sl) in enumerate(zip(A['st'],B['st'],SLOTS))]+['</div>',sview(nn(A['st']),nn(B['st']),fut=w is not None)]
     keep=lambda p:_TAG.get(p[0],'')=='' and p[4]>0 or (p[3] in DONEG and p[5]>0)
     bn=lambda X:sorted([p for p in X['bn'] if keep(p)],key=lambda p:-lval(p)[0])
     ba,bb=bn(A),bn(B)
@@ -349,12 +368,13 @@ def lineups(a,b):
         o.append(BH_CUR)
         for k in range(max(len(ba),len(bb))):
             o.append(lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,'BN'))
-    pool=lambda X:X['st']+[p for p in X['bn'] if _TAG.get(p[0],'') not in('IR','TX') and (p[4]>0 or p[5]!=0)]
-    return '<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+optblock(A['st'],B['st'],pool(A),pool(B),ta,tb,True,BH_CUR,keep,'BN')+'</div>'
-def panel(i,a,b):
-    return (f'<div class="mup mup-{i}">{lineups(a,b)}{card(a,b)}'
-            f'<input type="radio" name="mt{i}" id="mt{i}a" class="lr msa" checked><input type="radio" name="mt{i}" id="mt{i}b" class="lr msb">'
-            f'<div class="msw"><label for="mt{i}a">{e(a)}</label><label for="mt{i}b">{e(b)}</label></div>'
+    pool=lambda X:nn(X['st'])+[p for p in X['bn'] if _TAG.get(p[0],'') not in('IR','TX') and (p[4]>0 or p[5]!=0)]
+    return ('<div class="lus">' if w is None else f'<div class="lus" data-fw="{w}">')+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+optblock(nn(A['st']),nn(B['st']),pool(A),pool(B),ta,tb,True,BH_CUR,keep,'BN',w is not None)+'</div>'
+def panel(i,a,b,w=None):
+    m,k=(f'mup-{i}',f'mt{i}') if w is None else (f'fwp{w}-{i}',f'mt{w}-{i}')
+    return (f'<div class="mup {m}">{lineups(a,b,w)}{card(a,b,w)}'
+            f'<input type="radio" name="{k}" id="{k}a" class="lr msa" checked><input type="radio" name="{k}" id="{k}b" class="lr msb">'
+            f'<div class="msw"><label for="{k}a">{e(a)}</label><label for="{k}b">{e(b)}</label></div>'
             f'<div class="msch msch-a">{sched(a)}</div><div class="msch msch-b">{sched(b)}</div></div>')
 radios=''.join(f'<input type="radio" name="mus" id="mu-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N//2))
 def _rw(t,w):
@@ -371,7 +391,9 @@ def nmx(t):
 try:
     import lg as _LG;_AVR={t:_LG.RID[t] for t,f in _LG.AV.items() if f}   # manager faces (leagues that have them)
 except Exception:_AVR={}
-def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=None,fa='',fb='',sm=None,oa=None,ob=None,done=False):
+SMT0='Pre-game sim: average score over 20,000 simulated games (Sleeper and FantasyPros projections blended)'
+SMTF="Season sim: average score over 20,000 simulated seasons, each team's best lineup by Sleeper projections"   # future weeks (psim 'fut')
+def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=None,fa='',fb='',sm=None,oa=None,ob=None,done=False,smt=None,cw=True):
     """one game in the picker (about Sleeper's matchup-card height), two mirrored halves:
     1) face (if any); win chance under the pre-game projection (in brackets); live points with the live projection
        (points so far + projection for what's left) under them, or FINAL once the game is over, at the inner edge
@@ -379,18 +401,18 @@ def prow_(fr,a,b,ra,rb,ta,tb,va,vb,final=False,ca='',cb='',pa=None,ja=None,jb=No
     3) the full team name   4) record, streak, last 5, seed"""
     fz=final or done;ua,ub=(va>vb,vb>va) if fz else (False,False)
     def half(t,r,tg,v,hi,rc,pj,fm,cl,pw,won,og):
-        og,low=(pj,'Final') if final else (og,'Final' if (done or _tdone(t)) else '' if pj is None else f'{pj:.1f}')
+        og,low=(pj,'Final') if final else (og,'Final' if (done or (cw and _tdone(t))) else '' if pj is None else f'{pj:.1f}')
         if fz:lab,cls,wd=('Won','w',100) if won else ('Lost','l',100)
         else:lab,cls,wd=(f'{pw}% win','w' if pw>50 else 'l' if pw<50 else 'e',pw)
         av=f'<i class="av g4a av-{_AVR[t]}" aria-hidden="true"></i>' if t in _AVR else ''
         return (f'<span class="gs {cl}">'
                 f'<span class="g4t">{av}<i class="gsd {tone(r) if not final else ""}" title="{"Week score rank" if final else "Seed"}">{r}</i><span class="g4o" title="Pre-game projection">{"" if og is None else f"({og:.1f})"}</span>'
-                f'<span class="sc{" hi" if hi else ""}" data-r="{RID[t]}">{v:.1f}</span>'
+                f'<span class="sc{" hi" if hi else ""}" data-r="{RID[t]}">{"–" if v is None else f"{v:.1f}"}</span>'
                 f'<span class="gpj{" fz" if low=="Final" else ""}" title="{"" if low=="Final" else "Live projection"}">{low}</span></span>'
                 f'<span class="g4w"><span class="g4p {cls}">{lab}</span><span class="g4b"><i class="{cls}" style="width:{wd}%"></i></span></span>'
                 f'<b class="gn">{e(SHORT[t])}</b>'
                 f'<span class="gb"><span class="grc">{rc}</span><i class="stk {tg[:1].lower()}">{tg}</i><span class="gfm">{fm}</span></span></span>')
-    return (f'<label for="{fr}" class="g4{" fin" if fz else ""}">{half(a,ra,ta,va,ua,ca,ja,fa,"gl",pa,ua,oa)}<span class="g4m"><i class="g4vs">vs</i>{f'<span class="g4sim" title="Pre-game sim: average score over 20,000 simulated games (Sleeper and FantasyPros projections blended)"><small>Sim</small><b>{sm[0]:.0f}<i>–</i>{sm[1]:.0f}</b></span>' if sm else ''}</span>'
+    return (f'<label for="{fr}" class="g4{" fin" if fz else ""}">{half(a,ra,ta,va,ua,ca,ja,fa,"gl",pa,ua,oa)}<span class="g4m"><i class="g4vs">vs</i>{f'<span class="g4sim" title="{smt or SMT0}"><small>Sim</small><b>{sm[0]:.0f}<i>–</i>{sm[1]:.0f}</b></span>' if sm else ''}</span>'
             f'{half(b,rb,tb,vb,ub,cb,jb,fb,"gr",None if pa is None else 100-pa,ub,ob)}</label>')
 # In-week projection and win chance, the way Sleeper does them: finished players count their points, live players their
 # points plus the projection for the share of their game still to play (game clock), the rest their projection. Each team's
@@ -401,6 +423,9 @@ _PSG={}
 for _a,_b,_ma,_mb,_pa in _PSM.run()['games']:_PSG[(_a,_b)]=(_ma,_mb,_pa/100);_PSG[(_b,_a)]=(_mb,_ma,1-_pa/100)
 _PRE={}
 for _a,_b,_ma,_mb,_pa in _PSM.run().get('pre',[]):_PRE[(_a,_b)]=(_ma,_mb,_pa/100);_PRE[(_b,_a)]=(_mb,_ma,1-_pa/100)
+_FPS={}   # future weeks (2026-11-13): the season sim's mean points and a's win chance, {(week, a, b): (ma, mb, p)}
+for _w,_a,_b,_ma,_mb,_pa in _PSM.run().get('fut',[]):_FPS[(_w,_a,_b)]=(_ma,_mb,_pa/100);_FPS[(_w,_b,_a)]=(_mb,_ma,1-_pa/100)
+def _fsim(a,b,w):return _FPS.get((w,a,b)) or _SD.simgame(a,b)
 def _pre(a,b):
     """the pre-game sim score for this week's game (the 20,000-run sim before kickoff); stays fixed through the week"""
     return _PRE.get((a,b)) or _sg(a,b)
@@ -409,7 +434,7 @@ def _sg(a,b):
     return _PSG.get((a,b)) or _SD.simgame(a,b)
 def _lx(p):
     if lval(p)[1]:return p[5],0.0
-    if p[3] in LIVEG:f=float(_LEFT.get(p[3],0.5));return p[5]+p[4]*f,f
+    if p[3] in LIVEG and _pw(p)==W:f=float(_LEFT.get(p[3],0.5));return p[5]+p[4]*f,f   # a game in progress this week (not a later week's row)
     return p[4],1.0
 def _llv(X):return sum(_lx(p)[0] for p in X if p)   # a lineup's live projection: the Points band's small figure (.llv)
 def _r1(x):   # one decimal: float noise removed (to 1e-5), then nearest, exact ties to even (as Python's '.1f' on a clean value); live.js r1 is the same
@@ -430,10 +455,21 @@ def _needchk(h,where):
     that point, to 0.35 (three figures shown to 0.1 per side); the current slate (first not Final) = |llv A - llv B| as
     shown in the Points band (Actual only; a side whose band says Final reads its total), to 0.1; later slates and No game:
     empty"""
-    n=bad=0;mx=0.0
+    n=bad=0;mx=0.0;nf=0
     num=lambda x:float(x.replace('−','-'))
-    for lu in h.split('<div class="lus">')[1:]:
+    sg=re.split(r'<div class="lus"((?: data-fw="\d+")?)>',h)
+    for fw,lu in zip(sg[1::2],sg[2::2]):
         parts=lu.split('<div class="lus-o">',1)
+        pj=fw or 'starters as set in Sleeper now' in lu[:3000]   # projected lineups (Matchups future weeks, Playoffs, 2026-11-14): no need figure
+        if pj:   # every slate a later slate: need line empty, running total "– (proj)"
+            for part in parts:
+                if '<div class="lsv">' not in part:continue
+                for sl in part.split('<div class="lsv">',1)[1].split('<div class="slx ')[1:]:
+                    rt=re.search(r'<div class="mcr slc"><span>(.*?)</span><em>Running total</em><span>(.*?)</span></div>',sl).groups()
+                    ca,cb=re.search(r'<div class="mcr slc sltw"><span>(.*?)</span><em>Needs over proj</em><span>(.*?)</span></div>',sl).groups()
+                    nf+=1
+                    if ca or cb or not all(x.startswith('– <small>(') for x in rt):bad+=1;print(f'WARNING needs-check {where}: projected lineup{fw} shows "{ca}{cb}" / {rt!r}',file=sys.stderr)
+            continue
         for pi,part in enumerate(parts):
             if '<div class="lsv">' not in part:continue
             la=lb=None
@@ -477,7 +513,7 @@ def _needchk(h,where):
                         continue
                     n+=1;e=abs(float(f.group(1))-abs(d));mx=max(mx,e)
                     if e>tol+1e-9:bad+=1;print(f'WARNING needs-check {where}: {sx} slate {i+1} side {"ab"[s]} shows +{f.group(1)}, recomputed {abs(d):.2f} ({ga:.2f} vs {gb:.2f})',file=sys.stderr)
-    print(f'needs-check {where}: {n} figures checked, {bad} off, max diff {mx:.2f}',file=sys.stderr)   # stderr: the build runs this with stdout discarded
+    print(f'needs-check {where}: {n} figures checked, {bad} off, max diff {mx:.2f}'+(f', {nf} projected slates empty' if nf else ''),file=sys.stderr)   # stderr: the build runs this with stdout discarded
 def _lp(t):
     st=[p for p in LW['out'][str(RID[t])]['st'] if p];x=[_lx(p) for p in st];s2=sum(p[4]**2 for p in st)
     return sum(e for e,_ in x),(TSD**2*sum(w*p[4]**2 for (_,w),p in zip(x,st))/s2 if s2 else 0.0)
@@ -522,6 +558,23 @@ def hcard(w,a,b,A,B):
             f'<div class="hmar">Margin <b>{abs(A[1]-B[1]):.1f}</b></div></div>')
 _hpj=lambda X:round(sum(float(x.split('|')[2]) for x in X[2].split(',') if x),1)  # projected total of the starters that week
 _hfm=lambda t,w:''.join(f'<i class="fm {"w" if x[2]>x[3] else "l"}"></i>' for x in WK[t][:w][-5:])
+# future weeks (2026-11-13): one block per week, the current week's picker and panels with projections only
+fut=''
+for w in FW:
+    gl=[];sn=set()
+    for t in H:
+        if t in sn:continue
+        x=[f for f in FUT[t] if f[0]==w]
+        if not x:continue
+        o=FULL[x[0][1]];sn|={t,o};gl.append((t,o))
+    fr=''.join(f'<input type="radio" name="fw{w}" id="fw{w}-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(len(gl)))
+    _fp=lambda t:round(sum(p[4] for p in _fx(t,w)['st'] if p),1)   # projected total of the set lineup
+    def _fpw(a,b):
+        p=_fsim(a,b,w)[2];return max(1,min(99,round(p*100))) if 0<p<1 else round(p*100)
+    fc=f'<div class="mpk fwc{w}" role="tablist" aria-label="Game">'+''.join(prow_(f'fw{w}-{i}',a,b,seed(a),seed(b),streak(a),streak(b),None,None,False,rec(a),rec(b),_fpw(a,b),_fp(a),_fp(b),form(a),form(b),_fsim(a,b,w)[:2],_fp(a),_fp(b),False,SMTF,False) for i,(a,b) in enumerate(gl))+'</div>'
+    fut=f'<div class="mwx mwx-{w}">'+fr+fc+''.join(panel(i,a,b,w) for i,(a,b) in enumerate(gl))+'</div>'+fut
+    css+=''.join(f'#fw{w}-{i}:checked~.fwc{w} label[for="fw{w}-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk),var(--sh-hard)}}#fw{w}-{i}:checked~.fwp{w}-{i}{{display:block}}' for i in range(len(gl)))
+WM=max(FW or [WT])   # top of the week menu (2026-11-13: every remaining regular-season week)
 hist=''
 HW=[0]
 for w in range(DONE,0,-1):
@@ -540,18 +593,18 @@ for w in range(DONE,0,-1):
     hpn=''.join(f'<div class="mup hwp{w}-{i}">{hlineups(R2[str(RID[a])],R2[str(RID[b])])}{hcard(w,a,b,R2[str(RID[a])],R2[str(RID[b])])}</div>' for i,(a,b) in enumerate(gl))
     hist+=f'<div class="mwx mwx-{w}">'+hr+hc+hpn+'</div>'
     css+=''.join(f'#hw{w}-{i}:checked~.hwc{w} label[for="hw{w}-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#hw{w}-{i}:checked~.hwp{w}-{i}{{display:block}}' for i in range(lg.N//2))
-wr=''.join(f'<input type="radio" name="mwk" id="mw-{w}" class="lr"{" checked" if w==WT else ""}>' for w in range(1,WT+1))
-dd=('<details class="dd wdd"><summary>'+''.join(f'<span class="sv wsv-{w}">Week {w}</span>' for w in range(1,WT+1))+
+wr=''.join(f'<input type="radio" name="mwk" id="mw-{w}" class="lr"{" checked" if w==WT else ""}>' for w in range(1,WM+1))
+dd=('<details class="dd wdd"><summary>'+''.join(f'<span class="sv wsv-{w}">Week {w}</span>' for w in range(1,WM+1))+
     '<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>'
-    '<div class="ddm">'+''.join(f'<label for="mw-{w}"><i>{"Now" if w==W else "Final"}</i>Week {w}</label>' for w in range(WT,0,-1))+'</div></details>')
-sec=('<section class="mux" aria-labelledby="muh">'+'<input type="radio" name="lcol" id="lc-p" class="lr" checked><input type="radio" name="lcol" id="lc-t" class="lr"><input type="radio" name="lopt" id="lo-a" class="lr" checked><input type="radio" name="lopt" id="lo-o" class="lr"><input type="radio" name="lview" id="lv-p" class="lr" checked><input type="radio" name="lview" id="lv-s" class="lr"><input type="radio" name="ldet" id="ld-l" class="lr" checked><input type="radio" name="ldet" id="ld-d" class="lr"><input type="radio" name="lrank" id="rk-t" class="lr" checked><input type="radio" name="lrank" id="rk-g" class="lr">'+wr+f'<div class="posh"><b id="muh">Matchups</b><span id="mlive" class="mlive" data-w="{W}" hidden></span>{dd}</div>'+cur+hist+'</section>')
+    '<div class="ddm">'+''.join(f'<label for="mw-{w}"><i>{"Proj" if w>W and not FIN else "Now" if w==W else "Final"}</i>Week {w}</label>' for w in range(WM,0,-1))+'</div></details>')
+sec=('<section class="mux" aria-labelledby="muh">'+'<input type="radio" name="lcol" id="lc-p" class="lr" checked><input type="radio" name="lcol" id="lc-t" class="lr"><input type="radio" name="lopt" id="lo-a" class="lr" checked><input type="radio" name="lopt" id="lo-o" class="lr"><input type="radio" name="lview" id="lv-p" class="lr" checked><input type="radio" name="lview" id="lv-s" class="lr"><input type="radio" name="ldet" id="ld-l" class="lr" checked><input type="radio" name="ldet" id="ld-d" class="lr"><input type="radio" name="lrank" id="rk-t" class="lr" checked><input type="radio" name="lrank" id="rk-g" class="lr">'+wr+f'<div class="posh"><b id="muh">Matchups</b><span id="mlive" class="mlive" data-w="{W}" hidden></span>{dd}</div>'+fut+cur+hist+'</section>')
 # team names in the game boxes: the largest size (up to 16px) that fits each half, re-fitted when a week is shown or the width changes
 sec+=('<script>(function(){function fit(){document.querySelectorAll(".g4 .gn").forEach(function(el){if(!el.clientWidth)return;'
       'if(el.dataset.fw==el.clientWidth)return;el.dataset.fw=el.clientWidth;el.style.fontSize="";var f=parseFloat(getComputedStyle(el).fontSize);'
       'var rg=document.createRange();rg.selectNodeContents(el);while(rg.getBoundingClientRect().width>el.clientWidth-0.5&&f>11){f-=0.5;el.style.fontSize=f+"px"}})}'
       'fit();document.addEventListener("change",function(){requestAnimationFrame(fit)});window.addEventListener("resize",function(){requestAnimationFrame(fit)});'
       'if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){document.querySelectorAll(".g4 .gn").forEach(function(el){el.dataset.fw=""});fit()})})()</script>')
-css+=''.join(f'#mw-{w}:checked~.posh .wsv-{w}{{display:inline}}#mw-{w}:checked~.mwx-{w}{{display:block}}@media (min-width:1100px){{#mw-{w}:checked~.mwx-{w}{{display:grid}}}}#mw-{w}:checked~.posh label[for="mw-{w}"]{{background:var(--chalk);color:var(--ink)}}' for w in range(1,WT+1))
+css+=''.join(f'#mw-{w}:checked~.posh .wsv-{w}{{display:inline}}#mw-{w}:checked~.mwx-{w}{{display:block}}@media (min-width:1100px){{#mw-{w}:checked~.mwx-{w}{{display:grid}}}}#mw-{w}:checked~.posh label[for="mw-{w}"]{{background:var(--chalk);color:var(--ink)}}' for w in range(1,WM+1))
 css+=('.mup>.mcard{margin-top:20px}.mup>.lus{margin-top:4px}'
      '.mpk{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:0 0 12px}.mpk label:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 2.5px)}'
       '.mop .mrc{font-style:normal;flex:none;color:var(--steel);font-size:.86em;font-variant-numeric:tabular-nums;margin-left:6px}'

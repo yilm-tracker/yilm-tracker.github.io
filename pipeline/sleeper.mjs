@@ -118,14 +118,19 @@ export async function pullPlayoffs(get) {
     for (const x of sc) { const t = x.metadata && x.metadata.date_time; for (const tm of [x.metadata?.home_team, x.metadata?.away_team]) if (tm) k[tm] = [t, x.status]; }
     out.KICK[w] = k;
   }
-  // projections for the rest of the regular season (current week on), for the player-level season sim
+  // projections for the rest of the regular season (current week on), for the player-level season sim; since 2026-11-13
+  // also each player's NFL opponent (FPO), the week's games (SCH, HOME) and kickoffs (KICK), for Matchups' future weeks
   const po0 = +(lg.settings && lg.settings.playoff_week_start) || 15;
   const now = (sch.find(x => x.week < po0 && x.status != 'complete') || { week: po0 }).week;
-  out.FP = {};
+  out.FP = {}; out.FPO = {};
   for (let w = now; w < po0; w++) {
-    const pr = await get(projURL(w)).catch(() => []), m = {};
-    for (const r of pr) if (ids.has(r.player_id)) m[r.player_id] = Math.round(leagueScore(r.stats, ss) * 100) / 100;
-    out.FP[w] = m;
+    const pr = await get(projURL(w)).catch(() => []), m = {}, o = {};
+    for (const r of pr) if (ids.has(r.player_id)) { m[r.player_id] = Math.round(leagueScore(r.stats, ss) * 100) / 100; if (r.opponent) o[r.player_id] = r.opponent; }
+    out.FP[w] = m; out.FPO[w] = o;
+    const g = sch.filter(x => x.week == w);
+    out.SCH[w] = g.map(x => [x.home, x.away, x.status, x.date]); out.HOME[w] = g.map(x => x.home);
+    const sc = await get(`${S}/scores/nfl/regular/${SEASON}/${w}`).catch(() => null), k = {};
+    if (sc) { for (const x of sc) { const t = x.metadata && x.metadata.date_time; for (const tm of [x.metadata?.home_team, x.metadata?.away_team]) if (tm) k[tm] = [t, x.status]; } out.KICK[w] = k; }
   }
   out.n = ids.size;
   return out;

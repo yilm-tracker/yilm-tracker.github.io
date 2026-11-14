@@ -37,7 +37,7 @@ def _fp():
     try:return {k:float(v) for k,v in json.load(open(f)).get('pts',{}).items()} if os.path.exists(f) else {}
     except Exception:return {}
 def _key():
-    h=hashlib.sha1(b'psim-v2')
+    h=hashlib.sha1(b'psim-v3')   # v3 (2026-11-13): adds 'fut'
     for f in INPUTS+[_wk()]:
         if os.path.exists(P+f):h.update(open(P+f,'rb').read())
     if os.path.exists(_fpf()):h.update(open(_fpf(),'rb').read())
@@ -129,7 +129,7 @@ def run():
         _s.stderr.write('psim pregame: FantasyPros lines for %d/%d starters; FantasyPros minus Sleeper per starter %+.2f; per team %s\n'%(len(hit),len(st_),sum(FPW[p[0]]-p[4] for p in hit)/max(1,len(hit)),per))
 
     W=np.tile(np.array([D.T[t][0] for t in TEAMS],float),(n,1));PF=np.tile(np.array([D.T[t][3] for t in TEAMS],float),(n,1))
-    games=[]
+    games=[];fut=[]   # fut (2026-11-13, Matchups future weeks): [week, a, b, a's mean, b's mean, a's win %] for every week after this one
     for w in weeks:
         Z=rng.standard_normal((n,len(nflteams)))
         S=current_week(Z) if (LW and w==D.NOW) else lineup_scores(w,Z)
@@ -142,6 +142,7 @@ def run():
             if w==D.NOW:
                 games.append([t,o,float(S[:,a].mean()),float(S[:,b].mean()),float((S[:,a]>S[:,b]).mean()*100)])
                 if PRE is not None:pre.append([t,o,float(PRE[:,a].mean()),float(PRE[:,b].mean()),float((PRE[:,a]>PRE[:,b]).mean()*100)])
+            elif w>D.NOW:fut.append([w,t,o,float(S[:,a].mean()),float(S[:,b].mean()),float((S[:,a]>S[:,b]).mean()*100)])
     order=np.argsort(-(W*10000+PF),axis=1)            # order[:,k] = team index seeded k+1
     seed_of=np.empty_like(order);rows=np.arange(n)[:,None];seed_of[rows,order]=np.arange(N)[None,:]
     # playoffs: fixed bracket (Sleeper default). 6 teams, 2 byes: 3v6 and 4v5, then 1 plays the 4/5 winner and 2 the 3/6
@@ -172,7 +173,7 @@ def run():
         pair(lA,lB,base+(4 if PO==6 else 2));put(ru,N-1);put(ch,N)
         title=np.zeros(N);final=np.zeros(N)
         for i in range(N):title[i]=(ch==i).mean()*100;final[i]=((ch==i)|(ru==i)).mean()*100
-    out={'key':k,'n':n,'weeks':weeks,'now':D.NOW,'teams':{},'games':games,'pre':pre}
+    out={'key':k,'n':n,'weeks':weeks,'now':D.NOW,'teams':{},'games':games,'pre':pre,'fut':fut}
     for t in TEAMS:
         i=IDX[t];sd_=seed_of[:,i]
         r={'po':float((sd_<PO).mean()*100),'bye':float((sd_<BYE_N).mean()*100),'top':float((sd_==0).mean()*100),

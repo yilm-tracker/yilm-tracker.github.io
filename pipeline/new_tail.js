@@ -446,11 +446,14 @@ document.fonts&&document.fonts.ready.then(()=>requestAnimationFrame(simGap));add
 // ("9:30a", "Sat 8:20p"). A name that does not fit at 12px gets 11px on its own row, then letter-spacing down to -.02em, then its injury tag
 // and then its team logo move to the end of the game line (kept only if the game line still fits), then a fixed approved abbreviation (LUA).
 // A name with no approved form stays at 11px / -.02em and is reported (window.__luReport, needsForm). BN is a line in the position tile.
-const LUA={'Croskey-Merritt':'Croskey-M.','McCaffrey':'McCaff.','Rodriguez':'Rodrig.','Monangai':'Monang.','Henderson':'Henders.'};  // approved by Nicklaus, 2026-11-06
+const LUA={'Croskey-Merritt':'Croskey-M','McCaffrey':'McCaff.','Rodriguez':'Rodrig.','Monangai':'Monang.','Henderson':'Henders.','Montgomery':'Montgom.','Hockenson':'Hocken.'};  // approved by Nicklaus, 2026-11-06 (Montgom., Hocken., Croskey-M without the period: 2026-11-14)
 const LUR=[];  // what the last pass did, for QA (window.__luReport)
 const luOver=e=>e.scrollWidth>e.clientWidth+.5;
 function luShort(g){const w=g.querySelector('.gwhen');if(!w||w.dataset.full)return false;const f=w.textContent,ab=f.replace(/(\d)(?::(\d\d))?\s?([AP])M/,(x,h,mm,ap)=>h+(mm?':'+mm:'')+ap.toLowerCase());
   if(ab===f)return false;w.dataset.full=f;w.dataset.ab=ab;w.textContent=ab;return true}
+// 2026-11-14 (Nicklaus): a short time that still does not fit drops the day to two letters ("Thu 4:30p" -> "Th 4:30p")
+function luDay(g){const w=g.querySelector('.gwhen');if(!w||!w.dataset.full)return false;const d=w.textContent.replace(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun) /,x=>x.slice(0,2)+' ');
+  if(d===w.textContent)return false;w.dataset.ab=d;w.textContent=d;return true}
 function luShared(C,prop,els,base,floor){  // largest size (0.25px steps) at which every element fits, floor..base; returns it
   const est=Math.min(base,...els.map(e=>luOver(e)?base*e.clientWidth/e.scrollWidth:base));let k=Math.min(base,Math.max(floor,Math.floor(est*4)/4));
   if(k<base)C.style.setProperty(prop,k+'px');
@@ -470,7 +473,7 @@ function luFit(){LUR.length=0;
   const nb=parseFloat(getComputedStyle(cells[0].querySelector('b')).fontSize),k=luShared(C,'--lnf',S,nb,12);
   // B. game lines: one shared size (11px floor), then short times
   const gb=parseFloat(getComputedStyle(cells[0].querySelector('small')).fontSize),gk=G.length?luShared(C,'--lgf',G,gb,11):gb;
-  for(const g of G){if(!luOver(g))continue;const r={lu:C.className,game:g.textContent.trim(),short:null};if(luShort(g))r.short=g.querySelector('.gwhen').textContent;r.over=luOver(g);LUR.push(r)}
+  for(const g of G){if(!luOver(g))continue;const r={lu:C.className,game:g.textContent.trim(),short:null};if(luShort(g))r.short=g.querySelector('.gwhen').textContent;if(luOver(g)&&luDay(g))r.short=g.querySelector('.gwhen').textContent;r.over=luOver(g);LUR.push(r)}
   // C. names that do not fit at the shared size: 11px, letter-spacing, move tags (only if the game line still fits), abbreviate
   for(const s of S.filter(luOver)){const c=s.closest('.cnm'),sm=c.querySelector('small'),g=c.querySelector('.gp'),r={lu:C.className,name:s.textContent.trim(),size:11,ls:0,moved:[],abbr:null,needsForm:false};
     s.style.fontSize='11px';

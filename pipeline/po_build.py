@@ -14,15 +14,10 @@ g=lambda n:json.loads(re.search(r'const '+n+r'=(.*?);\n',s).group(1))
 T,H,WK=g('T'),g('H'),g('WK');G=len(WK[H[0]])
 def norm(n):
     n=n.replace('’',"'").replace(' 👑','').strip();return {'RIPMFL':'Team RIPMFL'}.get(n,n)
-R={norm(k):v for k,v in json.load(open(P+'rosters.json',encoding='utf-8')).items()}
 K=json.load(open(P+'ro_ranks.json'));K.pop('_bye',None)
 AGE=json.load(open(P+'cmp_extra.json',encoding='utf-8'))['age']
-A=json.load(open(P+'pull_pts.json'))
-INJM={}
-if os.path.exists(P+'pull8.json'):
-    for pid,m in json.load(open(P+'pull8.json'))['META'].items():
-        if m and m[3]:INJM[pid]=m[3]
-PROJ=json.load(open(P+'po_proj.json')) if os.path.exists(P+'po_proj.json') else None
+# week lineups, projections and the Matchups row format: fut_lu.py (shared with Matchups' future weeks, 2026-11-13)
+from fut_lu import R,PROJ,ppg,proj,pool,mp,setlineup
 SHORT=dict(lg.SHORT)
 SHORT0=dict(SHORT);SHORT={k:k for k in SHORT}  # full team names everywhere; SHORT0 keeps the data-file short names
 FULL=dict(lg.FULL)
@@ -34,20 +29,6 @@ def age(pid):
     b=AGE.get(pid)
     if not b:return None
     y,m,d=map(int,b.split('-'));return (date.today()-date(y,m,d)).days/365.25
-def ppg(pid):
-    a=A.get(pid)
-    if not a:return 0.0,0
-    gp=a[3][:G].count('1');tot=sum(v for v in a[2][:G] if v is not None)
-    return (round(tot/gp,2) if gp else 0.0),gp
-def proj(pid,w):
-    if PROJ and str(w) in PROJ and pid in PROJ[str(w)]:return PROJ[str(w)][pid][0],PROJ[str(w)][pid][1]
-    return ppg(pid)[0],None
-def pool(t,w):
-    out=[]
-    for p in R[t]:
-        if p[7] in('IR','TX'):continue
-        v,opp=proj(p[0],w);out.append(dict(pid=p[0],name=p[1],pos=p[2],nfl=p[3],pj=v,opp=opp,gp=ppg(p[0])[1],inj=INJM.get(p[0])))
-    return out
 SLOTS=[lg.SLAB.get(x,x) for x in lg.SLOTS]
 def best(t,w):return lg.optimal(pool(t,w),pts=lambda q:q['pj'])
 BEST={(t,w):best(t,w) for t in H for w in WEEKS}
@@ -77,27 +58,7 @@ def cell(q,side):
             f'<small>{badge(q["nfl"])}<span class="gp">{sub}</span></small></span></span><span class="cv {side}">{q["pj"]:.1f}</span>')
 import mu_build as MB
 MB.HATILE=False  # home / road shown by the vs / @ tile in each game line
-_W8=json.load(open(P+f'wk{G+1}.json'))
 RIDN=dict(lg.RID)
-HOMEW=json.load(open(P+'po_home.json')) if os.path.exists(P+'po_home.json') else {}
-def mp(q,w):
-    """player dict -> Matchups row format [pid,pos,name,nfl,proj,act,opp,inj,done,ha,week]"""
-    if q is None:return None
-    if q['opp']:ha='vs' if q['nfl'] in HOMEW.get(str(w),[]) else '@';opp=q['opp']
-    else:ha='';opp='TBD'
-    return [q['pid'],q['pos'],q['name'],q['nfl'],q['pj'],0,opp,q['inj'],False,ha,w]
-def setlineup(t,w):
-    """the team's lineup as currently set in Sleeper, re-projected for week w"""
-    pl={q['pid']:q for q in pool(t,w)}
-    allp={p[0]:p for p in R[t]}
-    out=[]
-    for x in _W8['out'][str(RIDN[t])]['st']:
-        pid=x[0]
-        if pid in pl:out.append(pl[pid])
-        elif pid in allp:
-            p=allp[pid];v,opp=proj(pid,w);out.append(dict(pid=pid,name=p[1],pos=p[2],nfl=p[3],pj=v,opp=opp,gp=ppg(pid)[1],inj=INJM.get(pid)))
-        else:out.append(None)
-    return out
 def lineup(a,b,w,k='p'):
     sa=[mp(q,w) for q in setlineup(a,w)];sb=[mp(q,w) for q in setlineup(b,w)]
     pa=[mp(q,w) for q in pool(a,w)];pb=[mp(q,w) for q in pool(b,w)]
@@ -105,13 +66,13 @@ def lineup(a,b,w,k='p'):
     src='Sleeper projections' if PROJ else f'projection = points per game, Weeks 1–{G} until Sleeper projections are pulled'
     hdr=f'<div class="msh lsh">Lineups</div>{MB.CTL([(MB.VSW,'Order','Lineup',MB.LSW)])}<div class="lnote">set lineup = starters as set in Sleeper now · {src}</div>'
     o=[MB.ptsrow(sa,sb)]
-    o+=['<div class="lpv">']+[MB.lgs(MB.lrow(x,y,''),i) for i,(x,y) in enumerate(zip(sa,sb))]+['</div>',MB.sview([x for x in sa if x],[y for y in sb if y])]
+    o+=['<div class="lpv">']+[MB.lgs(MB.lrow(x,y,''),i) for i,(x,y) in enumerate(zip(sa,sb))]+['</div>',MB.sview([x for x in sa if x],[y for y in sb if y],fut=True)]
     sida={p[0] for p in sa if p};sidb={p[0] for p in sb if p}
     ba=sorted([p for p in pa if p[0] not in sida and p[4]>0],key=lambda p:-p[4]);bb=sorted([p for p in pb if p[0] not in sidb and p[4]>0],key=lambda p:-p[4])
     if ba or bb:
         o.append('<div class="msh lbh"><b>Bench</b><i></i><small>active players, projected</small></div>')
         o+=[MB.lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,'') for k in range(max(len(ba),len(bb)))]
-    h=('<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+MB.optblock([p for p in sa if p],[p for p in sb if p],pa,pb,ta,tb,True,'<div class="msh lbh"><b>Bench</b><i></i><small>active players, projected</small></div>',lambda p:p[4]>0)+'</div>')
+    h=('<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+MB.optblock([p for p in sa if p],[p for p in sb if p],pa,pb,ta,tb,True,'<div class="msh lbh"><b>Bench</b><i></i><small>active players, projected</small></div>',lambda p:p[4]>0,fut=True)+'</div>')
     return h.replace('for="lo-a"',f'for="{k}lo-a"').replace('for="lo-o"',f'for="{k}lo-o"').replace('for="lv-p"',f'for="{k}lv-p"').replace('for="lv-s"',f'for="{k}lv-s"')
 def form(t,n=5):return ''.join(f'<i class="fm {"w" if x[2]>x[3] else "l"}"></i>' for x in WK[t][-n:])
 def card(a,b,w,label):
