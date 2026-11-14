@@ -66,6 +66,11 @@ def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2,opt=lambda t,w:set()):
     """returns (radios, picker html, panels html, css); dd(k,lab) is the team drop-down used by Matchup"""
     n=len(H);w0=WEEKS[0]
     radios=''.join(f'<input type="radio" name="ps" id="ps-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(n))
+    radios+='<input type="radio" name="slrank" id="srk-t" class="lr" checked><input type="radio" name="slrank" id="srk-g" class="lr">'  # Rank Pts / Gm (brief A6), scoped like the other Playoffs switches
+    # Rank Pts / Gm on the team drop-down's row, right (brief A6): Matchups' title + switch, its width set by an invisible copy of
+    # Matchups' Actual / Optimal switch in the same grid cell, so it is as wide as Rank in Matchups (125.72px) at every width
+    RK=('<div class="lctl lgrid psrk"><i class="lt ltr">Rank</i><div class="psrw">'+MB.RKW.replace('for="rk-t"','for="srk-t"').replace('for="rk-g"','for="srk-g"')
+        +'<div class="pseg psrz" aria-hidden="true"><label>Actual</label><label>Optimal</label></div></div></div>')
     pan=[]
     for i,t in enumerate(H):
         by=i<byes   # seeds 1-2: no Week 15 game
@@ -81,11 +86,13 @@ def build(H,SHORT,e,WEEKS,mp,setlineup,pool,dd,byes=2,opt=lambda t,w:set()):
         body=hd+''.join(row(q) for q in st)
         if bn:body+='<div class="msh lbh psbh">Bench</div>'+hd+''.join(row(q) for q in bn)
         pan.append(f'<div class="psp psp-{i}">{body}</div>')
-    pick=('<div class="cpk psk">'+dd('s','')+'</div>'
+    pick=('<div class="cpk psk">'+dd('s','')+RK+'</div>'
           f'<div class="pskey"><span><i class="ch g"><span class="ct">1</span></i>most allowed to position<i class="ch b"><span class="ct">32</span></i>fewest</span><span><svg class="pst8 k" viewBox="0 0 24 24" aria-label="In the best projected lineup"><path d="M12 2.6l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.4l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>in the best projected lineup</span>'
           f'<span class="pskw"><b>+4.2</b>pts/game allowed to the position vs league avg · Wks 1–{DVPG}</span></div>' if DVP else '')
-    css=(''.join(f'#ps-{i}:checked~.psk .dd-s .sv-{i}{{display:inline}}#ps-{i}:checked~.psk .dd-s label[for="ps-{i}"]{{background:var(--chalk);color:var(--ink)}}#ps-{i}:checked~.psx .psp-{i}{{display:block}}' for i in range(n))+
-         '.psk{grid-template-columns:minmax(0,1fr)!important}.psp{display:none}'
+    css=('#srk-t:checked~.psk .lrw label[for="srk-t"],#srk-g:checked~.psk .lrw label[for="srk-g"]{background:var(--chalk);color:var(--ink)}'
+         '#srk-g:checked~.psx .pq .pqi>b.rkt{display:none}#srk-g:checked~.psx .pq .pqi>b.rkg{display:block}'+''.join(f'#ps-{i}:checked~.psk .dd-s .sv-{i}{{display:inline}}#ps-{i}:checked~.psk .dd-s label[for="ps-{i}"]{{background:var(--chalk);color:var(--ink)}}#ps-{i}:checked~.psx .psp-{i}{{display:block}}' for i in range(n))+
+         '.psk{grid-template-columns:minmax(0,1fr) max-content!important;align-items:center;column-gap:12px}.psp{display:none}'
+         '.psk .psrk{grid-template-columns:max-content max-content!important;margin:0!important}.psrw{display:grid}.psrw>*{grid-area:1/1}.psrz{visibility:hidden;height:0;overflow:hidden}'
          '.psr{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr))!important;grid-template-areas:none!important;column-gap:0;align-items:center;padding-right:0!important}'
          '.cr.lu.psr.psh{border-color:transparent!important;background:none!important;box-shadow:none!important}.cr.lu.psr::after{display:none!important}'
          '.psr>*{grid-row:1;min-width:0}.psr>.cn{grid-column:1;grid-area:auto;padding-right:6px}.psr>:nth-child(2){grid-column:2}.psr>:nth-child(3){grid-column:3}.psr>:nth-child(4){grid-column:4}'
