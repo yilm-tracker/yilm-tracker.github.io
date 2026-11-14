@@ -207,24 +207,29 @@ const sbRg=document.createRange(),sbOvR=x=>{sbRg.selectNodeContents(x);return sb
 // flush to its label), so the Dropped pts / Season sim pair stays on one row (WebKit, 440 CSS px Nerd: +17.7px per row without it)
 const sbT=bd=>bd.querySelectorAll('.r>.sb.s-sk');
 // .sbx: the line shows no per-week part (display:none); the full line is kept in the line's title and aria-label (role group)
+// One decision per line type (2026-11-14, brief Q1): PF, PA and Tot Eff are separate types; if any row's line of a type does not fit,
+// that type drops its per-week part on every row of the board (all tiers, rows hidden by mode included), so lines read the same down the board
+const SBK=['s-pf','s-pa','s-lu'],sbK=x=>{const b=x.closest('.sb');return b?SBK.find(k=>b.classList.contains(k)):null},
+  sbXT=(bd,k)=>{let n=0;bd.querySelectorAll('.r>.sb.'+k).forEach(b=>{if(!b.classList.contains('sbx')){sbX(b,1);n++}});return n};
 function sbX(e,on){const x=e.querySelector(':scope>.stx');if(!x)return;e.classList.toggle('sbx',!!on);
   if(on){const pw=x.querySelector('.pw'),f=x.querySelector('.pf,.v'),c=x.querySelector('.ch');if(!pw)return;const t=(x.querySelector('.lb').textContent+' '+(f?f.textContent:'')+(c?', rank '+c.textContent:'')+', '+pw.textContent.replace(/^\s*·\s*/,'')).replace(/\s+/g,' ').trim();
     x.title=t;x.setAttribute('aria-label',t);x.setAttribute('role','group')}else if(x.hasAttribute('title')){x.removeAttribute('title');x.removeAttribute('aria-label');x.removeAttribute('role')}}
 function sbSet(bd,k){bd.__sbs=k;const v=typeof k==='number'?k.toFixed(2):k;sbEls(bd).forEach(e=>e.style.setProperty('--sbs',v))}
 function sbFit(){document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;const B=sbBlk(bd);B.forEach(e=>e.classList.add('sbm'));sbSet(bd,'1');const L=sbLines(bd);let k=1;
   B.forEach(e=>{e.style.removeProperty('--stw2');sbX(e,0)});sbT(bd).forEach(e=>e.classList.remove('sbt'));
-  // 2026-11-05 text floor: stat lines are never scaled below 1. 2026-11-14: each line decides on its own: a line that does not fit the
-  // full text column drops its per-week part (.sbx; the value stays in the line's title / aria-label), every other line keeps its whole text
-  const tight=L.some(sbOvR),so=L.filter(sbOv);
+  // 2026-11-05 text floor: stat lines are never scaled below 1. 2026-11-14 (Q1): one decision per line type: if any line of a type does not
+  // fit the full text column (read here with every row's lines shown, .sbm), that type drops its per-week part on every row (.sbx; the value
+  // stays in the line's title / aria-label); a type whose lines all fit keeps its whole text. Desktop: Tot Eff (right column) decides too.
+  const tight=L.some(sbOvR),so=new Set([...bd.querySelectorAll('.r>.sb .stx:not(.spl)')].filter(sbOv).map(sbK).filter(Boolean));
   // then the text column shrinks to the longest line (read with every per-week part shown), so the dots sit just after the text (all lines
   // aligned); while any line runs past its box the column keeps its full width (each line's own box): the dots never move between lines or modes
   const mw=Math.max(0,...L.filter(x=>x.closest('.sb')).map(x=>{const b=x.getBoundingClientRect();if(tight)return b.width;sbRg.selectNodeContents(x);return sbRg.getBoundingClientRect().right-b.left}));
-  so.forEach(x=>sbX(x.closest('.sb'),1));if(tight)sbT(bd).forEach(e=>e.classList.add('sbt'));
+  so.forEach(k=>sbXT(bd,k));if(tight)sbT(bd).forEach(e=>e.classList.add('sbt'));
   if(mw)B.forEach(e=>e.style.setProperty('--stw2',Math.ceil(mw+2)+'px'));B.forEach(e=>e.classList.remove('sbm'))});if(typeof tileFit==='function'){tileFit();
   // the rank tiles resize with the text: if a line now overflows, step the scale down again (a few passes at most)
   for(let n=0;n<4;n++){let again=false;document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;const L=sbLines(bd);
     if(L.some(sbOvR))sbT(bd).forEach(e=>{if(!e.classList.contains('sbt')){e.classList.add('sbt');again=true}});
-    L.filter(sbOv).forEach(x=>{const b=x.closest('.sb');if(!b.classList.contains('sbx')){sbX(b,1);again=true}})});if(!again)break;tileFit()}}}
+    new Set(L.filter(sbOv).map(sbK)).forEach(k=>{if(k&&sbXT(bd,k))again=true})});if(!again)break;tileFit()}}}
 // Opp rk · All-play · Luck line: full size always; if it does not fit, Luck wraps to a second line (all rows together)
 function s2Fit(){document.querySelectorAll('.board').forEach(bd=>{const A=bd.querySelectorAll('.r>.st.s2'),S=v=>A.forEach(e=>e.style.setProperty('--s2s',v));const L=[...A].filter(x=>x.offsetParent);S('1');L.forEach(x=>x.classList.remove('wrp'));let k=1;
   const over=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);  // 2026-11-05 text floor: never scaled below 1
