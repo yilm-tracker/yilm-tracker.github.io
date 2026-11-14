@@ -159,13 +159,16 @@ function mvAl(){
     const c=getComputedStyle(t);_cv.font=`${c.fontWeight} ${c.fontSize} ${c.fontFamily}`;const m=_cv.measureText('H'),a=m.fontBoundingBoxAscent,d=m.fontBoundingBoxDescent,lh=parseFloat(c.lineHeight)||a+d;
     const off=(lh-a-d)/2+a-m.actualBoundingBoxAscent;n.style.marginTop=(lg.getBoundingClientRect().top-(t.getBoundingClientRect().top+off))+'px'}})}
 function tnFit(){
+  // overflow = the name's content (a Range) ends past its box (2026-11-14), not scrollWidth > clientWidth: WebKit (Safari) reports
+  // scrollWidth 1px over at fractional box widths (desktop rows, zoom 1.1), which shrank six names that fit to 20-21px. Tolerance 0.05px: a name never runs past its box (Chromium 440: 0.22px over = too long)
+  const tnRg=document.createRange();
   // FAAB tiles: one width (the widest balance), so the FAAB labels beside them line up down the board
   const fb=[...document.querySelectorAll('.board .r .nm .fab b')].filter(b=>b.offsetParent);fb.forEach(b=>b.style.width='');const fw=Math.max(0,...fb.map(b=>b.getBoundingClientRect().width));fb.forEach(b=>b.style.width=fw+'px');
   // names end 6px short of the widest record tile (W3 4-3) on the board, the same on every row
   const R=[...document.querySelectorAll('.board .r')].map(r=>[r.querySelector(':scope>.nm'),r.querySelector('.side .rr')]).filter(([n,k])=>n&&k&&n.offsetParent);
   R.forEach(([n])=>n.style.paddingRight='');const pr=Math.max(0,...R.map(([n,k])=>n.getBoundingClientRect().right-Math.min(...[...k.children].map(c=>c.getBoundingClientRect().left))+6));R.forEach(([n])=>n.style.paddingRight=pr+'px');
   document.querySelectorAll('.board .r .tn').forEach(e=>{if(!e.offsetParent)return;e.style.fontSize='';e.style.whiteSpace='nowrap';e.style.lineHeight='';
-  const f0=parseFloat(getComputedStyle(e).fontSize),ov=()=>e.scrollWidth>e.clientWidth+.5;let f=f0;while(ov()&&f>f0*.85){f-=.5;e.style.fontSize=f+'px'}
+  const f0=parseFloat(getComputedStyle(e).fontSize),ov=()=>{tnRg.selectNodeContents(e);return tnRg.getBoundingClientRect().right>e.getBoundingClientRect().right+.05};let f=f0;while(ov()&&f>f0*.85){f-=.5;e.style.fontSize=f+'px'}
   if(ov()){e.style.whiteSpace='normal';e.style.lineHeight='1.12';f=f0;e.style.fontSize=f+'px';
     const fit=n=>{let g=f0;const bad=()=>ov()||e.getBoundingClientRect().height>n*1.12*g+1||(n>2&&n*1.12*g>52);e.style.fontSize=g+'px';while(bad()&&g>11){g-=.5;e.style.fontSize=g+'px'}return g};
     f=fit(2);if(f<15){const g=fit(3);if(g<=f)e.style.fontSize=(f=fit(2))+'px'}}});if(typeof ravFit==='function')ravFit();mvAl()}
@@ -191,16 +194,20 @@ function sbLines(bd){return [...bd.querySelectorAll('.sb .stx:not(.spl)')].filte
 // property or class on .board restyles all ~3,500 board elements at every step, and WebKit keeps that peak (Safari +400 MB on load).
 // Same computed values: every consumer of --sbs / --stw2 / --s2s sits in one of these elements; .sbm is set on the .sb blocks themselves.
 const sbEls=bd=>bd.querySelectorAll('.r .sb,.r .st'),sbBlk=bd=>bd.querySelectorAll('.r>.sb');
+// A line overflows when its content (a Range over it) ends past its own box (2026-11-14). Not scrollWidth > clientWidth: in WebKit
+// (Safari) a zoomed row (desktop, zoom 1.1) with a fractional column width (378.98px) reports scrollWidth one pixel over clientWidth
+// however short the text, so every line took the .sbw wrap state and its per-week part dropped out of the 16px line box.
+const sbRg=document.createRange(),sbOv=x=>{sbRg.selectNodeContents(x);return sbRg.getBoundingClientRect().right>x.getBoundingClientRect().right+.5};
 function sbSet(bd,k){bd.__sbs=k;const v=typeof k==='number'?k.toFixed(2):k;sbEls(bd).forEach(e=>e.style.setProperty('--sbs',v))}
 function sbFit(){document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;const B=sbBlk(bd);B.forEach(e=>e.classList.add('sbm'));sbSet(bd,'1');const L=sbLines(bd);let k=1;
-  B.forEach(e=>{e.style.removeProperty('--stw2');e.classList.remove('sbw')});const ov=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);
+  B.forEach(e=>{e.style.removeProperty('--stw2');e.classList.remove('sbw')});const ov=()=>L.some(sbOv);
   if(ov())B.forEach(e=>e.classList.add('sbw'))  // 2026-11-05 text floor: stat lines are never scaled below 1; the per-week part wraps under the figure instead
   // then the text column shrinks to the longest line, so the dots sit just after the text (all lines aligned)
   const mw=Math.max(0,...L.filter(x=>x.closest('.sb')).map(x=>{const rg=document.createRange();rg.selectNodeContents(x);const a=rg.getBoundingClientRect(),b=x.getBoundingClientRect();return a.right-b.left}));
   if(mw)B.forEach(e=>e.style.setProperty('--stw2',Math.ceil(mw+2)+'px'));B.forEach(e=>e.classList.remove('sbm'))});if(typeof tileFit==='function'){tileFit();
   // the rank tiles resize with the text: if a line now overflows, step the scale down again (a few passes at most)
   for(let n=0;n<4;n++){let again=false;document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;const L=sbLines(bd);
-    if(L.some(x=>x.scrollWidth>x.clientWidth+.5)){const B=sbBlk(bd);if(![...B].every(e=>e.classList.contains('sbw'))){B.forEach(e=>e.classList.add('sbw'));again=true}}});if(!again)break;tileFit()}}}
+    if(L.some(sbOv)){const B=sbBlk(bd);if(![...B].every(e=>e.classList.contains('sbw'))){B.forEach(e=>e.classList.add('sbw'));again=true}}});if(!again)break;tileFit()}}}
 // Opp rk · All-play · Luck line: full size always; if it does not fit, Luck wraps to a second line (all rows together)
 function s2Fit(){document.querySelectorAll('.board').forEach(bd=>{const A=bd.querySelectorAll('.r>.st.s2'),S=v=>A.forEach(e=>e.style.setProperty('--s2s',v));const L=[...A].filter(x=>x.offsetParent);S('1');L.forEach(x=>x.classList.remove('wrp'));let k=1;
   const over=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);  // 2026-11-05 text floor: never scaled below 1
