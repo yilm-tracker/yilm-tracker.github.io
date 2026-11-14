@@ -220,24 +220,42 @@ def sview(sa,sb,sid_a=None,sid_b=None):
             s=_slate(_pw(p),p[3]);k=s[0] if s else ('9','~');lab=s[1] if s else 'No game'
             g=groups.setdefault(k,{'lab':lab,'a':[],'b':[]});g[side].append(p)
     o=[];ca=cb=pa=pb=0.0;strip=[];rda=[0.0,False];rdb=[0.0,False]
-    # Needs over proj (2026-11-13): one figure for the matchup = the gap between the two teams' live projections (the
-    # Points band's small figure .llv, _llv() below, as shown to 0.1), on the trailing team's side of every slate not yet
-    # finished (live or upcoming), the same on each. Finished slates and No game: empty line. Level (under 0.05): empty.
-    # Trailing team with no starter left to play (every starter with a game has finished): '–'. live.js patches it too.
-    KS=sorted(groups);LA,LB=_llr(sa),_llr(sb);LD=round(LA-LB,1)
-    def need_row(st):
+    # Needs over proj, slate by slate (2026-11-13, Nicklaus; replaces the same-figure-on-every-unfinished-slate rule).
+    # Slates in kickoff order; Final = every game in it finished. Current slate = the first slate not Final (live, or the
+    # next to start). Finished slate S: the gap between G_A(S) and G_B(S), G_X(S) = actual points of X's starters in slates
+    # <= S + pre-game projection of X's starters after S (No game group included at its projection, as .llv does), each
+    # side to 0.1 as shown, on the side trailing at that point; trailing side with no starter in a slate after S: '–'.
+    # Current slate: the live gap |llv A - llv B| as shown (_llr), as the Points band. Later slates and No game: empty
+    # line. Level (under 0.05): empty. live.js applies the same rule on every poll.
+    KS=sorted(groups);LA,LB=_llr(sa),_llr(sb);LD=_r1(LA-LB) if LA>=LB else -_r1(LB-LA)
+    def _st(k):
+        g=groups[k]
+        if g['lab']=='No game':return 'Bye'
+        dn=[lval(p)[1] for p in g['a']+g['b']]
+        return 'Final' if all(dn) else ('Live' if any(dn) else 'Upcoming')
+    STS={k:_st(k) for k in KS}
+    CUR=next((k for k in KS if STS[k] not in('Final','Bye')),None)   # None: every slate finished
+    def _G(L,k):   # G_X(S) for the finished slate k, to 0.1 as shown
+        return _r1(sum((p[5] if (_slk(p)<=k and STS[_slk(p)]!='Bye') else p[4]) for p in L if p))
+    def _slk(p):
+        s=_slate(_pw(p),p[3]);return s[0] if s else ('9','~')
+    def _after(L,k):   # a starter with a game in a slate after k (as things stood when k ended: fixed once k is finished)
+        return any(p and p[6] and _slk(p)>k and STS[_slk(p)]!='Bye' for p in L)
+    def need_row(k):
         cell=['','']
-        if st not in('Final','Bye'):
-            tr=0 if LD<=-0.05 else 1 if LD>=0.05 else None
+        st=STS[k]
+        if st=='Bye' or (CUR is not None and k>CUR):d=None              # later slates and No game: empty line
+        elif k==CUR:d=LD;lf=lambda t:_left((sa,sb)[t])                   # current slate: the live gap
+        else:ga,gb=_G(sa,k),_G(sb,k);d=_r1(ga-gb) if ga>=gb else -_r1(gb-ga);lf=lambda t:_after((sa,sb)[t],k)  # finished slate: frozen at its end
+        if d is not None:
+            tr=0 if d<=-0.05 else 1 if d>=0.05 else None
             if tr is not None:
-                cell[tr]=f'<i class="dlt dn">+{abs(LD):.1f}</i>' if _left((sa,sb)[tr]) else '–'
+                cell[tr]=f'<i class="dlt dn">+{abs(d):.1f}</i>' if lf(tr) else '–'
         return f'<div class="mcr slc sltw"><span>{cell[0]}</span><em>Needs over proj</em><span>{cell[1]}</span></div>'
     for ki,k in enumerate(KS):
         g=groups[k]
         for sd in 'ab':g[sd].sort(key=lambda p:(_PO.get(p[1],9),-p[4]))
-        done=[lval(p)[1] for p in g['a']+g['b']]
-        st='Final' if all(done) else ('Live' if any(done) else 'Upcoming')
-        if g['lab']=='No game':st='Bye'
+        st=STS[k]
         xa=sum(p[5] for p in g['a'] if lval(p)[1]);xb=sum(p[5] for p in g['b'] if lval(p)[1])
         ja=sum(p[4] for p in g['a']);jb=sum(p[4] for p in g['b'])
         ca+=xa;cb+=xb;pa+=ja;pb+=jb
@@ -252,7 +270,8 @@ def sview(sa,sb,sid_a=None,sid_b=None):
             return f'<i class="dlt {c}">{"+" if v>=0.05 else "−" if v<=-0.05 else "±"}{abs(v):.1f}</i>'
         fa=lambda x,j:(f'{x:.1f}' if started else '–')+f' <small>({j:.1f})</small>'
         o.append(f'<div class="slx sx-{st.lower()}"><div class="slg"><b>{g["lab"]}</b><em>{len(g["a"])}<u>·</u>{len(g["b"])} starters</em><i class="ss {st.lower()}">{st}</i></div><div class="mcr slh"><span class="{"up" if started and xa>xb else ""}">{fa(xa,ja)}{dl(sda)}</span><em>Slate</em><span class="{"up" if started and xb>xa else ""}">{dl(sdb)}{fa(xb,jb)}</span></div>'
-                 f'<div class="mcr slc"><span>{ca:.1f} <small>({pa:.1f})</small>{dl(rda[0] if rda[1] else None)}</span><em>Running total</em><span>{dl(rdb[0] if rdb[1] else None)}{cb:.1f} <small>({pb:.1f})</small></span></div>'+need_row(st))
+                 +(f'<div class="mcr slc"><span>– <small>({pa:.1f})</small></span><em>Running total</em><span>– <small>({pb:.1f})</small></span></div>' if CUR is not None and (st=='Bye' or k>CUR) else   # later slate, and No game until every slate is Final: no actual, no margin (as the SLATE row of an upcoming slate)
+                  f'<div class="mcr slc"><span>{ca:.1f} <small>({pa:.1f})</small>{dl(rda[0] if rda[1] else None)}</span><em>Running total</em><span>{dl(rdb[0] if rdb[1] else None)}{cb:.1f} <small>({pb:.1f})</small></span></div>')+need_row(k))
         for i in range(max(len(g['a']),len(g['b']))):
             x=g['a'][i] if i<len(g['a']) else None;y=g['b'][i] if i<len(g['b']) else None;r=lrow(x,y,'')
             if sid_a is not None and x and x[0] not in sid_a:r=_swp(r,'a')
@@ -281,10 +300,10 @@ def ptsrow(sa,sb,big=True,ra=None,rb=None):
     if big:  # scoreboard band: live points large, the pre-game projection under each
         la,lb=_llv(sa),_llv(sb)   # live projection: points so far plus what is left to play
         fin=lambda X:bool(X) and all(lval(p)[1] for p in X)   # every starter on that side has finished
-        lva=('<small class="llv fz">Final</small>' if fin(sa) else f'<small class="llv" title="Live projection">{la:.1f}</small>')
-        lvb=('<small class="llv fz">Final</small>' if fin(sb) else f'<small class="llv" title="Live projection">{lb:.1f}</small>')
-        return (f'<div class="mcr ltot lsb"><span class="{"up" if ua else ""}"{da}><span class="ltr"><small class="lpg" title="Pre-game projection">({pa:.1f})</small><b class="lt-v">{fa}</b></span>{lva}</span>'
-                f'<em>Points</em><span class="{"up" if ub else ""}"{db}><span class="ltr"><b class="lt-v">{fb}</b><small class="lpg" title="Pre-game projection">({pb:.1f})</small></span>{lvb}</span></div>')
+        lva=('<small class="llv fz">Final</small>' if fin(sa) else f'<small class="llv" title="Live projection">{_r1(la):.1f}</small>')
+        lvb=('<small class="llv fz">Final</small>' if fin(sb) else f'<small class="llv" title="Live projection">{_r1(lb):.1f}</small>')
+        return (f'<div class="mcr ltot lsb"><span class="{"up" if ua else ""}"{da}><span class="ltr"><small class="lpg" title="Pre-game projection">({_r1(pa):.1f})</small><b class="lt-v">{fa}</b></span>{lva}</span>'
+                f'<em>Points</em><span class="{"up" if ub else ""}"{db}><span class="ltr"><b class="lt-v">{fb}</b><small class="lpg" title="Pre-game projection">({_r1(pb):.1f})</small></span>{lvb}</span></div>')
     return (f'<div class="mcr {"ltot" if big else "ltot2"}"><span class="{"up" if ua else ""}"{da}><b class="lt-v">{fa}</b> <small>({pa:.1f})</small></span>'
             f'<em>Points <i class=pj>(projected)</i></em><span class="{"up" if ub else ""}"{db}><small>({pb:.1f})</small> <b class="lt-v">{fb}</b></span></div>')
 BH_CUR='<div class="msh lbh"><b>Bench</b><i></i><small>active players with a game</small></div>'
@@ -393,32 +412,72 @@ def _lx(p):
     if p[3] in LIVEG:f=float(_LEFT.get(p[3],0.5));return p[5]+p[4]*f,f
     return p[4],1.0
 def _llv(X):return sum(_lx(p)[0] for p in X if p)   # a lineup's live projection: the Points band's small figure (.llv)
-def _llr(X):return float(f'{_llv(X):.1f}')          # ... as the page shows it (one decimal)
+def _r1(x):   # one decimal: float noise removed (to 1e-5), then nearest, exact ties to even (as Python's '.1f' on a clean value); live.js r1 is the same
+    v=round(abs(x)*1e5);q,r=divmod(v,10000)
+    if r>5000 or (r==5000 and q%2):q+=1
+    return (-q if x<0 else q)/10
+def _llr(X):return _r1(_llv(X))          # ... as the page shows it (one decimal)
 def _left(X):return any(p and p[6] and not lval(p)[1] for p in X)   # a starter with a game still to finish
 def needchk(h,where):
     import sys
-    """build check (2026-11-13), never fatal: in every lineup with a Points band, each 'Needs over proj' figure equals
-    |llv A - llv B| as shown (a side whose band says Final reads its total), on the trailing side, to 0.1"""
-    n=bad=0
-    for seg in re.split(r'(?=<div class="mcr ltot lsb">)',h)[1:]:
-        seg=seg.split('<div class="lus-o">')[0]
-        m=re.match(r'<div class="mcr ltot lsb">(.*?)<em>Points</em>(.*?)</div>',seg)
-        if not m:continue
-        def lv(x):
-            v=re.search(r'class="llv[^"]*"[^>]*>([^<]*)<',x).group(1)
-            return float(re.search(r'class="lt-v">([^<]*)<',x).group(1).replace('–','0')) if v=='Final' else float(v)
-        la,lb=lv(m.group(1)),lv(m.group(2))
-        for sl in seg.split('<div class="slx ')[1:]:
-            sx=sl[:sl.index('"')];ca,cb=re.search(r'<div class="mcr slc sltw"><span>(.*?)</span><em>Needs over proj</em><span>(.*?)</span></div>',sl).groups()
-            if sx in('sx-final','sx-bye') and (ca or cb):
-                bad+=1;print(f'WARNING needs-check {where}: {sx} slate shows "{ca}{cb}"',file=sys.stderr)
-            for side,c,tr in (('a',ca,la<lb),('b',cb,lb<la)):
-                f=re.search(r'\+([\d.]+)<',c)
-                if not f:continue
-                n+=1
-                if abs(float(f.group(1))-abs(la-lb))>0.1+1e-9 or not tr:
-                    bad+=1;print(f'WARNING needs-check {where}: side {side} shows +{f.group(1)}, |llv A - llv B| = {abs(la-lb):.2f} ({la} vs {lb})',file=sys.stderr)
-    print(f'needs-check {where}: {n} figures checked, {bad} off',file=sys.stderr)   # stderr: the build runs this with stdout discarded
+    try:_needchk(h,where)
+    except Exception as x:print(f'WARNING needs-check {where}: check failed ({x!r})',file=sys.stderr)   # never fatal
+def _needchk(h,where):
+    import sys
+    """build check (2026-11-13, slate by slate), never fatal. In every slate view (Actual and Optimal): a finished slate's
+    'Needs over proj' figure = |G A - G B| recomputed from the Running total rows (G(S) = actual through S + pre-game
+    projection after S = running actual(S) + running projection(last) - running projection(S)), on the side trailing at
+    that point, to 0.35 (three figures shown to 0.1 per side); the current slate (first not Final) = |llv A - llv B| as
+    shown in the Points band (Actual only; a side whose band says Final reads its total), to 0.1; later slates and No game:
+    empty"""
+    n=bad=0;mx=0.0
+    num=lambda x:float(x.replace('−','-'))
+    for lu in h.split('<div class="lus">')[1:]:
+        parts=lu.split('<div class="lus-o">',1)
+        for pi,part in enumerate(parts):
+            if '<div class="lsv">' not in part:continue
+            la=lb=None
+            m=re.search(r'<div class="mcr ltot lsb">(.*?)<em>Points</em>(.*?)</div>',part) if pi==0 else None
+            if m:
+                def lv(x):
+                    v=re.search(r'class="llv[^"]*"[^>]*>([^<]*)<',x).group(1)
+                    return float(re.search(r'class="lt-v">([^<]*)<',x).group(1).replace('–','0')) if v=='Final' else float(v)
+                la,lb=lv(m.group(1)),lv(m.group(2))
+            sv=part.split('<div class="lsv">',1)[1]
+            rows=[]
+            for sl in sv.split('<div class="slx ')[1:]:
+                sx=sl[:sl.index('"')]
+                rt=re.search(r'<div class="mcr slc"><span>(.*?)</span><em>Running total</em><span>(.*?)</span></div>',sl).groups()
+                ca,cb=re.search(r'<div class="mcr slc sltw"><span>(.*?)</span><em>Needs over proj</em><span>(.*?)</span></div>',sl).groups()
+                rv=[re.match(r'(?:<i[^>]*>[^<]*</i>)?\s*([–\-\d.]+) <small>\(([\-\d.]+)\)</small>',x) for x in rt]
+                if not all(rv):bad+=1;print(f'WARNING needs-check {where}: unread running total {rt!r}',file=sys.stderr);continue
+                rows.append((sx,[(None if r.group(1)=='–' else float(r.group(1)),float(r.group(2))) for r in rv],ca,cb))
+            if not rows:continue
+            ptot=[rows[-1][1][0][1],rows[-1][1][1][1]]
+            cur=next((i for i,r in enumerate(rows) if r[0] not in('sx-final','sx-bye')),None)
+            for i,(sx,rv,ca,cb) in enumerate(rows):
+                fig=[re.search(r'\+([\d.]+)<',c) for c in (ca,cb)]
+                if sx=='sx-bye' or (cur is not None and i>cur):
+                    if ca or cb:bad+=1;print(f'WARNING needs-check {where}: {sx} slate {i+1} (later / No game) shows "{ca}{cb}"',file=sys.stderr)
+                    continue
+                if i==cur:
+                    if la is None:continue   # Optimal: no live projection on the page
+                    ga,gb=la,lb;tol=0.1
+                else:
+                    if rv[0][0] is None or rv[1][0] is None:bad+=1;print(f'WARNING needs-check {where}: finished slate {i+1} has no running actual',file=sys.stderr);continue
+                    ga=rv[0][0]+ptot[0]-rv[0][1];gb=rv[1][0]+ptot[1]-rv[1][1];tol=0.35
+                d=ga-gb;tr=0 if d<=-0.05 else 1 if d>=0.05 else None
+                for s in (0,1):
+                    f=fig[s];c=(ca,cb)[s]
+                    if s!=tr:
+                        if c and abs(d)>=0.05+tol:bad+=1;print(f'WARNING needs-check {where}: {sx} slate {i+1} side {"ab"[s]} shows "{c}" but is not trailing ({ga:.2f} vs {gb:.2f})',file=sys.stderr)
+                        continue
+                    if not f:
+                        if c!='–' and abs(d)>=0.05+tol:bad+=1;print(f'WARNING needs-check {where}: {sx} slate {i+1} side {"ab"[s]} empty, gap {abs(d):.2f}',file=sys.stderr)
+                        continue
+                    n+=1;e=abs(float(f.group(1))-abs(d));mx=max(mx,e)
+                    if e>tol+1e-9:bad+=1;print(f'WARNING needs-check {where}: {sx} slate {i+1} side {"ab"[s]} shows +{f.group(1)}, recomputed {abs(d):.2f} ({ga:.2f} vs {gb:.2f})',file=sys.stderr)
+    print(f'needs-check {where}: {n} figures checked, {bad} off, max diff {mx:.2f}',file=sys.stderr)   # stderr: the build runs this with stdout discarded
 def _lp(t):
     st=[p for p in LW['out'][str(RID[t])]['st'] if p];x=[_lx(p) for p in st];s2=sum(p[4]**2 for p in st)
     return sum(e for e,_ in x),(TSD**2*sum(w*p[4]**2 for (_,w),p in zip(x,st))/s2 if s2 else 0.0)

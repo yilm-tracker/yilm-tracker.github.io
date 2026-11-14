@@ -1,7 +1,7 @@
 // In-page live scores for the Matchups tab (live site only; the download file has no script).
 // While the current week has games on, the page asks Sleeper directly (it allows any origin) and patches the
 // lineup rows in place: player points, FINAL / LIVE tile, game status, stat line, each team's points total, its live
-// projection (the small figure under it) and the "Needs over proj" line (2026-11-13).
+// projection (the small figure under it) and the "Needs over proj" line, slate by slate (2026-11-13).
 // Polling: every 60 s while a game is in progress and the page is visible; every 10 min otherwise.
 // The site rebuild still recomputes everything else (slate status, slate and running totals, optimal lineups, odds).
 // On-demand tabs (2026-11-04): the current week's lineups are on the page only while Matchups is open on that week
@@ -16,7 +16,7 @@
   // the tab was dropped (2026-11-05 heap snapshot); setup() finds them again on the next poll
   function rel(){box=null;cells=null}
   function get(u){return fetch(u,{cache:'no-store'}).then(function(r){if(!r.ok)throw r.status;return r.json()})}
-  function f1(x){return (Math.round(x*10)/10).toFixed(1)}
+  function f1(x){return r1(x).toFixed(1)}
   function grp(lab,nums){return '<span class="sit"><u>'+lab+'</u> '+nums.map(function(n){return typeof n==='number'&&n<0?'(−'+(-n)+')':String(n)}).join('-')+'</span>'}
   function statline(pos,s){  // same compact format as the build (statline.py)
     if(!s)return '';var g=function(k){return Math.round(s[k]||0)},o=[],td=function(c,y,t){return t?[c,y,t]:[c,y]};
@@ -27,8 +27,8 @@
     else if(pos==='DEF'){o.push(grp('SK',[g('sack')]),grp('TO',[g('int')+g('fum_rec')]));if(g('def_td'))o.push(grp('TD',[g('def_td')]));o.push(grp('PA',[g('pts_allow')]))}
     return o.join('<i class="sdt">•</i>');
   }
-  // 2026-11-13: each lineup's live projection (the Points band's small figure .llv) and "Needs over proj" (the gap between
-  // the two, on the trailing side of every slate the build did not mark finished), by the build's formula (mu_build _lx):
+  // 2026-11-13: each lineup's live projection (the Points band's small figure .llv) and "Needs over proj" (slate by slate,
+  // as mu_build sview: finished = frozen gap, current = gap between the two .llv, later = empty), by the build's formula (mu_build _lx):
   // finished = points, in progress = points + projection x share of the game left (game clock, as sleeper.mjs pullLive),
   // not started = projection; no game, or a team the feed does not list = the build's own value (data-x)
   function lx(el,st,pp,lf){
@@ -41,7 +41,7 @@
     if(s==='pre')return [j,false,true];
     var f=(el.querySelector('small')||{}).textContent==='FINAL';return [x,f,!f];
   }
-  function r1(x){return Math.round(x*10)/10}
+  function r1(x){var v=Math.round(Math.abs(x)*1e5),q=Math.floor(v/10000),r=v-q*10000;if(r>5000||(r===5000&&q%2))q++;return (x<0?-q:q)/10}   // one decimal: noise removed, nearest, exact ties to even (mu_build _r1)
   function proj(st,pp,lf){
     document.querySelectorAll('.lus').forEach(function(lu){
       var band=lu.querySelector('.ltot.lsb');if(!band||band.querySelectorAll('[data-r]').length!==2)return;  // current week only
@@ -53,11 +53,27 @@
         if(!n)return;
         if(sel==='.lus-a')band.querySelectorAll('[data-r]').forEach(function(sp,i){var v=sp.querySelector('.llv'),q=S[i?'b':'a'];if(!v)return;
           if(q[1]){v.className='llv fz';v.removeAttribute('title');v.textContent='Final'}else{v.className='llv';v.title='Live projection';v.textContent=f1(q[0])}});
-        var d=r1(r1(S.a[0])-r1(S.b[0])),tr=d<=-0.05?0:d>=0.05?1:-1;
+        // slate by slate (2026-11-13): finished slates (every game in them over, from the scores feed, not the slate chip)
+        // keep the gap as it stood when they ended, G = actual points in slates up to it + pre-game projection (data-j)
+        // after it; the current slate (first not finished) shows the live gap; later slates and No game: empty
+        var D=r1(r1(S.a[0])-r1(S.b[0])),X=[];
         bk.querySelectorAll(':scope>.lsv>.slx').forEach(function(sx){
-          if(sx.classList.contains('sx-final')||sx.classList.contains('sx-bye'))return;   // finished slates and No game: empty (build)
-          var c=sx.querySelector('.sltw');if(!c)return;c=c.querySelectorAll(':scope>span');if(c.length!==2)return;
-          for(var i=0;i<2;i++){var h=i!==tr?'':S[i?'b':'a'][2]?'<i class="dlt dn">+'+Math.abs(d).toFixed(1)+'</i>':'\u2013';if(c[i].innerHTML!==h)c[i].innerHTML=h}
+          var q={el:sx,bye:sx.classList.contains('sx-bye'),fin:true,n:0,act:[0,0],pj:[0,0],gm:[false,false]};   // gm: a starter with a game in this slate
+          sx.querySelectorAll('.cv').forEach(function(el){if(el.dataset.x===undefined)return;q.n++;
+            var i=el.classList.contains('a')?0:1,r=lx(el,st,pp,lf);if(el.dataset.p)q.fin=q.fin&&r[1];if(r[1]||!el.dataset.p)q.act[i]+=r[0];   // a starter without a game line (no data-p) never holds a slate open
+            q.pj[i]+=el.dataset.j!==undefined?+el.dataset.j:+el.dataset.x;if(el.dataset.p)q.gm[i]=true});
+          X.push(q)});
+        var cur=-1;for(var k=0;k<X.length;k++)if(!X[k].bye&&!(X[k].n&&X[k].fin)){cur=k;break}
+        X.forEach(function(q,k){
+          var c=q.el.querySelector('.sltw');if(!c)return;c=c.querySelectorAll(':scope>span');if(c.length!==2)return;
+          var d=null,lt=[false,false];
+          if(q.bye||(cur>=0&&k>cur)){}                                           // later slates and No game: empty
+          else if(k===cur){d=D;lt=[S.a[2],S.b[2]]}                                // current slate: the live gap
+          else{var g=[0,0];X.forEach(function(p,m){for(var i=0;i<2;i++){g[i]+=(!p.bye&&m<=k)?p.act[i]:p.pj[i];
+                if(!p.bye&&m>k&&p.gm[i])lt[i]=true}});   // '–' only if nobody played after it
+            d=r1(r1(g[0])-r1(g[1]))}                                              // finished slate: frozen at its end
+          var tr=d===null?-1:d<=-0.05?0:d>=0.05?1:-1;
+          for(var i=0;i<2;i++){var h=i!==tr?'':lt[i]?'<i class="dlt dn">+'+Math.abs(d).toFixed(1)+'</i>':'\u2013';if(c[i].innerHTML!==h)c[i].innerHTML=h}
         });
       });
     });
@@ -101,7 +117,8 @@
           if(m.home_team)lf[m.home_team]=lr;if(m.away_team)lf[m.away_team]=lr}
         var d=Date.parse(m.date_time||'');if(k==='pre'&&d&&d-now<15*60000&&d-now>-6*3600000)soon=true});
       var anyIn=Object.keys(st).some(function(k){return st[k]==='in'});
-      if(!anyIn&&!soon&&last){rel();schedule(600000);return}
+      var chg=!data||JSON.stringify(st)!==JSON.stringify(data[0]);   // a game changed state (e.g. a slate just finished): apply once more
+      if(!anyIn&&!soon&&last&&!chg){rel();schedule(600000);return}
       var needStats=anyIn&&now-lastStats>110000||!lastStats;
       return Promise.all([get(A+'/league/'+L+'/matchups/'+W),needStats?get(S+'/stats/nfl/'+Y+'/'+W+'?season_type=regular'):null]).then(function(r){
         if(r[1]){stats={};r[1].forEach(function(x){if(x.stats&&(x.stats.gp||x.stats.gms_active||x.player&&x.player.position==='DEF'))stats[x.player_id]=x.stats});lastStats=now}
