@@ -47,9 +47,9 @@ def prow(pid,name,pos,nfl,pts,gp,tag='',flat=False,pgm=False):
     by=BYE.get(nfl);bc='past' if by and by<=DONE else 'now' if by==DONE+1 else ''
     byh=f'<i class="by {bc}"><u>BYE</u><b>{by}</b></i>' if by else ''
     pg=f'{pts/gp:.1f}' if gp else '–'
-    if pgm: rk=PG[pid][0] if PG.get(pid) else None
+    if pgm: rk=PG[pid][0] if PG.get(pid) and PG[pid][1]>=3 else None  # 3+ games, else '–'
     big=rk and (rk>=100 or (pos=='DEF' and rk>=10))
-    sq=f'<i class="pq p-{pos.lower()}{" l3" if big and pts>0 else ""} t-{nfl or "FA"}"><span class="pqi"><span>{pos}</span>{f"<b>{rk}</b>" if pts>0 and rk else ""}</span></i>'
+    sq=f'<i class="pq p-{pos.lower()}{" l3" if big and pts>0 else ""} t-{nfl or "FA"}"><span class="pqi"><span>{pos}</span>{(f"<b>{rk or chr(8211)}</b>" if pts>0 else "") if pgm else f"<b>{rk}</b>" if pts>0 and rk else ""}</span></i>'
     a=age(pid);ag=f'<em class="pag {acl(a)}">{a:.1f}</em>' if a else ''
     return (f'<div class="rr2">{sq}'
             f'<span class="rn"><b>{nmh(name,pos)}{badge(nfl).replace('<em class="nfl','<em class="nfl tm',1) if nfl else ""}{ag}{IRX if tag=="IR" else ""}{TXC if (tag=="TX" and flat) else ""}</b><small><span class="gp"><u>GP</u><b>{gp}</b></span>{byh}{_SEA(pid,pos,DONE)}</small></span>'

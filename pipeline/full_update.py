@@ -141,7 +141,7 @@ for rid,r in RO.items():
         tie=int(sum(1 for q in same if abs(tot[q]-pts)<1e-9)>1) if pid in tot else 0
         ordn=1+sum(1 for q in same if tot[q]>pts+1e-9 or (abs(tot[q]-pts)<1e-9 and q<pid)) if pid in tot else len(same)+1
         if pid in tot:K[pid]=[rk,tie,pts]
-        if g:PG[pid]=[1+sum(1 for q in same if gp[q]>=3 and pgv(q)>pgv(pid)+1e-9),g]
+        if g:PG[pid]=[1+sum(1 for q in same if gp[q]>=3 and pgv(q)>pgv(pid)+1e-9) if g>=3 else None,g]  # per-game rank: 3+ games (pool and player alike), ties share; fewer = None (shown "–")
         else:PG[pid]=None
         tag='IR' if pid in (r['res'] or []) else 'TX' if pid in (r['taxi'] or []) else ''
         tm=(META.get(pid) or [None,None,None])[2] or (A[pid][1] if pid in A else '')

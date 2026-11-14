@@ -84,7 +84,7 @@ if _PL:
     sp0.run(['python3',P+'pl_build.py'],check=True,stdout=sp0.DEVNULL)
     _GL='<div class="glw"><span>Glossary</span><div class="pseg glc" role="group" aria-label="Glossary"><label for="gl-h">Hide</label><label for="gl-s">Show</label></div></div>'
     _KEY=('<div class="key"><div><b>Players</b> every NFL player, rostered or not, ranked at his position by season points (half-PPR, league scoring) '
-          'or by points per game. Per game needs at least half the completed weeks played. <b>Tile</b> = position rank for the chosen sort. '
+          'or by points per game. Per game needs at least 3 games played. <b>Tile</b> = position rank for the chosen sort. '
           '<b>GP</b> games played, (bye week), then the fantasy team that rosters him or Free agent.</div>'
           '<div><b>Stat line</b> season totals. PA yards-TD-INT, RU carries-yards-TD, REC catches-yards-TD; K FG made/attempted, LNG longest FG, XP made/attempted; '
           'DEF SK sacks, TO takeaways (interceptions + fumble recoveries), TD defensive and return touchdowns, PA points allowed per game.</div></div>')

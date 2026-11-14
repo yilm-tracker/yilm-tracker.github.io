@@ -76,6 +76,9 @@ from datetime import date as _d
 LW=json.load(open(P+f'wk{W}.json'));DONEG=set(LW['done']);LIVEG=set(LW.get('live',[]));HOME=set(LW['home'])
 _X=json.load(open(P+'cmp_extra.json',encoding='utf-8'));RID={v:int(k) for k,v in _X['rn'].items()};RN2={int(k):v for k,v in _X['rn'].items()}
 _K=json.load(open(P+'ro_ranks.json'));_K.pop('_bye',None);_PG=json.load(open(P+'ro_pg.json'))
+MINGP=3  # per-game ranks everywhere: 3+ games (standing rule 17, brief A6)
+def _pgr(pid):
+    v=_PG.get(pid);return v[0] if v and v[1]>=MINGP else None
 # ---------- future weeks (2026-11-13, brief A5): the rest of the regular season, each team's lineup as set in Sleeper now,
 # re-projected for that week (fut_lu.py, shared with the Playoffs builder); no results and nothing for live.js to patch
 import fut_lu as _FL
@@ -159,9 +162,9 @@ def lcell(p,side):
     pid,pos,name,tm,proj,act,opp,inj=p[:8]
     r=_K[pid][0] if _K.get(pid) and _K[pid][2]>0 else None
     big=r and (r>=100 or (pos=='DEF' and r>=10))
-    g=(_PG.get(pid) or [None])[0]  # points-per-game rank (players with 3+ games)
+    g=_pgr(pid)  # points-per-game rank (3+ games; fewer = '–' where the season rank has a figure, else blank as it)
     big3=lambda x:x and (x>=100 or (pos=='DEF' and x>=10))
-    rk=(f'<b class="rkt{" b3" if big3(r) else ""}">{r}</b>' if r else '<b class="rkt"></b>')+(f'<b class="rkg{" b3" if big3(g) else ""}">{g}</b>' if g else '<b class="rkg"></b>')
+    rk=(f'<b class="rkt{" b3" if big3(r) else ""}">{r}</b>' if r else '<b class="rkt"></b>')+(f'<b class="rkg{" b3" if big3(g) else ""}">{g}</b>' if g else f'<b class="rkg">{"–" if r else ""}</b>')
     sq=f'<i class="pq p-{pos.lower()} t-{tm or "FA"}"><span class="pqi"><span>{pos}</span>{rk}</span></i>'
     a=_age(pid);acl='ay' if a and a<27 else 'ap' if a and a<31 else 'ao'
     ag=f'<em class="pag {acl}">{a:.1f}</em>' if a else ''

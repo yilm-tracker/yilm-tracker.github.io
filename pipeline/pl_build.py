@@ -8,7 +8,7 @@ from datetime import date
 P=__DTP__
 e=html.escape
 X=json.load(open(P+'pull_top.json',encoding='utf-8'))
-D,MIN,PL=X['D'],X['minGp'],X['P']
+D,PL=X['D'],X['P'];MIN=3  # per-game ranks everywhere: 3+ games (brief A6; was the pull's ceil(D/2))
 import sys;sys.path.insert(0,P);from nfl_colors import badge_c as badge,NFLC,team_tiles
 import lg
 BYE=json.load(open(P+'ro_ranks.json',encoding='utf-8')).get('_bye',{})

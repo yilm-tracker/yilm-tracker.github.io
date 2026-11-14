@@ -126,12 +126,12 @@ def positions(a,b):
 PG=json.load(open(P+'ro_pg.json'))
 def cn(p,side,mode='p'):
     if p is None:return f'<span class="cn {side}"></span>'
-    r=rk(p) if mode=='p' else (PG[p[0]][0] if PG.get(p[0]) else None);lab=f'{p[2]}{r}' if r else p[2]
+    r=rk(p) if mode=='p' else (PG[p[0]][0] if PG.get(p[0]) and PG[p[0]][1]>=3 else None);lab=f'{p[2]}{r}' if r else p[2]
     ir='<i class="cir"></i>' if p[7]=='IR' else ''
     ag=age(p[0])
     agh=f'<em class="pag {"ay" if ag<27 else "ap" if ag<31 else "ao"}">{ag:.1f}</em>' if ag else ''
     sm2=f'<span class="gp">{p[6]} GP</span>' if mode=='g' else agh
-    sq=f'<i class="pq p-{p[2].lower()}{" l3" if (r and r>=100) or (p[2]=="DEF" and r and r>=10) else ""}"><span class="pqi"><span>{p[2]}</span>{f"<b>{r}</b>" if r else ""}</span></i>'
+    sq=f'<i class="pq p-{p[2].lower()}{" l3" if (r and r>=100) or (p[2]=="DEF" and r and r>=10) else ""}"><span class="pqi"><span>{p[2]}</span>{f"<b>{r}</b>" if r else "<b>–</b>" if mode=="g" and rk(p) else ""}</span></i>'
     return f'<span class="cn {side}">{sq}<span class="cnm"><b>{ir}<span>{e(pname(p))}</span>{agh}</b><small>{badge(p[3])}<span class="gp">{p[6]} GP</span></small></span></span>'
 def cell(p,side,mode):
     if p is None:return f'<span class="cn {side}"></span><span class="cv {side}"></span>'

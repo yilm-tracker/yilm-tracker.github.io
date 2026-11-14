@@ -224,7 +224,7 @@ export async function pullDetail(get, weeks) {
 }
 
 // Top players by position through week D (every NFL player, rostered or not): season stat totals, weekly league points,
-// names. Keeps the union of the top 60 by points and the top 60 by points per game (min. ceil(D/2) games) per position.
+// names. Keeps the union of the top 60 by points and the top 60 by points per game (min. 3 games) per position.
 const TOPK = ['pass_cmp', 'pass_att', 'pass_yd', 'pass_td', 'pass_int', 'rush_att', 'rush_yd', 'rush_td', 'rec', 'rec_tgt', 'rec_yd', 'rec_td',
   'fum_lost', 'fgm', 'fga', 'fgm_lng', 'xpm', 'xpa', 'sack', 'int', 'fum_rec', 'def_td', 'pts_allow', 'yds_allow', 'safe', 'def_st_td',
   'off_snp', 'tm_off_snp', 'pass_sack', 'pass_lng', 'rush_lng', 'rec_lng', 'blk_kick', 'ff', 'fum',
@@ -243,7 +243,7 @@ export async function pullTop(get, D, keep = 60) {
       for (const k of TOPK) { const v = s[k]; if (typeof v === 'number' && v) e.t[k] = k.endsWith('_lng') ? Math.max(e.t[k] || 0, v) : r2((e.t[k] || 0) + v); }
     }
   });
-  const minGp = Math.ceil(D / 2), pick = new Set();
+  const minGp = 3, pick = new Set();  // per-game ranks everywhere: 3+ games (brief A6; was ceil(D/2))
   for (const pos of FPOS) {
     const L_ = Object.entries(X).filter(([, e]) => e.pos === pos).map(([id, e]) => {
       const pl = e.w.filter(v => v != null); const pts = r2(pl.reduce((a, b) => a + b, 0)); return { id, pts, gp: pl.length, ppg: pl.length ? pts / pl.length : 0 };

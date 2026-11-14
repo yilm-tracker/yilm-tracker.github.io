@@ -111,7 +111,7 @@ def assess(t):
         if r>=lg.N-1 and pos not in('K','DEF'):bad.append((8 if pos in('RB','WR','QB') else 6,f'{lab} {ordn(r)} ({GRP[t][pos]:.0f} pts vs {GAVG[pos]:.0f} avg): {names}.'))
     # QB depth / surplus (1-QB league)
     qbs=[p for p in act(t) if p[2]=='QB' and p[7]!='IR']
-    good_q=[p for p in qbs if (PG.get(p[0]) or [99])[0]<=15]
+    good_q=[p for p in qbs if ((PG.get(p[0]) or [None])[0] or 99)<=15]
     if len(good_q)>=2:
         bad.append((4,f'QB surplus in a 1-QB league: {", ".join(pl(p) for p in good_q)} – trade value on the bench.'))
     if len(qbs)==1:

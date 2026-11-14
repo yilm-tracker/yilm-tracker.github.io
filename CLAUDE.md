@@ -141,6 +141,8 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 
 ## Gotchas learned the hard way
 
+- **Per-game ranks** (2026-11-14, brief A6; DESIGN.md §6 Position rank Pts / Gm): 3 games everywhere, ties share. `roster_files.py` (BBP) / `full_update.py` (YILM) write `ro_pg.json` `[rank or None, games]` (None below 3 games); readers also cut at 3 (`mu_build._pgr` / `MINGP`, `ro_build` pgm, `cmp_build`), so an older ro_pg.json renders the same. "–" only where the season rank has a figure (`lcell`: `r`). `pullTop` `minGp` = 3 and `pl_build.py` `MIN` = 3 (no longer the pull's ceil(D/2)). `assess.py` guards a None rank.
+
 - **Never test overflow with scrollWidth > clientWidth on the Standings board** (2026-11-14): WebKit (Safari) reports scrollWidth 1px over at fractional widths (zoomed desktop rows: a 378.98px column gave 380 vs 379 for a 215px line). Measure the content with a Range against the box (`sbOv`, `tnFit`). Other fitters still use scrollWidth (not audited).
 - `!important` font-size in CSS silently defeats JS fitting.
 - Measure chips only after resetting transform; skip nothing in `fit` now (stat lines included).
