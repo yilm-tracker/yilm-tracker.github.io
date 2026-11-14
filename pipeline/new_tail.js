@@ -378,9 +378,13 @@ function simGap(){if(innerWidth<1100)return;const t=document.querySelector('.dtp
   t.querySelectorAll('tr').forEach(tr=>{const f=tr.querySelector('td.dfin,th[data-k="fin"]');if(!f||!f.offsetParent)return;let p=f.previousElementSibling;while(p&&!p.offsetParent)p=p.previousElementSibling;if(p){pre.push(p);fin.push(f)}});
   if(!pre.length)return;pre.forEach(p=>p.style.removeProperty('padding-right'));fin.forEach(f=>f.style.removeProperty('padding-left'));
   // the width the wider Tot eff column needs comes from TEAM only: pin every other column at its natural width first
-  const hr=[...t.querySelectorAll('thead tr')].pop(),hs=hr?[...hr.children].filter(c=>c.offsetParent):[];hs.forEach(h=>h.style.removeProperty('width'));
+  const hr=[...t.querySelectorAll('thead tr')].pop(),hs=hr?[...hr.children].filter(c=>c.offsetParent):[];hs.forEach(h=>h.style.removeProperty('width'));t.classList.remove('dte');
   const keep=hs.filter(h=>!['team','fin'].includes(h.dataset.k)&&h!==pre[pre.length-1]&&!pre.includes(h)).map(h=>[h,h.getBoundingClientRect().width]);
-  keep.forEach(([h,wd])=>{h.style.boxSizing='border-box';h.style.width=wd+'px'});
+  // 2026-11-14 outer inset (brief 4a item 8): the seed and Playoffs columns are measured without the 16px edge padding (.dte),
+  // then pinned at that width plus the padding they gain, so the room comes from TEAM (and Tot eff / Finish, which simGap sizes next)
+  const e0=hs[0],e1=hs[hs.length-1],p0=e0?parseFloat(getComputedStyle(e0).paddingLeft):0,p1=e1?parseFloat(getComputedStyle(e1).paddingRight):0;t.classList.add('dte');
+  const d0=e0?parseFloat(getComputedStyle(e0).paddingLeft)-p0:0,d1=e1?parseFloat(getComputedStyle(e1).paddingRight)-p1:0;
+  keep.forEach(([h,wd])=>{h.style.boxSizing='border-box';h.style.width=(wd+(h===e0?d0:0)+(h===e1?d1:0))+'px'});
   fin.forEach(f=>f.style.setProperty('padding-left','16px','important'));  // 16px from the divider to Proj finish
   let R=1e9,L=1e9;fin.forEach((f,i)=>{const fb=f.getBoundingClientRect(),dl=fb.left,dr=dl+parseFloat(getComputedStyle(f).borderLeftWidth);
     R=Math.min(R,_sgEdge(f,'l')-dr);L=Math.min(L,dl-_sgEdge(pre[i],'r'))});

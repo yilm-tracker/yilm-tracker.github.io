@@ -1364,3 +1364,9 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
    overflowed (an iPhone in landscape lays out at 1,028 CSS px). In this band the column is capped at 712px (680px of content):
    the narrowest column at which The Wire (every filter) and Team Hub Trends are clean, measured every 10px from 760 to 1099px. */
 @media (min-width:760px) and (max-width:1099px){.wrap{max-width:712px}}
+
+/* 2026-11-14 DESKTOP TABLE OUTER INSET (brief 4a item 8): the seed and Playoffs cells are padded so the nearest ink is 16px from the
+   panel's inner edge (left 13.5px: the rank art's / digit's bearing; right 16px; was 3-9px). simGap adds .dte after it has measured and
+   pinned every other column, so TEAM gives up the width; where TEAM reaches its one-line minimum (BBP at every width but
+   1239 / 1419px, most at 1100-1260px; YILM 1100-1160px) the other columns give 0.06-2.65px each. */
+@media (min-width:1100px){.dtp .dtt.dte tr:not(.dtl)>:first-child{padding-left:13.5px!important}.dtp .dtt.dte tr:not(.dtl)>:last-child{padding-right:16px!important}}
