@@ -34,7 +34,7 @@ for (pid,name,pos,team,inj,pts,gp,rk,proj,opp,home,ko,ad) in ROWS:
     ppg=pts/gp if gp else 0
     nm=name if pos!='DEF' else name
     parts=nm.split(' ',1)
-    short=(parts[0][0]+'. '+parts[1]) if len(parts)==2 and pos!='DEF' else nm
+    short=(parts[0][0]+'. '+parts[1]) if len(parts)==2 and pos!='DEF' else nm.rsplit(' ',1)[-1] if pos=='DEF' else nm  # DEF short form = the team nickname (Nicklaus, 2026-11-14)
     it=INJ.get(inj or '','')
     mu=''
     if opp:mu=f'<span class="wha">{"vs" if home else "@"}</span>{badge(opp)}'+(f'<span class="wko">· {kick(ko)}</span>' if ko else '')
@@ -62,7 +62,9 @@ html_=(f'<section class="wrx" aria-labelledby="wrh"><div class="posh"><b id="wrh
 const sv=r=>r._s||(r._s=r.dataset.s.split(',').map(Number));
 function draw(){const v=R.filter(r=>(pos==='ALL'||r.dataset.p===pos||(pos==='FLX'&&FLX.includes(r.dataset.p)))&&(!q||r.dataset.n.includes(q))).sort((a,b)=>sv(b)[k]-sv(a)[k]||sv(b)[0]-sv(a)[0]);
 R.forEach(r=>r.hidden=true);v.slice(0,50).forEach((r,i)=>{r.hidden=false;r.style.order=i});M.textContent=v.length?(v.length>50?'Top 50 of '+v.length:v.length+' players'):'No players';X.classList.toggle('wk3',k===3);fit()}
-function fit(){X.querySelectorAll('.wrr:not([hidden]) .wn').forEach(n=>{n.textContent=n.dataset.f;n.style.fontSize='';const b=n.parentElement;if(b.scrollWidth>b.clientWidth+.5)n.textContent=n.dataset.s;let f=parseFloat(getComputedStyle(n).fontSize);while(b.scrollWidth>b.clientWidth+.5&&f>11){f-=.5;n.style.fontSize=f+'px'}})}
+// the name is a shrinking flex item (min-width:0): a long name overflows its own box into the team tag while the row never overflows,
+// so the test is the name's own overflow as well as the row's (2026-11-13: Chris Rodriguez Jr. ran 0.88px into his tag at 360P)
+function fit(){X.querySelectorAll('.wrr:not([hidden]) .wn').forEach(n=>{n.textContent=n.dataset.f;n.style.fontSize='';const b=n.parentElement,ov=()=>n.scrollWidth>n.clientWidth+.5||b.scrollWidth>b.clientWidth+.5;if(ov())n.textContent=n.dataset.s;let f=parseFloat(getComputedStyle(n).fontSize);while(ov()&&f>11){f-=.5;n.style.fontSize=f+'px'}})}
 function pf(){const f=X.querySelector('.wpf');if(!f)return;f.style.removeProperty('--wpp');let p=parseFloat(getComputedStyle(X.querySelector('.wpb')).paddingLeft);while(f.scrollWidth>f.clientWidth+.5&&p>6){p-=1;f.style.setProperty('--wpp',p+'px')}}
 pf();addEventListener('resize',()=>requestAnimationFrame(pf));document.addEventListener('change',()=>requestAnimationFrame(pf));document.fonts&&document.fonts.ready.then(pf);
 X.querySelectorAll('.wpb').forEach(b=>b.onclick=()=>{pos=b.dataset.p;X.querySelectorAll('.wpb').forEach(x=>x.classList.toggle('on',x===b));draw()});

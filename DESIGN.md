@@ -236,6 +236,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 ### The Wire `LIVE`
 - Filters: ALL · QB · RB · WR · TE · FLX · K · DEF (**YILM**: no K/DEF). FLX = RB+WR+TE, cream label (not a position colour); active = cream pill. One line at 360px.
+- **Player name fit** `LIVE` (2026-11-14): full name → short form (players: first initial + surname, "C. Rodriguez Jr."; **DEF: the team nickname at full size**, "Commanders", approved by Nicklaus 2026-11-14) → shrink to 11px; never "…". Tested on the name's own box as well as the row (the name is a shrinking flex item and used to run into its team tag while the row never overflowed). 360P / 402P / 440P, every filter, both sites: 0 name/tag overlaps (was BBP 11, YILM 6 at 360P), rows that already fit unchanged.
 
 ### Desktop standings table `LIVE`
 - Equal gaps (≥ 16px) on both sides of the 20K SIMULATIONS divider, measured by visible glyphs; only TEAM gives up width.
@@ -313,6 +314,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-14 · The Wire: a long player name no longer runs into its team tag (fit tests the name's own overflow); DEF rows use the team nickname at full size before any shrink · at 360P names overlapped the tag by up to 21px and "Washington Commanders" would have shrunk to 11px; Nicklaus: "def nicknames is fine where needed".
 - 2026-11-14 · Future weeks shipped with follow-ups: picker score "–" (not "0.0"); Playoffs' projected weeks read every slate as later (no need line, running total "– (proj)"); lineup short forms Montgom., Hocken. and Croskey-M (was Croskey-M.); a short game time that still does not fit gets a two-letter day ("Th 4:30p") · Nicklaus approved the A5 mock (brief A5).
 - 2026-11-14 · Matchups desktop games column: sticky 16px under the measured nav band, and only when band + 16px + the column fit the viewport (else it scrolls with the page) · it stuck at 76px, 26.58px under the 102.58px band, and its inner scroll hid 1-2 cards on shorter screens; Nicklaus chose sticky-only-when-it-fits over an inner scroll.
 - 2026-11-14 · Fix: the tile fitter reads the baseline of a figure or label that is itself a flex / grid item through a temporary unstyled wrapper, so Matchups "Week rank" chips sit on their label (−4.50 → −0.16 to −0.83px at 402P, −0.45 to −0.54 at 1440; the ~0.5px left is the §8 canvas rounding) and Stats › Consistency chips on their figures (−6.1 to −6.8 → −0.04 to −0.76px), both sites; element count unchanged · the baseline marker became a flex item at the top (CLAUDE.md gotcha); Nicklaus chose the general fix (Consistency moves too).

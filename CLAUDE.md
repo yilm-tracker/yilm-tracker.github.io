@@ -110,6 +110,7 @@ Two sister sites built by the same pipeline. This file is identical in both repo
 ## The Wire
 
 - Position filter (`wire_build.py`): ALL · QB · RB · WR · TE · FLX · K · DEF (YILM has no K/DEF). FLX (2026-11-03) = RB+WR+TE in one list, same sort/search/top 50; pill label `--chalk` (not a position colour), active = cream pill like ALL. The pill row spans the content width on one line (`.wpf` min-width 0, pills flex-grow, 6px gaps); `pf()` eases side padding from 12px (9px <=380) down to 6px until it fits (BBP: 10px at 402, 8px at 360).
+- Name fit (`fit()` in wire_build.py's script, 2026-11-14): full name (`data-f`) → short form (`data-s`: first initial + surname; DEF the last word of the team name, its nickname) → shrink to 11px. Overflow is tested on `.wn` itself as well as its `b`: `.wn` has `min-width:0`, so a long name overflows its own box into the team tag while `b` never overflows.
 
 ## Stats > Trades (2026-11-03)
 
