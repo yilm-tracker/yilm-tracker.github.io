@@ -265,7 +265,9 @@ export async function pullTop(get, D, keep = 60) {
 
 // THE WIRE: every unrostered player with season points or a projection this week. Week N = D + 1.
 // Row: [id, name, pos, team, injury, seasonPts, gp, posRank (season points among all players at the position),
-//       projN (league scoring), opp, home (1/0), kickoff ISO, adds48h (Sleeper-wide trending adds)]
+//       projN (league scoring), opp, home (1/0), kickoff ISO, adds48h (Sleeper-wide trending adds),
+//       posRankPerGame (points per game among players with 3+ games at the position; fewer games = null)]
+//       Both ranks are competition ranks: ties share a rank (brief A6, 2026-11-14; ties were broken arbitrarily before).
 export async function pullWire(get, D) {
   const N = D + 1, L = `${A}/league/${LEAGUE}`;
   const [lg, ro, players, pj, sch, K] = await Promise.all([get(L), get(`${L}/rosters`), get(`${A}/players/nfl`), get(projURL(N)),
@@ -277,8 +279,14 @@ export async function pullWire(get, D) {
   const X = {};
   weeks.forEach(rows => { for (const r of rows) { const pos = r.player && r.player.position, s = r.stats || {};
     if (!FPOS.has(pos) || !(s.gp > 0)) continue; const e = X[r.player_id] || (X[r.player_id] = { pos, pts: 0, gp: 0 }); e.pts = r2(e.pts + leagueScore(s, ss)); e.gp++; } });
-  const rk = {};
-  for (const pos of FPOS) Object.entries(X).filter(([, e]) => e.pos === pos).sort((a, b) => b[1].pts - a[1].pts).forEach(([id], i) => rk[id] = i + 1);
+  const rk = {}, rkg = {}, ppg = e => e.pts / e.gp;
+  for (const pos of FPOS) {
+    const L_ = Object.entries(X).filter(([, e]) => e.pos === pos), G_ = L_.filter(([, e]) => e.gp >= 3);
+    for (const [id, e] of L_) {
+      rk[id] = 1 + L_.filter(([, o]) => o.pts > e.pts + 1e-9).length;
+      if (e.gp >= 3) rkg[id] = 1 + G_.filter(([, o]) => ppg(o) > ppg(e) + 1e-9).length;
+    }
+  }
   const own = new Set(ro.flatMap(r => r.players || []));
   const PJ = {}; for (const r of pj) PJ[r.player_id] = r2(leagueScore(r.stats || {}, ss));
   const OPP = {}; for (const g of sch.filter(x => x.week == N)) { OPP[g.home] = [g.away, 1]; OPP[g.away] = [g.home, 0]; }
@@ -293,7 +301,7 @@ export async function pullWire(get, D) {
     const team = pos === 'DEF' ? id : (p.team || null); if (!team) continue;
     const name = pos === 'DEF' ? `${p.first_name || id} ${p.last_name || ''}`.trim() : (p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim());
     const o = OPP[team] || [null, 0];
-    out.push([id, name, pos, team, p.injury_status || null, pts, X[id] ? X[id].gp : 0, rk[id] || null, pr, o[0], o[1], (K[team] || [null])[0], AD[id] || 0]);
+    out.push([id, name, pos, team, p.injury_status || null, pts, X[id] ? X[id].gp : 0, rk[id] || null, pr, o[0], o[1], (K[team] || [null])[0], AD[id] || 0, rkg[id] || null]);
   }
   return { D, N, pulled: new Date().toISOString(), W: out };
 }

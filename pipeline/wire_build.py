@@ -29,7 +29,11 @@ def adds(v):
     if not v:return '–'
     return f'+{v/1000:.1f}k' if v>=1000 else f'+{v}'
 rows=[]
-for (pid,name,pos,team,inj,pts,gp,rk,proj,opp,home,ko,ad) in ROWS:
+# per-game rank (row[13], 3+ games, ties share) comes from the pull since 2026-11-14 (brief A6); an older pull_wire.json
+# (local builds before the first CI run) has none: the tile then shows the season rank in both states
+PGR=all(len(r)>13 for r in ROWS)
+for (pid,name,pos,team,inj,pts,gp,rk,proj,opp,home,ko,ad,*rest) in ROWS:
+    rg=rest[0] if PGR else rk
     if pos not in POS:continue
     ppg=pts/gp if gp else 0
     nm=name if pos!='DEF' else name
@@ -40,7 +44,7 @@ for (pid,name,pos,team,inj,pts,gp,rk,proj,opp,home,ko,ad) in ROWS:
     if opp:mu=f'<span class="wha">{"vs" if home else "@"}</span>{badge(opp)}'+(f'<span class="wko">· {kick(ko)}</span>' if ko else '')
     else:mu='<span class="wko">Bye</span>'
     rows.append((proj,pts,ppg,ad,f'<div class="wrr" data-p="{pos}" data-n="{e(nm.lower())}" data-s="{proj:.2f},{pts:.2f},{ppg:.3f},{ad}">'
-      f'<i class="wpt" style="--pc:{PC[pos]}"><b>{pos}</b><span>{rk if rk else "–"}</span></i>'
+      f'<i class="wpt" style="--pc:{PC[pos]}"><b>{pos}</b><span class="rkt">{rk if rk else "–"}</span><span class="rkg">{rg if rg else "–"}</span></i>'
       f'<div class="wnm"><b><span class="wn" data-f="{e(nm)}" data-s="{e(short)}">{e(nm)}</span>{badge(team).replace("<em class=\"nfl","<em class=\"nfl tm",1)}'
       +(f'<i class="winj" title="{e(inj)}">{it}</i>' if it else '')+f'</b><small>{mu}</small></div>'
       f'<span class="wv wpj">{n1(proj)}<small>pts</small></span><span class="wv wpt2">{pts:.0f}</span><span class="wv wpg">{n1(ppg) if gp else "–"}</span><span class="wv wad">{adds(ad)}</span></div>'))
@@ -50,12 +54,15 @@ _PB=['ALL']+[q for p in POS for q in ([p,'FLX'] if p=='TE' and len(_FL)>1 else [
 btn=''.join(f'<button type="button" class="wpb{" on" if p=="ALL" else ""}{" wflx" if p=="FLX" else ""}" data-p="{p}"'+(f' style="--pc:{PC[p]}"' if p in PC else '')+f'>{p}</button>' for p in _PB)
 srt=lambda k,lab,cls='':f'<button type="button" class="wsb{cls}" data-k="{k}">{lab}<i aria-hidden="true">▾</i></button>'
 html_=(f'<section class="wrx" aria-labelledby="wrh"><div class="posh"><b id="wrh">The Wire</b><span class="wsub">Best available · not on any roster in the league</span></div>'
-  f'<div class="wrc"><div class="wpf" role="group" aria-label="Position">{btn}</div><input class="wq" type="search" placeholder="Search player…" aria-label="Search player" autocomplete="off"></div>'
+  '<input type="radio" name="wrk" id="wrk-t" class="lr" checked><input type="radio" name="wrk" id="wrk-g" class="lr">'
+  f'<div class="wrc"><div class="wpf" role="group" aria-label="Position">{btn}</div><input class="wq" type="search" placeholder="Search player…" aria-label="Search player" autocomplete="off">'
+  '<div class="lctl lgrid wrkc"><i class="lt ltr">Rank</i><div class="psrw"><div class="lrw pseg" role="group" aria-label="Position rank by"><label for="wrk-t">Pts</label><label for="wrk-g">/ Gm</label></div>'
+  '<div class="pseg psrz" aria-hidden="true"><label>Actual</label><label>Optimal</label></div></div></div></div>'
   f'<div class="wrt"><div class="wrhd"><span class="wh0">Player</span><span class="wh1">Matchup</span>'
   +srt(0,f'<em>Wk {N}</em>Proj',' on')+srt(1,'<em>Season</em>Fpts')+srt(2,'Ppg')+srt(3,'<em>48h</em>Adds')+'</div>'
   f'<div class="wrl">{"".join(r[4] for r in rows)}</div><div class="wmore"></div></div>'
   '<div class="key"><div><b>The Wire</b> every player on no roster in this league with season points or a projection this week. '
-  f'<b>Tile</b> position and season rank at the position (league scoring, all players). <b>Proj</b> Sleeper projection for Week {N} in league scoring. '
+  f'<b>Tile</b> position and rank at the position (league scoring, all players): by season points, or under Rank / Gm by points per game (3+ games; fewer: –); ties share a rank. <b>Proj</b> Sleeper projection for Week {N} in league scoring. '
   '<b>Fpts / Ppg</b> season points and points per game played. <b>Adds</b> times the player was added across all Sleeper leagues in the last 48 hours. '
   'Tap a column to sort; the top 50 for the filter are shown.</div></div></section>'
   """<script>(function(){const X=document.querySelector('.wrx');if(!X)return;const L=X.querySelector('.wrl'),R=[...L.children],M=X.querySelector('.wmore');let pos='ALL',k=0,q='';const FLX=['RB','WR','TE'];
@@ -93,6 +100,10 @@ css="""
 .wpt{align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:var(--pc);color:#0b0e14;font-style:normal}
 .wpt b{font:700 11px/1 var(--display);letter-spacing:.04em;text-box:trim-both cap alphabetic}
 .wpt span{font:700 16px/1 var(--display);text-box:trim-both cap alphabetic}
+.wpt span.rkg,#wrk-g:checked~.wrc~.wrt .wpt span.rkt{display:none}#wrk-g:checked~.wrc~.wrt .wpt span.rkg{display:block}
+#wrk-t:checked~.wrc .lrw label[for="wrk-t"],#wrk-g:checked~.wrc .lrw label[for="wrk-g"]{background:var(--chalk);color:var(--ink)}
+.wrc .wrkc{grid-template-columns:max-content max-content!important;margin:0 0 0 auto!important;flex:none;align-self:center}
+.psrw{display:grid}.psrw>*{grid-area:1/1}.psrz{visibility:hidden;height:0;overflow:hidden}
 .wnm{min-width:0;padding:8px 0}
 .wnm>b{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;font:600 15px/1.2 var(--body);color:var(--chalk)}
 .wnm .wn{min-width:0}
