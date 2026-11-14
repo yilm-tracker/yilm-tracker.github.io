@@ -57,6 +57,7 @@ def cell(q,side):
     return (f'<span class="cn {side}">{sq}<span class="cnm"><b><span>{e(nm)}</span>{ij}</b>'
             f'<small>{badge(q["nfl"])}<span class="gp">{sub}</span></small></span></span><span class="cv {side}">{q["pj"]:.1f}</span>')
 import mu_build as MB
+RKROW=('<i aria-hidden="true"></i>','','Rank',MB.RKW)  # Matchups' Stats | Rank row without Stats: Rank keeps its grid cell (row 2, right)
 MB.HATILE=False  # home / road shown by the vs / @ tile in each game line
 RIDN=dict(lg.RID)
 def lineup(a,b,w,k='p'):
@@ -64,7 +65,7 @@ def lineup(a,b,w,k='p'):
     pa=[mp(q,w) for q in pool(a,w)];pb=[mp(q,w) for q in pool(b,w)]
     ta=sum(p[4] for p in sa if p);tb=sum(p[4] for p in sb if p)
     src='Sleeper projections' if PROJ else f'projection = points per game, Weeks 1–{G} until Sleeper projections are pulled'
-    hdr=f'<div class="msh lsh">Lineups</div>{MB.CTL([(MB.VSW,'Order','Lineup',MB.LSW)])}<div class="lnote">set lineup = starters as set in Sleeper now · {src}</div>'
+    hdr=f'<div class="msh lsh">Lineups</div>{MB.CTL([(MB.VSW,'Order','Lineup',MB.LSW),RKROW])}<div class="lnote">set lineup = starters as set in Sleeper now · {src}</div>'
     o=[MB.ptsrow(sa,sb)]
     o+=['<div class="lpv">']+[MB.lgs(MB.lrow(x,y,''),i) for i,(x,y) in enumerate(zip(sa,sb))]+['</div>',MB.sview([x for x in sa if x],[y for y in sb if y],fut=True)]
     sida={p[0] for p in sa if p};sidb={p[0] for p in sb if p}
@@ -73,7 +74,7 @@ def lineup(a,b,w,k='p'):
         o.append('<div class="msh lbh"><b>Bench</b><i></i><small>active players, projected</small></div>')
         o+=[MB.lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,'') for k in range(max(len(ba),len(bb)))]
     h=('<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+MB.optblock([p for p in sa if p],[p for p in sb if p],pa,pb,ta,tb,True,'<div class="msh lbh"><b>Bench</b><i></i><small>active players, projected</small></div>',lambda p:p[4]>0,fut=True)+'</div>')
-    return h.replace('for="lo-a"',f'for="{k}lo-a"').replace('for="lo-o"',f'for="{k}lo-o"').replace('for="lv-p"',f'for="{k}lv-p"').replace('for="lv-s"',f'for="{k}lv-s"')
+    return h.replace('for="lo-a"',f'for="{k}lo-a"').replace('for="lo-o"',f'for="{k}lo-o"').replace('for="lv-p"',f'for="{k}lv-p"').replace('for="lv-s"',f'for="{k}lv-s"').replace('for="rk-t"',f'for="{k}rk-t"').replace('for="rk-g"',f'for="{k}rk-g"')
 def form(t,n=5):return ''.join(f'<i class="fm {"w" if x[2]>x[3] else "l"}"></i>' for x in WK[t][-n:])
 def card(a,b,w,label):
     def side(x,cl):
@@ -128,12 +129,12 @@ if ACT:MB.META.update({k:v for k,v in ACT['m'].items() if k not in MB.META})
 def flineup(a,b,w):
     A_,B_=ACT['w'][str(w)][str(RIDN[a])],ACT['w'][str(w)][str(RIDN[b])];MB.HW[0]=w
     sa=[MB.hp(x) for x in A_[2].split(',')];sb=[MB.hp(x) for x in B_[2].split(',')]
-    hdr=f'<div class="msh lsh">Lineups</div>{MB.CTL([(MB.VSW,'Order','Lineup',MB.LSW)])}<div class="lnote">green = beat projection · red = fell short</div>'
+    hdr=f'<div class="msh lsh">Lineups</div>{MB.CTL([(MB.VSW,'Order','Lineup',MB.LSW),RKROW])}<div class="lnote">green = beat projection · red = fell short</div>'
     o=[MB.ptsrow(sa,sb)]+['<div class="lpv">']+[MB.lgs(MB.lrow(x,y,''),i) for i,(x,y) in enumerate(zip(sa,sb))]+['</div>',MB.sview(sa,sb)]
     ba=sorted([MB.hp(x) for x in A_[3].split(',') if x],key=lambda q:-q[5]);bb=sorted([MB.hp(x) for x in B_[3].split(',') if x],key=lambda q:-q[5])
     if ba or bb:o+=[MB.BH_HIST]+[MB.lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,'') for k in range(max(len(ba),len(bb)))]
     h='<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+MB.optblock(sa,sb,sa+ba,sb+bb,A_[1],B_[1],False,MB.BH_HIST)+'</div>'
-    return h.replace('for="lo-a"','for="blo-a"').replace('for="lo-o"','for="blo-o"').replace('for="lv-p"','for="blv-p"').replace('for="lv-s"','for="blv-s"')
+    return h.replace('for="lo-a"','for="blo-a"').replace('for="lo-o"','for="blo-o"').replace('for="lv-p"','for="blv-p"').replace('for="lv-s"','for="blv-s"').replace('for="rk-t"','for="brk-t"').replace('for="rk-g"','for="brk-g"')
 import po_cols
 def _plive(t,w):
     """bracket row: (points, projection, started) - the live week from the Matchups data, played weeks as scored"""
@@ -170,7 +171,7 @@ radios=('<input type="radio" name="pview" id="pv-b" class="lr" checked><input ty
         ''.join(f'<input type="radio" name="pa" id="pa-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N))+
         ''.join(f'<input type="radio" name="pb" id="pb-{i}" class="lr"{" checked" if i==1 else ""}>' for i in range(lg.N))+
         ''.join(f'<input type="radio" name="pw" id="pw-{w}" class="lr"{" checked" if w==17 else ""}>' for w in WEEKS)+
-        ''.join(f'<input type="radio" name="{k}lopt" id="{k}lo-a" class="lr" checked><input type="radio" name="{k}lopt" id="{k}lo-o" class="lr"><input type="radio" name="{k}lview" id="{k}lv-p" class="lr" checked><input type="radio" name="{k}lview" id="{k}lv-s" class="lr">' for k in 'bp'))
+        ''.join(f'<input type="radio" name="{k}lopt" id="{k}lo-a" class="lr" checked><input type="radio" name="{k}lopt" id="{k}lo-o" class="lr"><input type="radio" name="{k}lview" id="{k}lv-p" class="lr" checked><input type="radio" name="{k}lview" id="{k}lv-s" class="lr"><input type="radio" name="{k}lrank" id="{k}rk-t" class="lr" checked><input type="radio" name="{k}lrank" id="{k}rk-g" class="lr">' for k in 'bp'))
 import gzip,base64
 if FINAL:PPX=''
 elif WSP:
@@ -218,8 +219,8 @@ else:
      '<div class="psame">Pick two different teams.</div>'+PPX+_SPICK+_SPAN+'</section>')
 def _lc(k,sc):
     q=lambda r,t:','.join(f'#{k}{r}:checked~{c} {t}' for c in sc)
-    return (q('lo-a',f'.lsw label[for="{k}lo-a"]')+','+q('lo-o',f'.lsw label[for="{k}lo-o"]')+','+q('lv-p',f'.lvw label[for="{k}lv-p"]')+','+q('lv-s',f'.lvw label[for="{k}lv-s"]')+'{background:var(--chalk);color:var(--ink)}'
-            +q('lo-o','.hrv-a')+'{display:none}'+q('lo-o','.hrv-o')+'{display:inline}'+q('lo-o','.lus-a')+'{display:none}'+q('lo-o','.lus-o')+'{display:block}'+q('lv-s','.lsv')+'{display:block}'+q('lv-s','.lpv')+'{display:none}')
+    return (q('lo-a',f'.lsw label[for="{k}lo-a"]')+','+q('lo-o',f'.lsw label[for="{k}lo-o"]')+','+q('lv-p',f'.lvw label[for="{k}lv-p"]')+','+q('lv-s',f'.lvw label[for="{k}lv-s"]')+','+q('rk-t',f'.lrw label[for="{k}rk-t"]')+','+q('rk-g',f'.lrw label[for="{k}rk-g"]')+'{background:var(--chalk);color:var(--ink)}'
+            +q('lo-o','.hrv-a')+'{display:none}'+q('lo-o','.hrv-o')+'{display:inline}'+q('lo-o','.lus-a')+'{display:none}'+q('lo-o','.lus-o')+'{display:block}'+q('lv-s','.lsv')+'{display:block}'+q('lv-s','.lpv')+'{display:none}'+q('rk-g','.pq .pqi>b.rkt')+'{display:none}'+q('rk-g','.pq .pqi>b.rkg')+'{display:block}')
 css=_lc('b',['.bkx'])+_lc('p',['.ppx','.ppn'])
 css+=('.pvw{display:inline-flex;margin:0 0 14px}#pv-b:checked~.pvw label[for="pv-b"],#pv-c:checked~.pvw label[for="pv-c"],#pv-s:checked~.pvw label[for="pv-s"]{background:var(--chalk);color:var(--ink)}'
       '#pv-s:checked~.prd,#pv-s:checked~.rkey,#pv-s:checked~.bkx,#pv-s:checked~.ppk,#pv-s:checked~.pwk,#pv-s:checked~.psame,#pv-s:checked~.ppx,#pv-s:checked~.ppn,'
