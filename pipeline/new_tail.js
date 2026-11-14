@@ -235,13 +235,16 @@ function fit(){
     if(!t.dataset.oh){const ct0=t.querySelector('.ct')||t;oh.push([t,t.getBoundingClientRect().height/z,parseFloat(getComputedStyle(ct0).fontSize)])}
     let inline=false;
     if(r.tn){const g=document.createRange();g.selectNodeContents(r.tn);const rr=g.getBoundingClientRect(),tr=t.getBoundingClientRect();inline=tr.bottom>rr.top&&tr.top<rr.bottom}
-    if(!inline)continue;jobs.push({t,cap:m.cap,tn:r.tn,zc:r.el.currentCSSZoom||z,z})}
+    if(!inline)continue;jobs.push({t,cap:m.cap,tn:r.tn,zc:r.el.currentCSSZoom||z,z,fx:r.tn.parentElement===r.el&&/flex|grid/.test(cs.display)})}
   for(const [t,h,f] of oh){t.dataset.oh=h;t.dataset.of=f}
-  for(const j of jobs){const pb=document.createElement('i');pb.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';j.tn.after(pb);j.pb=pb}
+  for(const j of jobs){const pb=document.createElement('i');pb.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';
+    // a text run that is itself a flex/grid item (e.g. Matchups "Week rank", 2026-11-13): a marker beside it would be an item of its own at the top,
+    // so the run and its marker go into one temporary unstyled element (no page CSS can match it), the same box as the run's anonymous item; unwrapped after the read
+    if(j.fx){const w=document.createElement('fit-w');w.style.cssText='all:unset';j.tn.before(w);w.append(j.tn,pb);j.w=w}else j.tn.after(pb);j.pb=pb}
   inkBatch(jobs.map(j=>[j.t,Math.floor(j.cap*4)/4]));  // as tall as the figure beside it and never taller: tile height = its cap height (to 0.25px)
   for(const j of jobs)j.t.style.removeProperty('transform');  // measure from the untransformed spot, so a re-run never stacks offsets
   for(const j of jobs){j.mid=j.pb.getBoundingClientRect().bottom-j.cap*j.zc/2}  // read after sizing, so the line has settled: the figure's real baseline (a zero-size marker on it), not one estimated from font metrics: those are rounded differently by layout
-  for(const j of jobs)j.pb.remove();
+  for(const j of jobs){j.pb.remove();if(j.w)j.w.replaceWith(j.tn)}
   for(const j of jobs){  // centre every tile on the figure's cap height (a flex row centres on the line box, which sits lower)
     const tr=j.t.getBoundingClientRect(),d=(j.mid-(tr.top+tr.bottom)/2)/j.z;if(Math.abs(d)>0.01)j.t.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important')}
 }
