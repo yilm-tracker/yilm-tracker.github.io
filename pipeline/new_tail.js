@@ -139,7 +139,8 @@ function toggle(row){const t=row.dataset.t;OPEN.has(t)?OPEN.delete(t):OPEN.add(t
 list.addEventListener('click',e=>{if(e.target.closest('.strip'))return;if(e.target.closest('.fab')){setTimeout(()=>{const n=document.querySelector('nav.tabs');n&&n.scrollIntoView({block:'start'})},0);return}const r=e.target.closest('.r');if(r)toggle(r)});
 list.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('r')){e.preventDefault();toggle(e.target)}});
 const bh=document.getElementById('bh'),bm=document.getElementById('bm');
-function set(med){bh.setAttribute('aria-pressed',!med);bm.setAttribute('aria-pressed',med);draw(med);dtab(med)}
+function set(med){bh.setAttribute('aria-pressed',!med);bm.setAttribute('aria-pressed',med);draw(med);dtab(med);
+  if(window.tileFit)tileFit();s2Fit();sbFit()}  // draw() rebuilds the rows: size their chips, then re-fit the stat lines as on load (2026-11-13; a press left Luck cut until a resize)
 bh.onclick=()=>set(false);bm.onclick=()=>set(true);
 draw(false);if(!FL())dtab(false);
 if(typeof AVR!=='undefined')document.querySelectorAll('.pav[data-avt]').forEach(e=>{const r=AVR[e.dataset.avt];if(r)e.classList.add('av','av-'+r);else e.classList.add('nl')});
