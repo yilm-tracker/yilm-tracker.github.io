@@ -496,4 +496,11 @@ if(!FL())luFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(
   inkBatch(c.map(t=>[t,H.get(t)]))}
 let q=0;function sch(){if(q)return;q=requestAnimationFrame(()=>{q=0;sosFit()})}
 if(!FL())sosFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(sosFit);addEventListener('resize',sch);document.addEventListener('change',sch);document.addEventListener('panebuilt',sch);window.sosFit=sosFit})();
+// Matchups desktop games column (2026-11-13): sticks 16px under the nav band, measured here (--tnh), and only when band + 16px + the whole column
+// fit the viewport; otherwise it scrolls with the page (.nst), so every card stays reachable. Height-only resizes come through visualViewport
+// (the page's resize dispatcher passes width changes only).
+(function(){let q=0;function mpk(){q=0;const b=document.querySelector('.tnav');if(!b)return;const h=b.getBoundingClientRect().height;
+ document.documentElement.style.setProperty('--tnh',h+'px');document.querySelectorAll('.mwx>.mpk').forEach(m=>{if(!m.offsetParent)return;m.classList.toggle('nst',h+16+m.scrollHeight>innerHeight)})}
+ const go=()=>{if(!q)q=requestAnimationFrame(mpk)};go();addEventListener('resize',go);window.visualViewport&&visualViewport.addEventListener('resize',go);
+ document.addEventListener('change',go);document.addEventListener('panebuilt',go);document.fonts&&document.fonts.ready.then(go)})();
 </script>
