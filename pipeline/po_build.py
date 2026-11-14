@@ -17,7 +17,7 @@ def norm(n):
 K=json.load(open(P+'ro_ranks.json'));K.pop('_bye',None)
 AGE=json.load(open(P+'cmp_extra.json',encoding='utf-8'))['age']
 # week lineups, projections and the Matchups row format: fut_lu.py (shared with Matchups' future weeks, 2026-11-13)
-from fut_lu import R,PROJ,ppg,proj,pool,mp,setlineup
+from fut_lu import R,PROJ,ppg,proj,pool,mp,setlineup,held
 SHORT=dict(lg.SHORT)
 SHORT0=dict(SHORT);SHORT={k:k for k in SHORT}  # full team names everywhere; SHORT0 keeps the data-file short names
 FULL=dict(lg.FULL)
@@ -73,7 +73,9 @@ def lineup(a,b,w,k='p'):
     if ba or bb:
         o.append('<div class="msh lbh"><b>Bench</b><i></i><small>active players, projected</small></div>')
         o+=[MB.lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,'') for k in range(max(len(ba),len(bb)))]
-    h=('<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+MB.optblock([p for p in sa if p],[p for p in sb if p],pa,pb,ta,tb,True,'<div class="msh lbh"><b>Bench</b><i></i><small>active players, projected</small></div>',lambda p:p[4]>0,fut=True)+'</div>')
+    xb=MB.xbands(lambda tag:tuple([mp(q,w) for q in held(x,w,tag)] for x in (a,b)))   # IR / Taxi bands (brief Q2)
+    o.append(xb)
+    h=('<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+MB.optblock([p for p in sa if p],[p for p in sb if p],pa,pb,ta,tb,True,'<div class="msh lbh"><b>Bench</b><i></i><small>active players, projected</small></div>',lambda p:p[4]>0,fut=True,xb=xb)+'</div>')
     return h.replace('for="lo-a"',f'for="{k}lo-a"').replace('for="lo-o"',f'for="{k}lo-o"').replace('for="lv-p"',f'for="{k}lv-p"').replace('for="lv-s"',f'for="{k}lv-s"').replace('for="rk-t"',f'for="{k}rk-t"').replace('for="rk-g"',f'for="{k}rk-g"')
 def form(t,n=5):return ''.join(f'<i class="fm {"w" if x[2]>x[3] else "l"}"></i>' for x in WK[t][-n:])
 def card(a,b,w,label):

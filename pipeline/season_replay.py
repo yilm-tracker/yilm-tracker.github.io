@@ -78,7 +78,8 @@ for r in sorted(ROS,key=lambda r:r['roster_id']):
 assert len({t['name'] for t in teams})==len(teams),'duplicate team names'
 pot=int(LG['settings'].get('playoff_teams') or 6)
 W_('league.json',{'season':Y,'lid':LID,'name':LG['name'],'teams':teams,'slots':LG['roster_positions'],'po_teams':pot,
-                  'po_byes':{6:2,12:4}.get(pot,0),'po_start':REG+1,'past':PAST,'scoring':LG['scoring_settings'],'dynasty':LG['settings'].get('type')==2})
+                  'po_byes':{6:2,12:4}.get(pot,0),'po_start':REG+1,'past':PAST,'scoring':LG['scoring_settings'],'dynasty':LG['settings'].get('type')==2,
+                  'reserve_slots':int(LG['settings'].get('reserve_slots') or 0),'taxi_slots':int(LG['settings'].get('taxi_slots') or 0)})   # IR / Taxi bands (brief Q2)
 sys.path.insert(0,WS)
 RN={t['rid']:t['name'] for t in teams}
 # ---------- season constants

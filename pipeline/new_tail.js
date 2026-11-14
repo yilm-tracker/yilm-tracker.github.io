@@ -492,9 +492,12 @@ function luShared(C,prop,els,base,floor){  // largest size (0.25px steps) at whi
   if(k<base)C.style.setProperty(prop,k+'px');
   while(k>floor&&els.some(luOver)){k=Math.max(floor,k-.25);C.style.setProperty(prop,k+'px')}
   return k}
-function luFit(){LUR.length=0;
-  document.querySelectorAll('.lus-a,.lus-o').forEach(C=>{if(!C.offsetParent)return;
-  const cells=[...C.querySelectorAll('.cr.lu:not(.psr) .cnm')].filter(c=>c.offsetParent&&c.querySelector('b>span'));if(!cells.length)return;
+// IR / Taxi bands (brief Q2, 2026-11-14): rows marked data-xb are fitted as their own group, so the starters and Bench keep
+// exactly the sizes they had before the bands existed; the band rows get their own shared name / game-line size (same steps,
+// floors and fallbacks), set on the rows themselves (luT: '--lnf: initial' = back to the CSS fallback, i.e. full size)
+function luT(R){return {style:{setProperty:(p,v)=>R.forEach(r=>r.style.setProperty(p,v)),removeProperty:p=>R.forEach(r=>r.style.setProperty(p,'initial')),
+  getPropertyValue:p=>{const v=R[0].style.getPropertyValue(p);return v==='initial'?'':v}}}}
+function luGrp(C,cells,lu){if(!cells.length)return;
   C.style.removeProperty('--lnf');C.style.removeProperty('--lgf');
   for(const c of cells){const s=c.querySelector('b>span'),b=c.querySelector('b'),sm=c.querySelector('small');
     if(s.dataset.full){s.textContent=s.dataset.full;delete s.dataset.full}
@@ -506,9 +509,9 @@ function luFit(){LUR.length=0;
   const nb=parseFloat(getComputedStyle(cells[0].querySelector('b')).fontSize),k=luShared(C,'--lnf',S,nb,12);
   // B. game lines: one shared size (11px floor), then short times
   const gb=parseFloat(getComputedStyle(cells[0].querySelector('small')).fontSize),gk=G.length?luShared(C,'--lgf',G,gb,11):gb;
-  for(const g of G){if(!luOver(g))continue;const r={lu:C.className,game:g.textContent.trim(),short:null};if(luShort(g))r.short=g.querySelector('.gwhen').textContent;if(luOver(g)&&luDay(g))r.short=g.querySelector('.gwhen').textContent;r.over=luOver(g);LUR.push(r)}
+  for(const g of G){if(!luOver(g))continue;const r={lu:lu,game:g.textContent.trim(),short:null};if(luShort(g))r.short=g.querySelector('.gwhen').textContent;if(luOver(g)&&luDay(g))r.short=g.querySelector('.gwhen').textContent;r.over=luOver(g);LUR.push(r)}
   // C. names that do not fit at the shared size: 11px, letter-spacing, move tags (only if the game line still fits), abbreviate
-  for(const s of S.filter(luOver)){const c=s.closest('.cnm'),sm=c.querySelector('small'),g=c.querySelector('.gp'),r={lu:C.className,name:s.textContent.trim(),size:11,ls:0,moved:[],abbr:null,needsForm:false};
+  for(const s of S.filter(luOver)){const c=s.closest('.cnm'),sm=c.querySelector('small'),g=c.querySelector('.gp'),r={lu:lu,name:s.textContent.trim(),size:11,ls:0,moved:[],abbr:null,needsForm:false};
     s.style.fontSize='11px';
     const ls=()=>{s.style.removeProperty('letter-spacing');r.ls=0;if(!luOver(s))return;const d=(s.clientWidth-s.scrollWidth)/s.textContent.length;s.style.letterSpacing=Math.max(-0.22,Math.floor(d*100)/100)+'px';r.ls=parseFloat(s.style.letterSpacing)};
     ls();
@@ -518,8 +521,13 @@ function luFit(){LUR.length=0;
       else r.moved.push(lab);ls()}
     if(luOver(s)){const full=s.textContent.trim(),t=LUA[full];if(t){s.dataset.full=full;s.textContent=t;r.abbr=t;ls()}else r.needsForm=true}
     r.over=luOver(s);LUR.push(r)}
-  LUR.push({lu:C.className,nameSize:parseFloat(C.style.getPropertyValue('--lnf'))||nb,base:nb,gameSize:parseFloat(C.style.getPropertyValue('--lgf'))||gb,gbase:gb,rows:cells.length,
-    gameOver:G.filter(luOver).map(g=>g.textContent.trim())})})
+  LUR.push({lu:lu,nameSize:parseFloat(C.style.getPropertyValue('--lnf'))||nb,base:nb,gameSize:parseFloat(C.style.getPropertyValue('--lgf'))||gb,gbase:gb,rows:cells.length,
+    gameOver:G.filter(luOver).map(g=>g.textContent.trim())})}
+function luFit(){LUR.length=0;
+  document.querySelectorAll('.lus-a,.lus-o').forEach(L=>{if(!L.offsetParent)return;
+  const cells=[...L.querySelectorAll('.cr.lu:not(.psr) .cnm')].filter(c=>c.offsetParent&&c.querySelector('b>span'));
+  luGrp(L,cells.filter(c=>!c.closest('[data-xb]')),L.className);
+  const X=[...L.querySelectorAll('.cr.lu[data-xb]')];if(X.length)luGrp(luT(X),cells.filter(c=>c.closest('[data-xb]')),L.className+' xb')})
   window.__luReport=LUR.slice()}
 window.luFit=luFit;
 if(!FL())luFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(luFit);addEventListener('resize',()=>requestAnimationFrame(luFit));document.addEventListener('change',()=>requestAnimationFrame(luFit));document.addEventListener('panebuilt',()=>requestAnimationFrame(luFit));

@@ -42,6 +42,14 @@ def pool(t,w):
         if p[7] in('IR','TX'):continue
         v,opp=proj(p[0],w);out.append(dict(pid=p[0],name=p[1],pos=p[2],nfl=p[3],pj=v,opp=opp,gp=ppg(p[0])[1],inj=INJM.get(p[0])))
     return out
+def held(t,w,tag):
+    """team t's players in IR ('IR') or taxi ('TX') slots now, with week w's projection and game; never in pool(), so never
+    in a lineup, the Optimal pool or a total (brief Q2, IR / Taxi bands under Bench)"""
+    out=[]
+    for p in R[t]:
+        if p[7]!=tag:continue
+        v,opp=proj(p[0],w);out.append(dict(pid=p[0],name=p[1],pos=p[2],nfl=p[3],pj=v,opp=opp,gp=ppg(p[0])[1],inj=INJM.get(p[0])))
+    return out
 def bye(nfl,w):
     """the NFL team has no game in week w (only when that week's games are known)"""
     return bool(nfl) and str(w) in KICK and nfl not in KICK[str(w)]

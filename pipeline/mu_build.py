@@ -328,7 +328,33 @@ def ptsrow(sa,sb,big=True,ra=None,rb=None):
             f'<em>Points <i class=pj>(projected)</i></em><span class="{"up" if ub else ""}"{db}><small>({pb:.1f})</small> <b class="lt-v">{fb}</b></span></div>')
 BH_CUR='<div class="msh lbh"><b>Bench</b><i></i><small>active players with a game</small></div>'
 BH_HIST='<div class="msh lbh"><b>Bench</b><i></i><small>points left on the bench</small></div>'
-def optblock(sa,sb,pool_a,pool_b,ta,tb,proj=False,bhead='',bkeep=lambda p:True,bsl='',fut=False):
+# IR / Taxi bands under Bench (brief Q2, 2026-11-14 mock): the Bench band component and lineup rows, one band per slot type
+# the league has, only when either team has a player in it. Never in Bench, the Optimal pool, a total, .llv or Needs over proj
+# (they sit outside .lpv / .lsv, so live.js proj() never reads them; apply() may still patch their score cell).
+XSL={'IR':int(lg.L.get('reserve_slots') or 0),'TX':int(lg.L.get('taxi_slots') or 0)}   # Sleeper league settings, via league.json
+XB=(('IR','Injured reserve','not eligible to start'),('TX','Taxi squad','not eligible to start'))
+try:_SCH={(x[0],t):(o,h) for x in json.load(open(P+'pull8.json'))['S8'] for t,o,h in ((x[1],x[2],'@'),(x[2],x[1],'vs'))}
+except Exception:_SCH={}
+def _xg(p):
+    """band row with no Sleeper projection (most IR players): the projection carries the opponent, so the row read BYE / TBD
+    while his team plays; take the game from the NFL schedule (pull8.json S8, weeks it covers)"""
+    if (p[6] and p[6]!='TBD') or (_pw(p),p[3]) not in _SCH:return p
+    o,h=_SCH[(_pw(p),p[3])];p=list(p);p[6]=o
+    if len(p)>9:p[9]=h
+    return p
+def _xr(r):  # a band row: data-xb marks it for luFit's own band group (starters and Bench keep their sizes)
+    i=r.index('">');return r[:i]+'" data-xb>'+r[i+2:]
+def xbands(rows):
+    """rows(tag) -> (team a's rows, team b's rows) in the lineup row format; '' when the league has neither slot type or
+    nobody in it. Order as Bench (points / projection, highest first), then position, then name."""
+    o=''
+    for tag,lab,note in XB:
+        if not XSL.get(tag):continue
+        ra,rb=(sorted(map(_xg,L),key=lambda p:(-lval(p)[0],_PO.get(p[1],9),p[2])) for L in rows(tag))
+        if not(ra or rb):continue
+        o+=f'<div class="msh lbh"><b>{lab}</b><i></i><small>{note}</small></div>'+''.join(_xr(lrow(ra[k] if k<len(ra) else None,rb[k] if k<len(rb) else None,'')) for k in range(max(len(ra),len(rb))))
+    return o
+def optblock(sa,sb,pool_a,pool_b,ta,tb,proj=False,bhead='',bkeep=lambda p:True,bsl='',fut=False,xb=''):
     oa,ob=optimal(pool_a),optimal(pool_b)
     sid_a={p[0] for p in sa};sid_b={p[0] for p in sb}
     va=sum(lval(p)[0] for p in oa if p);vb=sum(lval(p)[0] for p in ob if p)
@@ -352,6 +378,7 @@ def optblock(sa,sb,pool_a,pool_b,ta,tb,proj=False,bhead='',bkeep=lambda p:True,b
     if ba or bb:
         o.append(bhead)
         o+=[lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,bsl) for k in range(max(len(ba),len(bb)))]
+    o.append(xb)
     return '<div class="lus-o">'+''.join(o)+'</div>'
 def lineups(a,b,w=None):
     """w: a future week (2026-11-13): the set lineup re-projected for week w (_fx), the Playoffs builder's note line, no
@@ -364,15 +391,18 @@ def lineups(a,b,w=None):
     hdr=f'<div class="msh lsh">Lineups</div>{CTL([(VSW,'Order','Lineup',LSW),(LDW,'Stats','Rank',RKW),(LCW,'Colors','','')])}<div class="lnote">{note}</div>'
     o=[ptsrow(nn(A['st']),nn(B['st']),True,*((RID[a],RID[b]) if w is None else (None,None)))]
     o+=['<div class="lpv">']+[lgs(lrow(pa,pb,sl if sl!='FLEX' else 'FLX'),i) for i,(pa,pb,sl) in enumerate(zip(A['st'],B['st'],SLOTS))]+['</div>',sview(nn(A['st']),nn(B['st']),fut=w is not None)]
-    keep=lambda p:_TAG.get(p[0],'')=='' and p[4]>0 or (p[3] in DONEG and p[5]>0)
+    keep=lambda p:_TAG.get(p[0],'')=='' and (p[4]>0 or (p[3] in DONEG and p[5]>0))   # IR / taxi never on Bench (brief Q2; a finished IR / taxi player with points used to be)
     bn=lambda X:sorted([p for p in X['bn'] if keep(p)],key=lambda p:-lval(p)[0])
     ba,bb=bn(A),bn(B)
     if ba or bb:
         o.append(BH_CUR)
         for k in range(max(len(ba),len(bb))):
             o.append(lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,'BN'))
+    xb=xbands((lambda tag:tuple([p for p in X['bn'] if _TAG.get(p[0],'')==tag] for X in (A,B))) if w is None else
+              (lambda tag:tuple([_FL.mp(q,w) for q in _FL.held(t,w,tag)] for t in (a,b))))
+    o.append(xb)
     pool=lambda X:nn(X['st'])+[p for p in X['bn'] if _TAG.get(p[0],'') not in('IR','TX') and (p[4]>0 or p[5]!=0)]
-    return ('<div class="lus">' if w is None else f'<div class="lus" data-fw="{w}">')+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+optblock(nn(A['st']),nn(B['st']),pool(A),pool(B),ta,tb,True,BH_CUR,keep,'BN',w is not None)+'</div>'
+    return ('<div class="lus">' if w is None else f'<div class="lus" data-fw="{w}">')+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+optblock(nn(A['st']),nn(B['st']),pool(A),pool(B),ta,tb,True,BH_CUR,keep,'BN',w is not None,xb)+'</div>'
 def panel(i,a,b,w=None):
     m,k=(f'mup-{i}',f'mt{i}') if w is None else (f'fwp{w}-{i}',f'mt{w}-{i}')
     return (f'<div class="mup {m}">{lineups(a,b,w)}{card(a,b,w)}'

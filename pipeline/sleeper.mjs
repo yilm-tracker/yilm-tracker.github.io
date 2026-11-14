@@ -93,6 +93,8 @@ export async function pullWeekly(get, D) {
   const tr = t => ({ ts: t.status_updated, rids: t.roster_ids, adds: t.adds, picks: t.draft_picks, faab: t.waiver_budget, st: t.status });
   const pull8a = {
     state, ss, pos: lg.roster_positions,
+    // IR / taxi slot counts (2026-11-14, brief Q2: Matchups / Playoffs IR and Taxi bands); null when Sleeper omits them
+    reserve_slots: (lg.settings || {}).reserve_slots ?? null, taxi_slots: (lg.settings || {}).taxi_slots ?? null,
     ro: ro.map(r => ({ rid: r.roster_id, own: r.owner_id, n: (r.players || []).length, res: r.reserve, taxi: r.taxi })),
     us: us.map(u => [u.user_id, u.display_name, (u.metadata || {}).team_name]),
     m8: mN.map(x => [x.roster_id, x.matchup_id, (x.starters || []).filter(p => p && p !== '0')]),
