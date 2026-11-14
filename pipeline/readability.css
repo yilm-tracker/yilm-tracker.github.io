@@ -1358,3 +1358,9 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
    own font (Barlow 600 14px), so its line box is the same strut a "+x.x" or "–" sits on: every need row is the filled
    height whether the build or live.js leaves it empty or fills it. No new element, no token. */
 .sltw>span:empty::before{content:"\00a0"}
+
+/* 2026-11-14 760-1099PX PAGE COLUMN, option A (brief 4a item 1, mock): from 760px The Wire, Team Hub Trends, Drafts and Compare
+   switch to their wide forms, but the column stayed at 560px (528px of content) up to 1099px, so those forms overlapped and
+   overflowed (an iPhone in landscape lays out at 1,028 CSS px). In this band the column is capped at 712px (680px of content):
+   the narrowest column at which The Wire (every filter) and Team Hub Trends are clean, measured every 10px from 760 to 1099px. */
+@media (min-width:760px) and (max-width:1099px){.wrap{max-width:712px}}
