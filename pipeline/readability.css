@@ -1292,10 +1292,10 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 .lbr .ch,.tqdr,.mus .ch,.pp.sm,.pr .ch,.dpc .ch{font-size:11px!important}
 .lbr .ch .ct,.tqdr .ct,.mus .ch .ct,.pp.sm .ct,.pr .ch .ct,.dpc .ch .ct{font-size:inherit!important}
 .pr .pch{width:20px}.pr .pch .pp{flex:none}  /* header tile group = the rows' 20px tile group (pill centred, overhanging), so its GP sits exactly where the numbers do */
-/* PF / PA / Tot Eff lines never scale: when a line does not fit, the per-week part wraps under the figure (.sbw, sbFit) */
-.r>.sb.sbw .stx{flex-wrap:wrap}
-.r>.sb.sbw .stx .pw{flex-basis:100%;margin-left:0!important}
-.r>.sb.sbw .pws{display:none}
+/* PF / PA / Tot Eff lines never scale (2026-11-14): each line decides on its own (sbFit); a line that does not fit its full text
+   column shows no per-week part (.sbx), its title / aria-label keep it. The old wrap (.sbw) was clipped by the 21px line box. */
+.r>.sb.sbx .stx .pw{display:none}
+.r>.sb.s-sk.sbt .stx{flex-wrap:wrap}.r>.sb.s-sk.sbt .stx .pw{flex-basis:100%;margin-left:0!important}  /* = the old .sbw rules on Dropped pts (sbFit's .sbt note) */
 
 /* 2026-11-06 text floor follow-ups: desktop table figures 15px from 1120px (tiles 10.97px, digits 10.25px as at >=1420px;
    1100-1119px keeps 13.5px: BBP's one-line team names need 196px and the table would pass the content edge by up to 17.7px).

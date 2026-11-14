@@ -196,18 +196,35 @@ function sbLines(bd){return [...bd.querySelectorAll('.sb .stx:not(.spl)')].filte
 const sbEls=bd=>bd.querySelectorAll('.r .sb,.r .st'),sbBlk=bd=>bd.querySelectorAll('.r>.sb');
 // A line overflows when its content (a Range over it) ends past its own box (2026-11-14). Not scrollWidth > clientWidth: in WebKit
 // (Safari) a zoomed row (desktop, zoom 1.1) with a fractional column width (378.98px) reports scrollWidth one pixel over clientWidth
-// however short the text, so every line took the .sbw wrap state and its per-week part dropped out of the 16px line box.
-const sbRg=document.createRange(),sbOv=x=>{sbRg.selectNodeContents(x);return sbRg.getBoundingClientRect().right>x.getBoundingClientRect().right+.5};
+// however short the text, so every line took the (then) wrap state and its per-week part dropped out of the 16px line box.
+// A line also counts as too long when the flex row has squeezed a rank chip so far that its digits come within 1.75px of the chip's
+// edge (the tile rule's smallest gap; a chip's own padding if that is smaller) or pass it (2026-11-14: at 360P PA / Tot Eff fitted
+// only by squeezing chips to 10.48px, digits up to 4.08px outside). WebKit's wider chips (advance-box padding) may give up width above that.
+const sbRg=document.createRange(),sbOvR=x=>{sbRg.selectNodeContents(x);return sbRg.getBoundingClientRect().right>x.getBoundingClientRect().right+.5},
+  sbOv=x=>{if(sbOvR(x))return true;for(const c of x.querySelectorAll(':scope>.ch')){const t=c.firstElementChild;if(!t)continue;sbRg.selectNodeContents(t);const a=sbRg.getBoundingClientRect(),b=c.getBoundingClientRect(),cs=getComputedStyle(c);
+    if(b.right-a.right<Math.min(1.75,parseFloat(cs.paddingRight))-.05||a.left-b.left<Math.min(1.75,parseFloat(cs.paddingLeft))-.05)return true}return false};
+// .sbt on the Dropped pts block while any line runs past its box: keeps the spacing that block had under the old wrap state ("/wk"
+// flush to its label), so the Dropped pts / Season sim pair stays on one row (WebKit, 440 CSS px Nerd: +17.7px per row without it)
+const sbT=bd=>bd.querySelectorAll('.r>.sb.s-sk');
+// .sbx: the line shows no per-week part (display:none); the full line is kept in the line's title and aria-label (role group)
+function sbX(e,on){const x=e.querySelector(':scope>.stx');if(!x)return;e.classList.toggle('sbx',!!on);
+  if(on){const pw=x.querySelector('.pw'),f=x.querySelector('.pf,.v'),c=x.querySelector('.ch');if(!pw)return;const t=(x.querySelector('.lb').textContent+' '+(f?f.textContent:'')+(c?', rank '+c.textContent:'')+', '+pw.textContent.replace(/^\s*·\s*/,'')).replace(/\s+/g,' ').trim();
+    x.title=t;x.setAttribute('aria-label',t);x.setAttribute('role','group')}else if(x.hasAttribute('title')){x.removeAttribute('title');x.removeAttribute('aria-label');x.removeAttribute('role')}}
 function sbSet(bd,k){bd.__sbs=k;const v=typeof k==='number'?k.toFixed(2):k;sbEls(bd).forEach(e=>e.style.setProperty('--sbs',v))}
 function sbFit(){document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;const B=sbBlk(bd);B.forEach(e=>e.classList.add('sbm'));sbSet(bd,'1');const L=sbLines(bd);let k=1;
-  B.forEach(e=>{e.style.removeProperty('--stw2');e.classList.remove('sbw')});const ov=()=>L.some(sbOv);
-  if(ov())B.forEach(e=>e.classList.add('sbw'))  // 2026-11-05 text floor: stat lines are never scaled below 1; the per-week part wraps under the figure instead
-  // then the text column shrinks to the longest line, so the dots sit just after the text (all lines aligned)
-  const mw=Math.max(0,...L.filter(x=>x.closest('.sb')).map(x=>{const rg=document.createRange();rg.selectNodeContents(x);const a=rg.getBoundingClientRect(),b=x.getBoundingClientRect();return a.right-b.left}));
+  B.forEach(e=>{e.style.removeProperty('--stw2');sbX(e,0)});sbT(bd).forEach(e=>e.classList.remove('sbt'));
+  // 2026-11-05 text floor: stat lines are never scaled below 1. 2026-11-14: each line decides on its own: a line that does not fit the
+  // full text column drops its per-week part (.sbx; the value stays in the line's title / aria-label), every other line keeps its whole text
+  const tight=L.some(sbOvR),so=L.filter(sbOv);
+  // then the text column shrinks to the longest line (read with every per-week part shown), so the dots sit just after the text (all lines
+  // aligned); while any line runs past its box the column keeps its full width (each line's own box): the dots never move between lines or modes
+  const mw=Math.max(0,...L.filter(x=>x.closest('.sb')).map(x=>{const b=x.getBoundingClientRect();if(tight)return b.width;sbRg.selectNodeContents(x);return sbRg.getBoundingClientRect().right-b.left}));
+  so.forEach(x=>sbX(x.closest('.sb'),1));if(tight)sbT(bd).forEach(e=>e.classList.add('sbt'));
   if(mw)B.forEach(e=>e.style.setProperty('--stw2',Math.ceil(mw+2)+'px'));B.forEach(e=>e.classList.remove('sbm'))});if(typeof tileFit==='function'){tileFit();
   // the rank tiles resize with the text: if a line now overflows, step the scale down again (a few passes at most)
   for(let n=0;n<4;n++){let again=false;document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetParent)return;const L=sbLines(bd);
-    if(L.some(sbOv)){const B=sbBlk(bd);if(![...B].every(e=>e.classList.contains('sbw'))){B.forEach(e=>e.classList.add('sbw'));again=true}}});if(!again)break;tileFit()}}}
+    if(L.some(sbOvR))sbT(bd).forEach(e=>{if(!e.classList.contains('sbt')){e.classList.add('sbt');again=true}});
+    L.filter(sbOv).forEach(x=>{const b=x.closest('.sb');if(!b.classList.contains('sbx')){sbX(b,1);again=true}})});if(!again)break;tileFit()}}}
 // Opp rk · All-play · Luck line: full size always; if it does not fit, Luck wraps to a second line (all rows together)
 function s2Fit(){document.querySelectorAll('.board').forEach(bd=>{const A=bd.querySelectorAll('.r>.st.s2'),S=v=>A.forEach(e=>e.style.setProperty('--s2s',v));const L=[...A].filter(x=>x.offsetParent);S('1');L.forEach(x=>x.classList.remove('wrp'));let k=1;
   const over=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);  // 2026-11-05 text floor: never scaled below 1
