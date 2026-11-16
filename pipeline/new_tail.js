@@ -140,7 +140,7 @@ list.addEventListener('click',e=>{if(e.target.closest('.strip'))return;if(e.targ
 list.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('r')){e.preventDefault();toggle(e.target)}});
 const bh=document.getElementById('bh'),bm=document.getElementById('bm');
 function set(med){bh.setAttribute('aria-pressed',!med);bm.setAttribute('aria-pressed',med);draw(med);dtab(med);
-  if(window.tileFit)tileFit();s2Fit();sbFit()}  // draw() rebuilds the rows: size their chips, then re-fit the stat lines as on load (2026-11-13; a press left Luck cut until a resize)
+  if(window.tileFit)tileFit();tnFit();s2Fit();sbFit();if(window.rrFit)rrFit();if(window.nrdFit)nrdFit();if(typeof rniSnap==='function')rniSnap()}  // names, Could have, streak tiles, desktop Nerd stack and the rank art's pixel snap too, in load order (2026-11-16, J1: rrFit ran 2 frames later on unfitted names, then tnFit moved the stat lines under it; a click fires no change, so rniSnap never ran)  // draw() rebuilds the rows: size their chips, then re-fit the stat lines as on load (2026-11-13; a press left Luck cut until a resize)
 bh.onclick=()=>set(false);bm.onclick=()=>set(true);
 draw(false);if(!FL())dtab(false);
 if(typeof AVR!=='undefined')document.querySelectorAll('.pav[data-avt]').forEach(e=>{const r=AVR[e.dataset.avt];if(r)e.classList.add('av','av-'+r);else e.classList.add('nl')});
@@ -337,17 +337,28 @@ if(typeof FAABL!=='undefined'&&window.fetch)fetch('https://api.sleeper.app/v1/le
 (function(){const C=document.createElement('canvas').getContext('2d');
 function capOf(el,s){const cs=getComputedStyle(el);C.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;return C.measureText(s||'0123456789').actualBoundingBoxAscent*(el.currentCSSZoom||1)}
 function txt(el,last){const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);let t=null,x;while(x=w.nextNode())if(x.textContent.trim()){t=x;if(!last)break}return t}
-function base(tn){const p=document.createElement('i');p.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';tn.after(p);const b=p.getBoundingClientRect().bottom;p.remove();return b}
 function rrFit(){
+  // read all, then write (fitter memory rules, 2026-11-16): one pass of writes to reset, the streak tiles in one inkBatch, every
+  // baseline marker inserted at once and read in one layout, then every margin written. Per row the result is as before.
   const rows=[...document.querySelectorAll('.board .r')].filter(r=>r.offsetParent&&r.querySelector('.side .rr b'));
-  rows.forEach(r=>{const sb=r.querySelector('.side .subw');if(sb)sb.style.removeProperty('margin-top')});
-  rows.forEach(r=>{const k=r.querySelector('.side .l5r .sk'),b=r.querySelector('.side .rr b');if(!k||!window.inkTile)return;k.style.removeProperty('transform');
-    const cs=getComputedStyle(b);C.font=cs.fontStyle+' '+cs.fontWeight+(matchMedia('(max-width:380px)').matches?' 22px ':' 26px ')+cs.fontFamily;window.inkTile(k,Math.floor(C.measureText('0123456789').actualBoundingBoxAscent*4)/4)});
-  rows.forEach(r=>{const sb=r.querySelector('.side .subw');if(!sb||!sb.offsetParent)return;const lt=txt(sb,0);if(!lt)return;const z=sb.currentCSSZoom||1;
-    const ab=r.querySelector('.side .l5r')||r.querySelector('.side .l5d'),floor=ab.getBoundingClientRect().bottom+4*z,me=base(lt)-capOf(lt.parentElement,'HOPC');
-    const lines=[...r.querySelectorAll(':scope>.st, :scope>.sb')].filter(e=>e.offsetParent&&!r.querySelector('.side').contains(e));let tgt=null;
-    for(const L of lines){for(const el of L.querySelectorAll('.lb,em,b,span')){if(!el.offsetParent)continue;const t=txt(el,0);if(!t)continue;const top=base(t)-capOf(t.parentElement,'HOPC');if(top>=floor-0.5&&(tgt===null||top<tgt))tgt=top;break}}
-    if(tgt===null)return;const m=parseFloat(getComputedStyle(sb).marginTop)||0;sb.style.setProperty('margin-top',(m+(tgt-me)/z).toFixed(2)+'px','important')});
+  rows.forEach(r=>{const sb=r.querySelector('.side .subw');if(sb)sb.style.removeProperty('margin-top');const k=r.querySelector('.side .l5r .sk');if(k)k.style.removeProperty('transform')});
+  if(window.inkBatch){const sz=matchMedia('(max-width:380px)').matches?' 22px ':' 26px ',L=[];
+    rows.forEach(r=>{const k=r.querySelector('.side .l5r .sk'),b=r.querySelector('.side .rr b');if(!k)return;const cs=getComputedStyle(b);C.font=cs.fontStyle+' '+cs.fontWeight+sz+cs.fontFamily;L.push([k,Math.floor(C.measureText('0123456789').actualBoundingBoxAscent*4)/4])});
+    window.inkBatch(L)}
+  // reads: per row the Could have text, the floor (4px under the streak row) and the first text of each stat line
+  const J=[];rows.forEach(r=>{const sb=r.querySelector('.side .subw');if(!sb||!sb.offsetParent)return;const lt=txt(sb,0);if(!lt)return;const z=sb.currentCSSZoom||1;
+    const ab=r.querySelector('.side .l5r')||r.querySelector('.side .l5d'),side=r.querySelector('.side');
+    const lines=[...r.querySelectorAll(':scope>.st, :scope>.sb')].filter(e=>e.offsetParent&&!side.contains(e)),c=[];
+    for(const L of lines){for(const el of L.querySelectorAll('.lb,em,b,span')){if(!el.offsetParent)continue;const t=txt(el,0);if(!t)continue;c.push([t,capOf(t.parentElement,'HOPC')]);break}}
+    J.push({sb,z,lt,lc:capOf(lt.parentElement,'HOPC'),floor:ab.getBoundingClientRect().bottom+4*z,m:parseFloat(getComputedStyle(sb).marginTop)||0,c})});
+  // one write (markers), one layout (all baselines), one write (markers out)
+  const mk=tn=>{const p=document.createElement('i');p.style.cssText='display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline';tn.after(p);return p};
+  J.forEach(j=>{j.lm=mk(j.lt);j.c.forEach(x=>x.push(mk(x[0])))});
+  J.forEach(j=>{j.me=j.lm.getBoundingClientRect().bottom-j.lc;j.tops=j.c.map(x=>x[2].getBoundingClientRect().bottom-x[1])});
+  J.forEach(j=>{j.lm.remove();j.c.forEach(x=>x[2].remove())});
+  // writes: Could have / Breakdown cap top level with the first stat line that starts at or below the floor
+  J.forEach(j=>{let tgt=null;for(const top of j.tops)if(top>=j.floor-0.5&&(tgt===null||top<tgt))tgt=top;if(tgt===null)return;
+    j.sb.style.setProperty('margin-top',(j.m+(tgt-j.me)/j.z).toFixed(2)+'px','important')});
   if(typeof tnFit==='function')tnFit()}
 window.rrFit=rrFit;const go=()=>requestAnimationFrame(()=>requestAnimationFrame(rrFit));go();addEventListener('resize',go);document.addEventListener('change',go);document.addEventListener('click',go);
 if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',go)}})();
