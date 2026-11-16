@@ -140,7 +140,7 @@ list.addEventListener('click',e=>{if(e.target.closest('.strip'))return;if(e.targ
 list.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('r')){e.preventDefault();toggle(e.target)}});
 const bh=document.getElementById('bh'),bm=document.getElementById('bm');
 function set(med){bh.setAttribute('aria-pressed',!med);bm.setAttribute('aria-pressed',med);draw(med);dtab(med);
-  if(window.tileFit)tileFit();tnFit();s2Fit();sbFit();if(window.rrFit)rrFit();if(window.nrdFit)nrdFit();if(typeof rniSnap==='function')rniSnap()}  // names, Could have, streak tiles, desktop Nerd stack and the rank art's pixel snap too, in load order (2026-11-16, J1: rrFit ran 2 frames later on unfitted names, then tnFit moved the stat lines under it; a click fires no change, so rniSnap never ran)  // draw() rebuilds the rows: size their chips, then re-fit the stat lines as on load (2026-11-13; a press left Luck cut until a resize)
+  if(window.tileFit)tileFit();tnFit();s2Fit();sbFit();if(window.rrFit)rrFit();if(window.nrdFit)nrdFit();if(typeof rniSnap==='function')rniSnap();if(window.dsFit)dsFit()}  // names, Could have, streak tiles, desktop Nerd stack and the rank art's pixel snap too, in load order (2026-11-16, J1: rrFit ran 2 frames later on unfitted names, then tnFit moved the stat lines under it; a click fires no change, so rniSnap never ran)  // draw() rebuilds the rows: size their chips, then re-fit the stat lines as on load (2026-11-13; a press left Luck cut until a resize)
 bh.onclick=()=>set(false);bm.onclick=()=>set(true);
 draw(false);if(!FL())dtab(false);
 if(typeof AVR!=='undefined')document.querySelectorAll('.pav[data-avt]').forEach(e=>{const r=AVR[e.dataset.avt];if(r)e.classList.add('av','av-'+r);else e.classList.add('nl')});
@@ -157,16 +157,16 @@ function mvAl(){
   // top of the name's capitals level with the top of the team logo
   n.style.marginTop='0px';const lg=n.closest('.r').querySelector('.rav');if(lg&&lg.getBoundingClientRect().height>0){
     const c=getComputedStyle(t);_cv.font=`${c.fontWeight} ${c.fontSize} ${c.fontFamily}`;const m=_cv.measureText('H'),a=m.fontBoundingBoxAscent,d=m.fontBoundingBoxDescent,lh=parseFloat(c.lineHeight)||a+d;
-    const off=(lh-a-d)/2+a-m.actualBoundingBoxAscent;n.style.marginTop=(lg.getBoundingClientRect().top-(t.getBoundingClientRect().top+off))+'px'}})}
+    const off=(lh-a-d)/2+a-m.actualBoundingBoxAscent;n.style.marginTop=(dsK(n)===1?(lg.getBoundingClientRect().top-(t.getBoundingClientRect().top+off)):((lg.getBoundingClientRect().top-t.getBoundingClientRect().top)/dsK(n)-off))+'px'}})}
 function tnFit(){
   // overflow = the name's content (a Range) ends past its box (2026-11-14), not scrollWidth > clientWidth: WebKit (Safari) reports
   // scrollWidth 1px over at fractional box widths (desktop rows, zoom 1.1), which shrank six names that fit to 20-21px. Tolerance 0.05px: a name never runs past its box (Chromium 440: 0.22px over = too long)
   const tnRg=document.createRange();
   // FAAB tiles: one width (the widest balance), so the FAAB labels beside them line up down the board
-  const fb=[...document.querySelectorAll('.board .r .nm .fab b')].filter(b=>b.offsetParent);fb.forEach(b=>b.style.width='');const fw=Math.max(0,...fb.map(b=>b.getBoundingClientRect().width));fb.forEach(b=>b.style.width=fw+'px');
+  const fb=[...document.querySelectorAll('.board .r .nm .fab b')].filter(b=>b.offsetParent);fb.forEach(b=>b.style.width='');const fw=Math.max(0,...fb.map(b=>b.getBoundingClientRect().width/dsK(b)));fb.forEach(b=>b.style.width=fw+'px');
   // names end 6px short of the widest record tile (W3 4-3) on the board, the same on every row
   const R=[...document.querySelectorAll('.board .r')].map(r=>[r.querySelector(':scope>.nm'),r.querySelector('.side .rr')]).filter(([n,k])=>n&&k&&n.offsetParent);
-  R.forEach(([n])=>n.style.paddingRight='');const pr=Math.max(0,...R.map(([n,k])=>n.getBoundingClientRect().right-Math.min(...[...k.children].map(c=>c.getBoundingClientRect().left))+6));R.forEach(([n])=>n.style.paddingRight=pr+'px');
+  R.forEach(([n])=>n.style.paddingRight='');const pr=Math.max(0,...R.map(([n,k])=>(n.getBoundingClientRect().right-Math.min(...[...k.children].map(c=>c.getBoundingClientRect().left)))/dsK(n)+6));R.forEach(([n])=>n.style.paddingRight=pr+'px');
   document.querySelectorAll('.board .r .tn').forEach(e=>{if(!e.offsetParent)return;e.style.fontSize='';e.style.whiteSpace='nowrap';e.style.lineHeight='';
   const f0=parseFloat(getComputedStyle(e).fontSize),ov=()=>{tnRg.selectNodeContents(e);return tnRg.getBoundingClientRect().right>e.getBoundingClientRect().right+.05};let f=f0;while(ov()&&f>f0*.85){f-=.5;e.style.fontSize=f+'px'}
   if(ov()){e.style.whiteSpace='normal';e.style.lineHeight='1.12';f=f0;e.style.fontSize=f+'px';
@@ -223,7 +223,7 @@ function sbFit(){document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetP
   const tight=L.some(sbOvR),so=new Set([...bd.querySelectorAll('.r>.sb .stx:not(.spl)')].filter(sbOv).map(sbK).filter(Boolean));
   // then the text column shrinks to the longest line (read with every per-week part shown), so the dots sit just after the text (all lines
   // aligned); while any line runs past its box the column keeps its full width (each line's own box): the dots never move between lines or modes
-  const mw=Math.max(0,...L.filter(x=>x.closest('.sb')).map(x=>{const b=x.getBoundingClientRect();if(tight)return b.width;sbRg.selectNodeContents(x);return sbRg.getBoundingClientRect().right-b.left}));
+  const mw=Math.max(0,...L.filter(x=>x.closest('.sb')).map(x=>{const b=x.getBoundingClientRect();if(tight)return b.width/dsK(x);sbRg.selectNodeContents(x);return (sbRg.getBoundingClientRect().right-b.left)/dsK(x)}));
   so.forEach(k=>sbXT(bd,k));if(tight)sbT(bd).forEach(e=>e.classList.add('sbt'));
   if(mw)B.forEach(e=>e.style.setProperty('--stw2',Math.ceil(mw+2)+'px'));B.forEach(e=>e.classList.remove('sbm'))});if(typeof tileFit==='function'){tileFit();
   // the rank tiles resize with the text: if a line now overflows, step the scale down again (a few passes at most)
@@ -232,7 +232,7 @@ function sbFit(){document.querySelectorAll('.board').forEach(bd=>{if(!bd.offsetP
     new Set(L.filter(sbOv).map(sbK)).forEach(k=>{if(k&&sbXT(bd,k))again=true})});if(!again)break;tileFit()}}}
 // Opp rk · All-play · Luck line: full size always; if it does not fit, Luck wraps to a second line (all rows together)
 function s2Fit(){document.querySelectorAll('.board').forEach(bd=>{const A=bd.querySelectorAll('.r>.st.s2'),S=v=>A.forEach(e=>e.style.setProperty('--s2s',v));const L=[...A].filter(x=>x.offsetParent);S('1');L.forEach(x=>x.classList.remove('wrp'));let k=1;
-  const over=()=>L.some(x=>x.scrollWidth>x.clientWidth+.5);  // 2026-11-05 text floor: never scaled below 1
+  const over=()=>L.some(x=>x.classList.contains('dsc')||x.closest('.dsc')?(sbRg.selectNodeContents(x),sbRg.getBoundingClientRect().right>x.getBoundingClientRect().right+.5):x.scrollWidth>x.clientWidth+.5);  // scaled desktop rows (dsFit): content Range vs box, as sbOv (WebKit reports scrollWidth 1px over at their fractional widths and wrapped Luck at 1100); elsewhere unchanged.  // 2026-11-05 text floor: never scaled below 1
   if(over())L.forEach(x=>x.classList.add('wrp'))});if(typeof tileFit==='function')tileFit()}
 if(!FL())s2Fit();(document.fonts&&document.fonts.ready||Promise.resolve()).then(s2Fit);addEventListener('resize',()=>requestAnimationFrame(s2Fit));document.addEventListener('change',()=>requestAnimationFrame(s2Fit));document.fonts&&document.fonts.addEventListener('loadingdone',s2Fit);
 // dropdown labels (Compare team pickers etc.): shrink a long name to fit instead of an ellipsis
@@ -368,6 +368,60 @@ function nrdFit(){document.querySelectorAll('#list .r').forEach(r=>{const els=[.
   els.forEach(e=>e.style.removeProperty('margin-top'));if(!mq.matches)return;let y=0;
   els.forEach(e=>{if(!e.offsetParent)return;e.style.setProperty('margin-top',y+'px','important');y+=e.getBoundingClientRect().height/(e.currentCSSZoom||1)+(e.classList.contains('s-lu')?12:16)})})}
 window.nrdFit=nrdFit;const go=()=>requestAnimationFrame(()=>requestAnimationFrame(nrdFit));go();addEventListener('resize',go);document.addEventListener('change',go);document.addEventListener('click',go);
+if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',go)}})();
+// dsFit (2026-11-16, brief DS, V3): desktop (>=1100px) Standings rows. The left side (rank, logo / face, name block, Opp / All-play /
+// Luck, PF, PA, record column) scales by one factor s = min(fit, 1.25) and the second grid track gives up R row px, so the stat lines'
+// rightmost ink sits 16px (screen) before the record column's leftmost ink. fit = largest s with that gap and the Nerd right column no
+// narrower than at 1100px today (325.8px). G (stat ink -> record ink, row px, at R = 0) is measured here on every pass, all rows, with
+// every stat line laid out (.sbm), rounded to 0.5px so a pass at another scale lands on the same value. The right column is counter-zoomed (1/s): its size
+// does not change. Writes only per row (--dss s, --dsz 1.1s, --dsi 1/s, --dsr R; class .dsc; CSS: "2026-11-16 DESKTOP STANDINGS SCALE"
+// block at the end of readability.css); when s or R changes it re-runs the Standings fitters in set()'s order.
+// dsK(e): the scale of the row holding e (1 elsewhere). Fitters that write a screen-px read back as CSS px divide by it, so at s = 1
+// they compute exactly what they did before (the x1.1 they inherit from the row zoom is an open item, DESIGN.md §8).
+function dsK(e){const r=e&&e.closest&&e.closest('#list .r.dsc');return r&&!e.closest('.s-lu,.s-sk,.szw,.strip')&&r.__dss||1}  // the right column and the strip are counter-zoomed: 1
+(function(){const mq=matchMedia('(min-width:1100px)'),rg=document.createRange(),CAP=1.25,PAD=16,M=47.3,RCMIN=325.8,T=111+270+84+78+3*9,GAP=16;
+const rr=e=>{rg.selectNodeContents(e);return rg.getBoundingClientRect()};
+function clear(R){R.forEach(r=>{if(!r.classList.contains('dsc'))return;r.classList.remove('dsc');['--dss','--dsz','--dsi','--dsr'].forEach(p=>r.style.removeProperty(p));delete r.__dss;delete r.__dsr})}
+// dsFit iterates to a fixed point (at most 4 passes): in Chromium the content scales uniformly, so the second pass reads the same G and
+// stops; WebKit draws zoomed text a little narrower than the scale predicts (Range gap at zoom 1.1: 6px wider than its pixels), so G read
+// at one scale moves at the next (1100px: 108.5 -> 117.5 -> 120.5 -> 122 -> 122). Iterating makes the result independent of the scale
+// the pass starts from (load, Dumb / Nerd, H2H / Median, resize all land on the same s and R).
+function dsFit(){for(let i=0;i<4;i++)if(!dsPass())break}
+function dsPass(){const R=[...document.querySelectorAll('#list>.tcard>.r')];if(!mq.matches){const had=R.some(r=>r.classList.contains('dsc'));clear(R);if(had)refit();return false}
+  const V=R.filter(r=>r.offsetParent&&r.querySelector('.side .rr b'));if(!V.length)return false;
+  // reads only (with every row's stat lines laid out, .sbm as in sbFit, so the lines a mode hides count too: Dumb / Nerd and H2H /
+  // Median never change G)
+  const SB=document.querySelectorAll('#list .r>.sb');SB.forEach(e=>e.classList.add('sbm'));
+  let st=-1e9,rc=1e9;const s0=V[0].__dss||1,R0=V[0].__dsr||0,Z0=1.1*s0,W=document.querySelector('#list').clientWidth;  // row width = the board's inner width (the rows' own box moves with the zoom's rounding; WebKit's rect includes 4px more)
+  for(const r of V){const L=r.getBoundingClientRect().left;
+    for(const e of r.querySelectorAll(':scope>.st.s2,:scope>.sb.s-pf>.stx,:scope>.sb.s-pa>.stx')){if(e.offsetParent)st=Math.max(st,rr(e).right-L)}
+    for(const d of r.querySelectorAll(':scope>.sb.s-pf .seg10 i:last-child,:scope>.sb.s-pa .seg10 i:last-child'))st=Math.max(st,d.getBoundingClientRect().right-L);
+    const sd=r.querySelector('.side'),b=sd.querySelector('.rr b'),k=sd.querySelector('.l5r .sk'),l5=sd.querySelector('.l5d i');
+    rc=Math.min(rc,rr(b).left-L);if(k&&k.offsetParent)rc=Math.min(rc,k.getBoundingClientRect().left-L);if(l5&&l5.offsetParent)rc=Math.min(rc,l5.getBoundingClientRect().left-L);
+    for(const x of sd.querySelectorAll('.subw .chl,.subw .cw'))if(x.offsetParent)rc=Math.min(rc,rr(x).left-L)}
+  SB.forEach(e=>e.classList.remove('sbm'));
+  if(!(rc<1e9&&st>-1e9))return false;
+  const G=Math.round(((rc-st)/Z0+R0)*2)/2,fit=((W-PAD-M-RCMIN)-GAP)/(T-G)/1.1;
+  let s=Math.max(1,Math.min(CAP,fit));s=Math.round(s*1e4)/1e4;
+  // the right column's effective zoom (1.1s x 1/s, computed in single precision) must come out exactly as today's 1.1: otherwise its font
+  // sizes differ from 1.1's by one float step and Chromium's font cache keeps whichever size it met first (Season sim cells 0.05px off a
+  // fresh load after a resize). Step s down by 0.0001 until it does (at most a few steps).
+  const f=Math.fround,d=f(devicePixelRatio||1),ok=x=>f(f(f(d*f(1.1*x)))*f(1/x))===f(d*f(1.1))&&f(f(1.1*x)*f(1/x))===f(1.1);
+  for(let i=0;i<200&&s>1&&!ok(s);i++)s=Math.round((s-1e-4)*1e4)/1e4;
+  const Z=1.1*s;let Rr=Math.max(0,Math.round((G-GAP/Z)*100)/100);
+  window.__ds={s,R:Rr,G,fit};
+  if(V.every(r=>r.classList.contains('dsc')&&r.__dss===s&&r.__dsr===Rr)&&R.every(r=>r.classList.contains('dsc')))return false;
+  // writes (per row, no reads in between). A change from one scale to another first goes back through the unscaled layout (one forced
+  // layout, only when s changes): Chromium keeps the counter-zoomed right column's intrinsic sizes from the old scale otherwise (Season
+  // sim cells up to 0.06px off a fresh load after a resize).
+  if(V.some(r=>r.classList.contains('dsc')&&r.__dss!==s)){clear(R);void document.querySelector('#list').offsetHeight}
+  R.forEach(r=>{r.classList.add('dsc');r.style.setProperty('--dss',s);r.style.setProperty('--dsz',String(Z));r.style.setProperty('--dsi',String(1/s));r.style.setProperty('--dsr',Rr+'px');r.__dss=s;r.__dsr=Rr});
+  refit();return true}
+// the scale invalidates every Standings card fit: run them again in set()'s order (chips, names, Opp line, stat lines, streak tile + Could
+// have, Nerd stack, rank-art pixel snap)
+function refit(){if(window.tileFit)tileFit();if(typeof tnFit==='function')tnFit();if(typeof s2Fit==='function')s2Fit();if(typeof sbFit==='function')sbFit();
+  if(window.rrFit)rrFit();if(window.nrdFit)nrdFit();if(typeof rniSnap==='function')rniSnap()}
+window.dsFit=dsFit;const go=()=>requestAnimationFrame(()=>requestAnimationFrame(dsFit));go();addEventListener('resize',go);document.addEventListener('change',go);document.addEventListener('click',go);
 if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',go)}})();
 
 /* pcnFit: matrix row labels on phones (face + manager name): shrink a long manager name until it fits its label (floor 10px) */
