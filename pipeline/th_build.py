@@ -214,7 +214,7 @@ def data_view(t):
              +kpi('Record',SB._wr([hg['w'],hg['l'],hg['t']]) if hn else '–',None,'<span class="tqkn">in those games</span>')
              +kpi('Own high',f'{hg["hi"]:.2f}' if hg['hi'] is not None else '–',None,f'<span class="tqkn">Wk {", ".join(str(w) for w in hg["hw"])}</span>' if hg['hw'] else '')+'</div>')
     hrows=[[f'<span class="tqgn"><small>Wk {g["w"]}</small><i class="wl {"w" if g["won"] else "l"}">{"W" if g["won"] else "L"}</i>{e(g["opp"])}</span>',
-            f'<span class="sxv">{g["me"]:.2f}–{g["them"]:.2f}</span>',f'<span class="sxv b {"up" if g["won"] else "dn" if g["me"]<g["them"] else "z"}">{SB.sgn(D.q2(D._fx(g["me"])-D._fx(g["them"])),2)}</span>'] for g in hf]
+            f'<span class="sxv">{g["me"]:.2f}–{g["them"]:.2f}</span>',f'<span class="sxv">{SB.sgn(D.q2(D._fx(g["me"])-D._fx(g["them"])),2)}</span>'] for g in hf]
     o.append(SB.table([('Games',''),('Score','92px'),('Margin','54px')],hrows,'tqcg'+('' if hf else ' tqce')))
     if not hf:o.append('<div class="tqnone">None</div>')
     # byes (none once the regular season is over)
