@@ -381,6 +381,26 @@ def couldhave():
     CH=_g('CH')
     for t in TEAMS:assert [len(out[t]['won']),len(out[t]['lost'])]==list(CH[t]),(t,CH[t])   # one definition: the Standings card's
     return out
+def highs():
+    """season highs faced (2026-11-16): a team's season high = its highest score (2 decimals) over the completed weeks in
+    season.act; a team faced a season high in week w when its opponent scored exactly the opponent's season high that
+    week (every tied week counts). Recomputed every build: a later, bigger score moves the high."""
+    import season as SE
+    wk=sorted(w for w in SE.act if w in SE.sched and (w<=G or G>=REGW))
+    sc={t:{w:q2(_fx(SE.act[w][t])) for w in wk if t in SE.act[w]} for t in TEAMS}
+    out={}
+    for t in TEAMS:
+        s=sc[t];hi=max(s.values()) if s else None
+        out[t]=dict(hi=hi,hw=[w for w in wk if s.get(w)==hi] if s else [],faced=[])
+    for w in wk:
+        for a,b in SE.sched[w]:
+            for x,y in ((a,b),(b,a)):
+                if y in out and w in out[y]['hw']:
+                    me,them=sc[x][w],sc[y][w]
+                    out[x]['faced'].append(dict(w=w,opp=y,them=them,me=me,won=me>them,tie=me==them))
+    for t,o in out.items():
+        f=o['faced'];o['w']=sum(g['won'] for g in f);o['t']=sum(g['tie'] for g in f);o['l']=len(f)-o['w']-o['t']
+    return out
 if __name__=='__main__':
     o,m=odds()
     for t in sorted(TEAMS,key=lambda t:-o[t]['po']):print(f"{t:24s} po {o[t]['po']:5.1f} bye {o[t]['bye']:5.1f} #1 {o[t]['top']:5.1f} W {o[t]['w']:.2f}")

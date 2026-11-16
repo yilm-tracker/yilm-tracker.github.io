@@ -207,6 +207,16 @@ def data_view(t):
         o.append(sec('Remaining schedule',f"Each opponent's points-for rank and points per week · {ordn(sr['rank'])} hardest of {N}"+(f' · phones show the next 5 of {len(sw_)} weeks' if len(sw_)>5 else '')))
         o.append(f'<div class="sxm hmx tqgrid sosm" style="--n:{len(sw_)};--n5:{min(len(sw_),5)}"><div class="sxr sxhd">{SB.soshd(sw_)}</div>'
                  f'<div class="sxr"><span class="mxn">Opp</span>{"".join(SB.soscell(u,w,i) for i,(w,u) in enumerate(zip(sw_,sr["opp"])))}<span class="hav">{sr["v1"]:.1f}</span></div></div>')
+    # season highs faced (2026-11-16): games against an opponent's season high so far
+    hg=SB.HG[t];hf=sorted(hg['faced'],key=lambda g:-g['w']);hn=len(hf)
+    o.append(sec('Season highs faced','Games against an opponent\'s highest score of the season so far'))
+    o.append('<div class="tqkg tq3">'+kpi('Faced',str(hn),None,'<span class="tqkn">season highs</span>')
+             +kpi('Record',SB._wr([hg['w'],hg['l'],hg['t']]) if hn else '–',None,'<span class="tqkn">in those games</span>')
+             +kpi('Own high',f'{hg["hi"]:.2f}' if hg['hi'] is not None else '–',None,f'<span class="tqkn">Wk {", ".join(str(w) for w in hg["hw"])}</span>' if hg['hw'] else '')+'</div>')
+    hrows=[[f'<span class="tqgn"><small>Wk {g["w"]}</small><i class="wl {"w" if g["won"] else "l"}">{"W" if g["won"] else "L"}</i>{e(g["opp"])}</span>',
+            f'<span class="sxv">{g["me"]:.2f}–{g["them"]:.2f}</span>',f'<span class="sxv b {"up" if g["won"] else "dn" if g["me"]<g["them"] else "z"}">{SB.sgn(D.q2(D._fx(g["me"])-D._fx(g["them"])),2)}</span>'] for g in hf]
+    o.append(SB.table([('Games',''),('Score','92px'),('Margin','54px')],hrows,'tqcg'+('' if hf else ' tqce')))
+    if not hf:o.append('<div class="tqnone">None</div>')
     # byes (none once the regular season is over)
     wk=list(range(D.NOW,15));B=BYS[t]
     if not wk:return ''.join(o)

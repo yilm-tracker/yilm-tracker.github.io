@@ -108,7 +108,7 @@ def m_sched():
     lmx=max([abs(T[x][0]-av[x]) for x in TEAMS]+[0.1])  # bar scale = the largest luck either way (a fixed 1.2 capped most bars at full length)
     lr=[[nmb(a,dvb(T[a][0]-av[a],lmx)),f'<span class="sxv">{T[a][0]}</span>',f'<span class="sxv">{av[a]:.1f}</span>',f'<span class="sxv b {"up" if T[a][0]-av[a]>=0.5 else "dn" if T[a][0]-av[a]<=-0.5 else ""}">{sgn(T[a][0]-av[a])}</span>'] for a in sorted(TEAMS,key=lambda a:-(T[a][0]-av[a]))]
     return (head('Schedule swap',f'Wins through Week {G} with each team\'s schedule')+mat+
-            head('Schedule luck',f'Actual wins vs average across all {len(TEAMS)} schedules')+table([('Team',''),('Wins','42px'),('Avg','42px'),('Luck','46px')],lr)+sos_block())
+            head('Schedule luck',f'Actual wins vs average across all {len(TEAMS)} schedules')+table([('Team',''),('Wins','42px'),('Avg','42px'),('Luck','46px')],lr)+highs_block()+sos_block())
 EW=D.everyweek()
 def _rec(r):return f'{r[0]}-{r[1]}'+(f'-{r[2]}' if r[2] else '')
 def m_everyweek():
@@ -478,6 +478,24 @@ def perfect_block():
           for t in sorted(TEAMS,key=lambda t:(-PFX[t]['o'][0],PFX[t]['o'][1],-PFX[t]['opt']))]
     return (head('Perfect-lineup record','Record if every team had started its best lineup every week · Eff % = points scored as a share of the best lineup')
             +table([('Team',''),('Actual','40px'),('Perfect','44px'),('Diff','30px'),('Eff %','38px')],rows,'nsx'))
+# ---------- 2026-11-16 season highs faced (Stats › Schedules + Team Hub; identical in both repos)
+HG=D.highs()
+def highs_block():
+    order=sorted(TEAMS,key=lambda t:(-len(HG[t]['faced']),HG[t]['w'],D.seed(t)))
+    rows=[]
+    for t in order:
+        h=HG[t];n=len(h['faced'])
+        rows.append([nmb(t,''),f'<span class="sxv b{"" if n else " z"}">{n}</span>',
+                     f'<span class="sxv b">{_wr([h["w"],h["l"],h["t"]])}</span>' if n else '<span class="sxv z">–</span>',
+                     f'<span class="sxv">{h["hi"]:.2f}</span>' if h['hi'] is not None else '<span class="sxv z">–</span>'])
+    gs,cnt=_cap([dict(g,team=t) for t in TEAMS for g in HG[t]['faced']]);gs.sort(key=lambda g:(-g['w'],-g['them']))
+    def row(g):
+        a,b=(g['team'],g['opp']) if g['me']>=g['them'] else (g['opp'],g['team']);sa,sb=(g['me'],g['them']) if a==g['team'] else (g['them'],g['me'])
+        return gmrow(g['w'],a,sa,b,sb,f'{g["them"]:.2f}')
+    return (head('Season highs faced','Games against an opponent\'s highest score of the season so far · W-L = record in those games · High = the team\'s own season high')
+            +table([('Team',''),('Faced','38px'),('W-L','36px'),('High','46px')],rows,'nsh')
+            +head(f'Season-high games · {cnt}','Opponent at its season high · winner on top · the high on the right · newest first')
+            +(''.join(row(g) for g in gs) or '<div class="tqnone">None yet</div>'))
 NSCSS=('.sxm.sosm .sxr>span.sox{display:grid;grid-template-columns:auto auto;justify-content:center;align-items:center;column-gap:3px;row-gap:5px;height:auto;background:none;border-radius:0}'
        '.sosm .sox .pav{display:block;flex:none;width:22px;height:22px;border-radius:50%;background-color:var(--deck-2);background-position:center;background-size:cover;background-repeat:no-repeat}'
        '.sosm .sox .ch{margin:0;font-family:var(--display);font-weight:700;font-style:normal}'
