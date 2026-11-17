@@ -217,6 +217,17 @@ def data_view(t):
             f'<span class="sxv">{g["me"]:.2f}–{g["them"]:.2f}</span>',f'<span class="sxv">{SB.sgn(D.q2(D._fx(g["me"])-D._fx(g["them"])),2)}</span>'] for g in hf]
     o.append(SB.table([('Games',''),('Score','92px'),('Margin','54px')],hrows,'tqcg'+('' if hf else ' tqce')))
     if not hf:o.append('<div class="tqnone">None</div>')
+    # median splits (2026-11-16): weeks above / below the league median, wins scored below it, losses scored above it
+    ms=SB.MS[t];mg=sorted([(g,'w') for g in ms['wb']]+[(g,'l') for g in ms['la']],key=lambda x:-x[0]['w'])
+    o.append(sec('Median splits','Weeks above / below the league median; wins scored below it, losses scored above it, and opponents who scored above it'))
+    o.append('<div class="tqkg">'+kpi('vs median',SB._wr([ms['ab'],ms['be'],ms['eq']]),None,'<span class="tqkn">weeks above–below</span>')
+             +kpi('Won below',str(len(ms['wb'])),None,'<span class="tqkn">wins under the median</span>')
+             +kpi('Lost above',str(len(ms['la'])),None,'<span class="tqkn">losses over the median</span>')
+             +kpi('Opp above',str(ms['oa']),None,f'<span class="tqkn">{SB._wr([ms["oaw"],ms["oal"],ms["oat"]])} vs them</span>' if ms['oa'] else '<span class="tqkn">none yet</span>')+'</div>')
+    mrows=[[f'<span class="tqgn"><small>Wk {g["w"]}</small><i class="wl {r}">{r.upper()}</i>{e(g["opp"])}</span>',
+            f'<span class="sxv">{g["me"]:.2f}–{g["them"]:.2f}</span>',f'<span class="sxv">{SB.sgn(D.q2(D._fx(g["me"])-D._fx(g["them"])),2)}</span>'] for g,r in mg]
+    o.append(SB.table([('Games',''),('Score','92px'),('Margin','54px')],mrows,'tqcg'+('' if mg else ' tqce')))
+    if not mg:o.append('<div class="tqnone">None</div>')
     # byes (none once the regular season is over)
     wk=list(range(D.NOW,15));B=BYS[t]
     if not wk:return ''.join(o)

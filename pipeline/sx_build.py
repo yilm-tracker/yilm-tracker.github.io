@@ -108,7 +108,7 @@ def m_sched():
     lmx=max([abs(T[x][0]-av[x]) for x in TEAMS]+[0.1])  # bar scale = the largest luck either way (a fixed 1.2 capped most bars at full length)
     lr=[[nmb(a,dvb(T[a][0]-av[a],lmx)),f'<span class="sxv">{T[a][0]}</span>',f'<span class="sxv">{av[a]:.1f}</span>',f'<span class="sxv b {"up" if T[a][0]-av[a]>=0.5 else "dn" if T[a][0]-av[a]<=-0.5 else ""}">{sgn(T[a][0]-av[a])}</span>'] for a in sorted(TEAMS,key=lambda a:-(T[a][0]-av[a]))]
     return (head('Schedule swap',f'Wins through Week {G} with each team\'s schedule')+mat+
-            head('Schedule luck',f'Actual wins vs average across all {len(TEAMS)} schedules')+table([('Team',''),('Wins','42px'),('Avg','42px'),('Luck','46px')],lr)+highs_block()+sos_block())
+            head('Schedule luck',f'Actual wins vs average across all {len(TEAMS)} schedules')+table([('Team',''),('Wins','42px'),('Avg','42px'),('Luck','46px')],lr)+highs_block()+medsplit_block()+sos_block())
 EW=D.everyweek()
 def _rec(r):return f'{r[0]}-{r[1]}'+(f'-{r[2]}' if r[2] else '')
 def m_everyweek():
@@ -429,10 +429,10 @@ def sos_block():
 LCAP=25   # a league-wide game list shows every game up to this many rows; past it, the newest LCAP ("N of M shown"); Team Hub has each team's full lists
 def _cap(gs):
     m=len(gs);return sorted(gs,key=lambda g:-g['w'])[:LCAP],(str(m) if m<=LCAP else f'{LCAP} of {m} shown')
-def gmrow(w,win,ws,lose,ls,chip,best=None):   # the Margins "closest games" row: winner on top, loser under, the deciding figure at the right
+def gmrow(w,win,ws,lose,ls,chip,best=None,cls=''):   # the Margins "closest games" row: winner on top, loser under, the deciding figure at the right
     # best=(winner's, loser's best-lineup points): a second figure column beside the actual scores (Could-have games)
-    def nm(v,i):return f'<em>{v:.2f}</em>' if not best else f'<span class="gnm"><em>{v:.2f}</em><em class="gbx">{best[i]:.2f}</em></span>'
-    return (f'<div class="gml{" gm2" if best else ""}"><span class="gwk">Wk {w}</span><span class="gtm"><span><b class="gln"><i class="wl w">W</i>{e(win)}</b>{nm(ws,0)}</span>'
+    def nm(v,i):return f'<em>{v:.2f}</em>' if not best else f'<span class="gnm"><em>{v:.2f}</em><em class="gbx">{"" if best[i] is None else f"{best[i]:.2f}"}</em></span>'
+    return (f'<div class="gml{" gm2" if best else ""}{cls}"><span class="gwk">Wk {w}</span><span class="gtm"><span><b class="gln"><i class="wl w">W</i>{e(win)}</b>{nm(ws,0)}</span>'
             f'<span><span class="gln"><i class="wl l">L</i>{e(lose)}</span>{nm(ls,1)}</span></span><b class="gmv cl">{chip}</b></div>')
 def close_list():
     gs,cnt=_cap([dict(g,team=t) for t in TEAMS for g in CGM[t] if g['win']]);gs.sort(key=lambda g:(g['m'],-g['w']))
@@ -496,6 +496,27 @@ def highs_block():
             +table([('Team',''),('Faced','38px'),('W-L','36px'),('High','46px')],rows,'nsh')
             +head(f'Season-high games · {cnt}','Opponent at its season high · winner on top · the high on the right · newest first')
             +(''.join(row(g) for g in gs) or '<div class="tqnone">None yet</div>'))
+# ---------- 2026-11-16 median splits (Stats › Schedules + Team Hub; identical in both repos)
+MS=D.medsplit()
+def _msg(t,g,k):   # one listed game, winner on top; the week's median beside the split team's score only
+    if k=='wb':return gmrow(g['w'],t,g['me'],g['opp'],g['them'],f'{D.q2(D._fx(g["me"])-D._fx(g["them"])):.2f}',(g['med'],None),' gmd')
+    return gmrow(g['w'],g['opp'],g['them'],t,g['me'],f'{D.q2(D._fx(g["them"])-D._fx(g["me"])):.2f}',(None,g['med']),' gmd')
+def medsplit_block():
+    order=sorted(TEAMS,key=lambda t:(-MS[t]['ab'],MS[t]['be'],D.seed(t)))
+    def nz(v):return f'<span class="sxv b{"" if v else " z"}">{v}</span>'
+    rows=[]
+    for t in order:
+        m=MS[t]
+        rows.append([nmb(t,''),f'<span class="sxv b">{_wr([m["ab"],m["be"],m["eq"]])}</span>',nz(len(m['wb'])),nz(len(m['la'])),
+                     f'<span class="sxv b fm2 msx"><b{"" if m["oa"] else " class=z"}>{m["oa"]}</b><small class="wlb">{_wr([m["oaw"],m["oal"],m["oat"]])}</small></span>' if m['oa']
+                     else '<span class="sxv b z">0</span>'])
+    gs=[(g,t,k) for t in TEAMS for k in ('wb','la') for g in MS[t][k]]
+    m=len(gs);gs.sort(key=lambda x:(-x[0]['w'],D.seed(x[1])));gs=gs[:LCAP];cnt=str(m) if m<=LCAP else f'{LCAP} of {m} shown'
+    hd='<div class="gml gm2 gmh gmd"><span></span><span class="gtm"><span><span></span><span class="gnm"><em>Score</em><em>Median</em></span></span></span><b>Margin</b></div>'
+    return (head('Median splits','Weeks above / below the league median; wins scored below it, losses scored above it, and opponents who scored above it')
+            +table([('Team',''),('<i class="msf">vs median</i><i class="mss">vs med</i>','40px'),('<i class="msf">Won below</i><i class="mss">Won &lt;</i>','36px'),('<i class="msf">Lost above</i><i class="mss">Lost &gt;</i>','36px'),('<i class="msf">Opp above</i><i class="mss">Opp &gt;</i>','36px')],rows,'nsh nsm')
+            +head(f'Median-split games · {cnt}','Wins scored below the week\'s median and losses scored above it · winner on top · the median beside the split team\'s score · newest first')
+            +(hd+''.join(_msg(t,g,k) for g,t,k in gs) if gs else '<div class="tqnone">None yet</div>'))
 NSCSS=('.sxm.sosm .sxr>span.sox{display:grid;grid-template-columns:auto auto;justify-content:center;align-items:center;column-gap:3px;row-gap:5px;height:auto;background:none;border-radius:0}'
        '.sosm .sox .pav{display:block;flex:none;width:22px;height:22px;border-radius:50%;background-color:var(--deck-2);background-position:center;background-size:cover;background-repeat:no-repeat}'
        '.sosm .sox .ch{margin:0;font-family:var(--display);font-weight:700;font-style:normal}'
@@ -507,6 +528,9 @@ NSCSS=('.sxm.sosm .sxr>span.sox{display:grid;grid-template-columns:auto auto;jus
        '.sxv.fm2{display:flex;flex-direction:column;align-items:flex-end;gap:7px;line-height:1}.fm2>b{font:inherit;text-box:trim-both cap alphabetic}.fm2 .fma{font-style:normal;font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.02em;color:var(--text-dim);white-space:nowrap;text-box:trim-both cap alphabetic}.fm2 .fma b{font-weight:600;font-size:13px;letter-spacing:0;color:var(--chalk)}'
        '.odnote.nsn{margin:10px 0 0;color:var(--text-dim)}.gnm{display:flex;flex:none;gap:8px;align-items:baseline}.gnm em{width:40px;text-align:right}@media (max-width:430px){.gml.gm2{grid-template-columns:30px minmax(0,1fr) 54px;gap:6px;font-size:13px}.gm2 .gnm{gap:6px}.gm2 .gnm em{width:38px}.gml.gm2.gmh{font-size:11px}}.gtm>span .gnm em.gbx{color:var(--text-dim)!important}.gtm>span+span .gnm em.gbx{color:var(--chalk)!important;font-weight:700}.gml.gmh{padding:0 0 6px;font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim)}.gml.gmh .gtm>span .gnm em{font:inherit;color:inherit!important}.gml.gmh .gnm em{width:auto;min-width:40px}.gml.gmh>b{justify-self:end;font-weight:600;white-space:nowrap}'
        '.tqgn{display:flex;align-items:center;min-width:0;font-size:14px;font-weight:500;color:var(--chalk);line-height:1.25}.tqgn small{flex:none;width:34px;font-family:var(--display);font-weight:600;font-size:13px;color:var(--text-dim)}.tqgn .wl{flex:none}'
+       '.fm2 small.wlb{font:600 11px/1 var(--display);letter-spacing:.04em;margin-right:-.04em;font-variant-numeric:tabular-nums;color:var(--steel);text-box:trim-both cap alphabetic}.fm2>b.z{color:var(--text-dim)}'
+       '.nsm .sxhd i{font-style:normal}.nsm .sxhd .msf{display:none}@media (min-width:760px){.sxt.nsm{--cols:minmax(0,1fr) 62px 62px 62px 62px!important}.nsm .sxhd .msf{display:inline}.nsm .sxhd .mss{display:none}}'
+       '.gml.gmd .gtm>span .gnm em.gbx{color:var(--text-dim)!important;font-weight:600}'
        '.tqcg{margin-top:8px}.tqcg+.tqnone{color:var(--text-dim)}.tqcg.tqce{margin-bottom:0}')
 MODS=[('pos','Positions',None),('odds','Odds',m_odds),*([('drf','Draft',m_draft)] if 'pick' in next(iter(PS['teams'].values())) else []),*([('frm','Form',m_form)] if FM['rows'] else []),('sch','Schedules',m_sched),('ew','Every week',m_everyweek),('trd','Trades',m_trades),('lu','Lineups',m_lineups),('prj','Projections',m_proj),
       ('mg','Margins',m_close),*([('pt','Prime time',m_prime)] if SWL['of'] else []),('cs','Consistency',m_cons),('st','Stars',m_stars),('yo','Age',m_youth),('rk','Ranks',m_heat),('by','Byes',m_byes),('hr','Home / Road',m_homeroad)]

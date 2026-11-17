@@ -401,6 +401,33 @@ def highs():
     for t,o in out.items():
         f=o['faced'];o['w']=sum(g['won'] for g in f);o['t']=sum(g['tie'] for g in f);o['l']=len(f)-o['w']-o['t']
     return out
+def medsplit():
+    """median splits (2026-11-16, brief MS): per completed week the league median = statistics.median of every team's
+    score (2 decimals, exact); above = score > median, below = < median, equal = neither. Won below = won H2H scoring below
+    the median; lost above = lost H2H scoring above it (H2H ties count as neither). Opp above = the H2H opponent scored
+    above the median; oaw/oal/oat = this team's record in those games. Weeks as highs()."""
+    import season as SE
+    wk=sorted(w for w in SE.act if w in SE.sched and (w<=G or G>=REGW))
+    sc={w:{t:_fx(SE.act[w][t]) for t in TEAMS if t in SE.act[w]} for w in wk}
+    sc={w:{t:_fx(str(q2(v))) for t,v in s.items()} for w,s in sc.items()}
+    md={w:stt.median(sorted(sc[w].values())) for w in wk}
+    out={t:dict(ab=0,be=0,eq=0,wb=[],la=[],oa=0,oaw=0,oal=0,oat=0) for t in TEAMS}
+    for w in wk:
+        m=md[w]
+        for a,b in SE.sched[w]:
+            for x,y in ((a,b),(b,a)):
+                if x not in out or x not in sc[w] or y not in sc[w]:continue
+                me,them=sc[w][x],sc[w][y];o=out[x]
+                g=dict(w=w,opp=y,me=q2(me),them=q2(them),med=q2(m))
+                o['ab' if me>m else 'be' if me<m else 'eq']+=1
+                if me>them and me<m:o['wb'].append(g)
+                if me<them and me>m:o['la'].append(g)
+                if them>m:
+                    o['oa']+=1;o['oaw' if me>them else 'oal' if me<them else 'oat']+=1
+    for t in TEAMS:
+        if out[t]['ab']!=T[t][2]:
+            import sys;print(f'WARNING medsplit: {t} above {out[t]["ab"]} != Top-N wins {T[t][2]}',file=sys.stderr)
+    return out
 if __name__=='__main__':
     o,m=odds()
     for t in sorted(TEAMS,key=lambda t:-o[t]['po']):print(f"{t:24s} po {o[t]['po']:5.1f} bye {o[t]['bye']:5.1f} #1 {o[t]['top']:5.1f} W {o[t]['w']:.2f}")
