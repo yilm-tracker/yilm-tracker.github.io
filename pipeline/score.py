@@ -26,9 +26,14 @@ if 'starters' in L:
     OWN={i:r for r,ids in ST.items() for i in ids}
     for r,X in wk['out'].items():
         X['st']=[p for p in X['st'] if OWN.get(p[0],r)==r];X['bn']=[p for p in X['bn'] if OWN.get(p[0],r)==r]
+# points: each row from its own roster's players_points (ppr, 2026-11-17: a player traded after his game keeps his points
+# on the team he played for; a row its roster's map does not list keeps its value); live.json without ppr, or a roster
+# missing from it: the merged map
+PPR=L.get('ppr') or {}
 for rid,X in wk['out'].items():
+    own=PPR.get(rid)
     for p in X['st']+X['bn']:
-        v=L['pp'].get(p[0])
+        v=own.get(p[0]) if own is not None else L['pp'].get(p[0])
         if v is not None and abs(v-p[5])>1e-9:p[5]=round(v,2);n+=1
     X['pts']=L['tp'].get(rid,X['pts'])  # Sleeper's team total is authoritative
     s=round(sum(p[5] for p in X['st']),2)

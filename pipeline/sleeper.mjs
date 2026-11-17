@@ -97,7 +97,9 @@ export async function pullWeekly(get, D) {
     reserve_slots: (lg.settings || {}).reserve_slots ?? null, taxi_slots: (lg.settings || {}).taxi_slots ?? null,
     ro: ro.map(r => ({ rid: r.roster_id, own: r.owner_id, n: (r.players || []).length, res: r.reserve, taxi: r.taxi })),
     us: us.map(u => [u.user_id, u.display_name, (u.metadata || {}).team_name]),
-    m8: mN.map(x => [x.roster_id, x.matchup_id, (x.starters || []).filter(p => p && p !== '0')]),
+    // [roster, matchup, starters, players]: players = the roster's own week-N matchup list (2026-11-17: a player
+    // traded after his game kicked off stays with the team he played for; roster_files.lineups / full_update §6 bench)
+    m8: mN.map(x => [x.roster_id, x.matchup_id, (x.starters || []).filter(p => p && p !== '0'), x.players || []]),
     t7: tD.filter(t => t.type == 'trade').map(tr), t8: tN.filter(t => t.type == 'trade').map(tr), ntp: tp.length,
   };
   return { pull_m7, pull_pts: P, pull8, pull8a };
@@ -153,8 +155,10 @@ export async function pullLive(get, W, known) {
   }
   const done = sc.filter(g => g.week == W && g.status == 'complete').flatMap(g => [g.home, g.away]);
   const live = sc.filter(g => g.week == W && g.status == 'in_game').flatMap(g => [g.home, g.away]);
-  const pp = {}, tp = {}, sts = {};
-  m.forEach(x => { tp[x.roster_id] = x.points; sts[x.roster_id] = x.starters; Object.assign(pp, x.players_points); });
+  // pp = every roster's players_points merged; ppr = per roster (2026-11-17: score.py fills each row from its own roster's
+  // map, so a player traded after his game keeps his points on the team he played for)
+  const pp = {}, tp = {}, sts = {}, ppr = {};
+  m.forEach(x => { tp[x.roster_id] = x.points; sts[x.roster_id] = x.starters; ppr[x.roster_id] = x.players_points || {}; Object.assign(pp, x.players_points); });
   const S_ = {};
   for (const r of st) {
     const pid = r.player_id; if (!(pid in pp)) continue;
@@ -179,7 +183,7 @@ export async function pullLive(get, W, known) {
       extra[id] = [id, p.position || '', p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || id, TW[id] || p.team || '', q ? leagueScore(q.stats, ss) : 0, 0, q ? q.opponent || null : null, inj];
     }
   }
-  return { w: W, done, live, left, tp, pp: pz, S: S_, starters: sts, extra };
+  return { w: W, done, live, left, tp, pp: pz, ppr, S: S_, starters: sts, extra };
 }
 
 // Current NFL team of the players on the week-W page, for runs that do not re-pull the week (mid-week weekly runs,

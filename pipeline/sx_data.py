@@ -126,14 +126,43 @@ def eff_week(ts):
     for k in range(1,19):
         if d<K1+timedelta(days=7*(k-1)):return k
     return 19
+# Points since a trade (2026-11-17): a week counts when the player's game that week kicked off after the trade
+# (kick.json[w][team], team = his NFL team that week from his hist.json row, else txp); no game that week (bye) = 0.
+# A week kick.json does not have (older files) falls back to eff_week. Stats › Trades and Compare › Trades both use since().
+KO=json.load(open(P+'kick.json'))
+_TW={}
+def _tw(pid,w):
+    if w not in _TW:
+        d={}
+        for x in HI['w'].get(str(w),{}).values():
+            for s_ in x[2:4]:
+                for e_ in s_.split(','):
+                    f_=e_.split('|')
+                    if len(f_)>1 and f_[1]:d.setdefault(f_[0],f_[1])
+        _TW[w]=d
+    return _TW[w].get(pid) or (X['txp'].get(pid) or [None,None,None])[2] or ''
+def counts(pid,ts,w):
+    """True when the player's week-w game kicked off after ts (ms)"""
+    k=KO.get(str(w))
+    if not k:return w>=eff_week(ts)
+    e_=k.get(_tw(pid,w))
+    if not e_ or not e_[0]:return False
+    return datetime.fromisoformat(e_[0].replace('Z','+00:00')).timestamp()*1000>ts
+def since(pid,ts,G=G):
+    wk=X['txw'].get(pid) or []
+    return sum(wk[w-1] or 0 for w in range(1,min(G,len(wk))+1) if counts(pid,ts,w))
+def first_week(pids,ts):
+    """the first week in which a game of one of these players kicked off after ts (the "Week N on" label); no players: eff_week"""
+    ws=[next((w for w in range(1,19) if counts(p,ts,w)),19) for p in pids]
+    return min(ws) if ws else eff_week(ts)
 RD={1:'1st',2:'2nd',3:'3rd',4:'4th'}
 def trades():
     out=[]
     for x in sorted(X['tx'],key=lambda x:-x['ts']):
-        k=eff_week(x['ts']);rids=list(x['rids'])  # two or more teams
+        k=first_week(list(x['adds'] or {}),x['ts']);rids=list(x['rids'])  # two or more teams
         side={r:dict(pl=[],pk=[],faab=0) for r in rids}
         for pid,to in (x['adds'] or {}).items():
-            nm,pos,nfl=X['txp'][pid];wk=X['txw'][pid];pts=sum(wk[k-1:G]) if k<=G else 0.0
+            nm,pos,nfl=X['txp'][pid];wk=X['txw'][pid];pts=since(pid,x['ts'])
             side[to]['pl'].append(dict(name=nm,pos=pos,nfl=nfl,pts=round(pts,2)))
         for y,r,o,new,prev in x['picks']:
             side[new]['pk'].append(f'{y} {RD[r]} ({SHORT[RN[o]]})')

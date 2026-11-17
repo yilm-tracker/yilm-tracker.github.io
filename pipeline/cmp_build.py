@@ -26,6 +26,7 @@ RN={int(k):v for k,v in X['rn'].items()};RID={v:k for k,v in RN.items()}
 e=html.escape;G=len(WK[H[0]]);W=G+1;TODAY=date.today()
 from datetime import datetime as _dtm
 _K=json.load(open(P+'kick.json')).get('1',{})
+import sx_data as _SD  # since(): points since a trade, shared with Stats › Trades (2026-11-17)
 OPEN=min((int(_dtm.fromisoformat(v[0]).timestamp()*1000) for v in _K.values() if v and v[0]),default=1788800000000)-86400000
 seed=lambda t:H.index(t)+1
 tone=lg.tone
@@ -226,7 +227,7 @@ def trades(a,b):
             out=[]
             for pid,to in (t['adds'] or {}).items():
                 if to==r:
-                    nm,pos,tm=X['txp'][pid];since=sum(X['txw'][pid][w-1] for w in range(max(1,t['w']),G+1))
+                    nm,pos,tm=X['txp'][pid];since=_SD.since(pid,t['ts'],G)
                     out.append(f'<div class="ti">{ppt(pos)}<span>{e(nm)}</span><b>{since:.1f}</b></div>')
             for sn,rd,orig,to,frm in t['picks']:
                 if to==r:out.append(f'<div class="ti"><i class="pk"><span class="ct">{rd}</span></i><span>{sn} R{rd}{"" if orig==to else " · "+e(RN[orig])}</span></div>')

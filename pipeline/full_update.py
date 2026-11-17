@@ -33,6 +33,13 @@ def team_of(pid):
 hw={};wact={};wmx={};pairs={}
 import sys as _sy;_sy.path.insert(0,P);import lg
 def optimal(pool):return [q for q in lg.optimal(pool) if q is not None]
+# a player in two rosters' players_points in one week would be counted twice (Sleeper keeps a player traded after his
+# game kicked off on the roster he played for, so this should never happen); warn, never stop (2026-11-17)
+_seen={}
+for m in M7['M7']:
+    for pid in m['pp']:_seen.setdefault(pid,[]).append(m['rid'])
+for pid,rs in _seen.items():
+    if len(rs)>1:print('WARNING full_update.py: week',DONE,'player',pid,'in players_points of rosters',rs,file=sys.stderr)
 for m in M7['M7']:
     rid=m['rid'];st=m['st'];pp=m['pp']
     def ent(pid):
@@ -61,6 +68,7 @@ s=open(P+'data_block.js',encoding='utf-8').read()
 FUT=json.loads(re.search(r'const FUT=(\{.*?\});\n',s).group(1))
 SH=dict(lg.RN)  # FUT opponents use full team names
 m8={r[0]:(r[1],r[2]) for r in X8a['m8']}
+mp={r[0]:r[3] for r in X8a['m8'] if len(r)>3}  # each roster's week-NOW matchup players (2026-11-17); empty for older pulls
 def projtot(rid):return round(sum(PJ.get(p,[0])[0] for p in m8[rid][1]),2)
 NF={}
 for t,L_ in FUT.items():
@@ -170,7 +178,12 @@ for rid,(mid,st) in m8.items():
         if pid in (r['res'] or []):inj=inj or 'IR'
         tm=(META.get(pid) or [None,None,None])[2] or ''
         return [pid,pos(pid),nm(pid),tm,pj[0],0,pj[1],inj if inj in INJ else None]
-    out[str(rid)]={'mid':mid,'pts':0,'st':[row(p) for p in st],'bn':[row(p) for p in r['pl'] if p not in st]}
+    # bench = the roster's own week-NOW matchup list minus starters (current-roster order first), so a player traded after
+    # his game kicked off stays with the team he played for (2026-11-17); older pulls without the list: the current roster
+    ml=[p for p in (mp.get(rid) or []) if p and p!='0']
+    if ml:bn=[p for p in r['pl'] if p in ml and p not in st]+[p for p in ml if p not in r['pl'] and p not in st]
+    else:bn=[p for p in r['pl'] if p not in st]
+    out[str(rid)]={'mid':mid,'pts':0,'st':[row(p) for p in st],'bn':[row(p) for p in bn]}
 json.dump({'done':[],'out':out,'home':sorted(home8),'done_note':'final + vs/@ for completed games too'},open(P+f'wk{NOW}.json','w'))
 KI=L('kick.json');KI[str(NOW)]=K8;json.dump(KI,open(P+'kick.json','w'))
 print('ok',{season.RN[r]:(wact[r],wmx[r]) for r in wact})

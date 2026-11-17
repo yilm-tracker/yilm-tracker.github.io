@@ -141,11 +141,13 @@ node('weekly',0)
 X8=J('pull8.json');X8a=J('pull8a.json');M7=J('pull_m7.json')
 PJ,META,S8,K8=X8['PJ'],X8['META'],X8['S8'],X8['K8'];RO={r['rid']:r for r in M7['RO']}
 home={h for w_,a_,h in S8 if w_==1};out={}
-for rid,mid,st in X8a['m8']:
+for rid,mid,st,*mp_ in X8a['m8']:
     r=RO[rid]
+    ml=[p for p in (mp_[0] if mp_ else []) if p and p!='0']  # the roster's own Week-1 matchup list (2026-11-17), else the roster
+    bn_=[p for p in r['pl'] if p in ml and p not in st]+[p for p in ml if p not in r['pl'] and p not in st] if ml else [p for p in r['pl'] if p not in st]
     def row(pid):
         m=META.get(pid) or [pid,'?',None,None,None];return [pid,m[1],m[0],m[2] or '',PJ.get(pid,[0,None])[0],0,PJ.get(pid,[0,None])[1],None]
-    out[str(rid)]={'mid':mid,'pts':0,'st':[row(p) for p in st if p and p!='0'],'bn':[row(p) for p in r['pl'] if p not in st]}
+    out[str(rid)]={'mid':mid,'pts':0,'st':[row(p) for p in st if p and p!='0'],'bn':[row(p) for p in bn_]}
 W_('wk1.json',{'done':[],'out':out,'home':sorted(home),'done_note':'season replay'})
 W_('kick.json',{'1':K8})
 # ---------- replay the completed weeks, then (season in progress) the current week's live scores
