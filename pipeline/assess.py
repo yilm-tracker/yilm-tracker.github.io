@@ -177,7 +177,7 @@ def assess_html(t):
             f'<div class="rak">{st}</div>'
             f'<div class="rag up"><h4>Strengths</h4><ul>{li(a["good"])}</ul></div>'
             f'<div class="rag dn"><h4>Concerns</h4><ul>{li(a["bad"])}</ul></div>'+
-            (f'<div class="ran">Weeks 1–{G} results and end-of-season rosters</div></div>' if FIN else f'<div class="ran">Weeks 1–{G} results, current rosters and app win projections · refreshed with each update</div></div>'))
+            (f'<div class="ran">Weeks\u00a01–\u2060{G} results and end-of-season rosters</div></div>' if FIN else f'<div class="ran">Weeks\u00a01–\u2060{G} results, current rosters and app win projections · refreshed with each update</div></div>'))  # week range glued as sx_build._glue (2026-11-17)
 if __name__=='__main__':
     import re as _r
     for t in TEAMS:print(_r.sub('<[^>]+>',' ',assess_html(t))[:420]);print()

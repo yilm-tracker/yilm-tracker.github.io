@@ -26,8 +26,12 @@ def opps(tm):
     o=topp.get(tm)
     if not o:return ''
     return o if tm in home else '@'+o
+ROSTERED={x for r_ in RO.values() for x in (r_['pl'] or [])}
 def team_of(pid):
-    if pid in oldp:return oldp[pid][3]
+    # a bench row taken from the matchup list (2026-11-17) for a player on no current roster can carry no team (META has
+    # none): such a row falls through to his stat line team (A), else the next pull's team (META), exactly as before that
+    # change, when he was not in oldp (2026-11-17, job 1b: YILM Week 1 Najee Harris had lost "NYG / DAL")
+    if pid in oldp and (oldp[pid][3] or pid in ROSTERED):return oldp[pid][3]
     if pid in A:return A[pid][1]
     return META.get(pid,[None,None,''])[2] if META.get(pid) else ''
 hw={};wact={};wmx={};pairs={}

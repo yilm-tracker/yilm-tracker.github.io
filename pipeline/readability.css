@@ -489,8 +489,10 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .thlg i.dot{width:9px;height:9px;border-radius:50%;background:var(--c)}
 .thlg i.tick{width:2px;height:12px;border-radius:1px;background:var(--c)}
 .thlg i.line{width:14px;height:2px;border-radius:1px;background:var(--c)}
-/* desktop: Team Hub opens up into a card grid */
-@media (min-width:960px){
+/* desktop: Team Hub opens up into a card grid. From 1100px (was 960px until 2026-11-17, job 1b part D: from 960 to 1099px this
+   beat the 712px 760-1099px page column on specificity, so opening Team Hub widened the header, year strip and nav to 1180px
+   and every other tab went back to 712px; one breakpoint for the page now) */
+@media (min-width:1100px){
   .wrap:has(#tab-th:checked){max-width:1180px}
   .thkg{grid-template-columns:1fr 1fr}
   .thk.wide{grid-column:1 / -1}
@@ -1392,3 +1394,5 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 }
 /* 2026-11-17 SUBTITLE WRAP (Nicklaus 10:15 ET; DESIGN.md §6 Year strips, section subtitles): a section subtitle never ends on a single word. text-wrap:pretty where a subtitle had no wrap rule (Stats head() and list sub-heads + Team Hub sec(): .sxh>span; Rosters / Players / Team Hub .rsub; Playoffs .prsub; Leaderboards .lbd; Compare sub-section notes .cpn .msh>small). .posh>.wsub keeps text-wrap:balance (2026-11-06). Size, colour, spacing and max-width unchanged. */
 .sxh>span,.rsub,.prsub,.lbd,.cpn .msh>small{text-wrap:pretty}
+/* 2026-11-17 (job 1b): the Rosters team-assessment note .ran (assess.py, "Weeks 1–G results, current rosters ... refreshed with each update" / FIN variant) gets the same treatment; its week range is glued in assess.py */
+.ran{text-wrap:pretty}
