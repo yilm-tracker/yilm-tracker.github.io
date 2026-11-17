@@ -106,18 +106,19 @@ def everyweek():
             s=[(WK[a][w][2],WK[b][w][2]) for w in range(G)]
             E[a][b]=(sum(x>y for x,y in s),sum(x<y for x,y in s),sum(x==y for x,y in s))
     return E
+SWT={}  # ties of the same comparison (mine == theirs), filled by schedswap() in its loop (2026-11-17); losses = G - wins - ties
 def schedswap():
     M={}
     for a in TEAMS:
-        M[a]={}
+        M[a]={};SWT[a]={}
         for b in TEAMS:
-            wn=0
+            wn=0;tn=0
             for w in range(1,G+1):
                 opp=result(b,w)[2]
                 mine=WK[a][w-1][2]
                 theirs=WK[b][w-1][2] if opp==a else WK[opp][w-1][2]
-                wn+=mine>theirs
-            M[a][b]=wn
+                wn+=mine>theirs;tn+=mine==theirs
+            M[a][b]=wn;SWT[a][b]=tn
     return M
 # ---------- 3. trades
 K1=datetime(2026,9,13,17,0,tzinfo=timezone.utc)  # Sunday 1pm ET of Week 1; a trade counts from the first Sunday slate after it

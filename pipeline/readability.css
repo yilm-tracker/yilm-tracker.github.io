@@ -1396,3 +1396,13 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 .sxh>span,.rsub,.prsub,.lbd,.cpn .msh>small{text-wrap:pretty}
 /* 2026-11-17 (job 1b): the Rosters team-assessment note .ran (assess.py, "Weeks 1–G results, current rosters ... refreshed with each update" / FIN variant) gets the same treatment; its week range is glued in assess.py */
 .ran{text-wrap:pretty}
+
+/* 2026-11-17 STANDINGS RECORD BASELINE + MEDIAN BREAKDOWN (job 2, both sites). (1) One record baseline per row, every mode: the
+   record's line box is the 35.1px record's (a strut on .rr, font set longhand so tabular figures are kept), so a 29.7px 4-digit
+   record (.rr4, e.g. Median "13-7") sits on the same baseline and the streak row, last-5 dots and Could have hang off it; was
+   up to 5.4px (7px at 1440) higher in .rr4 rows, so H2H -> Median moved them. (2) Median mode: Could have stays; one values-only
+   line .bkl "10-0 · 9-1" (H2H, then Top-N) under the streak row, the desktop table's Median W-L values style (Barlow 600 11px,
+   .04em, tabular) in --text-dim; rrFit hangs Could have below it. */
+.board .side .rr{display:block;font-family:var(--display);font-weight:700;font-size:35.1px;line-height:1;white-space:nowrap}
+.board .side .rr b{line-height:1}
+.board .side>.bkl{font:600 11px/1 var(--display);letter-spacing:.04em;margin:2px -.04em 0 0;font-variant-numeric:tabular-nums;color:var(--text-dim);white-space:nowrap;text-align:right}

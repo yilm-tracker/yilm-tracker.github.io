@@ -69,8 +69,11 @@ function draw(med){
     const gbOf=k=>{const [rw,rl]=wl(o[k]);const g=((rw-rw0)+(rl0-rl))/2;return g%1?g.toFixed(1):String(g)};
     const rf=refs.filter(([k])=>i>k);
     const gbH='';  // Games back (and the leader's 'Leader' label) removed from the card 2026-11-02
-    const sub=med?`<div class="chl">Breakdown</div><div class="cw">H2H <b>${w}-${l}</b></div><div class="cw">Top-${(typeof NT!=='undefined'?NT:10)/2} <b>${mw}-${G-mw}</b></div>`
-                 :`<div class="chl">Could have</div><div class="cw">Won <b>${CH[t][0]}</b></div><div class="cw">Lost <b>${CH[t][1]}</b></div>`;
+    // Could have in both modes (2026-11-17, job 2); Median adds one values-only line under the streak row, H2H then Top-N (the
+    // desktop table's Median W-L values), full wording in title / aria-label. rrFit then hangs Could have below that line.
+    const bkt=`H2H ${w}-${l} · Top-${(typeof NT!=='undefined'?NT:10)/2} ${mw}-${G-mw}`;
+    const bk=med?`<div class="bkl" title="${bkt}" aria-label="${bkt}">${w}-${l} · ${mw}-${G-mw}</div>`:'';
+    const sub=`<div class="chl">Could have</div><div class="cw">Won <b>${CH[t][0]}</b></div><div class="cw">Lost <b>${CH[t][1]}</b></div>`;
     const P=med?PM:PH,dl=P.indexOf(t)-i,a=(med?POS.M:POS.H)[t];
     const tri=p=>`<svg class="tri" viewBox="0 0 8 7" aria-hidden="true"><path d="${p}"/></svg>`;
     const mv=dl>0?`<span class="mv up">${tri('M4 0L8 7H0Z')}${dl}</span>`:dl<0?`<span class="mv dn">${tri('M0 0H8L4 7Z')}${-dl}</span>`:`<span class="mv eq">–</span>`;
@@ -92,7 +95,7 @@ function draw(med){
       <div class="sb s-lu"><div class="stx"><em class="lb">Tot Eff</em><span class="v">${EF[t][0].toFixed(0)}%</span>${chip(rankEf(t),tiedEf(t))} <i class="pw"><span class="pws">· </span><b class="lw">${EF[t][1].toFixed(1)}</b>/wk</i></div>${seg(rankEf(t))}</div>
       <div class="sb s-sk"><div class="stx spl dps"><span class="dpb dpd"><span class="dph"><em class="lb dpl">Dropped pts</em><i class="pw pu">/wk</i></span><span class="dpg">${['QB','RB','WR','TE'].map((k,i)=>LPOS.includes(k)?`<span class="dpc p-${k.toLowerCase()}"><b>${k}</b><span class="${DP[t][i]>=0.05?'':'z'}">${DP[t][i].toFixed(1)}</span>${chip(dpR(i,t),dpT(i,t))}</span>`:'').join('')}</span></span><span class="dpb dso"><span class="dph"><em class="lb dpl">Season sim</em></span><span class="dpg sog">${[['Finish',SO[t][0].toFixed(1)],['#1',pctS(SO[t][1])],['Bye',pctS(SO[t][2])],['Playoffs',pctS(SO[t][3])]].map(([k,v],i)=>k==='Bye'?'':`<span class="dpc so s${i}"><b>${k}</b><span class="${i&&v==='0%'?'z':''}">${i?v:`<span class="sof ${tone(Math.round(SO[t][0]))}">${v}</span>`}</span></span>`).join('')}</span></span></div></div>
       <div class="st s2"><span><em class="lb">Opp<i class="lrk"> rk</i></em><span class="v">${d[9].toFixed(1)}</span>${chip(rankOf(d[9],9,true),tied(d[9],9))}</span><span><em class="lb">All-play</em><span class="v">${d[10]}-${d[11]}</span>${chip(rankOf(d[10],10,false),tied(d[10],10))}</span><span><em class="lb">Luck</em><span class="v">${luck(d[12])}<i class="lku" title="Expected wins (xW): all-play win rate × games played. Luck = actual wins − xW">${(d[10]/(d[10]+d[11])*(d[0]+d[1])).toFixed(2)} xW</i></span>${chip(rankOf(d[12],12,false),tied(d[12],12))}</span></div>
-      <div class="side"><div class="rr${(String(rw0)+String(rl0)).length>2?" rr4":""}"><b>${rw0}-${rl0}</b></div><div class="l5r"><span class="sk ${lastR==='W'?'w':'l'}"><span class="ct">${lastR}${n}</span></span><span class="l5d" aria-label="Last 5 results">${WK[t].slice(-5).map(g=>`<i class="${g[2]>g[3]?'w':'l'}"></i>`).join('')}</span></div>${gbH}<div class="subw">${sub}</div></div>
+      <div class="side"><div class="rr${(String(rw0)+String(rl0)).length>2?" rr4":""}"><b>${rw0}-${rl0}</b></div><div class="l5r"><span class="sk ${lastR==='W'?'w':'l'}"><span class="ct">${lastR}${n}</span></span><span class="l5d" aria-label="Last 5 results">${WK[t].slice(-5).map(g=>`<i class="${g[2]>g[3]?'w':'l'}"></i>`).join('')}</span></div>${bk}${gbH}<div class="subw">${sub}</div></div>
       <div class="szw">${season(t)}</div>
       <div class="strip"${op?'':' hidden'}>${strip}</div></div>`}).join('')+'</section>';  // each tier is its own card (section.tcard)
 }
@@ -332,8 +335,8 @@ if(typeof FAABL!=='undefined'&&window.fetch)fetch('https://api.sleeper.app/v1/le
   const v=r.querySelector('.rv'),sm=s.parentElement;if(s.getBoundingClientRect().right>v.getBoundingClientRect().left-8||sm.scrollWidth>sm.clientWidth+0.5)r.classList.add('rsw')})}
  const go=()=>requestAnimationFrame(rslFit);go();addEventListener('resize',go);document.addEventListener('change',go);document.addEventListener('click',go);
  if(document.fonts){document.fonts.ready.then(go);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',go)}})();
-// Standings card, right column (rrFit): the streak tile is the record's cap height, centred on it; "Could have" /
-// "Breakdown" starts level with the top of the OPP line (cap tops). Record and dots sizes are CSS (readability.css, +15%).
+// Standings card, right column (rrFit): the streak tile is the record's cap height, centred on it; "Could have" starts level
+// with the top of the first stat line at least 4px under the streak row, or under the Median breakdown line (.bkl) when shown (cap tops). Record and dots sizes are CSS (readability.css, +15%).
 (function(){const C=document.createElement('canvas').getContext('2d');
 function capOf(el,s){const cs=getComputedStyle(el);C.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;return C.measureText(s||'0123456789').actualBoundingBoxAscent*(el.currentCSSZoom||1)}
 function txt(el,last){const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);let t=null,x;while(x=w.nextNode())if(x.textContent.trim()){t=x;if(!last)break}return t}
@@ -347,7 +350,7 @@ function rrFit(){
     window.inkBatch(L)}
   // reads: per row the Could have text, the floor (4px under the streak row) and the first text of each stat line
   const J=[];rows.forEach(r=>{const sb=r.querySelector('.side .subw');if(!sb||!sb.offsetParent)return;const lt=txt(sb,0);if(!lt)return;const z=sb.currentCSSZoom||1;
-    const ab=r.querySelector('.side .l5r')||r.querySelector('.side .l5d'),side=r.querySelector('.side');
+    const ab=r.querySelector('.side>.bkl')||r.querySelector('.side .l5r')||r.querySelector('.side .l5d'),side=r.querySelector('.side');
     const lines=[...r.querySelectorAll(':scope>.st, :scope>.sb')].filter(e=>e.offsetParent&&!side.contains(e)),c=[];
     for(const L of lines){for(const el of L.querySelectorAll('.lb,em,b,span')){if(!el.offsetParent)continue;const t=txt(el,0);if(!t)continue;c.push([t,capOf(t.parentElement,'HOPC')]);break}}
     J.push({sb,z,lt,lc:capOf(lt.parentElement,'HOPC'),floor:ab.getBoundingClientRect().bottom+4*z,m:parseFloat(getComputedStyle(sb).marginTop)||0,c})});
@@ -398,7 +401,7 @@ function dsPass(){const R=[...document.querySelectorAll('#list>.tcard>.r')];if(!
     for(const d of r.querySelectorAll(':scope>.sb.s-pf .seg10 i:last-child,:scope>.sb.s-pa .seg10 i:last-child'))st=Math.max(st,d.getBoundingClientRect().right-L);
     const sd=r.querySelector('.side'),b=sd.querySelector('.rr b'),k=sd.querySelector('.l5r .sk'),l5=sd.querySelector('.l5d i');
     rc=Math.min(rc,rr(b).left-L);if(k&&k.offsetParent)rc=Math.min(rc,k.getBoundingClientRect().left-L);if(l5&&l5.offsetParent)rc=Math.min(rc,l5.getBoundingClientRect().left-L);
-    for(const x of sd.querySelectorAll('.subw .chl,.subw .cw'))if(x.offsetParent)rc=Math.min(rc,rr(x).left-L)}
+    for(const x of sd.querySelectorAll('.subw .chl,.subw .cw,.side>.bkl'))if(x.offsetParent)rc=Math.min(rc,rr(x).left-L)}
   SB.forEach(e=>e.classList.remove('sbm'));
   if(!(rc<1e9&&st>-1e9))return false;
   const G=Math.round(((rc-st)/Z0+R0)*2)/2,fit=((W-PAD-M-RCMIN)-GAP)/(T-G)/1.1;

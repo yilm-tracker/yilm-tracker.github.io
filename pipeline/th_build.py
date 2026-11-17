@@ -98,6 +98,9 @@ def sec(title,sub=''):return f'<div class="sxh tqh"><b>{title}</b><span>{_glue(s
 def kpi(lab,val,r=None,sub='',neutral=False):
     rr=(f'<em class="tqr">{ordn(r)}</em>' if neutral else rk(r)) if r else ''
     return f'<div class="tqk"><span class="tqkl">{lab}</span><b class="tqkv">{val}</b><span class="tqks">{rr}{sub}</span></div>'
+# colour of a "Record with each team's schedule" cell (Nicklaus, 2026-11-17 14:53 ET): against the team's own record on its own
+# schedule, as the Stats matrix colours it: more wins = .up, the same = neutral, fewer = .dn
+def SWC(r,own):return 'up' if r[0]>own[0] else 'dn' if r[0]<own[0] else ''
 def data_view(t):
     o=[]
     x=T[t];sd=H.index(t)+1;O=OD[t]
@@ -142,6 +145,11 @@ def data_view(t):
     ew=SB.EW[t];ops=[u for u in H if u!=t]
     o.append(sec('Every-week head to head',f'Record if they had played each team every week · Wk 1–{G}'))
     o.append('<div class="tqew">'+''.join(f'<div><span>{e(u)}</span><b class="{"up" if ew[u][0]>ew[u][1] else "dn" if ew[u][0]<ew[u][1] else ""}">{SB._rec(ew[u])}</b></div>' for u in ops)+'</div>')
+    # record with each team's schedule (2026-11-17, job 2): this team's weekly scores against team u's schedule (Stats › Schedules
+    # "Schedule swap": SB.M[t][u] wins, D.SWT ties, losses = G - wins - ties); Every-week's format, coloured by SWC
+    sw=lambda u:(SB.M[t][u],G-SB.M[t][u]-D.SWT[t][u],D.SWT[t][u])
+    o.append(sec("Record with each team's schedule",f'Own schedule {SB._rec(sw(t))} · Wk 1–{G}'))
+    o.append('<div class="tqew tqsw">'+''.join(f'<div><span>{e(u)}</span><b class="{SWC(sw(u),sw(t))}">{SB._rec(sw(u))}</b></div>' for u in ops)+'</div>')
     # stars
     s=STS[t]
     segs=''.join(f'<i class="p-{v[1].lower()}{" s1" if i==0 else ""}" style="width:{v[2]/s["tot"]*100:.2f}%"></i>' for i,v in enumerate(s['top3']))
