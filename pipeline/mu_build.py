@@ -162,9 +162,9 @@ def lcell(p,side):
     pid,pos,name,tm,proj,act,opp,inj=p[:8]
     r=_K[pid][0] if _K.get(pid) and _K[pid][2]>0 else None
     big=r and (r>=100 or (pos=='DEF' and r>=10))
-    g=_pgr(pid)  # points-per-game rank (3+ games; fewer = '–' where the season rank has a figure, else blank as it)
+    g=_pgr(pid)  # points-per-game rank (3+ games); no figure = '–' in both states (2026-11-17: was blank when the season rank was blank too)
     big3=lambda x:x and (x>=100 or (pos=='DEF' and x>=10))
-    rk=(f'<b class="rkt{" b3" if big3(r) else ""}">{r}</b>' if r else '<b class="rkt"></b>')+(f'<b class="rkg{" b3" if big3(g) else ""}">{g}</b>' if g else f'<b class="rkg">{"–" if r else ""}</b>')
+    rk=(f'<b class="rkt{" b3" if big3(r) else ""}">{r}</b>' if r else '<b class="rkt">–</b>')+(f'<b class="rkg{" b3" if big3(g) else ""}">{g}</b>' if g else '<b class="rkg">–</b>')
     sq=f'<i class="pq p-{pos.lower()} t-{tm or "FA"}"><span class="pqi"><span>{pos}</span>{rk}</span></i>'
     a=_age(pid);acl='ay' if a and a<27 else 'ap' if a and a<31 else 'ao'
     ag=f'<em class="pag {acl}">{a:.1f}</em>' if a else ''
@@ -193,7 +193,7 @@ def lcell(p,side):
         hb=f'<i class="hab {"hab-h" if _hax(p)=="vs" else "hab-r"}" aria-label="{wd.title()}">'+''.join(f'<span>{c}</span>' for c in wd)+'</i>'
     return (f'<span class="cn {side}{" hbx" if hb else ""}">{sq}{flg}<span class="cnm"><b><span title="{e(name)}" aria-label="{e(name)}">{e(nm)}</span>{mk}{ij}</b>'
             f'<small><span class="gp{" fin" if done else ""}"{dt}>{st}</span></small></span>{hb}</span>'+
-            (f'<span class="cv {side} act"{dp}><span class="fs {"up" if act>=proj else "dn"}" title="Projected {proj:.1f}"><em class="fdf">{_dif(act,proj)}</em>{v:.1f}<small>FINAL</small></span></span>' if done else f'<span class="cv {side} pjc"{dp}><span class="fs pj"><em class="fdf"></em>{v:.1f}<small>PROJ</small></span></span>'))
+            (f'<span class="cv {side} act"{dp}><span class="fs {"up" if act>=proj else "dn"}" title="Projected {proj:.1f}"><em class="fdf">{_dif(act,proj)}</em>{v:.1f}<small>FINAL</small></span></span>' if done else f'<span class="cv {side} pjc"{dp}><span class="fs pj"><em class="fdf"></em>{"–" if _XB[0] and not v else f"{v:.1f}"}<small>PROJ</small></span></span>'))
 def _swp(r,side):
     """Optimal lineup: a bench player moved in. Marks the cell (.swp) and adds BN as the third line of its position tile (2026-11-06)."""
     i=r.index(f'<span class="cn {side}">');r=r[:i]+f'<span class="cn {side} swp">'+r[i+len(f'<span class="cn {side}">'):]
@@ -344,6 +344,7 @@ def _xg(p):
     return p
 def _xr(r):  # a band row: data-xb marks it for luFit's own band group (starters and Bench keep their sizes)
     i=r.index('">');return r[:i]+'" data-xb>'+r[i+2:]
+_XB=[False]   # True while xbands() writes band rows: a band row without a projection shows "–" over PROJ (2026-11-17), not 0.0
 def xbands(rows):
     """rows(tag) -> (team a's rows, team b's rows) in the lineup row format; '' when the league has neither slot type or
     nobody in it. Order as Bench (points / projection, highest first), then position, then name."""
@@ -352,7 +353,9 @@ def xbands(rows):
         if not XSL.get(tag):continue
         ra,rb=(sorted(map(_xg,L),key=lambda p:(-lval(p)[0],_PO.get(p[1],9),p[2])) for L in rows(tag))
         if not(ra or rb):continue
-        o+=f'<div class="msh lbh"><b>{lab}</b><i></i><small>{note}</small></div>'+''.join(_xr(lrow(ra[k] if k<len(ra) else None,rb[k] if k<len(rb) else None,'')) for k in range(max(len(ra),len(rb))))
+        _XB[0]=True
+        try:o+=f'<div class="msh lbh"><b>{lab}</b><i></i><small>{note}</small></div>'+''.join(_xr(lrow(ra[k] if k<len(ra) else None,rb[k] if k<len(rb) else None,'')) for k in range(max(len(ra),len(rb))))
+        finally:_XB[0]=False
     return o
 def optblock(sa,sb,pool_a,pool_b,ta,tb,proj=False,bhead='',bkeep=lambda p:True,bsl='',fut=False,xb=''):
     oa,ob=optimal(pool_a),optimal(pool_b)

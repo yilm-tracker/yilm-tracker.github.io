@@ -90,7 +90,11 @@ DP={t:[D.dropped(t)[k] for k in ORD] for t in TEAMS}
 CLS=SB.CL;STS=SB.ST;YOS=SB.YO;HES=SB.HE;BYS=SB.BY;HRT=SB.HRT
 def avg(v):return sum(v)/len(v) if v else 0
 # ---------------------------------------------------------------- Data view
-def sec(title,sub=''):return f'<div class="sxh tqh"><b>{title}</b><span>{sub}</span></div>'
+# a week range in a subtitle never breaks (2026-11-17, subtitle wrap): 'Weeks 1–10' / 'Wk 1–10' kept on one line
+# (no-break space after the word, word joiner after the dash), so text-wrap:pretty cannot leave '1–10' or '10' alone
+import re as _gre
+_glue=lambda s:_gre.sub(r'\b(Weeks?|Wk) (\d+)–(\d+)',lambda m:f'{m[1]}\u00a0{m[2]}–\u2060{m[3]}',s)
+def sec(title,sub=''):return f'<div class="sxh tqh"><b>{title}</b><span>{_glue(sub)}</span></div>'
 def kpi(lab,val,r=None,sub='',neutral=False):
     rr=(f'<em class="tqr">{ordn(r)}</em>' if neutral else rk(r)) if r else ''
     return f'<div class="tqk"><span class="tqkl">{lab}</span><b class="tqkv">{val}</b><span class="tqks">{rr}{sub}</span></div>'

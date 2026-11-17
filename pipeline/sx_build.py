@@ -31,7 +31,11 @@ def dvb(v,mx):
     return f'<span class="dvb"><i class="{"up" if v>=0 else "dn"}" style="width:{w:.2f}%"></i></span>'
 def hbar(v,mx,cls=''):return f'<span class="hbr"><i class="{cls}" style="width:{(min(v/mx,1)*100 if mx else 0):.2f}%"></i></span>'
 def nmb(t,bar):return f'<span class="sxnb"><span class="sxnl"><i class="pav" data-avt="{e(t)}" aria-hidden="true"></i>{nm(t)}</span>{bar}</span>'  # logo/face + name, bar under
-def head(title,sub):return f'<div class="sxh"><b>{title}</b><span>{sub}</span></div>'
+# a week range in a subtitle never breaks (2026-11-17, subtitle wrap): 'Weeks 1–10' / 'Wk 1–10' kept on one line
+# (no-break space after the word, word joiner after the dash), so text-wrap:pretty cannot leave '1–10' or '10' alone
+import re as _gre
+_glue=lambda s:_gre.sub(r'\b(Weeks?|Wk) (\d+)–(\d+)',lambda m:f'{m[1]}\u00a0{m[2]}–\u2060{m[3]}',s)
+def head(title,sub):return f'<div class="sxh"><b>{title}</b><span>{_glue(sub)}</span></div>'
 def table(cols,rows,cls=''):
     # cols: list of (label, width) ; first col is the team name (flex)
     tpl=' '.join(['minmax(0,1fr)']+[w for _,w in cols[1:]])

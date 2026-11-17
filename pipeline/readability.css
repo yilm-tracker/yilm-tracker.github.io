@@ -1390,3 +1390,5 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
  html body #dn-full:checked~#list.board>.tcard>.r.r.r.dsc>.side{grid-row:1 / span 6!important}
  html body #dn-full:checked~#list.board>.tcard>.r.r.r.dsc>.szw{margin-bottom:15px!important}
 }
+/* 2026-11-17 SUBTITLE WRAP (Nicklaus 10:15 ET; DESIGN.md §6 Year strips, section subtitles): a section subtitle never ends on a single word. text-wrap:pretty where a subtitle had no wrap rule (Stats head() and list sub-heads + Team Hub sec(): .sxh>span; Rosters / Players / Team Hub .rsub; Playoffs .prsub; Leaderboards .lbd; Compare sub-section notes .cpn .msh>small). .posh>.wsub keeps text-wrap:balance (2026-11-06). Size, colour, spacing and max-width unchanged. */
+.sxh>span,.rsub,.prsub,.lbd,.cpn .msh>small{text-wrap:pretty}
