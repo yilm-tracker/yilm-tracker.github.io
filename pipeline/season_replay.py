@@ -113,6 +113,10 @@ if not BO and not PAST and DONE<REG:
     irtx.record(DONE+1,{str(r['roster_id']):{'ir':r.get('reserve') or [],'tx':r.get('taxi') or []} for r in ROS},path=IRX)
 if os.path.exists(IRX):shutil.copy(IRX,os.path.join(WS,'irtx.json'))
 elif os.path.exists(os.path.join(WS,'irtx.json')):os.remove(os.path.join(WS,'irtx.json'))
+# new stats data (brief newstats-data 2026-11-17): nfl_wk.json.gz into the workspace from the capture (no network), the
+# same pull and shape as BBP's (`pull.mjs nfl D`: NFL stat lines of completed weeks 1..DONE, schedule, matchup lists;
+# read by nflx.py); full replays and --build-only alike; never fatal
+subprocess.run(['node',os.path.join(WS,'pull.mjs'),'nfl',str(DONE)],cwd=WS,env=ENV,stdout=subprocess.DEVNULL)
 # ---------- seed files
 if BO:
     subprocess.run(['python3',os.path.join(WS,'run.py'),'build'],cwd=WS,env=ENV,check=True);sys.exit()

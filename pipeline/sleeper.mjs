@@ -311,3 +311,61 @@ export async function pullWire(get, D) {
   }
   return { D, N, pulled: new Date().toISOString(), W: out };
 }
+
+// NFL weekly data for the new stats (nfl_wk.json.gz, read by nflx.py; brief newstats-data 2026-11-17). Completed weeks
+// 1..D only. No new endpoint: the same stats / schedule / matchups / players URLs the other pulls already read.
+//   stats: {w: [[pid, team, opponent, pos, {stat: value}], ...]}  rows whose fantasy position (pull_season.mjs fpos rule)
+//          is QB/RB/WR/TE/K/DEF and that have gp or gms_active; keys = every key either league scores (NFLK, BBP 46 +
+//          YILM 132 = 132) + this league's own scoring keys + NFLX; zero values left out; rows by player id, keys sorted
+//   sched: [[week, away, home], ...]  every regular-season game, all 18 weeks
+//   mu:    {w: {roster id: [pid, ...]}}  each roster's week-w matchup player list (incl. IR / taxi)
+// No timestamp in the file, so an unchanged season writes identical bytes (no data commit).
+const NFLK = [
+  'blk_kick', 'blk_kick_ret_yd', 'bonus_def_fum_td_50p', 'bonus_def_int_td_50p', 'bonus_fd_qb', 'bonus_fd_rb', 'bonus_fd_te',
+  'bonus_fd_wr', 'bonus_pass_cmp_25', 'bonus_pass_yd_300', 'bonus_pass_yd_400', 'bonus_rec_rb', 'bonus_rec_te', 'bonus_rec_wr',
+  'bonus_rec_yd_100', 'bonus_rec_yd_200', 'bonus_rush_att_20', 'bonus_rush_rec_yd_100', 'bonus_rush_rec_yd_200',
+  'bonus_rush_yd_100', 'bonus_rush_yd_200', 'bonus_sack_2p', 'bonus_tkl_10p', 'def_2pt', 'def_3_and_out', 'def_4_and_stop',
+  'def_forced_punts', 'def_kr_yd', 'def_pass_def', 'def_pr_yd', 'def_st_ff', 'def_st_fum_rec', 'def_st_td', 'def_st_tkl_solo',
+  'def_td', 'ff', 'fg_ret_yd', 'fgm', 'fgm_0_19', 'fgm_20_29', 'fgm_30_39', 'fgm_40_49', 'fgm_50_59', 'fgm_50p', 'fgm_60p',
+  'fgm_yds', 'fgm_yds_over_30', 'fgmiss', 'fgmiss_0_19', 'fgmiss_20_29', 'fgmiss_30_39', 'fgmiss_40_49', 'fgmiss_50_59',
+  'fgmiss_50p', 'fgmiss_60p', 'fum', 'fum_lost', 'fum_rec', 'fum_rec_td', 'fum_ret_yd', 'idp_pass_def_3p', 'idp_sack_yd',
+  'int', 'int_ret_yd', 'kr_yd', 'pass_2pt', 'pass_att', 'pass_cmp', 'pass_cmp_40p', 'pass_fd', 'pass_inc', 'pass_int',
+  'pass_int_td', 'pass_sack', 'pass_td', 'pass_td_40p', 'pass_td_50p', 'pass_yd', 'pr_yd', 'pts_allow', 'pts_allow_0',
+  'pts_allow_14_20', 'pts_allow_1_6', 'pts_allow_21_27', 'pts_allow_28_34', 'pts_allow_35p', 'pts_allow_7_13', 'qb_hit', 'rec',
+  'rec_0_4', 'rec_10_19', 'rec_20_29', 'rec_2pt', 'rec_30_39', 'rec_40p', 'rec_5_9', 'rec_fd', 'rec_td', 'rec_td_40p',
+  'rec_td_50p', 'rec_yd', 'rush_2pt', 'rush_40p', 'rush_att', 'rush_fd', 'rush_td', 'rush_td_40p', 'rush_td_50p', 'rush_yd',
+  'sack', 'sack_yd', 'safe', 'st_ff', 'st_fum_rec', 'st_td', 'st_tkl_solo', 'tkl', 'tkl_ast', 'tkl_loss', 'tkl_solo', 'xpm',
+  'xpmiss', 'yds_allow', 'yds_allow_0_100', 'yds_allow_100_199', 'yds_allow_200_299', 'yds_allow_300_349', 'yds_allow_350_399',
+  'yds_allow_400_449', 'yds_allow_450_499', 'yds_allow_500_549', 'yds_allow_550p',
+];
+const NFLX = ['pass_att', 'pass_cmp', 'rush_att', 'rec_tgt', 'gp', 'gms_active', 'off_snp'];
+export async function pullNfl(get, D) {
+  const L = `${A}/league/${LEAGUE}`;
+  const [lg, players, sch] = await Promise.all([get(L), get(`${A}/players/nfl`), get(`${S}/schedule/nfl/regular/${SEASON}`)]);
+  const K = new Set([...NFLK, ...NFLX, ...Object.keys(lg.scoring_settings || {})]);
+  // fantasy position as pull_season.mjs: the player's position if the leagues score it, else the first fantasy position
+  // that they score (two-way players); the players map first, else the stat row's own player object
+  const fp = p => p && (FPOS.has(p.position) ? p.position : (p.fantasy_positions || []).find(x => FPOS.has(x))) || null;
+  const weeks = Array.from({ length: Math.max(0, D) }, (_, i) => i + 1);
+  const [st, mu] = await Promise.all([
+    Promise.all(weeks.map(w => get(`${S}/stats/nfl/${SEASON}/${w}?season_type=regular`))),
+    Promise.all(weeks.map(w => get(`${L}/matchups/${w}`)))]);
+  const stats = {}, mus = {};
+  weeks.forEach((w, i) => {
+    const rows = [];
+    for (const r of st[i] || []) {
+      const pos = fp(players[r.player_id]) || fp(r.player), s = r.stats || {};
+      if (!FPOS.has(pos) || !(s.gp > 0 || s.gms_active > 0)) continue;
+      const x = {};
+      for (const k of Object.keys(s).sort()) if (K.has(k) && typeof s[k] === 'number' && s[k] !== 0) x[k] = s[k];
+      rows.push([String(r.player_id), r.team || null, r.opponent || null, pos, x]);
+    }
+    rows.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+    stats[w] = rows;
+    const m = {};
+    for (const x of mu[i] || []) m[x.roster_id] = (x.players || []).filter(p => p && p !== '0');
+    mus[w] = m;
+  });
+  const sched = sch.map(x => [+x.week, x.away, x.home]).sort((a, b) => a[0] - b[0]);
+  return { season: String(SEASON), D: Math.max(0, D), stats, sched, mu: mus };
+}

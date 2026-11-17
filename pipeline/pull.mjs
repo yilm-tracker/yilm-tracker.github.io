@@ -7,12 +7,14 @@
 //   node pull.mjs wire D           -> pull_wire.json (THE WIRE: unrostered players, week D+1 projections)
 //   node pull.mjs top D            -> pull_top.json (top players by position through week D, all NFL players)
 //   node pull.mjs detail a-b       -> stats_detail.json (full stat lines for lineup players, weeks a..b)
+//   node pull.mjs nfl D            -> nfl_wk.json.gz (NFL stat lines weeks 1..D, schedule, matchup lists; nflx.py reads it;
+//                                     never fatal: on any error the previous file is kept)
 //   node pull.mjs teams W [full]   -> pull_teams.json (current NFL team + week-W opponent of the players in the files;
 //                                     applied by teams.py; without full the players map is read only on a difference)
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { lastCompleteWeek, pullWeekly, pullPlayoffs, pullLive, pullDetail, pullTop, pullWire, pullTeams } from './sleeper.mjs';
+import { lastCompleteWeek, pullWeekly, pullPlayoffs, pullLive, pullDetail, pullTop, pullWire, pullTeams, pullNfl } from './sleeper.mjs';
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const out = (f, o) => fs.writeFileSync(path.join(DIR, f), JSON.stringify(o));
 // Offline replay of a captured season (pull_season.mjs): DT_CACHE=history/raw/2025 answers every request from the capture
@@ -79,6 +81,16 @@ if (cmd === 'state') {
   const x = await pullTeams(get, +arg, cur, process.argv[4] === 'full');
   out('pull_teams.json', x);
   console.log('teams pull ok for week', arg, '(' + x.src + '):', Object.keys(x.T).length, 'players');
+} else if (cmd === 'nfl') {
+  // new stats data (brief newstats-data 2026-11-17): written only when the whole pull succeeded, via a temp file
+  try {
+    const x = await pullNfl(get, +arg), f = path.join(DIR, 'nfl_wk.json.gz');
+    fs.writeFileSync(f + '.tmp', zlib.gzipSync(JSON.stringify(x), { level: 9 })); fs.renameSync(f + '.tmp', f);
+    console.log('nfl pull ok: weeks 1-' + x.D, Object.values(x.stats).map(r => r.length).join(' '), 'rows,', x.sched.length, 'games,', fs.statSync(f).size, 'bytes');
+  } catch (e) {
+    try { fs.unlinkSync(path.join(DIR, 'nfl_wk.json.gz.tmp')); } catch (_) { }
+    console.error('WARNING nfl pull failed (previous nfl_wk.json.gz kept):', e && e.message || e);
+  }
 } else if (cmd === 'detail') {
   // fuller per-player stat lines for the Detailed lineup view: weeks "a-b" (or one week), lineup players only
   const [a, b] = arg.split('-').map(Number), f = path.join(DIR, 'stats_detail.json');
@@ -86,4 +98,4 @@ if (cmd === 'state') {
   const x = await pullDetail(get, Array.from({ length: (b || a) - a + 1 }, (_, i) => a + i));
   Object.assign(D, x); out('stats_detail.json', D);
   console.log('detail pull ok:', Object.entries(x).map(([w, v]) => `wk${w} ${Object.keys(v).length}`).join(', '));
-} else { console.error('usage: node pull.mjs state|weekly D|playoffs|live W|detail a-b|teams W [full]'); process.exit(2); }
+} else { console.error('usage: node pull.mjs state|weekly D|playoffs|live W|detail a-b|teams W [full]|nfl D'); process.exit(2); }
