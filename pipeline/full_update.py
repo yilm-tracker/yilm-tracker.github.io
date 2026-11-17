@@ -35,6 +35,7 @@ def team_of(pid):
     if pid in A:return A[pid][1]
     return META.get(pid,[None,None,''])[2] if META.get(pid) else ''
 hw={};wact={};wmx={};pairs={}
+import irtx as _IX;XO={}  # IR / taxi at each player's kickoff leave the best lineup and Bench (2026-11-17; no irtx.json: nothing)
 import sys as _sy;_sy.path.insert(0,P);import lg
 def optimal(pool):return [q for q in lg.optimal(pool) if q is not None]
 # a player in two rosters' players_points in one week would be counted twice (Sleeper keeps a player traded after his
@@ -56,7 +57,8 @@ for m in M7['M7']:
     s=round(sum(pp.get(p,0) for p in st if p and p!='0'),2)
     if abs(s-m['pts'])>=0.02:print('WARNING full_update.py: roster',rid,'starters sum',s,'!= Sleeper total',m['pts'],'; starters without points:',[p for p in st if p and p!='0' and p not in pp],file=sys.stderr)  # warn, never stop the build (2026-11-08)
     wact[rid]=m['pts']
-    op=optimal([{'pos':pos(p),'pts':v} for p,v in pp.items()]);wmx[rid]=round(sum(q['pts'] for q in op),2)
+    XO[rid]=_IX.out(DONE,rid,[(p,team_of(p)) for p in pp],set(st))
+    op=optimal([{'pos':pos(p),'pts':v} for p,v in pp.items() if p not in XO[rid]]);wmx[rid]=round(sum(q['pts'] for q in op),2)
     assert wmx[rid]>=m['pts']-1e-9
     pairs.setdefault(m['mid'],[]).append(rid)
 HI['w'][str(DONE)]=hw
@@ -108,9 +110,10 @@ for w in range(1,DONE+1):
             o=[]
             for x in sx.split(','):
                 if not x:continue
-                f=x.split('|');o.append({'pid':f[0],'pos':HI['m'][f[0]][0],'pts':float(f[3]),'opp':f[4] if len(f)>4 else 'x'})
+                f=x.split('|');o.append({'pid':f[0],'pos':HI['m'][f[0]][0],'pts':float(f[3]),'opp':f[4] if len(f)>4 else 'x','nfl':f[1] if len(f)>1 else ''})
             return o
         st_,bn_=par(v[2]),par(v[3])
+        _x=_IX.out(w,rid,[(q['pid'],q['nfl']) for q in bn_],{q['pid'] for q in st_});bn_=[q for q in bn_ if q['pid'] not in _x]
         for q in st_:
             a=agg.setdefault(rid,{});a[q['pos']]=a.get(q['pos'],0)+q['pts'];c=stc.setdefault(rid,{});c[q['pos']]=c.get(q['pos'],0)+1
             if not q['opp'] or (q['pts']==0 and not _DET.get(str(w),{}).get(q['pid'],{}).get('gp',1)):  # no game: bye week (or inactive)
@@ -164,7 +167,7 @@ OK=L('ro_ranks.json');K['_bye']=OK['_bye']
 json.dump(K,open(P+'ro_ranks.json','w'));json.dump(PG,open(P+'ro_pg.json','w'))
 # ---------- 5. compare extras: bench per week, traded players' weekly points, ages
 for m in M7['M7']:
-    t=season.RN[m['rid']];b=round(sum(v for p,v in m['pp'].items() if p not in m['st']),2)
+    t=season.RN[m['rid']];b=round(sum(v for p,v in m['pp'].items() if p not in m['st'] and p not in XO.get(m['rid'],{})),2)
     if len(X['bench'][t])<DONE:X['bench'][t].append(b)
 for pid in X['txw']:
     a=A.get(pid);X['txw'][pid]=[(v if v is not None else 0) for v in a[2][:DONE]] if a else (X['txw'][pid]+[0]*DONE)[:DONE]

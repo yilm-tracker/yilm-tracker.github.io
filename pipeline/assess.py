@@ -70,6 +70,7 @@ def _opt(pool):return lg.optsum(pool)
 def lastweek(t):
     w=WK[t][-1];d=HI['w'][str(G)][str(RID[t])]
     st=_parse(d[2]);bn=_parse(d[3])
+    import irtx as _IX;_x=_IX.out(G,RID[t],[(x.split('|')[0],x.split('|')[1]) for x in d[3].split(',') if x],{q['pid'] for q in st});bn=[q for q in bn if q['pid'] not in _x]  # IR / taxi at kickoff (2026-11-17)
     sc=sum(q['pts'] for q in st);pj=sum(q['proj'] for q in st)
     assert abs(sc-w[2])<0.02,(t,sc,w[2])
     top=max(st,key=lambda q:q['pts']);flop=min([q for q in st if q['pos'] not in('K','DEF')],key=lambda q:q['pts']-q['proj'])

@@ -105,6 +105,14 @@ def wk_done(w):
 DONE=0
 while DONE<REG and wk_done(DONE+1):DONE+=1
 log('completed regular-season weeks:',DONE)
+# IR / taxi lists per week (irtx.py, 2026-11-17): a fresh CI capture records the coming week's lists (current season, full
+# replay only; irtx.record itself runs in CI only), then the workspace gets the repo's history/raw/<year>/irtx.json
+IRX=os.path.join(RAW,'irtx.json')
+if not BO and not PAST and DONE<REG:
+    sys.path.insert(0,SRC);import irtx
+    irtx.record(DONE+1,{str(r['roster_id']):{'ir':r.get('reserve') or [],'tx':r.get('taxi') or []} for r in ROS},path=IRX)
+if os.path.exists(IRX):shutil.copy(IRX,os.path.join(WS,'irtx.json'))
+elif os.path.exists(os.path.join(WS,'irtx.json')):os.remove(os.path.join(WS,'irtx.json'))
 # ---------- seed files
 if BO:
     subprocess.run(['python3',os.path.join(WS,'run.py'),'build'],cwd=WS,env=ENV,check=True);sys.exit()

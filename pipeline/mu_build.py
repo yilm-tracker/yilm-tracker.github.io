@@ -573,17 +573,29 @@ def hp(sp,inj=None):
     pid,tm,proj,act,o=sp.split('|');pos,name=META[pid]
     ha='@' if o.startswith('@') else 'vs';opp=o.lstrip('@') or None
     return [pid,pos,name,tm,float(proj),float(act),opp,inj,True,ha,HW[0]]
-def hlineups(A,B):
+import irtx as _IX
+def hbench(A,B,ra=None,rb=None):
+    """a completed week's Bench rows per side (hist format), without the players irtx lists as IR / taxi at their own
+    kickoff (2026-11-17), and the Injured reserve / Taxi squad bands for those (xbands; '' when none). Week = HW[0]."""
+    S=[]
+    for X,r in ((A,ra),(B,rb)):
+        st={x.split('|')[0] for x in X[2].split(',') if x};rows=[hp(x) for x in X[3].split(',') if x]
+        d=_IX.out(HW[0],r,[(p[0],p[3]) for p in rows],st) if r is not None else {}
+        S.append((sorted([p for p in rows if p[0] not in d],key=lambda q:-q[5]),d,rows))
+    xb=xbands(lambda tag:tuple([p for p in R_ if d_.get(p[0])==tag] for _,d_,R_ in S)) if S[0][1] or S[1][1] else ''
+    return S[0][0],S[1][0],xb
+def hlineups(A,B,ra=None,rb=None):
     sa=[hp(x) for x in A[2].split(',')];sb=[hp(x) for x in B[2].split(',')]
     ta,tb=A[1],B[1];pa,pb=sum(x[4] for x in sa),sum(x[4] for x in sb)
     hdr=f'<div class="msh lsh">Lineups</div>{CTL([(VSW,'Order','Lineup',LSW),(LDW,'Stats','Rank',RKW),(LCW,'Colors','','')])}<div class="lnote">green = beat projection · red = fell short</div>'
     o=[ptsrow(sa,sb)]
     o+=['<div class="lpv">']+[lrow(x,y,'') for x,y in zip(sa,sb)]+['</div>',sview(sa,sb)]
-    ba=sorted([hp(x) for x in A[3].split(',') if x],key=lambda q:-q[5]);bb=sorted([hp(x) for x in B[3].split(',') if x],key=lambda q:-q[5])
+    ba,bb,xb=hbench(A,B,ra,rb)
     if ba or bb:
         o.append(BH_HIST)
         o+=[lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,'') for k in range(max(len(ba),len(bb)))]
-    return '<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+optblock(sa,sb,sa+ba,sb+bb,ta,tb,False,BH_HIST)+'</div>'
+    o.append(xb)
+    return '<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+optblock(sa,sb,sa+ba,sb+bb,ta,tb,False,BH_HIST,xb=xb)+'</div>'
 def hcard(w,a,b,A,B):
     xa=WK[a][w-1];xb=WK[b][w-1]
     side=lambda x,X,cl,won:(f'<div class="mus {cl}"><span class="hres {"w" if won else "l"}">{"WON" if won else "LOST"}</span><b>{e(x)}</b>'
@@ -626,7 +638,7 @@ for w in range(DONE,0,-1):
     hr=''.join(f'<input type="radio" name="hw{w}" id="hw{w}-{i}" class="lr"{" checked" if i==0 else ""}>' for i in range(lg.N//2))
     _hx=lambda t:WK[t][w-1]
     hc=f'<div class="mpk hwc{w}" role="tablist">'+''.join(prow_(f'hw{w}-{i}',a,b,_hx(a)[4],_hx(b)[4],streak(a,w),streak(b,w),R2[str(RID[a])][1],R2[str(RID[b])][1],True,_rw(a,w),_rw(b,w),None,_hpj(R2[str(RID[a])]),_hpj(R2[str(RID[b])]),_hfm(a,w),_hfm(b,w)) for i,(a,b) in enumerate(gl))+'</div>'
-    hpn=''.join(f'<div class="mup hwp{w}-{i}">{hlineups(R2[str(RID[a])],R2[str(RID[b])])}{hcard(w,a,b,R2[str(RID[a])],R2[str(RID[b])])}</div>' for i,(a,b) in enumerate(gl))
+    hpn=''.join(f'<div class="mup hwp{w}-{i}">{hlineups(R2[str(RID[a])],R2[str(RID[b])],RID[a],RID[b])}{hcard(w,a,b,R2[str(RID[a])],R2[str(RID[b])])}</div>' for i,(a,b) in enumerate(gl))
     hist+=f'<div class="mwx mwx-{w}">'+hr+hc+hpn+'</div>'
     css+=''.join(f'#hw{w}-{i}:checked~.hwc{w} label[for="hw{w}-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#hw{w}-{i}:checked~.hwp{w}-{i}{{display:block}}' for i in range(lg.N//2))
 wr=''.join(f'<input type="radio" name="mwk" id="mw-{w}" class="lr"{" checked" if w==WT else ""}>' for w in range(1,WM+1))

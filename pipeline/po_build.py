@@ -133,9 +133,9 @@ def flineup(a,b,w):
     sa=[MB.hp(x) for x in A_[2].split(',')];sb=[MB.hp(x) for x in B_[2].split(',')]
     hdr=f'<div class="msh lsh">Lineups</div>{MB.CTL([(MB.VSW,'Order','Lineup',MB.LSW),RKROW])}<div class="lnote">green = beat projection · red = fell short</div>'
     o=[MB.ptsrow(sa,sb)]+['<div class="lpv">']+[MB.lgs(MB.lrow(x,y,''),i) for i,(x,y) in enumerate(zip(sa,sb))]+['</div>',MB.sview(sa,sb)]
-    ba=sorted([MB.hp(x) for x in A_[3].split(',') if x],key=lambda q:-q[5]);bb=sorted([MB.hp(x) for x in B_[3].split(',') if x],key=lambda q:-q[5])
+    ba,bb,xb=MB.hbench(A_,B_,RIDN[a],RIDN[b])   # IR / taxi at kickoff leave Bench for their bands (2026-11-17)
     if ba or bb:o+=[MB.BH_HIST]+[MB.lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,'') for k in range(max(len(ba),len(bb)))]
-    h='<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+MB.optblock(sa,sb,sa+ba,sb+bb,A_[1],B_[1],False,MB.BH_HIST)+'</div>'
+    h='<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+xb+'</div>'+MB.optblock(sa,sb,sa+ba,sb+bb,A_[1],B_[1],False,MB.BH_HIST,xb=xb)+'</div>'
     return h.replace('for="lo-a"','for="blo-a"').replace('for="lo-o"','for="blo-o"').replace('for="lv-p"','for="blv-p"').replace('for="lv-s"','for="blv-s"').replace('for="rk-t"','for="brk-t"').replace('for="rk-g"','for="brk-g"')
 import po_cols
 def _plive(t,w):
