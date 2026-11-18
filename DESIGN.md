@@ -368,11 +368,14 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 - **Standings at 874L (760-1099px band)**: the phone card is 680px wide, so 180-191px stay empty between the end of the stat lines and the record column (BBP 187-191px, YILM 180-191px; 35-39px in the phone column) (found 2026-11-14 with the 712px column; not changed).
 - **Compare › Players at plain 402 / 360 CSS px** (2026-11-18, not changed: no phone lays out there; 402P = 472 CSS px): names still ellipsised at plain 402 (BBP 36, YILM 33, retro 9 rows per mode: Concepcion, Smith-Njigba, Croskey-Merritt, Washington) and plain 360 (BBP 639, YILM 748, retro 234; 75px name cells, GP text 11.5px from the pre-existing `max-width:370px` rule). Options if ever needed: an 11px step and approved short forms (e.g. "Smith-N.").
 - **Compare losing-side grey `#7d8597`** on ordinary player rows: 3.63:1 BBP, 2.72:1 YILM (under 4.5; pre-existing; design audit item 3). Band rows already use `--steel`.
+- **Classic: past weeks' Actual lineups carry no slot-group line** (`.lgs` missing from `mu_build.hlineups`): existing inconsistency, not fixed.
+- **Retro lineup rows differ from Classic by decision (2026-11-18)**; the same treatment for Classic / YILM is undecided.
 
 ## 9. Decision log
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-18 · Retro (BBP) Matchups / Playoffs lineup rows: dark framed bands on the panel (`--blue-3`, 1px black inset frame, 2px black lip `0 2px 0 0 --black`, 6px gap = 2px lip + 4px panel after every row, strip, slate header, "Points gained" rule and above the result card at >=1100px; slot-group line removed; details retro/RETRO.md rule 1) · Nicklaus 16:11 / 17:18 ET after mocks D, E, E without frame and shadows S1-S3; the flat `--blue-2` rows read flat against the panel; the sideways `--sh-hard` ran into the panel frame (rows end 1.5px from it). Classic and YILM unchanged.
 - 2026-11-18 · Compare › Players: NFL logos replace the team text chips (GP line below 760px, after the name from 760px; `cnFit`), Injured reserve / Taxi squad bands after DEF (Matchups' band component, no winner shading, heads exclude them), "–" for missing figures, and Best player / Startable / 10+ pts/g exclude IR and taxi (Points-weighted age unchanged); no eligible player = blank side · Nicklaus 2026-11-18 08:43 ET (CP-1 mock + five recommendations); IR / taxi players were counted as playable and the text chips were the last ones on the page
 - 2026-11-17 · Standings names fit the widest record of both modes and each row's wider ▲/▼ marker, so H2H / Median never refits a name (396 rows, 0 differ) · Nicklaus 14:35 ET (approved 16:12); some H2H names wrapped or grew in Median only (row up to 23px taller)
 - 2026-11-17 · Rosters last-game header `.ralh`: `text-wrap: pretty`, as the subtitles and `.ran` · it ended on one word at plain 360 / 402 (6 → 0)
