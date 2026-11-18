@@ -1257,10 +1257,10 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 .pane-mu .cr.lu .cv .fs.pj,.pane-po .cr.lu:not(.psr) .cv .fs.pj{box-shadow:none!important;background:none!important}
 .pane-mu .cr.lu::after,.pane-po .cr.lu:not(.psr)::after{left:calc(50% - .5px);top:0;bottom:0;width:1px;background:var(--line);z-index:1}
 .pane-mu .cr.lu.lgs::before,.pane-po .cr.lu:not(.psr).lgs::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--row-divider);z-index:2}
-.pane-mu .lbh,.pane-po .lbh:not(.psbh){display:flex;align-items:center;gap:14px;margin:0 -10.5px;padding:11px 16px;background:var(--pg);border:0!important;font:700 11.5px/1 var(--display);letter-spacing:.2em;text-transform:uppercase;white-space:nowrap}
-.pane-mu .lbh b,.pane-po .lbh:not(.psbh) b{font-weight:700;color:var(--text-dim)}
-.pane-mu .lbh i,.pane-po .lbh:not(.psbh) i{flex:1;min-width:12px;height:1px;background:var(--line)}
-.pane-mu .lbh small,.pane-po .lbh:not(.psbh) small{flex:none;font:500 11px/1 var(--body);letter-spacing:0;text-transform:none;color:var(--steel);text-align:right}
+.pane-mu .lbh,.pane-po .lbh:not(.psbh),.pane-cm .lbh.cxb{display:flex;align-items:center;gap:14px;margin:0 -10.5px;padding:11px 16px;background:var(--pg);border:0!important;font:700 11.5px/1 var(--display);letter-spacing:.2em;text-transform:uppercase;white-space:nowrap}
+.pane-mu .lbh b,.pane-po .lbh:not(.psbh) b,.pane-cm .lbh.cxb b{font-weight:700;color:var(--text-dim)}
+.pane-mu .lbh i,.pane-po .lbh:not(.psbh) i,.pane-cm .lbh.cxb i{flex:1;min-width:12px;height:1px;background:var(--line)}
+.pane-mu .lbh small,.pane-po .lbh:not(.psbh) small,.pane-cm .lbh.cxb small{flex:none;font:500 11px/1 var(--body);letter-spacing:0;text-transform:none;color:var(--steel);text-align:right}
 @media (min-width:1100px){.pane-mu .lbh{margin-inline:0}}  /* desktop Matchups rows sit at 0; Playoffs rows keep -10.5px, so its strip does too */
 
 /* 2026-11-05 (Nicklaus) TEXT FLOOR: no text under 11 CSS px (9.35pt on phones at scale 0.85), both sites.
@@ -1407,3 +1407,21 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 /* 2026-11-17 (job 2): the Rosters last-game header .ralh ("Week 10 · 163.0–81.5 vs Nuts in the Face") wraps like the subtitles and
    the assessment note .ran (job 1b: text-wrap:pretty), so the opponent's name never leaves one word alone on the last line (plain 360 / 402) */
 .ralh span{text-wrap:pretty}
+
+/* 2026-11-18 COMPARE PLAYERS: LOGOS, IR / TAXI BANDS. Compare › Players IR / Taxi bands = the Matchups band strip (values above); in Compare it spans the rows (margin 0) */
+.pane-cm .lbh.cxb{margin:12px 0 0}
+/* Compare's own .cpn .msh small (white-space normal, min-width 0) reached the band note; restore the Matchups strip's computed values */
+.pane-cm .lbh.cxb small{white-space:nowrap;min-width:auto}
+/* Compare logo = Matchups lineup logo (22 x 20, margin -2px 0, 4px after the name, as .cr.lu at row scale 1); moved to the GP line
+   by cnFit (.cnf1) it follows the GP text at that line's own 6px gap, the age (.cnf2) likewise */
+.pane-cm .cr .cnm b{gap:4px}
+.pane-cm .cnm small>.nfl.tm.opp{flex:none;width:22px!important;height:20px!important;margin:-4px 0!important;top:0}
+/* the GP line keeps the 17px it had with the old team chip (.nfl height 17px, top of this file), so rows do not shrink (54.94 -> 54.00 at 402P without it) */
+.pane-cm .cr .cnm small{min-height:17px}
+/* name-line logo. Margin -4px 0 (the GP-line logo's): a 12px layout box, so the 20px logo never sets the name line's height
+   (with -2px it made rows 55.00 vs 54.94 before at 440P / 874L / 956L / 1440); paint unchanged (align-self:center). top -.47px puts its centre on the
+   name's cap centre (was +0.47px below it; Matchups lineup +0.16px) */
+.pane-cm .cn .cnm b>.nfl.tm{margin:-4px 0!important;position:relative;top:-.47px}
+
+/* band row values have no winner, so neither side takes the losing-side grey #7d8597 (3.63:1 BBP / 2.72:1 YILM on the row): --steel (5.44 / 5.02:1) */
+.pane-cm .cr.cxr .cv{color:var(--steel)}

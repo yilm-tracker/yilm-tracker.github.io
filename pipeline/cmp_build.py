@@ -48,7 +48,8 @@ def row(l,x,y,va=None,vb=None,low=False):
     return f'<div class="mcr"><span class="{ca}">{x}</span><em>{l}</em><span class="{cb}">{y}</span></div>'
 sec=lambda t,body,sub='':f'<div class="msh">{t}{f"<small>{sub}</small>" if sub else ""}</div><div class="mcmp">{body}</div>'
 ppt=lambda p,lab=None:f'<i class="pp sm p-{p.lower()}"><span class="ct">{lab or p}</span></i>'
-active=lambda t:[p for p in R[t] if p[7]!='TX']
+active=lambda t:[p for p in R[t] if p[7]!='TX']   # taxi dropped, IR counted: Points-weighted age only (it describes the roster)
+elig=lambda t:[p for p in R[t] if p[7] not in('IR','TX')]   # eligible to start (no IR, no taxi): Players position groups, Best player, Startable, 10+ pts/g
 rk=lambda p:K[p[0]][0] if K.get(p[0]) and p[4]>0 else None
 # ---------- Overview
 def overview(a,b):
@@ -116,12 +117,12 @@ def positions(a,b):
     def blocks(mode):
         rf=rk if mode=='p' else (lambda q:PG[q[0]][0] if PG.get(q[0]) and PG[q[0]][1]>=3 else None)
         def best(t,p):
-            r=[q for q in active(t) if q[2]==p and rf(q)];return min(r,key=rf) if r else None
+            r=[q for q in elig(t) if q[2]==p and rf(q)];return min(r,key=rf) if r else None
         bs=''
         for p in POS:
             pa,pb=best(a,p),best(b,p)
             bs+=f'<div class="cr cbp">{cn(pa,"a",mode)}<em>{p}</em>{cn(pb,"b",mode)}</div>'
-        cnt=lambda t,p:sum(1 for q in active(t) if q[2]==p and rf(q) and rf(q)<=TOPN[p])
+        cnt=lambda t,p:sum(1 for q in elig(t) if q[2]==p and rf(q) and rf(q)<=TOPN[p])
         st=''.join(row(ppt(p,f'{p} ≤{TOPN[p]}'),str(cnt(a,p)),str(cnt(b,p)),cnt(a,p),cnt(b,p)) for p in POS)
         ta,tb=sum(cnt(a,p) for p in POS),sum(cnt(b,p) for p in POS)
         st+=row('Total',str(ta),str(tb),ta,tb)
@@ -130,6 +131,19 @@ def positions(a,b):
     return f'<div class="cs cs-po">{sec("Points per start",ps)}<div class="cpg pseg" role="group" aria-label="Player points"><label for="cs-p">Pts</label><label for="cs-g">/ Gm</label></div>{blocks("p")}{blocks("g")}</div>'
 # ---------- Players (mirrored, one line each)
 PG=json.load(open(P+'ro_pg.json'))
+XB=(('IR','Injured reserve','not eligible to start'),('TX','Taxi squad','not eligible to start'))   # = mu_build.XB
+def _slots():  # = mu_build: league reserve_slots / taxi_slots (YILM lg.L; BBP pull8a.json, else the Paper Trail capture); never fatal
+    try:
+        import lg as _lg;return int(_lg.L.get('reserve_slots') or 0),int(_lg.L.get('taxi_slots') or 0)
+    except Exception:pass
+    try:a=json.load(open(P+'pull8a.json'))
+    except Exception:a={}
+    if a.get('reserve_slots') is not None or a.get('taxi_slots') is not None:return a.get('reserve_slots') or 0,a.get('taxi_slots') or 0
+    try:
+        s_=json.load(open(P+f"history/paper/sleeper_{a['state']['league_season']}.json",encoding='utf-8'))['league']['settings'];return s_.get('reserve_slots') or 0,s_.get('taxi_slots') or 0
+    except Exception:return 0,0
+try:XSL=dict(zip(('IR','TX'),(int(x) for x in _slots())))
+except Exception:XSL={'IR':0,'TX':0}
 def cn(p,side,mode='p'):
     if p is None:return f'<span class="cn {side}"></span>'
     r=rk(p) if mode=='p' else (PG[p[0]][0] if PG.get(p[0]) and PG[p[0]][1]>=3 else None);lab=f'{p[2]}{r}' if r else p[2]
@@ -137,17 +151,19 @@ def cn(p,side,mode='p'):
     ag=age(p[0])
     agh=f'<em class="pag {"ay" if ag<27 else "ap" if ag<31 else "ao"}">{ag:.1f}</em>' if ag else ''
     sm2=f'<span class="gp">{p[6]} GP</span>' if mode=='g' else agh
-    sq=f'<i class="pq p-{p[2].lower()}{" l3" if (r and r>=100) or (p[2]=="DEF" and r and r>=10) else ""}"><span class="pqi"><span>{p[2]}</span>{f"<b>{r}</b>" if r else "<b>–</b>" if mode=="g" and rk(p) else ""}</span></i>'
-    return f'<span class="cn {side}">{sq}<span class="cnm"><b>{ir}<span>{e(pname(p))}</span>{agh}</b><small>{badge(p[3])}<span class="gp">{p[6]} GP</span></small></span></span>'
-def cell(p,side,mode):
+    sq=f'<i class="pq p-{p[2].lower()}{" l3" if (r and r>=100) or (p[2]=="DEF" and r and r>=10) else ""}"><span class="pqi"><span>{p[2]}</span><b>{r or "–"}</b></span></i>'
+    mk=badge(p[3]).replace('<em class="nfl','<em class="nfl tm',1) if p[3] else ''   # 2026-11-18: the Matchups lineup logo, after the name (no team: nothing, as Matchups)
+    return f'<span class="cn {side}">{sq}<span class="cnm"><b>{ir}<span>{e(pname(p))}</span>{mk}{agh}</b><small><span class="gp">{p[6]} GP</span></small></span></span>'
+def cell(p,side,mode,xb=False):
     if p is None:return f'<span class="cn {side}"></span><span class="cv {side}"></span>'
     v=p[4] if mode=='p' else (p[4]/p[6] if p[6] else 0)
+    if xb and not p[6]:return cn(p,side,mode)+f'<span class="cv {side}">–</span>'   # band row, no games: "–" in Pts and / Gm (Matchups' band rule); ordinary rows keep 0.0 (heads, shading)
     return cn(p,side,mode)+f'<span class="cv {side}">{v:.1f}</span>'
 def players(a,b,mode):
     val=(lambda p:p[4]) if mode=='p' else (lambda p:p[4]/p[6] if p[6] else 0)
     o=[]
     for pos in POS:
-        la=sorted([p for p in active(a) if p[2]==pos],key=lambda p:-val(p));lb=sorted([p for p in active(b) if p[2]==pos],key=lambda p:-val(p))
+        la=sorted([p for p in elig(a) if p[2]==pos],key=lambda p:-val(p));lb=sorted([p for p in elig(b) if p[2]==pos],key=lambda p:-val(p))
         if not la and not lb:continue
         if mode=='p':ta,tb=sum(map(val,la)),sum(map(val,lb))
         else:ta,tb=sum(p[4] for p in la)/max(1,sum(p[6] for p in la)),sum(p[4] for p in lb)/max(1,sum(p[6] for p in lb))
@@ -156,6 +172,15 @@ def players(a,b,mode):
             pa=la[k] if k<len(la) else None;pb=lb[k] if k<len(lb) else None;w=''
             if pa and pb:va,vb=val(pa),val(pb);w=' wa' if va>vb+1e-9 else ' wb' if vb>va+1e-9 else ''
             o.append(f'<div class="cr{w}">{cell(pa,"a",mode)}{cell(pb,"b",mode)}</div>')
+    # IR / Taxi bands after DEF (2026-11-18): Matchups' band component (.msh.lbh, XB labels / note), rows mirrored A / B,
+    # sorted by this mode's value, no winner shading; a band only when the league has the slot type and either team uses it
+    for tag,lab,note in XB:
+        if not XSL.get(tag):continue
+        la,lb=(sorted([p for p in R[t] if p[7]==tag],key=lambda p:(-val(p),POS.index(p[2]) if p[2] in POS else 9,pname(p))) for t in (a,b))
+        if not(la or lb):continue
+        o.append(f'<div class="msh lbh cxb"><b>{lab}</b><i></i><small>{note}</small></div>')
+        for k in range(max(len(la),len(lb))):
+            o.append(f'<div class="cr cxr">{cell(la[k] if k<len(la) else None,"a",mode,True)}{cell(lb[k] if k<len(lb) else None,"b",mode,True)}</div>')
     return ''.join(o)
 def playersec(a,b):
     return f'<div class="cs cs-pl"><div class="cpg pseg" role="group" aria-label="Player points"><label for="cs-p">Pts</label><label for="cs-g">/ Gm</label></div><div class="cpl cpl-p">{players(a,b,"p")}</div><div class="cpl cpl-g">{players(a,b,"g")}</div></div>'
@@ -163,7 +188,7 @@ def playersec(a,b):
 def depth(a,b):
     ba,bb=stt.mean(X['bench'][a]),stt.mean(X['bench'][b])
     tot=lambda t:sum(p[4] for p in R[t])
-    n10=lambda t:sum(1 for p in active(t) if p[6] and p[4]/p[6]>=10)
+    n10=lambda t:sum(1 for p in elig(t) if p[6] and p[4]/p[6]>=10)
     cnt=lambda t,k:sum(1 for p in R[t] if p[7]==k)
     body=(row('Bench pts / wk',f'{ba:.1f}',f'{bb:.1f}',ba,bb)+row('Bench share',f'{ba/(ba+T[a][5])*100:.0f}%',f'{bb/(bb+T[b][5])*100:.0f}%',ba/(ba+T[a][5]),bb/(bb+T[b][5]))+
       row('Roster pts',f'{tot(a):.0f}',f'{tot(b):.0f}',tot(a),tot(b))+row('10+ pts/g players',str(n10(a)),str(n10(b)),n10(a),n10(b))+

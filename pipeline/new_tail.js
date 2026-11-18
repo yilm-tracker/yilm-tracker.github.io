@@ -632,4 +632,39 @@ if(!FL())sosFit();(document.fonts&&document.fonts.ready||Promise.resolve()).then
  document.documentElement.style.setProperty('--tnh',h+'px');document.querySelectorAll('.mwx>.mpk').forEach(m=>{if(!m.offsetParent)return;m.classList.toggle('nst',h+16+m.scrollHeight>innerHeight)})}
  const go=()=>{if(!q)q=requestAnimationFrame(mpk)};go();addEventListener('resize',go);window.visualViewport&&visualViewport.addEventListener('resize',go);
  document.addEventListener('change',go);document.addEventListener('panebuilt',go);document.fonts&&document.fonts.ready.then(go)})();
+// 2026-11-18 COMPARE PLAYERS: LOGOS, IR / TAXI BANDS: Compare name line fit (cnFit). The NFL logo sits after the name, as in Matchups lineup rows; when the
+// name line (name + logo + age) does not fit its column, the steps are Matchups' luFit order: the logo moves to the end of the
+// GP line, then the age, then the name shrinks in 0.5px steps to 12px. Read all rows, then write all (memory rule 2), per step.
+(function(){const rg=document.createRange();
+function ov(b){const nm=b.querySelector(':scope>span');if(!nm)return false;rg.selectNodeContents(nm);const tr=rg.getBoundingClientRect(),c=b.closest('.cnm').getBoundingClientRect();
+  const ks=[...b.children].filter(k=>k!==nm).map(k=>k.getBoundingClientRect());const all=[tr,...ks];
+  const nr=nm.getBoundingClientRect();return tr.right>nr.right+.05||tr.left<nr.left-.05||Math.max(...all.map(r=>r.right))>c.right+.05||Math.min(...all.map(r=>r.left))<c.left-.05||ks.some(k=>k.left<tr.right-.05&&k.right>tr.left+.05)}
+function cnFit(){const B=[...document.querySelectorAll('.cpn .cnm>b')].filter(b=>b.offsetParent);if(!B.length)return;
+  B.forEach(b=>{const s=b.parentElement.querySelector('small');s&&s.querySelectorAll(':scope>.nfl.tm,:scope>.pag').forEach(x=>{x.classList.remove('opp');b.appendChild(x)});
+    const nm=b.querySelector(':scope>span'),lg=b.querySelector(':scope>.nfl.tm'),ag=b.querySelector(':scope>.pag');if(lg)nm.after(lg);if(ag)b.appendChild(ag);if(nm)nm.style.fontSize='';b.style.minHeight='';b.classList.remove('cnf1','cnf2')});
+  // below 760px (every phone in portrait; Compare's wide form starts at 760px, DESIGN.md §7) the logo is always on the GP line,
+  // every row, every list, both modes; from 760px it sits after the name and moves only by the per-list step below (safety net)
+  const NW=!matchMedia('(min-width:760px)').matches;
+  if(NW)B.forEach(b=>{const x=b.querySelector(':scope>.nfl.tm'),s=b.parentElement.querySelector('small');if(x&&s){x.classList.add('opp');s.appendChild(x);b.classList.add('cnf1')}});
+  let bad=B.filter(ov);
+  // one decision per list (as the Standings stat lines, brief Q1): if any row of a list (one mode's Players list, or Best player) needs a
+  // step, every row of that list takes it, so logos never sit on the name line in some rows and on the GP line in others
+  const grp=b=>b.closest('.cpl .cbpw,.cpl')||b.closest('.cpn');const grow=L=>{const G=new Set(L.map(grp));return B.filter(b=>G.has(grp(b)))};
+  // a moved logo / age is kept only if the GP line still fits (DESIGN.md §6 luFit: "kept only if the game line still fits");
+  // GP line too long = a Range over its GP text past the text's box (ellipsis) or any item past the cell. Logo: per list (a list whose
+  // GP line fails anywhere keeps every logo on the name line); age: per row. Write all, read all, write the reverts.
+  const og=b=>{const s=b.parentElement.querySelector('small');if(!s)return false;const c=b.closest('.cnm').getBoundingClientRect();
+    return [...s.children].some(k=>{const kb=k.getBoundingClientRect();if(k.matches('.gp')){rg.selectNodeContents(k);const r=rg.getBoundingClientRect();if(r.right>kb.right+.05||r.left<kb.left-.05)return true}return kb.right>c.right+.05||kb.left<c.left-.05})};
+  const back=(b,sel,cls)=>{const s=b.parentElement.querySelector('small'),x=s&&s.querySelector(':scope>'+sel);if(!x)return;x.classList.remove('opp');if(x.classList.contains('nfl'))b.querySelector(':scope>span').after(x);else b.appendChild(x);b.classList.remove(cls)};
+  const mv=(sel,cls,all)=>{const M=[];(all?grow(bad.filter(b=>b.querySelector(':scope>'+sel))):bad).forEach(b=>{const x=b.querySelector(':scope>'+sel),s=b.parentElement.querySelector('small');if(x&&s){if(x.classList.contains('nfl'))x.classList.add('opp');s.appendChild(x);b.classList.add(cls);M.push(b)}});
+    const F=M.filter(og);(all?M.filter(b=>new Set(F.map(grp)).has(grp(b))):F).forEach(b=>back(b,sel,cls));bad=bad.filter(ov)};
+  // a logo moved to the GP line gets .opp: that line's logo rule (rebuild.py .cnm small .nfl.opp.n-X), as Matchups' opponent logo
+  if(!NW)mv('.nfl.tm','cnf1',1);mv('.pag','cnf2',0);   // logo: per list (only rows that have one decide); age: per row
+  // a shrunk name keeps its row's height (name line held at its full-size height, read before any shrink; was 54.39 vs 54.94 at 360P)
+  const H0=new Map(bad.map(b=>[b,b.getBoundingClientRect().height]));
+  let f=14.5;while(bad.length&&f>12){f-=.5;bad.forEach(b=>b.querySelector(':scope>span').style.fontSize=f+'px');bad=bad.filter(ov)}
+  H0.forEach((h,b)=>{if(b.querySelector(':scope>span').style.fontSize)b.style.minHeight=h+'px'});
+  window.__cnFit={rows:B.length,logo:B.filter(b=>b.classList.contains('cnf1')).length,age:B.filter(b=>b.classList.contains('cnf2')).length,still:bad.map(b=>b.textContent)}}
+let q=0;const go=()=>{if(!q)q=requestAnimationFrame(()=>{q=0;cnFit()})};
+addEventListener('resize',go);document.addEventListener('change',go);document.addEventListener('panebuilt',go);document.fonts&&document.fonts.ready.then(go);window.cnFit=cnFit})();
 </script>
