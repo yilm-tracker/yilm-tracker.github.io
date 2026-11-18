@@ -489,11 +489,9 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .thlg i.dot{width:9px;height:9px;border-radius:50%;background:var(--c)}
 .thlg i.tick{width:2px;height:12px;border-radius:1px;background:var(--c)}
 .thlg i.line{width:14px;height:2px;border-radius:1px;background:var(--c)}
-/* desktop: Team Hub opens up into a card grid. From 1100px (was 960px until 2026-11-17, job 1b part D: from 960 to 1099px this
-   beat the 712px 760-1099px page column on specificity, so opening Team Hub widened the header, year strip and nav to 1180px
-   and every other tab went back to 712px; one breakpoint for the page now) */
+/* desktop: Team Hub card grid (legacy v1 classes). Its own 1180px page cap (.wrap:has(#tab-th:checked)) was deleted 2026-11-17 (job 2):
+   from 960px it beat the 712px column, and from 1100px new_head.html's .wrap{max-width:1400px!important} overrode it, so it did nothing */
 @media (min-width:1100px){
-  .wrap:has(#tab-th:checked){max-width:1180px}
   .thkg{grid-template-columns:1fr 1fr}
   .thk.wide{grid-column:1 / -1}
   .thk .thsvg{max-width:560px;margin:0 auto}
@@ -587,7 +585,7 @@ html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!importan
 .dso .rkb{position:relative;top:-1.2px;font-size:inherit!important;line-height:1!important;padding:2px 4px!important;font-family:inherit!important;font-weight:inherit!important}
 .cr.lu.wa .cv.a.act,.cr.lu.wb .cv.b.act,.cr.lu .cv.act .fs{color:var(--chalk)!important}
 .dso .rkb{top:0!important;display:inline-block!important;text-box:trim-both cap alphabetic;padding:5px 6px!important;min-width:0!important;line-height:1!important;vertical-align:baseline}.dso .dpc.s0{display:flex!important;flex-direction:column;align-items:center}
-.ltot{position:sticky;top:calc(var(--navh,0px) + 6px);z-index:6;box-shadow:0 6px 14px -6px rgba(0,0,0,.6)}
+.ltot{position:sticky;top:calc(var(--tnh,0px) + 16px);z-index:6;box-shadow:0 6px 14px -6px rgba(0,0,0,.6)}
 .ltot .lt-v,.ltot small,.ltot em{transition:font-size .15s ease}.ltot{transition:padding .15s ease}
 .ltot.stk{padding-top:6px!important;padding-bottom:6px!important}.ltot.stk .lt-v{font-size:20px!important;line-height:1.05}.ltot.stk small{font-size:11px!important}.ltot.stk em{font-size:10px!important}
 .ltot.stk>span{display:flex!important;flex-direction:row!important;align-items:baseline;gap:8px}.ltot.stk>span:last-child{justify-content:flex-end}.ltot.stk>span:last-child>.llv{order:-1}.ltot.stk .lt-v{font-size:21px!important}
@@ -1406,3 +1404,6 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 .board .side .rr{display:block;font-family:var(--display);font-weight:700;font-size:35.1px;line-height:1;white-space:nowrap}
 .board .side .rr b{line-height:1}
 .board .side>.bkl{font:600 11px/1 var(--display);letter-spacing:.04em;margin:2px -.04em 0 0;font-variant-numeric:tabular-nums;color:var(--text-dim);white-space:nowrap;text-align:right}
+/* 2026-11-17 (job 2): the Rosters last-game header .ralh ("Week 10 · 163.0–81.5 vs Nuts in the Face") wraps like the subtitles and
+   the assessment note .ran (job 1b: text-wrap:pretty), so the opponent's name never leaves one word alone on the last line (plain 360 / 402) */
+.ralh span{text-wrap:pretty}

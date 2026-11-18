@@ -167,9 +167,23 @@ function tnFit(){
   const tnRg=document.createRange();
   // FAAB tiles: one width (the widest balance), so the FAAB labels beside them line up down the board
   const fb=[...document.querySelectorAll('.board .r .nm .fab b')].filter(b=>b.offsetParent);fb.forEach(b=>b.style.width='');const fw=Math.max(0,...fb.map(b=>b.getBoundingClientRect().width/dsK(b)));fb.forEach(b=>b.style.width=fw+'px');
-  // names end 6px short of the widest record tile (W3 4-3) on the board, the same on every row
-  const R=[...document.querySelectorAll('.board .r')].map(r=>[r.querySelector(':scope>.nm'),r.querySelector('.side .rr')]).filter(([n,k])=>n&&k&&n.offsetParent);
-  R.forEach(([n])=>n.style.paddingRight='');const pr=Math.max(0,...R.map(([n,k])=>(n.getBoundingClientRect().right-Math.min(...[...k.children].map(c=>c.getBoundingClientRect().left)))/dsK(n)+6));R.forEach(([n])=>n.style.paddingRight=pr+'px');
+  // names end 6px short of the widest record tile (W3 4-3) on the board, the same on every row. Widest of BOTH modes (2026-11-17, job 2):
+  // every row's record is laid out once as H2H and once as Median (the strings and .rr4 rule of draw()), read in one layout each, then
+  // put back, so a name never refits when H2H / Median switches (Median "10-10" is wider than "5-5")
+  const R=[...document.querySelectorAll('.board .r')].map(r=>[r.querySelector(':scope>.nm'),r.querySelector('.side .rr'),r.dataset.t]).filter(([n,k])=>n&&k&&n.offsetParent);
+  R.forEach(([n])=>n.style.paddingRight='');const gap=([n,k])=>(n.getBoundingClientRect().right-Math.min(...[...k.children].map(c=>c.getBoundingClientRect().left)))/dsK(n)+6;
+  const kb=R.map(([,k])=>[k.firstElementChild,k.firstElementChild&&k.firstElementChild.textContent,k.classList.contains('rr4')]);let pr=0;
+  if(typeof T!=='undefined'&&typeof G!=='undefined')[0,1].forEach(md=>{R.forEach(([,k,t],i)=>{const e=T[t],b=kb[i][0];if(!e||!b)return;const a=md?[e[0]+e[2],e[1]+G-e[2]]:[e[0],e[1]];
+    b.textContent=a[0]+'-'+a[1];k.classList.toggle('rr4',(String(a[0])+String(a[1])).length>2)});pr=Math.max(pr,...R.map(gap))});
+  R.forEach(([,k],i)=>{const [b,tx,c4]=kb[i];if(b)b.textContent=tx;k.classList.toggle('rr4',c4)});pr=Math.max(pr,...R.map(gap));R.forEach(([n])=>n.style.paddingRight=pr+'px');
+  // the ▲/▼ change marker differs by mode too (H2H "▲1", Median "–"): each row's marker keeps the width of the wider of its two
+  // (min-width in em of the marker's own size; the glyphs do not move), so the name fits the same in both modes (2026-11-17, job 2)
+  if(typeof PH!=='undefined'&&typeof PM!=='undefined'&&typeof H!=='undefined'&&typeof M!=='undefined'){const tri=p=>`<svg class="tri" viewBox="0 0 8 7" aria-hidden="true"><path d="${p}"/></svg>`;
+    const mk=(t,md)=>{const dl=(md?PM:PH).indexOf(t)-(md?M:H).indexOf(t);return dl>0?['mv up',tri('M4 0L8 7H0Z')+dl]:dl<0?['mv dn',tri('M0 0H8L4 7Z')+(-dl)]:['mv eq','–']};
+    const V=R.map(([n,,t])=>[n.querySelector('.tn .mv'),t]).filter(([v])=>v);V.forEach(([v])=>v.style.minWidth='');
+    const em=()=>V.map(([v])=>v.getBoundingClientRect().width/(parseFloat(getComputedStyle(v).fontSize)*(v.currentCSSZoom||1)||1));
+    const cur=V.map(([v])=>[v.className,v.innerHTML]),wd=[0,1].map(md=>{V.forEach(([v,t])=>{const [c,h]=mk(t,md);v.className=c;v.innerHTML=h});return em()});
+    V.forEach(([v],i)=>{v.className=cur[i][0];v.innerHTML=cur[i][1];v.style.minWidth=Math.max(wd[0][i],wd[1][i]).toFixed(4)+'em'})}
   document.querySelectorAll('.board .r .tn').forEach(e=>{if(!e.offsetParent)return;e.style.fontSize='';e.style.whiteSpace='nowrap';e.style.lineHeight='';
   const f0=parseFloat(getComputedStyle(e).fontSize),ov=()=>{tnRg.selectNodeContents(e);return tnRg.getBoundingClientRect().right>e.getBoundingClientRect().right+.05};let f=f0;while(ov()&&f>f0*.85){f-=.5;e.style.fontSize=f+'px'}
   if(ov()){e.style.whiteSpace='normal';e.style.lineHeight='1.12';f=f0;e.style.fontSize=f+'px';
@@ -308,14 +322,17 @@ function finFit(){document.querySelectorAll('.dso .rkb').forEach(k=>{if(!k.offse
   const cs=getComputedStyle(vs),fm0=fm(cs),z=k.currentCSSZoom||1;if(!inkTile(k,Math.round(fm0.cap*2)/2))return;
   const g=document.createRange();g.selectNodeContents(vs);const rr=g.getBoundingClientRect(),zz=rr.height/(fm0.asc+fm0.desc),base=rr.top+fm0.asc*zz,mid=base-fm0.cap*zz/2;
   const kr=k.getBoundingClientRect(),d=(mid-(kr.top+kr.bottom)/2)/zz;k.style.setProperty('transform','translateY('+d.toFixed(2)+'px)','important')})}
-// matchup points bar: pinned under the tabs while you scroll the lineups, and slimmed down once pinned
-(function(){const nav=document.querySelector('nav.tabs');let h0=new WeakMap(),raf=0;
+// matchup points bar: pinned under the tabs while you scroll the lineups, and slimmed down once pinned.
+// 2026-11-17 (job 2): pinned 16px under the sticky nav band .tnav (the Matchups games column's gap), using the band's real height --tnh
+// (set here too, so it is current wherever a .ltot can pin; resize + visualViewport resize). --navh (nav.tabs, static since 2026-11-03, so 0) is left for Team Hub's .tqsk.
+(function(){const nav=document.querySelector('nav.tabs');let h0=new WeakMap(),raf=0;const LG=16;
+function bandh(){const b=document.querySelector('.tnav');const v=b?b.getBoundingClientRect().height:0;document.documentElement.style.setProperty('--tnh',v+'px');return v}
 function navh(){const v=nav&&getComputedStyle(nav).position==='sticky'?Math.round(nav.getBoundingClientRect().height):0;document.documentElement.style.setProperty('--navh',v+'px');return v}
-function upd(){raf=0;const nh=navh();document.querySelectorAll('.ltot').forEach(b=>{if(!b.offsetParent)return;const top=b.getBoundingClientRect().top;const pr=b.parentElement.getBoundingClientRect();
- const on=top<=nh+6.5&&pr.top<nh;if(on===b.classList.contains('stk'))return;
+function upd(){raf=0;navh();const nh=bandh();document.querySelectorAll('.ltot').forEach(b=>{if(!b.offsetParent)return;const top=b.getBoundingClientRect().top;const pr=b.parentElement.getBoundingClientRect();
+ const on=top<=nh+LG+0.5&&pr.top<nh+LG-6;if(on===b.classList.contains('stk'))return;
  if(on){const H=b.getBoundingClientRect().height;b.classList.add('stk');b.style.marginBottom=(parseFloat(getComputedStyle(b).marginBottom)||0)+(H-b.getBoundingClientRect().height)+'px'}
  else{b.classList.remove('stk');b.style.marginBottom=''}})}
-const go=()=>{if(!raf)raf=requestAnimationFrame(upd)};addEventListener('scroll',go,{passive:true});addEventListener('resize',go);document.addEventListener('change',go);go()})();
+const go=()=>{if(!raf)raf=requestAnimationFrame(upd)};addEventListener('scroll',go,{passive:true});addEventListener('resize',go);window.visualViewport&&visualViewport.addEventListener('resize',go);document.addEventListener('change',go);document.addEventListener('panebuilt',go);document.fonts&&document.fonts.ready.then(go);go()})();
 // YILM title: one line, as large as fits the width (max 88px)
 (function(){function f(){document.querySelectorAll('h1.yh').forEach(h=>{h.style.fontSize='';const m=parseFloat(getComputedStyle(h).fontSize);const w=h.clientWidth;if(!w)return;const R=document.createRange();R.selectNodeContents(h);let fs=Math.min(88,m*w/R.getBoundingClientRect().width);h.style.fontSize=fs.toFixed(2)+'px';let i=0;while(h.scrollWidth>h.clientWidth+0.5&&i++<20){fs-=0.5;h.style.fontSize=fs+'px'}})}
 f();addEventListener('resize',f);if(document.fonts)document.fonts.ready.then(f)})();

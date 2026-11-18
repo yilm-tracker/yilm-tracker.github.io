@@ -33,7 +33,9 @@ def team_of(pid):
     # change, when he was not in oldp (2026-11-17, job 1b: YILM Week 1 Najee Harris had lost "NYG / DAL")
     if pid in oldp and (oldp[pid][3] or pid in ROSTERED):return oldp[pid][3]
     if pid in A:return A[pid][1]
-    return META.get(pid,[None,None,''])[2] if META.get(pid) else ''
+    # a player Sleeper lists with no NFL team (team null) is a free agent: "FA", as Sleeper shows it (2026-11-17, job 2; a null used to
+    # be written as the string "None", e.g. YILM Tyreek Hill Weeks 4-6)
+    return (META[pid][2] or 'FA') if META.get(pid) else ''
 hw={};wact={};wmx={};pairs={}
 import irtx as _IX;XO={}  # IR / taxi at each player's kickoff leave the best lineup and Bench (2026-11-17; no irtx.json: nothing)
 import sys as _sy;_sy.path.insert(0,P);import lg
