@@ -589,7 +589,7 @@ def hlineups(A,B,ra=None,rb=None):
     ta,tb=A[1],B[1];pa,pb=sum(x[4] for x in sa),sum(x[4] for x in sb)
     hdr=f'<div class="msh lsh">Lineups</div>{CTL([(VSW,'Order','Lineup',LSW),(LDW,'Stats','Rank',RKW),(LCW,'Colors','','')])}<div class="lnote">green = beat projection · red = fell short</div>'
     o=[ptsrow(sa,sb)]
-    o+=['<div class="lpv">']+[lrow(x,y,'') for x,y in zip(sa,sb)]+['</div>',sview(sa,sb)]
+    o+=['<div class="lpv">']+[lgs(lrow(x,y,''),i) for i,(x,y) in enumerate(zip(sa,sb))]+['</div>',sview(sa,sb)]
     ba,bb,xb=hbench(A,B,ra,rb)
     if ba or bb:
         o.append(BH_HIST)
