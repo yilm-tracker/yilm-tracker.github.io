@@ -642,9 +642,11 @@ for w in range(DONE,0,-1):
     hist+=f'<div class="mwx mwx-{w}">'+hr+hc+hpn+'</div>'
     css+=''.join(f'#hw{w}-{i}:checked~.hwc{w} label[for="hw{w}-{i}"]{{border-color:var(--chalk);box-shadow:inset 0 0 0 1px var(--chalk)}}#hw{w}-{i}:checked~.hwp{w}-{i}{{display:block}}' for i in range(lg.N//2))
 wr=''.join(f'<input type="radio" name="mwk" id="mw-{w}" class="lr"{" checked" if w==WT else ""}>' for w in range(1,WM+1))
+_wtg=lambda w:"Proj" if w>W and not FIN else "Now" if w==W else "Final"   # menu tag; the label's tier class follows it (2026-11-18, brief PL-1)
+_WKC={"Proj":"wkf","Now":"wkn","Final":"wkp"}   # future / now / past: styled only in the retro theme (retro/theme.css); Classic and YILM have no rule
 dd=('<details class="dd wdd"><summary>'+''.join(f'<span class="sv wsv-{w}">Week {w}</span>' for w in range(1,WM+1))+
     '<svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>'
-    '<div class="ddm">'+''.join(f'<label for="mw-{w}"><i>{"Proj" if w>W and not FIN else "Now" if w==W else "Final"}</i>Week {w}</label>' for w in range(WM,0,-1))+'</div></details>')
+    '<div class="ddm">'+''.join(f'<label for="mw-{w}" class="{_WKC[_wtg(w)]}"><i>{_wtg(w)}</i>Week {w}</label>' for w in range(WM,0,-1))+'</div></details>')
 sec=('<section class="mux" aria-labelledby="muh">'+'<input type="radio" name="lcol" id="lc-p" class="lr" checked><input type="radio" name="lcol" id="lc-t" class="lr"><input type="radio" name="lopt" id="lo-a" class="lr" checked><input type="radio" name="lopt" id="lo-o" class="lr"><input type="radio" name="lview" id="lv-p" class="lr" checked><input type="radio" name="lview" id="lv-s" class="lr"><input type="radio" name="ldet" id="ld-l" class="lr" checked><input type="radio" name="ldet" id="ld-d" class="lr"><input type="radio" name="lrank" id="rk-t" class="lr" checked><input type="radio" name="lrank" id="rk-g" class="lr">'+wr+f'<div class="posh"><b id="muh">Matchups</b><span id="mlive" class="mlive" data-w="{W}" hidden></span>{dd}</div>'+fut+cur+hist+'</section>')
 # team names in the game boxes: the largest size (up to 16px) that fits each half, re-fitted when a week is shown or the width changes
 sec+=('<script>(function(){function fit(){document.querySelectorAll(".g4 .gn").forEach(function(el){if(!el.clientWidth)return;'
