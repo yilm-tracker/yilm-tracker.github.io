@@ -193,7 +193,17 @@ def lcell(p,side):
         hb=f'<i class="hab {"hab-h" if _hax(p)=="vs" else "hab-r"}" aria-label="{wd.title()}">'+''.join(f'<span>{c}</span>' for c in wd)+'</i>'
     return (f'<span class="cn {side}{" hbx" if hb else ""}">{sq}{flg}<span class="cnm"><b><span title="{e(name)}" aria-label="{e(name)}">{e(nm)}</span>{mk}{ij}</b>'
             f'<small><span class="gp{" fin" if done else ""}"{dt}>{st}</span></small></span>{hb}</span>'+
-            (f'<span class="cv {side} act"{dp}><span class="fs {"up" if act>=proj else "dn"}" title="Projected {proj:.1f}"><em class="fdf">{_dif(act,proj)}</em>{v:.1f}<small>FINAL</small></span></span>' if done else f'<span class="cv {side} pjc"{dp}><span class="fs pj"><em class="fdf"></em>{"–" if _XB[0] and not v else f"{v:.1f}"}<small>PROJ</small></span></span>'))
+            (f'<span class="cv {side} act"{dp}><span class="fs {"up" if act>=proj else "dn"}" title="Projected {_pjf(proj)}"><em class="fdf">{_dif(act,proj)}</em>{v:.1f}{_pjl(proj)}</span></span>' if done else f'<span class="cv {side} pjc"{dp}><span class="fs pj"><em class="fdf"></em>&nbsp;{_pjl(proj)}</span></span>'))
+def _pjl(proj):
+    """LV-1 / LV-2 (2026-11-20): the points cell's bottom line = the pre-game projection (the figure live.js reads as data-j), small,
+    in every state; no PROJ / LIVE / FINAL word. The big figure slot shows real points only (not started: a no-break space keeps
+    its line). A band row (IR / Taxi) without a projection: "–". One decimal by _r1 on the data-j value (= live.js f1(data-j))."""
+    t='–' if _XB[0] and not proj else _pjf(proj)
+    return f'<small><b class="fpj">{t}</b></small>'
+def _pjf(proj):
+    """The pre-game projection to one decimal as live.js prints data-j (f1): _r1 of the 2-decimal data-j value. Used by the bottom
+    line and the final cell's title, so the two never differ (they did by 0.1 on exact .x5 ties: '.1f' vs ties to even)."""
+    return f'{_r1(float(f"{proj:.2f}")):.1f}'
 def _swp(r,side):
     """Optimal lineup: a bench player moved in. Marks the cell (.swp) and adds BN as the third line of its position tile (2026-11-06)."""
     i=r.index(f'<span class="cn {side}">');r=r[:i]+f'<span class="cn {side} swp">'+r[i+len(f'<span class="cn {side}">'):]

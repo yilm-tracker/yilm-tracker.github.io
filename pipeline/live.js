@@ -1,6 +1,6 @@
 // In-page live scores for the Matchups tab (live site only; the download file has no script).
 // While the current week has games on, the page asks Sleeper directly (it allows any origin) and patches the
-// lineup rows in place: player points, FINAL / LIVE tile, game status, stat line, each team's points total, its live
+// lineup rows in place: player points, final / live tile (pre-game projection small under the points), game status, stat line, each team's points total, its live
 // projection (the small figure under it) and the "Needs over proj" line, slate by slate (2026-11-13).
 // Polling: every 60 s while a game is in progress and the page is visible; every 10 min otherwise.
 // The site rebuild still recomputes everything else (slate status, slate and running totals, optimal lineups, odds).
@@ -39,7 +39,7 @@
     if(s==='post')return [pp[pid]||0,true,false];
     if(s==='in')return [(pp[pid]||0)+j*(lf[t]!==undefined?lf[t]:0.5),false,true];
     if(s==='pre')return [j,false,true];
-    var f=(el.querySelector('small')||{}).textContent==='FINAL';return [x,f,!f];
+    var fs=el.querySelector('.fs'),f=!!fs&&(fs.classList.contains('up')||fs.classList.contains('dn'));return [x,f,!f];   // finished = the cell's class (LV-1: the word FINAL is gone)
   }
   function r1(x){var v=Math.round(Math.abs(x)*1e5),q=Math.floor(v/10000),r=v-q*10000;if(r>5000||(r===5000&&q%2))q++;return (x<0?-q:q)/10}   // one decimal: noise removed, nearest, exact ties to even (mu_build _r1)
   function proj(st,pp,lf){
@@ -87,7 +87,7 @@
       var t=cn&&cn.querySelector('.gp[data-t]');t=t?t.dataset.t:null;var s=t&&st[t];if(!s||s==='pre')return;
       var v=pp[pid]||0,j=+el.dataset.j,fin=s==='post';
       el.classList.remove('pjc');el.classList.add('act');
-      var df=Math.round((v-j)*10)/10;el.innerHTML='<span class="fs '+(fin?(v>=j?'up':'dn'):'lv')+'" title="Projected '+f1(j)+'">'+'<em class="fdf">'+(fin?(df>=0?'+':'\u2212')+Math.abs(df).toFixed(1):'')+'</em>'+f1(v)+'<small>'+(fin?'FINAL':'LIVE')+'</small></span>';
+      var df=Math.round((v-j)*10)/10;el.innerHTML='<span class="fs '+(fin?(v>=j?'up':'dn'):'lv')+'" title="Projected '+f1(j)+'">'+'<em class="fdf">'+(fin?(df>=0?'+':'\u2212')+Math.abs(df).toFixed(1):'')+'</em>'+f1(v)+'<small><b class="fpj">'+(row&&row.hasAttribute('data-xb')&&!j?'\u2013':f1(j))+'</b></small></span>';   // LV-1: bottom line = pre-game projection (data-j), no LIVE / FINAL word; band row without one: '–'
       var gl=cn.querySelector('.gp[data-t]');
       if(gl){var w=gl.querySelector('.gwhen'),sp=gl.querySelector('.gsep');
         if(fin){if(w)w.remove();if(sp)sp.remove();gl.classList.add('fin')}else if(w)w.textContent='Live'}

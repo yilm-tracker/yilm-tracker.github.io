@@ -1435,3 +1435,10 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 .lus-o .mcr.ltot:not(.lsb){background:var(--ink);border:0;box-shadow:inset 0 0 0 1px var(--line),var(--sh-hard)!important;padding-left:14px;padding-right:14px}
 @media (max-width:440px){.lus-o .mcr.ltot:not(.lsb):not(.stk){padding-left:12px;padding-right:12px}}
 @media (max-width:400px){.lus-o .mcr.ltot:not(.lsb){padding-left:12px;padding-right:12px}}
+/* 2026-11-20 LINEUP POINTS CELL (briefs LV-1 / LV-2, shipped): the big figure is real points only (live, final); a game not
+   started leaves its slot empty (a no-break space keeps the line). The bottom line, where PROJ / LIVE / FINAL was, holds the pre-game
+   projection (data-j) in every state: Barlow Condensed 600 13px tabular (the .fm2 second-line value size), --chalk in every state
+   (--text-dim measured 4.07-4.22:1 on the live / final-up tints). line-height 0 on the figure: the bottom line keeps the 11px
+   word's line box, so nothing in the cell moves between states. */
+.cr.lu .cv .fs small .fpj{font-weight:600;font-size:13px;line-height:0;letter-spacing:0;font-variant-numeric:tabular-nums;color:var(--chalk)}
+.cr.lu .cv .fs:is(.up,.dn) small{opacity:1}
