@@ -137,6 +137,34 @@ def _age(pid):
 SLOTS=[lg.SLAB.get(x,x) for x in lg.SLOTS]
 # 2026-11-05: a 1px --row-divider above the first row of each new slot group (QB | RB | WR ...); none inside a group
 def lgs(r,i):return r.replace('<div class="cr lu','<div class="cr lu lgs',1) if 0<i<len(SLOTS) and SLOTS[i]!=SLOTS[i-1] else r
+# ---------- empty starter slot (brief ES-1, 2026-11-21): a starter slot with nobody in it. Sleeper writes the id '0' (or '') in the
+# current week's wk<W>.json and in hist.json; future weeks and Playoffs lineups (fut_lu.setlineup) give None. The row's data is kept
+# as it is (it counts 0 everywhere, as before); the current week and past weeks wrap it in _E to carry the slot it fills, so the
+# Position view, the Slate view and the Optimal view print the same row (ecell) wherever it lands. No data-* hooks: live.js never reads it.
+_SLAB={'SUPER_FLEX':'SFLX','WRRB_FLEX':'W/R','REC_FLEX':'W/T'}   # slot labels as the lineups name them (YILM's SLOTS are already mapped)
+def _SL(i):return _SLAB.get(SLOTS[i],SLOTS[i]) if 0<=i<len(SLOTS) else ''
+class _E(list):
+    """an empty starter slot's row (same data as the file's row) plus the slot label it fills"""
+    slot=''
+def _emp(p):return p is not None and str(p[0]) in('0','')
+def _es(L):
+    """a starter list with every empty slot ('0' / '') wrapped as _E, labelled by its slot (SLOTS order); None kept as None"""
+    o=[]
+    for i,p in enumerate(L):
+        if _emp(p):q=_E(p);q.slot=_SL(i);o.append(q)
+        else:o.append(p)
+    return o
+def ecell(slot,side):
+    """one side of an empty-slot row: the grey tile (no position class, no team class) with the slot's position and no rank line
+    (.w4: a label of 4+ letters, set smaller so it clears the frame as DEF does), the name "Empty" (no visible logo, tag, age or
+    chip), no game line, and the band rows' "–" on the points cell's bottom line (_pjl's dash; the big figure slot holds a
+    no-break space, as a not-started cell; no delta, no up / dn / lv class, no title; same in every state). The name line and the
+    game line keep a player row's boxes (a hidden team logo, a hidden "vs" tile and opponent logo), so the row is a player row's
+    height whatever the other side holds. No data-* hooks. Classic CSS: readability.css "2026-11-21 EMPTY LINEUP SLOT"."""
+    return (f'<span class="cn {side} emp"><i class="pq{" w4" if len(slot)>=4 else ""}"><span class="pqi"><span>{slot}</span></span></i>'
+            f'<span class="cnm"><b><span title="Empty slot" aria-label="Empty slot">Empty</span><em class="nfl tm" aria-hidden="true"></em></b>'
+            f'<small><span class="gp"><span class="gha ht h" aria-hidden="true">vs</span><em class="nfl opp" aria-hidden="true"></em></span></small></span></span>'
+            f'<span class="cv {side} pjc emp"><span class="fs pj"><em class="fdf"></em>&nbsp;<small><b class="fpj">–</b></small></span></span>')
 INJ={'Questionable':'Q','Doubtful':'D','Out':'O','IR':'IR'}
 from statline import statline as _sl, fumbles as _fl, fumbles_kept as _fk, detail as _dx
 def lval(p):
@@ -157,8 +185,11 @@ def _when(p,done):
 _KJ=json.load(open(P+'kick.json'))
 def _dif(a,j):
     d=round(a-j,1);return ('+' if d>=0 else '−')+f'{abs(d):.1f}'  # points vs projection, on the FINAL tile
-def lcell(p,side):
-    if p is None:return f'<span class="cn {side}"></span><span class="cv {side}"></span>'
+def lcell(p,side,es=''):
+    """es: the slot label when p is an empty starter slot given as None (future weeks, Playoffs); None without it = a blank side
+    (Bench / band rows with one team shorter)"""
+    if p is None:return ecell(es,side) if es else f'<span class="cn {side}"></span><span class="cv {side}"></span>'
+    if _emp(p):return ecell(getattr(p,'slot','') or es,side)
     pid,pos,name,tm,proj,act,opp,inj=p[:8]
     r=_K[pid][0] if _K.get(pid) and _K[pid][2]>0 else None
     big=r and (r>=100 or (pos=='DEF' and r>=10))
@@ -208,20 +239,21 @@ def _swp(r,side):
     """Optimal lineup: a bench player moved in. Marks the cell (.swp) and adds BN as the third line of its position tile (2026-11-06)."""
     i=r.index(f'<span class="cn {side}">');r=r[:i]+f'<span class="cn {side} swp">'+r[i+len(f'<span class="cn {side}">'):]
     j=r.index('</span></i>',i);return r[:j]+'<b class="pbn">BN</b>'+r[j:]
-def lrow(pa,pb,slot):
+def lrow(pa,pb,slot,es=('','')):
     w=''
     if pa and pb:
         va,vb=lval(pa)[0],lval(pb)[0];w=' wa' if va>vb+1e-9 else ' wb' if vb>va+1e-9 else ''
     def sl(p,side):
+        if _emp(p):return ''
         if p and not lval(p)[1] and (p[10] if len(p)>10 else W)==W and p[6]:return f'<span class="slz sl{side}" data-sp="{p[0]}" data-pos="{p[1]}"></span>'
         if not p or not lval(p)[1]:return ''
         t=_sl(p[10] if len(p)>10 else W,p[0],p[1])
         return f'<span class="sln sl{side}">{t}</span>' if t else ''
     def dx(p,side):
-        if not p or not lval(p)[1]:return ''
+        if not p or _emp(p) or not lval(p)[1]:return ''
         t=_dx(p[10] if len(p)>10 else W,p[0],p[1])
         return f'<span class="sdx sdx{side}">{t}</span>' if t else ''
-    return f'<div class="cr lu{w}">{lcell(pa,"a")}{lcell(pb,"b")}{sl(pa,"a")}{sl(pb,"b")}{dx(pa,"a")}{dx(pb,"b")}</div>'
+    return f'<div class="cr lu{w}">{lcell(pa,"a",es[0])}{lcell(pb,"b",es[1])}{sl(pa,"a")}{sl(pb,"b")}{dx(pa,"a")}{dx(pb,"b")}</div>'
 
 def optimal(pool):return lg.optimal(pool,pos=lambda p:p[1],pts=lambda p:lval(p)[0])
 
@@ -329,7 +361,7 @@ def ptsrow(sa,sb,big=True,ra=None,rb=None):
     da=f' data-r="{ra}"' if ra else '';db=f' data-r="{rb}"' if rb else ''
     if big:  # scoreboard band: live points large, the pre-game projection under each
         la,lb=_llv(sa),_llv(sb)   # live projection: points so far plus what is left to play
-        fin=lambda X:bool(X) and all(lval(p)[1] for p in X)   # every starter on that side has finished
+        fin=lambda X:bool(X) and all(lval(p)[1] for p in X if not _emp(p))   # every starter on that side has finished (an empty slot never holds it open: live.js skips it too, brief ES-1b)
         lva=('<small class="llv fz">Final</small>' if fin(sa) else f'<small class="llv" title="Live projection">{_r1(la):.1f}</small>')
         lvb=('<small class="llv fz">Final</small>' if fin(sb) else f'<small class="llv" title="Live projection">{_r1(lb):.1f}</small>')
         return (f'<div class="mcr ltot lsb"><span class="{"up" if ua else ""}"{da}><span class="ltr"><small class="lpg" title="Pre-game projection">({_r1(pa):.1f})</small><b class="lt-v">{fa}</b></span>{lva}</span>'
@@ -379,7 +411,7 @@ def optblock(sa,sb,pool_a,pool_b,ta,tb,proj=False,bhead='',bkeep=lambda p:True,b
        ptsrow(sa,sb,False),res]
     o.append('<div class="lpv">')
     for i,(x,y) in enumerate(zip(oa,ob)):
-        r=lgs(lrow(x,y,''),i)
+        r=lgs(lrow(x,y,'',(_SL(i),)*2),i)   # a slot the pool cannot fill: the empty-slot row (brief ES-1)
         if x and x[0] not in sid_a:r=_swp(r,'a')
         if y and y[0] not in sid_b:r=_swp(r,'b')
         o.append(r)
@@ -397,13 +429,14 @@ def lineups(a,b,w=None):
     """w: a future week (2026-11-13): the set lineup re-projected for week w (_fx), the Playoffs builder's note line, no
     data-r / data-p hooks (live.js never touches it), every slate a later slate"""
     A,B=_lux(a,w),_lux(b,w)
+    A,B=dict(A,st=_es(A['st'])),dict(B,st=_es(B['st']))   # empty slots carry their slot label (brief ES-1); data unchanged
     nn=lambda L:[p for p in L if p]
     tot=lambda X:sum(lval(p)[0] for p in nn(X['st']))
     ta,tb=tot(A),tot(B)
     note='boxed = final · grey = projected' if w is None else f'set lineup = starters as set in Sleeper now · {_FL.src(w)}'
     hdr=f'<div class="msh lsh">Lineups</div>{CTL([(VSW,'Order','Lineup',LSW),(LDW,'Stats','Rank',RKW),(LCW,'Colors','','')])}<div class="lnote">{note}</div>'
     o=[ptsrow(nn(A['st']),nn(B['st']),True,*((RID[a],RID[b]) if w is None else (None,None)))]
-    o+=['<div class="lpv">']+[lgs(lrow(pa,pb,sl if sl!='FLEX' else 'FLX'),i) for i,(pa,pb,sl) in enumerate(zip(A['st'],B['st'],SLOTS))]+['</div>',sview(nn(A['st']),nn(B['st']),fut=w is not None)]
+    o+=['<div class="lpv">']+[lgs(lrow(pa,pb,sl if sl!='FLEX' else 'FLX',(_SL(i),)*2),i) for i,(pa,pb,sl) in enumerate(zip(A['st'],B['st'],SLOTS))]+['</div>',sview(nn(A['st']),nn(B['st']),fut=w is not None)]
     keep=lambda p:_TAG.get(p[0],'')=='' and (p[4]>0 or (p[3] in DONEG and p[5]>0))   # IR / taxi never on Bench (brief Q2; a finished IR / taxi player with points used to be)
     bn=lambda X:sorted([p for p in X['bn'] if keep(p)],key=lambda p:-lval(p)[0])
     ba,bb=bn(A),bn(B)
@@ -414,7 +447,7 @@ def lineups(a,b,w=None):
     xb=xbands((lambda tag:tuple([p for p in X['bn'] if _TAG.get(p[0],'')==tag] for X in (A,B))) if w is None else
               (lambda tag:tuple([_FL.mp(q,w) for q in _FL.held(t,w,tag)] for t in (a,b))))
     o.append(xb)
-    pool=lambda X:nn(X['st'])+[p for p in X['bn'] if _TAG.get(p[0],'') not in('IR','TX') and (p[4]>0 or p[5]!=0)]
+    pool=lambda X:[p for p in nn(X['st']) if not _emp(p)]+[p for p in X['bn'] if _TAG.get(p[0],'') not in('IR','TX') and (p[4]>0 or p[5]!=0)]
     return ('<div class="lus">' if w is None else f'<div class="lus" data-fw="{w}">')+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+optblock(nn(A['st']),nn(B['st']),pool(A),pool(B),ta,tb,True,BH_CUR,keep,'BN',w is not None,xb)+'</div>'
 def panel(i,a,b,w=None):
     m,k=(f'mup-{i}',f'mt{i}') if w is None else (f'fwp{w}-{i}',f'mt{w}-{i}')
@@ -580,7 +613,9 @@ css=''.join(f'#mu-{i}:checked~.muc2 label[for="mu-{i}"]{{border-color:var(--chal
 # ---------- historical weeks
 HS=json.load(open(P+'hist.json'));META=HS['m']
 def hp(sp,inj=None):
-    pid,tm,proj,act,o=sp.split('|');pos,name=META[pid]
+    pid,tm,proj,act,o=sp.split('|')
+    if pid in('0',''):return [pid,'','',tm,float(proj or 0),float(act or 0),None,inj,True,'',HW[0]]   # an empty starter slot (brief ES-1; META has no '0')
+    pos,name=META[pid]
     ha='@' if o.startswith('@') else 'vs';opp=o.lstrip('@') or None
     return [pid,pos,name,tm,float(proj),float(act),opp,inj,True,ha,HW[0]]
 import irtx as _IX
@@ -595,7 +630,7 @@ def hbench(A,B,ra=None,rb=None):
     xb=xbands(lambda tag:tuple([p for p in R_ if d_.get(p[0])==tag] for _,d_,R_ in S)) if S[0][1] or S[1][1] else ''
     return S[0][0],S[1][0],xb
 def hlineups(A,B,ra=None,rb=None):
-    sa=[hp(x) for x in A[2].split(',')];sb=[hp(x) for x in B[2].split(',')]
+    sa=_es([hp(x) for x in A[2].split(',')]);sb=_es([hp(x) for x in B[2].split(',')])
     ta,tb=A[1],B[1];pa,pb=sum(x[4] for x in sa),sum(x[4] for x in sb)
     hdr=f'<div class="msh lsh">Lineups</div>{CTL([(VSW,'Order','Lineup',LSW),(LDW,'Stats','Rank',RKW),(LCW,'Colors','','')])}<div class="lnote">green = beat projection · red = fell short</div>'
     o=[ptsrow(sa,sb)]
@@ -605,7 +640,7 @@ def hlineups(A,B,ra=None,rb=None):
         o.append(BH_HIST)
         o+=[lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,'') for k in range(max(len(ba),len(bb)))]
     o.append(xb)
-    return '<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+optblock(sa,sb,sa+ba,sb+bb,ta,tb,False,BH_HIST,xb=xb)+'</div>'
+    return '<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+'</div>'+optblock(sa,sb,[p for p in sa if not _emp(p)]+ba,[p for p in sb if not _emp(p)]+bb,ta,tb,False,BH_HIST,xb=xb)+'</div>'
 def hcard(w,a,b,A,B):
     xa=WK[a][w-1];xb=WK[b][w-1]
     side=lambda x,X,cl,won:(f'<div class="mus {cl}"><span class="hres {"w" if won else "l"}">{"WON" if won else "LOST"}</span><b>{e(x)}</b>'

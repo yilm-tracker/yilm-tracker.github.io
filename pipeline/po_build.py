@@ -67,7 +67,7 @@ def lineup(a,b,w,k='p'):
     src='Sleeper projections' if PROJ else f'projection = points per game, Weeks 1–{G} until Sleeper projections are pulled'
     hdr=f'<div class="msh lsh">Lineups</div>{MB.CTL([(MB.VSW,'Order','Lineup',MB.LSW),RKROW])}<div class="lnote">set lineup = starters as set in Sleeper now · {src}</div>'
     o=[MB.ptsrow(sa,sb)]
-    o+=['<div class="lpv">']+[MB.lgs(MB.lrow(x,y,''),i) for i,(x,y) in enumerate(zip(sa,sb))]+['</div>',MB.sview([x for x in sa if x],[y for y in sb if y],fut=True)]
+    o+=['<div class="lpv">']+[MB.lgs(MB.lrow(x,y,'',(MB._SL(i),)*2),i) for i,(x,y) in enumerate(zip(sa,sb))]+['</div>',MB.sview([x for x in sa if x],[y for y in sb if y],fut=True)]   # None = an empty starter slot: the empty-slot row (brief ES-1)
     sida={p[0] for p in sa if p};sidb={p[0] for p in sb if p}
     ba=sorted([p for p in pa if p[0] not in sida and p[4]>0],key=lambda p:-p[4]);bb=sorted([p for p in pb if p[0] not in sidb and p[4]>0],key=lambda p:-p[4])
     if ba or bb:
@@ -130,12 +130,12 @@ if FINAL:MB.W=0  # no current week: never mark a row for the live updater
 if ACT:MB.META.update({k:v for k,v in ACT['m'].items() if k not in MB.META})
 def flineup(a,b,w):
     A_,B_=ACT['w'][str(w)][str(RIDN[a])],ACT['w'][str(w)][str(RIDN[b])];MB.HW[0]=w
-    sa=[MB.hp(x) for x in A_[2].split(',')];sb=[MB.hp(x) for x in B_[2].split(',')]
+    sa=MB._es([MB.hp(x) for x in A_[2].split(',')]);sb=MB._es([MB.hp(x) for x in B_[2].split(',')])   # empty slots labelled (brief ES-1)
     hdr=f'<div class="msh lsh">Lineups</div>{MB.CTL([(MB.VSW,'Order','Lineup',MB.LSW),RKROW])}<div class="lnote">green = beat projection · red = fell short</div>'
     o=[MB.ptsrow(sa,sb)]+['<div class="lpv">']+[MB.lgs(MB.lrow(x,y,''),i) for i,(x,y) in enumerate(zip(sa,sb))]+['</div>',MB.sview(sa,sb)]
     ba,bb,xb=MB.hbench(A_,B_,RIDN[a],RIDN[b])   # IR / taxi at kickoff leave Bench for their bands (2026-11-17)
     if ba or bb:o+=[MB.BH_HIST]+[MB.lrow(ba[k] if k<len(ba) else None,bb[k] if k<len(bb) else None,'') for k in range(max(len(ba),len(bb)))]
-    h='<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+xb+'</div>'+MB.optblock(sa,sb,sa+ba,sb+bb,A_[1],B_[1],False,MB.BH_HIST,xb=xb)+'</div>'
+    h='<div class="lus">'+hdr+'<div class="lus-a">'+''.join(o)+xb+'</div>'+MB.optblock(sa,sb,[p for p in sa if not MB._emp(p)]+ba,[p for p in sb if not MB._emp(p)]+bb,A_[1],B_[1],False,MB.BH_HIST,xb=xb)+'</div>'
     return h.replace('for="lo-a"','for="blo-a"').replace('for="lo-o"','for="blo-o"').replace('for="lv-p"','for="blv-p"').replace('for="lv-s"','for="blv-s"').replace('for="rk-t"','for="brk-t"').replace('for="rk-g"','for="brk-g"')
 import po_cols
 def _plive(t,w):

@@ -1441,3 +1441,22 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
    word's line box, so nothing in the cell moves between states. */
 .cr.lu .cv .fs small .fpj{font-weight:600;font-size:13px;line-height:0;letter-spacing:0;font-variant-numeric:tabular-nums;color:var(--chalk)}
 .cr.lu .cv .fs:is(.up,.dn) small{opacity:1}
+/* 2026-11-21 EMPTY LINEUP SLOT (briefs ES-1 / ES-1b): a starter slot with nobody in it (mu_build.ecell; .cn.emp / .cv.emp), Matchups
+   and Playoffs lineups, current, past and future weeks. Tile: the grey no-position tile, the slot's own position alone (no rank
+   line), centred both ways by the tile's flex; its trailing .04em letter-spacing is given back so the ink is centred across; a label
+   of 4+ letters (.w4: FLEX, SFLX) is 11px, letter-spacing -.02em, margin-right .06em (ink centred across in Chromium and
+   WebKitGTK), so its ink clears the frame at least as far as DEF's (14px).
+   Name: "Empty" in --text-dim at the lineup's name size (--lnf), out of the flow and centred on the tile's own box (the tile's
+   top / bottom, 8px past the name block; 4px at the foot when the row has a stat line); padding-bottom .19em lifts the line .095em,
+   the measured gap between IBM Plex Sans 600's "Empty" ink centre (cap top to descender) and its line's centre in WebKit. Row
+   height: the name line keeps a player's box (min 1.1em, the name's line, plus a hidden team logo) and the game line a hidden
+   "vs" tile and opponent logo, so an empty side is exactly a player row's height on its own (both sides empty, alone in a slate).
+   Points: the band rows' "–" on the bottom line (_pjl's .fpj), the big figure slot a no-break space, as a not-started cell. */
+.cr.lu .cn.emp .pq .pqi>span{margin-right:-.04em}
+.cr.lu .cn.emp .pq.w4 .pqi>span{font-size:11px!important;letter-spacing:-.02em!important;margin-right:.06em}
+.cr.lu .cn.emp .cnm>b{position:static;min-height:1.1em}
+.cr.lu .cn.emp .cnm>b>span:first-child{position:absolute;top:-8px;bottom:-8px;display:flex;align-items:center;margin:0;padding:0 0 .19em;overflow:visible;color:var(--text-dim)}
+.cr.lu:has(.sln) .cn.emp .cnm>b>span:first-child{bottom:-4px}
+.cr.lu .cn.a.emp .cnm>b>span:first-child{left:0}
+.cr.lu .cn.b.emp .cnm>b>span:first-child{right:0}
+.cr.lu .cn.emp .cnm :is(.nfl,.gha){visibility:hidden}

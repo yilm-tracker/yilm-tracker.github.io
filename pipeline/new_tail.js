@@ -610,7 +610,7 @@ function luGrp(C,cells,lu){if(!cells.length)return;
     gameOver:G.filter(luOver).map(g=>g.textContent.trim())})}
 function luFit(){LUR.length=0;
   document.querySelectorAll('.lus-a,.lus-o').forEach(L=>{if(!L.offsetParent)return;
-  const cells=[...L.querySelectorAll('.cr.lu:not(.psr) .cnm')].filter(c=>c.offsetParent&&c.querySelector('b>span'));
+  const cells=[...L.querySelectorAll('.cr.lu:not(.psr) .cnm')].filter(c=>c.offsetParent&&c.querySelector('b>span')&&!c.closest('.emp'));   // an empty slot (brief ES-1): "Empty" never sets the shared sizes and is never abbreviated; it still takes --lnf
   luGrp(L,cells.filter(c=>!c.closest('[data-xb]')),L.className);
   const X=[...L.querySelectorAll('.cr.lu[data-xb]')];if(X.length)luGrp(luT(X),cells.filter(c=>c.closest('[data-xb]')),L.className+' xb')})
   window.__luReport=LUR.slice()}

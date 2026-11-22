@@ -183,6 +183,7 @@ out={}
 for rid,(mid,st) in m8.items():
     r=RO[rid]
     def row(pid):
+        if pid in('0',''):return [pid,'','','',0,0,None,None]   # an empty starter slot: no position, no name (was '?' / '0'; brief ES-1)
         pj=PJ.get(pid,[0,None]);inj=(META.get(pid) or [None]*4)[3]
         if pid in (r['res'] or []):inj=inj or 'IR'
         tm=(META.get(pid) or [None,None,None])[2] or ''
