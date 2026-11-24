@@ -1460,3 +1460,12 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 .cr.lu .cn.a.emp .cnm>b>span:first-child{left:0}
 .cr.lu .cn.b.emp .cnm>b>span:first-child{right:0}
 .cr.lu .cn.emp .cnm :is(.nfl,.gha){visibility:hidden}
+
+/* 2026-11-24 SWAP BADGE FILL (brief PT-1e; DESIGN.md 4): --swap-fill, a NEW token with one job, the trade swap badge (Stats › Trades
+   .txsw and the Paper Trail sheet's .ptswb). Value = the row hue (--row-lt) lightened (HSL) to the first value >= 3.2:1 on --row-lt:
+   3.22:1 on --row-lt, 4.16:1 on --deck; glyph --frame 6.76:1 (was --row-divider fill + --text-dim glyph, 1.16-1.61:1 against the rows). */
+:root{--swap-fill:#799ec1}
+.txsw{background:var(--swap-fill);color:var(--frame)}
+/* 2026-11-24 PAPER TRAIL HEAD INK (brief PT-1e): the faces' art ends .5px inside their 18px box (WebKitGTK 3x, 17 heads), so gapFit
+   measures the head's lowest ink there (--ptak; BBP logos 1.125px under the box, retro 2px) */
+html .pts{--ptak:-.5px}

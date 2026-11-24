@@ -33,18 +33,27 @@ K={};C={}    # picks: key -> [year, round, orig idx, owner idx, used label, used
 SRC={}       # season -> 'MFL' | 'Sleeper'
 PICKS=False
 def sides(moves,m,ref,tix):
-    """Trade step as two columns from the receiving team's side (2026-11-10): [got, gave] = every asset of the trade that
-    m's receiving team (m[3]) received / sent, the opened item included; players, then picks (year, round), then FAAB.
-    moves = (kind, id, from, to). An entry is a ref string, or [ref, team idx] when its other team is not the row's
-    From team (three-team trades), so the sheet can name it."""
+    """Trade step as headed columns, one per team that got something (2026-11-24, brief PT-1e): [[team idx, items], ...];
+    first the receiving team (m[3], the old "Traded to"), then the From team (m[2]; kept in a two-team trade even when it
+    got nothing: "Nothing"), then any other team that got something, in order of first appearance. Items: players, then
+    picks (year, round), then FAAB. moves = (kind, id, from, to). In a trade of three or more teams every item is
+    [ref, source team idx] (-1 = the data names no source: left untagged); in a two-team trade a plain ref."""
     to,frm=m[3],m[2];o={'player':0,'pick':1,'faab':2}
-    def col(i,j):
-        r=[]
-        for mm in sorted((mm for mm in moves if mm[i]==to),key=lambda mm:(o.get(mm[0],3),str(ref(mm)) if mm[0]=='pick' else '')):
+    tm=[]
+    for mm in moves:
+        for t in (mm[3],mm[2]):
+            if t is not None and t not in tm:tm.append(t)
+    multi=len(tm)>2
+    order=[to]+([frm] if frm is not None and frm!=to else [])+[mm[3] for mm in moves]
+    cols=[];seen=set()
+    for t in order:
+        if t is None or t in seen:continue
+        seen.add(t);r=[]
+        for mm in sorted((mm for mm in moves if mm[3]==t),key=lambda mm:(o.get(mm[0],3),str(ref(mm)) if mm[0]=='pick' else '')):
             x=ref(mm)
-            if x:r.append(x if mm[j]==frm else [x,tix(mm[j])])
-        return r
-    return [col(3,2),col(2,3)]
+            if x:r.append([x,tix(mm[2]) if mm[2] is not None else -1] if multi else x)
+        if r or (not multi and t in (to,frm)):cols.append([tix(t),r])
+    return cols
 
 if _dt_os.path.exists(P+'history/paper/sleeper_2025.json'):
     # ------------------------------------------------------------------ BBP: MFL + Sleeper, picks and players
@@ -100,7 +109,7 @@ if _dt_os.path.exists(P+'history/paper/sleeper_2025.json'):
             if m[0]!='player':continue
             sid=str(m[1]);pinfo(sid)
             if ty=='trade':
-                H[sid].append([y,d,'T',ti(m[3]),ti(m[2]),*sides(ev['moves'],m,ref,ti)])
+                H[sid].append([y,d,'T',ti(m[3]),ti(m[2]),sides(ev['moves'],m,ref,ti)])
             elif ty=='draft':
                 kd={'startup':'s','rookie':'r','import':'i','supplemental':'p'}.get(ev.get('kind'),'r')
                 q=pkey(ev['pick']) if ev.get('pick') else None
@@ -131,7 +140,7 @@ if _dt_os.path.exists(P+'history/paper/sleeper_2025.json'):
                         sid=str(ev['moves'][0][1]);pinfo(sid);used=[dlabel(ev),sid]
                         rows.append([ev['season'],d,'U',ti(by),-1,[dlabel(ev),sid]]);continue
                     if m[2]!=own:rows.append([ev['season'],d,'M',ti(m[2]),ti(own),[]])
-                    rows.append([ev['season'],d,'T',ti(m[3]),ti(m[2]),*sides(ev['moves'],m,ref,ti)]);own=m[3]
+                    rows.append([ev['season'],d,'T',ti(m[3]),ti(m[2]),sides(ev['moves'],m,ref,ti)]);own=m[3]
                 if y<=cur and not used and y<2025 and not rows:continue
                 K[key]=[y,r,ti(o),ti(own),used[0] if used else '',used[1] if used else '']
                 C[key]=rows
@@ -231,7 +240,7 @@ else:
             for m in mv:
                 if m[0]!='player':continue
                 sid,frm,rid=m[1],m[2],m[3]
-                H[sid].append([y,d,'T',ti(RN_(rid)),ti(RN_(frm)) if frm else -1,*sides(mv,m,rf,lambda r:ti(RN_(r)) if r else -1)])
+                H[sid].append([y,d,'T',ti(RN_(rid)),ti(RN_(frm)) if frm else -1,sides(mv,m,rf,lambda r:ti(RN_(r)) if r else -1)])
             continue
         for sid,rid in adds.items():
             pinfo(sid);k={'waiver':'W','free_agent':'A','commissioner':'CA'}.get(ty,'A')
@@ -243,7 +252,10 @@ else:
 
 # every row in date order (stable: a draft or claim before a same-day drop)
 for sid in H:H[sid].sort(key=lambda r:(r[1],{'R':0,'T':1,'W':2,'A':2,'CA':2,'M':3,'D':4,'CD':4,'U':5}.get(r[2],3)))
-PT=dict(T=T,S={str(k):v for k,v in SRC.items()},P=PL,H=H,K=K,C=C,Z={t:slug(t) for t in T},N={t:v for t,v in (TSH if PICKS else {}).items() if t in TI})
+# column-head short forms of the sheet's trade step (heads only: not PSN, not items, not holder names), approved by Nicklaus
+# 2026-11-24: "Rev. Apache Master" is PSN's approved form (DESIGN.md 2.16), "Chop Wood" new. Tried before any shrink.
+HSF={'Reverse Apache Master':'Rev. Apache Master','Chop Wood, Carry Water':'Chop Wood'}
+PT=dict(T=T,S={str(k):v for k,v in SRC.items()},P=PL,H=H,K=K,C=C,Z={t:slug(t) for t in T},N={t:v for t,v in (TSH if PICKS else {}).items() if t in TI},HS={t:v for t,v in HSF.items() if t in TI})
 _js=json.dumps(PT,separators=(',',':'),ensure_ascii=False)
 if __name__=='__main__' and '--stats' in sys.argv:
     print('teams',len(T),'players',len(PL),'rows',sum(len(v) for v in H.values()),'picks',len(K),'chain rows',sum(len(v) for v in C.values()),'json',len(_js))
@@ -327,22 +339,33 @@ const refh=r=>{const c=r[0],v=r.slice(1);if(c==='p'){const p=D.P[v];return '<but
  if(c==='k')return '<button type="button" class="ptr" data-k="'+esc(v)+'">'+esc(KN(v))+'</button>';if(c==='$')return '<span class="ptr0">$'+esc(v)+' FAAB</span>';return ''};
 const lst=a=>a.length?a.join(', '):'nothing';
 const dk={s:'Startup draft',r:'Rookie draft',i:'Sleeper import',p:'Supplemental draft',d:'Draft'};
-// Trade step (2026-11-10): line 1 and "From" as before, then two columns from the receiving team's side: left = every
-// asset it received (+), right = every asset it sent (−). x / w = [got, gave] (sides() in the build): a ref, or
-// [ref, team] when the item's other team is not the row's From team (three-team trades: named under the item).
-// me = the open sheet's own ref: bold, not a link. Pick = "2029 R1 " + "(original team)" (.pttot never breaks inside;
-// data-ab = the SH short team name, PT.N). trFit() picks the forms.
-function titem(q,sg,me){const r=typeof q==='string'?q:q[0],o=typeof q==='string'?-1:q[1],c=r[0],v=r.slice(1);let h='';
+// Trade step (2026-11-24, brief PT-1e; Nicklaus chose V2): no "Traded to" / "From" lines; the row's logo slot holds the
+// swap badge (.ptswb, Stats › Trades' .txsw: one component); one headed column per team that got something (sides() in
+// the build: [[team, items], ...]; left = the receiving team, right = the From team, any further team under the shorter
+// of the two, placed by tPlace()). Head = 18px logo / face (none when the team has no picture) + team name; a 1px rule
+// under it, 6px of ink above and below (gapFit); items = what THAT team got, no +/- marks. Items: a ref, or
+// [ref, source team] in trades of three or more teams ("from Z" under it; -1 = source unknown, untagged). me = the open
+// sheet's own ref: bold, not a link. Pick = "2029 R1 " + "(original team)" (.pttot never breaks inside; data-ab = the SH
+// short team name, PT.N). trFit() picks the item forms, hdFit() the head forms and sizes.
+const HSF=D.HS||{};  // column-head short forms (heads only), PT.HS from the build
+const SWP='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5h9.5M10 3l2.5 2.5L10 8M13 10.5H3.5M6 8l-2.5 2.5L6 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';  // Stats › Trades swap glyph (sx_build.py SWP), repeated
+function titem(q,me){const r=typeof q==='string'?q:q[0],o=typeof q==='string'?-1:q[1],c=r[0],v=r.slice(1);let h='';
  if(c==='p'){const p=D.P[v],n=esc(p?p[0]:v);h=r===me?'<b class="pttme" data-n="'+n+'">'+n+'</b>':'<button type="button" class="ptr" data-p="'+esc(v)+'" data-n="'+n+'">'+n+'</button>'}
  else if(c==='k'){const kv=D.K[v],tn=kv?T[kv[2]]:'',ab=tn&&D.N&&D.N[tn],n=kv?kv[0]+' R'+kv[1]+' <span class="pttot"'+(ab?' data-ab="('+esc(ab)+')" data-f="('+esc(tn)+')"':'')+'>('+esc(tn)+')</span>':esc(v);
   h=r===me?'<b class="pttme">'+n+'</b>':'<button type="button" class="ptr" data-k="'+esc(v)+'"'+(kv?' aria-label="'+esc(KN(v))+'"':'')+'>'+n+'</button>'}
  else if(c==='$')h='<span class="ptr0">$'+esc(v)+' FAAB</span>';
  else if(c==='x'){const m=/^(.*?) (\(.*\))$/.exec(v);h='<span class="ptr0">'+(m?esc(m[1])+' <span class="pttot">'+esc(m[2])+'</span>':esc(v))+'</span>'}
- return '<span class="ptti"><i class="pttk '+(sg>0?'pttkp':'pttkn')+'">'+(sg>0?'+':'−')+'</i><span class="pttx">'+h+(o>=0?'<small class="pttcp">'+(sg>0?'from ':'to ')+esc(T[o])+'</small>':'')+'</span></span>'}
-function tcols(x,w,me){const col=(a,sg,lab)=>'<span class="pttc" role="group" aria-label="'+lab+'">'+(a&&a.length?a.map(q=>titem(q,sg,me)).join(''):'<span class="ptti pttno"><i class="pttk"></i><span class="pttx">Nothing</span></span>')+'</span>';
- return '<span class="pttr">'+col(x,1,'Received')+col(w,-1,'Sent')+'</span>'}
+ return '<span class="ptti"><span class="pttx">'+h+(o>=0?'<small class="pttcp">from '+esc(T[o])+'</small>':'')+'</span></span>'}
+function thead(i){const n=i>=0?T[i]:'',r=typeof AVR!=='undefined'?AVR[n]:null;
+ return '<span class="ptth">'+(r?'<i class="pav av av-'+r+'" aria-hidden="true"></i>':'')+'<b class="ptthn" data-f="'+esc(n)+'"'+(HSF[n]?' data-ab="'+esc(HSF[n])+'"':'')+'>'+esc(n)+'</b></span>'}
+function tcols(cols,me){cols=cols||[];const col=(c,k)=>'<span class="pttc'+(k>1?' pttc3':'')+'" role="group" aria-label="'+esc(c[0]>=0?T[c[0]]:'')+' received">'+thead(c[0])
+  +'<span class="pttl">'+(c[1].length?c[1].map(q=>titem(q,me)).join(''):'<span class="ptti pttno"><span class="pttx">Nothing</span></span>')+'</span></span>';
+ return '<span class="pttr"><span class="pttw">'+(cols[0]?col(cols[0],0):'')+cols.slice(2).map((c,k)=>col(c,k+2)).join('')+'</span><span class="pttw">'+(cols[1]?col(cols[1],1):'')+'</span></span>'}
+function tcount(cols){const s=new Set();(cols||[]).forEach(c=>{s.add(c[0]);c[1].forEach(q=>{if(typeof q!=='string'&&q[1]>=0)s.add(q[1])})});return s.size}
 function line(r,isPick,me){const[y,d,k,a,b,x,w]=r,ta=a>=0?T[a]:'',tb=b>=0?T[b]:'';let l1='',l2='',l3='',who=a;
- if(k==='T'){l1='Traded to <b>'+esc(ta)+'</b>';l2=(tb?'From '+esc(tb):'')+((x||[]).concat(w||[]).some(q=>typeof q!=='string')?(tb?' · ':'')+'3-team trade':'');l3=tcols(x,w,me)}
+ if(k==='T'){const m=r[1],n=tcount(x),mm=+m.slice(5,7),dd=+m.slice(8,10),multi=(x||[]).some(c=>c[1].some(q=>typeof q!=='string'));
+  return '<div class="pte ptet'+(multi?' ptet3':'')+'"><span class="ptdt"><i>'+MO[mm-1]+'</i><b>'+dd+'</b></span>'+'<i class="ptswb" role="img" aria-label="Trade">'+SWP+'</i>'
+   +'<span class="ptxt">'+(multi?'<span class="ptt3">'+n+'-team trade</span>':'')+tcols(x,me)+'</span></div>'}
  else if(k==='W'){l1='Claimed by <b>'+esc(ta)+'</b>';l2='Waivers'+(x[0]?' · $'+esc(x[0])+' FAAB':'')}
  else if(k==='A'){l1='Added by <b>'+esc(ta)+'</b>';l2='Free agent'}
  else if(k==='CA'){l1='Added by <b>'+esc(ta)+'</b>';l2='Commissioner'}
@@ -381,7 +404,8 @@ function hide(fromPop){if(S.hidden)return;S.hidden=true;document.documentElement
 // slotFit) -> the item wraps inside its own column under its text (the mark column gives the hanging indent; a pick
 // breaks before its "(team)": the full name again when that fits the column on its own line, else the short one, which
 // itself wraps only if it is wider than the column). Never shrinks, clips or ellipsises. Reads, then writes.
-function trFit(){if(S.hidden)return;const A=typeof LUA!=='undefined'?LUA:{},N=[...SB.querySelectorAll('.pttx')];if(!N.length)return;
+function trFit(){if(S.hidden)return;trFit0();hdFit();tPlace();gapFit()}
+function trFit0(){const A=typeof LUA!=='undefined'?LUA:{},N=[...SB.querySelectorAll('.pttx')];if(!N.length)return;
  N.forEach(n=>{n.classList.remove('pttwr','pttwr2');const o=n.querySelector('.pttot[data-f]');if(o)o.textContent=o.dataset.f;const p=n.querySelector('[data-n]');if(p){p.textContent=p.dataset.n;p.removeAttribute('title')}});
  const ov=n=>{const e=n.firstElementChild;return e?e.getBoundingClientRect().width>n.getBoundingClientRect().width+.05:false};
  const O=N.filter(ov);
@@ -394,6 +418,38 @@ function trFit(){if(S.hidden)return;const A=typeof LUA!=='undefined'?LUA:{},N=[.
   n.classList.add('pttwr');const q=n.querySelector('.pttot'),wd=()=>q.getBoundingClientRect().width>n.getBoundingClientRect().width+.05;
   if(q&&q.dataset.f){q.textContent=q.dataset.f;if(wd())q.textContent=q.dataset.ab}
   if(q&&wd())n.classList.add('pttwr2')})}
+// hdFit (2026-11-24): column heads, per head: full name at 12.5px -> the approved head short form (HSF = PT.HS) at 12.5px
+// -> shrink in 0.25px steps to 11px (the text floor). Never ellipsised: a head that still does not fit at 11px overflows.
+function hdFit(){const Hs=[...SB.querySelectorAll('.ptthn')];if(!Hs.length)return;
+ Hs.forEach(h=>{h.style.fontSize='';h.textContent=h.dataset.f;h.removeAttribute('title')});
+ const ov=h=>{const r=document.createRange();r.selectNodeContents(h);return r.getBoundingClientRect().right>h.parentElement.getBoundingClientRect().right+.05};
+ const O=Hs.filter(ov);
+ O.forEach(h=>{if(h.dataset.ab){h.textContent=h.dataset.ab;h.title=h.dataset.f;if(!ov(h))return}let s=12.5;while(ov(h)&&s>11){s-=.25;h.style.fontSize=s+'px'}})}
+// gapFit (2026-11-24): the 1px rule under each column head sits 6px of ink under the head (its picture's lowest ink:
+// the box + --ptak, the ring and hard shadow below it; with no picture, the name's lowest glyph) and 6px of ink over the
+// column's first item (its highest glyph). Glyph ink from the fonts' own outlines (GT: [top, bottom] per character in
+// thousandths of an em above / below the baseline; IBM Plex Sans 400 / 600, and Martian Mono 400 / 600 at wdth 75 with the
+// retro face's 87.5% size-adjust), baselines from zero-size markers; padding-bottom of the head and margin-top of the
+// item list by layout, no transforms. Reads everything, then writes.
+const GT=(()=>{const o={},R={"P400":["!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~’‘“”–—éèáíóúñçÉ·…",[698,-12,740,460,698,0,780,-82,710,-12,710,-12,740,460,760,-137,760,-137,747,388,548,62,117,-133,347,261,117,-12,740,-151,710,-12,698,0,710,0,710,-12,698,0,698,-12,698,-12,698,0,710,-12,710,0,528,-12,528,-133,566,-12,440,172,566,-12,710,-12,708,-121,698,0,698,0,710,-12,698,0,698,0,698,0,710,-12,698,0,698,0,698,-12,698,0,698,0,698,0,698,0,710,-12,698,0,710,-164,698,0,710,-12,698,0,698,-12,698,0,698,0,698,0,698,0,698,0,760,-138,740,-151,760,-138,698,296,-95,-165,779,585,528,-12,740,-12,528,-12,740,-12,528,-12,740,0,586,-212,740,0,740,0,740,-200,740,0,740,0,528,0,528,0,528,-12,528,-200,528,-200,516,0,528,-12,659,0,516,-12,516,0,516,0,516,0,516,-200,516,0,760,-138,760,-138,760,-138,374,236,750,500,740,490,740,490,750,500,342,266,342,266,779,-12,779,-12,779,-12,779,0,779,-12,779,-12,728,0,528,-207,949,0,369,240,117,-12]],"P600":["!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~’‘“”–—éèáíóúñçÉ·…",[698,-12,740,428,698,0,780,-82,710,-12,710,-12,740,428,760,-138,760,-138,747,282,549,63,154,-143,368,241,154,-11,740,-151,710,-12,698,0,710,0,710,-12,698,0,698,-12,698,-12,698,0,710,-12,710,0,534,-11,534,-143,593,-5,468,142,593,-5,710,-12,709,-121,698,0,698,0,710,-12,698,0,698,0,698,0,710,-12,698,0,698,0,698,-11,698,0,698,0,698,0,698,0,710,-12,698,0,710,-178,698,0,710,-12,698,0,698,-12,698,0,698,0,698,0,698,0,698,0,760,-138,740,-151,760,-138,698,283,-75,-183,805,581,534,-12,740,-12,534,-12,740,-12,534,-12,740,0,614,-212,740,0,746,0,746,-200,740,0,740,0,534,0,534,0,534,-12,534,-200,534,-200,522,0,534,-12,665,0,522,-12,522,0,522,0,522,0,522,-200,522,0,760,-138,760,-138,760,-138,392,219,750,465,740,455,740,455,750,465,358,250,358,250,805,-12,805,-12,805,-12,805,0,805,-12,805,-12,744,0,534,-211,969,0,386,221,154,-11]],"M400":["!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~’‘“”–—éèáíóúñçÉ·…",[700,-6,742,401,700,0,788,-88,714,-14,714,-14,742,401,805,-140,805,-140,508,103,516,96,166,-158,350,262,166,-7,742,-149,714,-14,700,0,714,0,714,-14,700,0,700,-14,700,-14,700,0,714,-14,714,0,532,-7,532,-158,552,60,464,149,552,60,714,-6,714,-189,700,0,700,0,714,-14,700,0,700,0,700,0,714,-10,700,0,700,0,700,-14,700,0,700,0,700,0,700,0,714,-14,700,0,714,-189,700,0,714,-14,700,0,700,-14,700,0,700,0,700,0,700,0,700,0,788,-122,742,-149,788,-122,714,472,-44,-131,742,500,539,-12,742,-14,539,-14,742,-14,539,-14,756,0,539,-189,742,0,749,0,749,-189,742,0,742,0,539,0,539,0,539,-14,539,-175,539,-175,539,0,539,-14,662,-14,525,-14,525,0,525,0,525,0,525,-189,525,0,798,-133,752,-52,798,-133,398,214,756,432,742,418,742,418,756,432,350,262,350,262,735,-14,735,-14,735,-12,735,0,735,-14,735,-14,733,0,539,-189,910,0,436,262,166,-7]],"M600":["!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~’‘“”–—éèáíóúñçÉ·…",[700,-7,742,384,700,0,788,-88,716,-16,716,-14,742,384,830,-166,830,-166,522,86,533,79,203,-162,363,250,203,-9,742,-149,716,-16,700,0,716,0,716,-16,700,0,700,-16,700,-16,700,0,716,-16,716,0,542,-9,542,-162,567,46,476,136,567,46,716,-7,716,-182,700,0,700,0,716,-16,700,0,700,0,700,0,716,-12,700,0,700,0,700,-16,700,0,700,0,700,0,700,0,716,-16,700,0,716,-191,700,0,716,-16,700,0,700,-16,700,0,700,0,700,0,700,0,700,0,806,-141,742,-149,806,-141,716,466,-44,-157,742,472,549,-12,742,-14,549,-16,742,-14,549,-16,758,0,548,-191,742,0,769,0,769,-191,742,0,742,0,549,0,549,0,549,-16,548,-175,548,-175,548,0,549,-16,672,-16,534,-16,534,0,534,0,534,0,534,-191,534,0,823,-158,752,-52,823,-158,409,203,758,393,742,377,742,377,758,393,360,252,360,252,747,-16,747,-16,747,-12,747,0,747,-16,747,-16,744,0,549,-191,913,0,455,244,203,-9]]};for(const k in R){const[c,v]=R[k],m={};[...c].forEach((ch,i)=>m[ch]=[v[2*i]/1000,v[2*i+1]/1000]);o[k]=m}return o})();
+const gTab=el=>{const c=getComputedStyle(el);return GT[(/Martian/.test(c.fontFamily)?'M':'P')+(+c.fontWeight>=550?600:400)]};
+function gInk(t,tab){let a=0,b=0;for(const ch of t){const g=tab[ch];if(g){if(g[0]>a)a=g[0];if(g[1]<b)b=g[1]}else if(ch.trim())a=Math.max(a,.83)}return [a,b]}
+function gapFit(){const C=[...SB.querySelectorAll('.pttc')];if(!C.length)return;
+ const Q=C.map(c=>{const h=c.querySelector('.ptth'),l=c.querySelector('.pttl'),x=l.querySelector('.pttx'),f=x.firstElementChild,t=f&&!f.classList.contains('pttcp')?f:x,m=document.createElement('i');
+  m.style.cssText='display:inline-block;width:0;height:0;vertical-align:baseline';x.insertBefore(m,x.firstChild);h.style.paddingBottom='';l.style.marginTop='';return {h,l,t,m}});
+ const R=Q.map(q=>{const h=q.h,n=h.querySelector('.ptthn'),a=h.querySelector('.pav'),z=h.currentCSSZoom||1,cs=getComputedStyle(h),fn=parseFloat(getComputedStyle(n).fontSize),ft=parseFloat(getComputedStyle(q.t).fontSize),
+  hb=h.getBoundingClientRect().bottom/z,nb=n.getBoundingClientRect().bottom/z,mb=q.m.getBoundingClientRect().top/z,
+  lo=a?a.getBoundingClientRect().bottom/z+(parseFloat(cs.getPropertyValue('--ptak'))||0):nb-gInk(n.textContent,gTab(n))[1]*fn,
+  hi=mb-gInk((q.t.textContent||'').replace(/\s+/g,' ').trim(),gTab(q.t))[0]*ft;
+  return {pb:parseFloat(cs.paddingBottom),mt:parseFloat(getComputedStyle(q.l).marginTop),rt:hb-1,lo,hi,b:mb}});
+ Q.forEach(q=>q.m.remove());
+ // the rule's top and the first item's baseline land on device pixels (the engines paint borders and text baselines there)
+ const px=window.devicePixelRatio||1,sn=v=>Math.round(v*px)/px;
+ Q.forEach((q,i)=>{const r=R[i],dp=sn(r.lo+6)-r.rt,rb=r.rt+dp+1,b=r.hi+dp+(r.b-r.hi),db=sn(rb+6+(r.b-r.hi))-b;
+  q.h.style.paddingBottom=(r.pb+dp).toFixed(3)+'px';q.l.style.marginTop=(r.mt+db).toFixed(3)+'px'})}
+// tPlace (2026-11-24): a third (fourth ...) team's column goes under the shorter of the first two (tie = left)
+function tPlace(){SB.querySelectorAll('.pttr').forEach(R=>{const X3=[...R.querySelectorAll('.pttc3')];if(!X3.length)return;const W=R.querySelectorAll(':scope>.pttw');
+ X3.forEach(c=>c.remove());X3.forEach(c=>{const a=W[0].getBoundingClientRect().height,b=W[1].getBoundingClientRect().height;(b<a?W[1]:W[0]).appendChild(c)})})}
 function fitT(){const n=ST.querySelector('.ptsn');if(!n)return;n.style.fontSize='';let s=parseFloat(getComputedStyle(n).fontSize);while(ST.scrollWidth>ST.clientWidth+.5&&s>17){s-=.5;n.style.fontSize=s+'px'}}
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-k],[data-p]');
  if(b&&(X.contains(b)||S.contains(b))){if(b.classList.contains('ptb'))return;ev.preventDefault();b.dataset.k?show('pick',b.dataset.k,true):show('player',b.dataset.p,true)}});
@@ -630,18 +686,35 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptr{all:unset;cursor:pointer;color:var(--chalk);text-decoration:underline;text-decoration-color:var(--text-dim);text-underline-offset:2px}'
  '.ptr:focus-visible{outline:2px solid var(--chalk);outline-offset:1px}.ptr0{color:var(--chalk)}'
  '.ptsm .ptr{font-weight:600}'
- # trade step, two columns (2026-11-10): row 2 of the sheet row, under the action lines, in the content column. Equal
- # columns, 16px apart; item = mark column (8px) + 5px + text; items 5px apart (the action lines' gap); text = the detail
- # line's 12.5px/1.35; the open sheet's own item bold --chalk, no underline; marks --text-dim (the sign is the cue; --loss is 2.92:1 on YILM's
- #   lighter row, under 3:1, and green/red are results colours, DESIGN.md 2.3).
- '.pte>.pttr{grid-column:3;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;align-items:start;margin-top:8px}'
- '.pttc{display:flex;flex-direction:column;gap:5px;min-width:0}'
- '.ptti{display:grid;grid-template-columns:8px minmax(0,1fr);column-gap:5px;align-items:start;font:400 12.5px/1.35 var(--body);color:var(--chalk)}'
- '.pttk{font:600 12.5px/1.35 var(--body);font-style:normal;text-align:center}.pttk{color:var(--text-dim)}'
- '.pttx{min-width:0;white-space:nowrap}.pttx.pttwr{white-space:normal}.pttot{white-space:nowrap}.pttx.pttwr2 .pttot{white-space:normal}'
+ # trade step (2026-11-24, brief PT-1e): no line 1 / line 2; the content column holds headed columns, one per team that got
+ # something. Row 1 keeps main's height (line 1 14px/1.25 + 5px + line 2 12.5px/1.35 = 39.375px) so the date block and the
+ # logo slot do not move; the columns start at the row's content top and span both rows. Head: 18px logo / face + name, Plex
+ # 600 12.5px --chalk, the name's box trimmed to cap top / baseline and centred on the 18px picture (a shrunk name keeps the
+ # baseline); head margin-top -1.41px puts the name's cap top where line 1's cap top was. A 1px rule under the head (declared
+ # --row-divider; readability.css's border rule paints every border --frame, as the sheet's row dividers) with 6px of ink
+ # above (the picture's lowest ink = its box + --ptak; no picture: the name's lowest glyph) and below (the first item's
+ # highest glyph): gapFit sets the head's padding-bottom and the list's margin-top (the values below are its starting point).
+ '.pte.ptet{grid-template-rows:calc(14px * 1.25 + 5px + 12.5px * 1.35) auto}.ptet>.ptdt,.ptet>.ptswb{grid-row:1}'
+ '.ptxt{grid-column:3;grid-row:1/span 2;align-self:start;min-width:0;display:flex;flex-direction:column}'
+ '.ptt3{display:block;font:600 11px/1 var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);text-box:trim-both cap alphabetic;margin:4.23px 0 8px}'
+ '.pttr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;align-items:start}'
+ '.pttw,.pttc{display:flex;flex-direction:column;min-width:0}.pttc3{margin-top:12px}'
+ '.ptth{display:flex;align-items:flex-start;gap:6px;box-sizing:content-box;height:18px;margin-top:var(--ptthm,-1.41px);padding-bottom:var(--ptthp,7.1px);border-bottom:1px solid var(--row-divider);white-space:nowrap;min-width:0}'
+ '.ptth .pav{width:18px;height:18px}.pts{--ptak:0px}'
+ +('.pts{--ptak:1.125px}' if PICKS else '')+  # BBP logo: ring + shadow ink 1.125px under its box (WebKitGTK 3x); YILM: its readability.css
+
+ '.ptthn{display:block;font:600 12.5px/1 var(--body);color:var(--chalk);white-space:nowrap;text-box:trim-both cap alphabetic;margin-top:calc(9px - 12.5px * var(--ptcap,.698) / 2 + (12.5px - 1em) * var(--ptcap,.698))}'
+ '.pttl{display:flex;flex-direction:column;gap:5px;margin-top:var(--pttlm,2.27px)}'
+ '.ptti{display:block;font:400 12.5px/1.35 var(--body);color:var(--chalk)}'
+ '.pttx{display:block;min-width:0;white-space:nowrap}.pttx.pttwr{white-space:normal}.pttot{white-space:nowrap}.pttx.pttwr2 .pttot{white-space:normal}'
  '.pttx>*{display:inline-block;max-width:none}.pttx.pttwr>*{display:inline}'
  '.pttme{font-weight:600;color:var(--chalk)}.pttno{color:var(--text-dim)}'
  '.pttx>.pttcp,.pttx.pttwr>.pttcp{display:block;font:400 11px/1.3 var(--body);color:var(--text-dim);white-space:normal;margin-top:1px}'
+ # swap badge (2026-11-24, V2): the logo slot of a trade row holds the Stats › Trades swap badge (.txsw: its glyph, fill
+ # --swap-fill (DESIGN.md 4), glyph --frame, --sh-hard, 4px corner; declarations repeated here, never read from Stats CSS),
+ # sized to the 28px logo slot (glyph 14 -> 18px, the badge's ratio), centred where the logo was
+ '.ptswb{grid-column:2;width:28px;height:28px;box-sizing:border-box;display:grid;place-items:center;background:var(--swap-fill);box-shadow:var(--sh-hard);border-radius:4px;color:var(--frame);font-style:normal}'
+ '.ptswb svg{display:block;width:18px;height:18px}'
  '.ptx .nfl,.pts .nfl{flex:none}'
  +yrs_css)
 if __name__=='__main__':
