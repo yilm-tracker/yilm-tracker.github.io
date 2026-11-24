@@ -133,8 +133,25 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: { path: site }
+      # deploy-pages sometimes queries the run's artifacts ~0.3 s after upload-pages-artifact finalised and finds none
+      # ("Found 0 artifact(s)"; the artifact is listed moments later). Up to 3 tries, 20 s apart; the last try has no
+      # continue-on-error, so a deploy that fails 3 times still fails the run (2026-11-24, brief DP-1).
       - id: deploy
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Wait before deploy retry
+        if: steps.deploy.outcome == 'failure'
+        run: sleep 20
+      - id: deploy2
+        if: steps.deploy.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Wait before last deploy try
+        if: steps.deploy2.outcome == 'failure'
+        run: sleep 20
+      - id: deploy3
+        if: steps.deploy2.outcome == 'failure'
         uses: actions/deploy-pages@v4
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deploy.outputs.page_url || steps.deploy2.outputs.page_url || steps.deploy3.outputs.page_url }}
