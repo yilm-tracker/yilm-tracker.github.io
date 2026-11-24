@@ -112,7 +112,9 @@ for w in range(1,DONE+1):
             o=[]
             for x in sx.split(','):
                 if not x:continue
-                f=x.split('|');o.append({'pid':f[0],'pos':HI['m'][f[0]][0],'pts':float(f[3]),'opp':f[4] if len(f)>4 else 'x','nfl':f[1] if len(f)>1 else ''})
+                f=x.split('|')
+                if f[0] not in HI['m']:print(f'WARNING position totals: week {w} roster {rid}: {f[0] or "empty"} has no player entry (empty starter slot?), left out',file=sys.stderr);continue  # guard (2026-11-24); never fatal
+                o.append({'pid':f[0],'pos':HI['m'][f[0]][0],'pts':float(f[3]),'opp':f[4] if len(f)>4 else 'x','nfl':f[1] if len(f)>1 else ''})
             return o
         st_,bn_=par(v[2]),par(v[3])
         _x=_IX.out(w,rid,[(q['pid'],q['nfl']) for q in bn_],{q['pid'] for q in st_});bn_=[q for q in bn_ if q['pid'] not in _x]
