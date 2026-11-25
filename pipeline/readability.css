@@ -1467,3 +1467,33 @@ html:root{--tier-po:var(--accent);--rks:52px}  /* token names aligned with BBP (
 /* 2026-11-24 PAPER TRAIL HEAD INK (brief PT-1e): the faces' art ends .5px inside their 18px box (WebKitGTK 3x, 17 heads), so gapFit
    measures the head's lowest ink there (--ptak; BBP logos 1.125px under the box, retro 2px) */
 html .pts{--ptak:-.5px}
+/* 2026-11-24 PAPER TRAIL MOVE TYPES (PT-2, shipped 2026-11-25; briefs PT-2c .. PT-2g: option A, tiles on adds only). Defining --mv-w switches
+   paper_build.py's move-type markup on (KH): a type tile on waiver claims and free-agent adds only (fourth grid column on those rows;
+   line 2 without the word the tile says), per-type counts as plain text under the summary; every other row as today.
+   No new colour (PT-2e): the WAIVER tile takes the FAAB tile's pair (a waiver claim spends FAAB): fill --faab, ink --pg (6.05:1).
+   --mv-a is the same pair (YILM has no free-agent adds; defined so both move types exist). Gold stays the via marks' job (§2 rule 3). */
+:root{--mv-w:var(--faab);--mv-a:var(--faab)}
+html .pts{--ptf1:17px;--ptf2:15px;--ptfh:15px;--ptfi:15px;--ptfc:13.5px;--ptf3:13.5px;--ptfl:17px;--ptfm:15px;--ptfy:14.5px;--ptfdm:13.5px;--ptfdd:20.5px;--ptkw:42px;--ptsep:.562em}
+/* tile = the position chip .pz (17px, 4px corner, 0 4px padding, Barlow Condensed 700 11px caps, cap-trimmed line), flat (§2 rule 4).
+   --ptkw (a minimum: a longer label grows the tile, never clips) = WAIVER, the widest label in YILM's data (3.038em = 33.42px at .04em
+   tracking, font outlines) + 2 x 4px, rounded up. Across, ink-centred from the font's outlines: text-indent = (right bearing of the
+   last glyph + the trailing .04em - left bearing of the first), em, per word. Down: the cap-trimmed line sits centred but its ink rides
+   2/3px low (from pixels, every tile: WebKitGTK 3x 5.33 / 4.00px, Chromium 1440 5.25 / 4.00px top / bottom): 1.333px of
+   padding-bottom lifts the centred line by half of it. Centre on line 1's cap centre, top on the device-pixel grid: paper_build.py
+   kSnap. --ptsep = "· " in IBM Plex Sans (.326 + .236em). */
+.pts .pte.ptk-a{grid-template-columns:32px 28px minmax(0,1fr) minmax(var(--ptkw),max-content)}
+/* waiver rows are one line (brief PT-2f): line 1 | the bid "$N" (paper_build.py .ptkf) | tile. --ptrb = the bid's last digit's right
+   bearing, IBM Plex Sans 600 (font outlines), so its ink ends 8px before the tile */
+.pts .pte.ptk-w{grid-template-columns:32px 28px minmax(0,1fr) max-content minmax(var(--ptkw),max-content)}.pts .pte.ptk-w>.ptkr{grid-column:5}
+.pts .ptkf[data-d="0"]{--ptrb:0.04em}.pts .ptkf[data-d="1"]{--ptrb:0.03em}.pts .ptkf[data-d="2"]{--ptrb:0.054em}.pts .ptkf[data-d="3"]{--ptrb:0.071em}.pts .ptkf[data-d="4"]{--ptrb:0.036em}.pts .ptkf[data-d="5"]{--ptrb:0.047em}.pts .ptkf[data-d="6"]{--ptrb:0.044em}.pts .ptkf[data-d="7"]{--ptrb:0.057em}.pts .ptkf[data-d="8"]{--ptrb:0.045em}.pts .ptkf[data-d="9"]{--ptrb:0.049em}
+
+.pts .ptkr{grid-column:4;align-self:center;position:relative;display:grid;place-items:center;box-sizing:border-box;min-width:var(--ptkw);height:17px;padding:0 4px 1.333px;border-radius:4px;
+  font:700 11px/1 var(--display);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;font-style:normal;text-box:trim-both cap alphabetic;color:var(--pg)}
+.pts .ptkr.ptkt-w{background:var(--mv-w);text-indent:.04em}.pts .ptkr.ptkt-a{background:var(--mv-a);text-indent:.02em}
+/* a line 2 that wraps never ends on one word (brief PT-2d item 6) */
+.pts .ptb2{text-wrap:balance}
+/* counts line dots (brief PT-2g): each dot moves inside its --ptsep box by half the difference of the next item's first glyph's left
+   bearing (--kd) and the previous item's last glyph's right bearing (--ke), IBM Plex Sans 400 outlines (x .5em; paper_build.py writes
+   the glyphs as data-d / data-e), so the ink gap before the dot equals the gap after it ("waiver ·" was 0.64px tighter) */
+.pts .ptkn::before{text-indent:calc((var(--kd,.051) - var(--ke,.056)) * .5em)}
+.pts .ptkn[data-d="0"]{--kd:.060}.pts .ptkn[data-d="1"]{--kd:.051}.pts .ptkn[data-d="2"]{--kd:.069}.pts .ptkn[data-d="3"]{--kd:.042}.pts .ptkn[data-d="4"]{--kd:.038}.pts .ptkn[data-d="5"]{--kd:.077}.pts .ptkn[data-d="6"]{--kd:.067}.pts .ptkn[data-d="7"]{--kd:.069}.pts .ptkn[data-d="8"]{--kd:.058}.pts .ptkn[data-d="9"]{--kd:.067}.pts .ptkn[data-e="s"]+.ptkn{--ke:.056}.pts .ptkn[data-e="p"]+.ptkn{--ke:.050}.pts .ptkn[data-e="t"]+.ptkn{--ke:.044}.pts .ptkn[data-e="r"]+.ptkn{--ke:.017}.pts .ptkn[data-e="e"]+.ptkn{--ke:.047}

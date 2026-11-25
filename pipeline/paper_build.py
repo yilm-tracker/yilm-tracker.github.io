@@ -366,25 +366,50 @@ function line(r,isPick,me){const[y,d,k,a,b,x,w]=r,ta=a>=0?T[a]:'',tb=b>=0?T[b]:'
  if(k==='T'){const m=r[1],n=tcount(x),mm=+m.slice(5,7),dd=+m.slice(8,10),multi=(x||[]).some(c=>c[1].some(q=>typeof q!=='string'));
   return '<div class="pte ptet'+(multi?' ptet3':'')+'"><span class="ptdt"><i>'+MO[mm-1]+'</i><b>'+dd+'</b></span>'+'<i class="ptswb" role="img" aria-label="Trade">'+SWP+'</i>'
    +'<span class="ptxt">'+(multi?'<span class="ptt3">'+n+'-team trade</span>':'')+tcols(x,me)+'</span></div>'}
- else if(k==='W'){l1='Claimed by <b>'+esc(ta)+'</b>';l2='Waivers'+(x[0]?' · $'+esc(x[0])+' FAAB':'')}
- else if(k==='A'){l1='Added by <b>'+esc(ta)+'</b>';l2='Free agent'}
- else if(k==='CA'){l1='Added by <b>'+esc(ta)+'</b>';l2='Commissioner'}
- else if(k==='D'){l1='Dropped by <b>'+esc(tb)+'</b>';who=b}
- else if(k==='CD'){l1='Removed from <b>'+esc(tb)+'</b>';l2='Commissioner';who=b}
- else if(k==='R'){l1='Drafted by <b>'+esc(ta)+'</b>';l2=(dk[x[1]]||'Draft')+' · '+esc(x[0])+(x[2]&&D.K[x[2]]&&D.K[x[2]][2]!==a?' · '+refh('k'+x[2]):'')}
- else if(k==='U'){l1='Used by <b>'+esc(ta)+'</b>';l2=esc(x[0])+' · '+refh('p'+x[1])}
- else if(k==='M'){l1='Moved to <b>'+esc(ta)+'</b>';l2='From '+esc(tb)+' · commissioner, no trade logged'}
- const m=+d.slice(5,7),dd=+d.slice(8,10);
- return '<div class="pte"><span class="ptdt"><i>'+MO[m-1]+'</i><b>'+dd+'</b></span>'+av(who)+'<span class="ptx1"><span class="pta">'+l1+'</span>'+(l2?'<span class="ptb2">'+l2+'</span>':'')+'</span>'+l3+'</div>'}
+ // move-type hooks (2026-11-24, briefs PT-2 .. PT-2d): waiver claims and free-agent adds only (Nicklaus 20:57 ET: "the only adds become
+ // attention drawing"). Those rows carry .ptk-w / .ptk-a and a type tile i.ptkr in a fourth grid column; the tile says the type, so
+ // line 2 drops the word; a waiver row is one line (PT-2f): its bid "$N" (span.ptkf, value only; title / aria-label "$N FAAB") sits in
+ // its own track left of the tile, on line 1's baseline (kSnap). A free-agent add has no line 2. Every other row is today's markup and text. Emitted
+ // only where the page's stylesheet defines the move tokens (KH): elsewhere today's markup, byte for byte (a span boundary splits the
+ // text run and Chromium then moves every later glyph of the line by 1/64px, which changed Classic's anti-aliasing). Line 1's team may
+ // carry data-ab (PT.HS) for l1Fit (KH only).
+ const KL={w:'Waiver',a:'Free agent'};let kk='',am='';
+ const bt=n=>KH&&HSF[n]?'<b data-f="'+esc(n)+'" data-ab="'+esc(HSF[n])+'">'+esc(n)+'</b>':'<b>'+esc(n)+'</b>';
+ if(k==='W'){kk=KH?'w':'';l1='Claimed by '+bt(ta);l2=KH?'':'Waivers'+(x[0]?' · $'+esc(x[0])+' FAAB':'');
+  if(KH&&x[0])am='<span class="ptkf" data-d="'+String(x[0]).slice(-1)+'" title="$'+esc(x[0])+' FAAB" aria-label="$'+esc(x[0])+' FAAB"><b>$'+esc(x[0])+'</b></span>'}
+ else if(k==='A'){kk=KH?'a':'';l1='Added by '+bt(ta);l2=KH?'':'Free agent'}
+ else if(k==='CA'){l1='Added by '+bt(ta);l2='Commissioner'}
+ else if(k==='D'){l1='Dropped by '+bt(tb);who=b}
+ else if(k==='CD'){l1='Removed from '+bt(tb);l2='Commissioner';who=b}
+ else if(k==='R'){l1='Drafted by '+bt(ta);l2=(dk[x[1]]||'Draft')+' · '+esc(x[0])+(x[2]&&D.K[x[2]]&&D.K[x[2]][2]!==a?' · '+refh('k'+x[2]):'')}
+ else if(k==='U'){l1='Used by '+bt(ta);l2=esc(x[0])+' · '+refh('p'+x[1])}
+ else if(k==='M'){l1='Moved to '+bt(ta);l2='From '+esc(tb)+' · commissioner, no trade logged'}
+ const m=+d.slice(5,7),dd=+d.slice(8,10),tile=kk?'<i class="ptkr ptkt-'+kk+'">'+KL[kk]+'</i>':'';
+ return '<div class="pte'+(kk?' ptk-'+kk:'')+'"><span class="ptdt"><i>'+MO[m-1]+'</i><b>'+dd+'</b></span>'+av(who)+'<span class="ptx1"><span class="pta">'+l1+'</span>'
+   +(l2?'<span class="ptb2">'+l2+'</span>':'')+'</span>'+l3+am+tile+'</div>'}
 function body(rows,isPick,me){let h='',cur=null;
  for(const r of rows){const y=r[0];if(y!==cur){cur=y;h+='<div class="ptsy"><span>'+y+'</span><span>'+esc(D.S[y]==='MFL'?'MyFantasyLeague':'Sleeper')+'</span></div>'}h+=line(r,isPick,me)}
  return h||'<p class="ptnone">No moves yet.</p>'}
+// per-type counts for the header summary (briefs PT-2 .. PT-2e; KH only): own line under the summary, plain text in its style, order
+// of frequency (ties in KT order), plurals; none for a sheet with one move. Items are joined by a space (the break opportunity); each
+// item is one unbreakable .ptkn whose "· " is its own ::before (a box of --ptsep = the dot + a space); the items' wrapper .ptkw sits
+// --ptsep to the left inside .ptkc (overflow hidden), so on every line the first item's dot is cut off and the space before it is the
+// one the line break eats: no line starts or ends with a dot. The block balances its lines. data-d = the item's first glyph (its
+// count's first digit), data-e = its last glyph (brief PT-2g): the site CSS moves each dot inside its box by the two glyphs' side
+// bearings (from the font outlines), so the ink gap before the dot equals the gap after it.
+const KT=[['A','free agent','free agents'],['D','drop','drops'],['W','waiver','waivers'],['T','trade','trades'],['R','draft','drafts'],['C','commissioner move','commissioner moves']];
+function kcount(rows){if(!KH||rows.length<2)return '';const n={};rows.forEach(r=>{const k=/^(CA|CD|M)$/.test(r[2])?'C':r[2];n[k]=(n[k]||0)+1});
+ const L=KT.filter(t=>n[t[0]]).sort((a,b)=>n[b[0]]-n[a[0]]);if(!L.length)return '';
+ return '<span class="ptkc"><span class="ptkw">'+L.map(t=>{const w=n[t[0]]===1?t[1]:t[2];return '<span class="ptkn" data-d="'+String(n[t[0]])[0]+'" data-e="'+w.slice(-1)+'">'+n[t[0]]+' '+w.replace(/ /g,' ')+'</span>'}).join(' ')+'</span></span>'}
+// move-type hooks on wherever the page's stylesheet defines the move tokens (retro theme.css, YILM readability.css); BBP Classic
+// does not, and keeps today's markup (see line())
+const KH=getComputedStyle(document.documentElement).getPropertyValue('--mv-w').trim()!=='';
 const S=document.querySelector('.pts'),ST=S.querySelector('.ptst'),SS=S.querySelector('.ptss'),SB=S.querySelector('.ptsb');let back=null,pushed=false;
 function show(kind,id,push){let t='',s='',rows=[];
  if(kind==='player'){const p=D.P[id];if(!p)return false;rows=D.H[id]||[];
    t='<span class="ptsn">'+esc(p[0])+'</span>'+nfl(p[2]);
    s='<span class="ptsl">'+(p[1]?'<i class="pz p-'+esc(p[1].toLowerCase())+'">'+esc(p[1])+'</i>':'')+(p[3]>=0?av(p[3])+'<span>On <b>'+esc(T[p[3]])+'</b></span>':'<span>Not on a roster</span>')+'</span>'
-     +'<span class="ptsm">'+rows.length+' move'+(rows.length===1?'':'s')+(rows.length?' since '+rows[0][1].slice(0,4):'')+'</span>';
+     +'<span class="ptsm">'+rows.length+' move'+(rows.length===1?'':'s')+(rows.length?' since '+rows[0][1].slice(0,4):'')+kcount(rows)+'</span>';
    rows=rows.slice().reverse()}
  else{const v=D.K[id];if(!v)return false;rows=D.C[id]||[];
    t='<span class="ptsn">'+v[0]+' · Round '+v[1]+'</span>';
@@ -404,7 +429,30 @@ function hide(fromPop){if(S.hidden)return;S.hidden=true;document.documentElement
 // slotFit) -> the item wraps inside its own column under its text (the mark column gives the hanging indent; a pick
 // breaks before its "(team)": the full name again when that fits the column on its own line, else the short one, which
 // itself wraps only if it is wider than the column). Never shrinks, clips or ellipsises. Reads, then writes.
-function trFit(){if(S.hidden)return;trFit0();hdFit();tPlace();gapFit()}
+function trFit(){if(S.hidden)return;l1Fit();trFit0();hdFit();tPlace();gapFit();kSnap()}
+// kSnap (2026-11-24, briefs PT-2c / PT-2e; KH only): the move-type tiles (i.ptkr) sit with their centre on line 1's cap centre (as the
+// Picks TIMES TRADED tile sits on the holder name's cap centre), on the device-pixel grid. The tile is laid out centred in its row; on
+// a two-line row (waiver + "$N FAAB") that is between the lines. Line 1's baseline is read from a zero-size marker put at its start
+// (an inline formatting context: .pta is a block), its cap centre = baseline - cap height / 2 (--ptcap, IBM Plex Sans .698em, Martian
+// Mono at size-adjust .875 .70em); the tile's top = cap centre - half its height, rounded to the nearest device pixel (1 / dpr CSS px;
+// the row's text is not on the grid, CSS cannot see where a box meets it), written as a relative `top` (moves nothing else). Runs last
+// in trFit (after every show() and on resize) and when the fonts are ready. The waiver bid (.ptkf, PT-2f) takes line 1's baseline the
+// same way (a relative `top`; 0 on a one-line row, where both are centred in the row). Clears, reads all, then writes.
+function kSnap(){if(!KH||S.hidden)return;const l=[...SB.querySelectorAll('.ptkr')];if(!l.length)return;const u=1/(window.devicePixelRatio||1);
+ const cap=parseFloat(getComputedStyle(S).getPropertyValue('--ptcap'))||.698;
+ l.forEach(t=>t.style.top='');const mk=l.map(t=>{const a=t.parentElement.querySelector('.pta'),i=document.createElement('i');i.style.cssText='display:inline-block;width:0;height:0;margin:0;padding:0;border:0;vertical-align:baseline';a.insertBefore(i,a.firstChild);return [a,i]});
+ const d=l.map((t,k)=>{const[a,i]=mk[k],r=t.getBoundingClientRect(),c=i.getBoundingClientRect().bottom-cap*parseFloat(getComputedStyle(a).fontSize)/2;return Math.round((c-r.height/2)/u)*u-r.top});
+ const F=[...SB.querySelectorAll('.ptkf')];F.forEach(f=>f.style.top='');const fm=F.map(f=>{const i=document.createElement('i');i.style.cssText='display:inline-block;width:0;height:0;margin:0;padding:0;border:0;vertical-align:baseline';f.firstChild.appendChild(i);
+  const a=f.parentElement.querySelector('.pta'),j=document.createElement('i');j.style.cssText=i.style.cssText;a.insertBefore(j,a.firstChild);return [i,j]});
+ const fd=fm.map(([i,j])=>j.getBoundingClientRect().bottom-i.getBoundingClientRect().bottom);
+ mk.forEach(m=>m[1].remove());fm.forEach(([i,j])=>{i.remove();j.remove()});l.forEach((t,i)=>{if(Math.abs(d[i])>.001)t.style.top=d[i].toFixed(4)+'px'});
+ F.forEach((f,i)=>{if(Math.abs(fd[i])>.001)f.style.top=fd[i].toFixed(4)+'px'})}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(!S.hidden)kSnap()});
+// l1Fit (2026-11-24, briefs PT-2b .. PT-2d; KH only): a line 1 that would wrap takes its team's approved head short form (PT.HS);
+// still too long: it wraps as before. Reads, then writes.
+function l1Fit(){const L=[...SB.querySelectorAll('.pta b[data-ab]')];if(!L.length)return;L.forEach(b=>{b.textContent=b.dataset.f;b.removeAttribute('title')});
+ const one=b=>{const a=b.parentElement,lh=parseFloat(getComputedStyle(a).lineHeight);return a.getBoundingClientRect().height<lh*1.5};
+ const O=L.filter(b=>!one(b));O.forEach(b=>{b.textContent=b.dataset.ab;b.title=b.dataset.f})}
 function trFit0(){const A=typeof LUA!=='undefined'?LUA:{},N=[...SB.querySelectorAll('.pttx')];if(!N.length)return;
  N.forEach(n=>{n.classList.remove('pttwr','pttwr2');const o=n.querySelector('.pttot[data-f]');if(o)o.textContent=o.dataset.f;const p=n.querySelector('[data-n]');if(p){p.textContent=p.dataset.n;p.removeAttribute('title')}});
  const ov=n=>{const e=n.firstElementChild;return e?e.getBoundingClientRect().width>n.getBoundingClientRect().width+.05:false};
@@ -424,7 +472,7 @@ function hdFit(){const Hs=[...SB.querySelectorAll('.ptthn')];if(!Hs.length)retur
  Hs.forEach(h=>{h.style.fontSize='';h.textContent=h.dataset.f;h.removeAttribute('title')});
  const ov=h=>{const r=document.createRange();r.selectNodeContents(h);return r.getBoundingClientRect().right>h.parentElement.getBoundingClientRect().right+.05};
  const O=Hs.filter(ov);
- O.forEach(h=>{if(h.dataset.ab){h.textContent=h.dataset.ab;h.title=h.dataset.f;if(!ov(h))return}let s=12.5;while(ov(h)&&s>11){s-=.25;h.style.fontSize=s+'px'}})}
+ O.forEach(h=>{if(h.dataset.ab){h.textContent=h.dataset.ab;h.title=h.dataset.f;if(!ov(h))return}let s=parseFloat(getComputedStyle(h).fontSize)||12.5;while(ov(h)&&s>11){s-=.25;h.style.fontSize=s+'px'}})}
 // gapFit (2026-11-24): the 1px rule under each column head sits 6px of ink under the head (its picture's lowest ink:
 // the box + --ptak, the ring and hard shadow below it; with no picture, the name's lowest glyph) and 6px of ink over the
 // column's first item (its highest glyph). Glyph ink from the fonts' own outlines (GT: [top, bottom] per character in
@@ -658,8 +706,8 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptg .pav{width:28px;height:28px}'
  '.ptfa0{font:700 12px/1 var(--display);letter-spacing:.06em;color:var(--text-dim);font-style:normal}'
  '.ptdt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-style:normal}'
- '.ptdt i{font:600 11px/1 var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);font-style:normal;text-box:trim-both cap alphabetic}'
- '.ptdt b{font:700 17px/1 var(--display);color:var(--chalk);text-box:trim-both cap alphabetic}'
+ '.ptdt i{font:600 var(--ptfdm,11px)/1 var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);font-style:normal;text-box:trim-both cap alphabetic}'
+ '.ptdt b{font:700 var(--ptfdd,17px)/1 var(--display);color:var(--chalk);text-box:trim-both cap alphabetic}'
  '.ptdl{align-items:flex-end}.ptdl b{font-size:12px;color:var(--text-dim);font-weight:600;letter-spacing:.06em}.ptdl i{color:var(--chalk);font-size:12px}'
  '.ptmore{margin:-4px 0 14px;font-size:12px;color:var(--steel)}.ptmore:empty{display:none}'
  '.ptnone{margin:0;padding:16px;color:var(--text-dim);font-size:13px}'
@@ -673,16 +721,16 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptsx:focus-visible{outline:2px solid var(--chalk);outline-offset:2px}'
  '.ptst{margin:0;display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;font:700 26px/1.1 var(--display);letter-spacing:.02em;text-transform:uppercase;color:var(--chalk)}'
  '.ptss{display:flex;flex-direction:column;gap:6px;margin-top:8px}'
- '.ptsl{display:flex;align-items:center;gap:8px;font:400 14px/1.2 var(--body);color:var(--chalk)}.ptsl .pav{width:24px;height:24px}.ptsl b{font-weight:600}'
- '.ptsm{font:400 12.5px/1.35 var(--body);color:var(--text-dim)}'
+ '.ptsl{display:flex;align-items:center;gap:8px;font:400 var(--ptfl,14px)/1.2 var(--body);color:var(--chalk)}.ptsl .pav{width:24px;height:24px}.ptsl b{font-weight:600}'
+ '.ptsm{font:400 var(--ptfm,12.5px)/1.35 var(--body);color:var(--text-dim)}'
  '.ptsb{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:max(16px,env(safe-area-inset-bottom))}'
- '.ptsy{display:flex;justify-content:space-between;align-items:center;padding:10px 16px 9px;font:700 12px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);background:var(--pg)}'
+ '.ptsy{display:flex;justify-content:space-between;align-items:center;padding:10px 16px 9px;font:700 var(--ptfy,12px)/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);background:var(--pg)}'
  '.pte{display:grid;grid-template-columns:32px 28px minmax(0,1fr);column-gap:12px;align-items:center;padding:12px 16px;border-top:1px solid var(--row-divider);background:var(--deck)}'
  '.ptsy+.pte{border-top:0}.pte:nth-child(odd){background:var(--row-lt)}'
  '.pte .pav{width:28px;height:28px}.pte .ptfa{visibility:hidden}'
  '.ptx1{min-width:0;display:flex;flex-direction:column;gap:5px}'
- '.pta{font:400 14px/1.25 var(--body);color:var(--chalk)}.pta b{font-weight:600}'
- '.ptb2{font:400 12.5px/1.35 var(--body);color:var(--text-dim)}'
+ '.pta{font:400 var(--ptf1,14px)/1.25 var(--body);color:var(--chalk)}.pta b{font-weight:600}'
+ '.ptb2{font:400 var(--ptf2,12.5px)/1.35 var(--body);color:var(--text-dim)}'
  '.ptr{all:unset;cursor:pointer;color:var(--chalk);text-decoration:underline;text-decoration-color:var(--text-dim);text-underline-offset:2px}'
  '.ptr:focus-visible{outline:2px solid var(--chalk);outline-offset:1px}.ptr0{color:var(--chalk)}'
  '.ptsm .ptr{font-weight:600}'
@@ -694,28 +742,37 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  # --row-divider; readability.css's border rule paints every border --frame, as the sheet's row dividers) with 6px of ink
  # above (the picture's lowest ink = its box + --ptak; no picture: the name's lowest glyph) and below (the first item's
  # highest glyph): gapFit sets the head's padding-bottom and the list's margin-top (the values below are its starting point).
- '.pte.ptet{grid-template-rows:calc(14px * 1.25 + 5px + 12.5px * 1.35) auto}.ptet>.ptdt,.ptet>.ptswb{grid-row:1}'
+ '.pte.ptet{grid-template-rows:calc(var(--ptf1,14px) * 1.25 + 5px + var(--ptf2,12.5px) * 1.35) auto}.ptet>.ptdt,.ptet>.ptswb{grid-row:1}'
  '.ptxt{grid-column:3;grid-row:1/span 2;align-self:start;min-width:0;display:flex;flex-direction:column}'
- '.ptt3{display:block;font:600 11px/1 var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);text-box:trim-both cap alphabetic;margin:4.23px 0 8px}'
+ '.ptt3{display:block;font:600 var(--ptf3,11px)/1 var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);text-box:trim-both cap alphabetic;margin:4.23px 0 8px}'
  '.pttr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;align-items:start}'
  '.pttw,.pttc{display:flex;flex-direction:column;min-width:0}.pttc3{margin-top:12px}'
  '.ptth{display:flex;align-items:flex-start;gap:6px;box-sizing:content-box;height:18px;margin-top:var(--ptthm,-1.41px);padding-bottom:var(--ptthp,7.1px);border-bottom:1px solid var(--row-divider);white-space:nowrap;min-width:0}'
  '.ptth .pav{width:18px;height:18px}.pts{--ptak:0px}'
  +('.pts{--ptak:1.125px}' if PICKS else '')+  # BBP logo: ring + shadow ink 1.125px under its box (WebKitGTK 3x); YILM: its readability.css
 
- '.ptthn{display:block;font:600 12.5px/1 var(--body);color:var(--chalk);white-space:nowrap;text-box:trim-both cap alphabetic;margin-top:calc(9px - 12.5px * var(--ptcap,.698) / 2 + (12.5px - 1em) * var(--ptcap,.698))}'
+ '.ptthn{display:block;font:600 var(--ptfh,12.5px)/1 var(--body);color:var(--chalk);white-space:nowrap;text-box:trim-both cap alphabetic;margin-top:calc(9px - var(--ptfh,12.5px) * var(--ptcap,.698) / 2 + (var(--ptfh,12.5px) - 1em) * var(--ptcap,.698))}'
  '.pttl{display:flex;flex-direction:column;gap:5px;margin-top:var(--pttlm,2.27px)}'
- '.ptti{display:block;font:400 12.5px/1.35 var(--body);color:var(--chalk)}'
+ '.ptti{display:block;font:400 var(--ptfi,12.5px)/1.35 var(--body);color:var(--chalk)}'
  '.pttx{display:block;min-width:0;white-space:nowrap}.pttx.pttwr{white-space:normal}.pttot{white-space:nowrap}.pttx.pttwr2 .pttot{white-space:normal}'
  '.pttx>*{display:inline-block;max-width:none}.pttx.pttwr>*{display:inline}'
  '.pttme{font-weight:600;color:var(--chalk)}.pttno{color:var(--text-dim)}'
- '.pttx>.pttcp,.pttx.pttwr>.pttcp{display:block;font:400 11px/1.3 var(--body);color:var(--text-dim);white-space:normal;margin-top:1px}'
+ '.pttx>.pttcp,.pttx.pttwr>.pttcp{display:block;font:400 var(--ptfc,11px)/1.3 var(--body);color:var(--text-dim);white-space:normal;margin-top:1px}'
  # swap badge (2026-11-24, V2): the logo slot of a trade row holds the Stats › Trades swap badge (.txsw: its glyph, fill
  # --swap-fill (DESIGN.md 4), glyph --frame, --sh-hard, 4px corner; declarations repeated here, never read from Stats CSS),
  # sized to the 28px logo slot (glyph 14 -> 18px, the badge's ratio), centred where the logo was
  '.ptswb{grid-column:2;width:28px;height:28px;box-sizing:border-box;display:grid;place-items:center;background:var(--swap-fill);box-shadow:var(--sh-hard);border-radius:4px;color:var(--frame);font-style:normal}'
  '.ptswb svg{display:block;width:18px;height:18px}'
  '.ptx .nfl,.pts .nfl{flex:none}'
+ # per-type counts (KH only, briefs PT-2d / PT-2e): own line in the summary's style; items unbreakable, lines balanced, the separator
+ # is each item's ::before (--ptsep wide: "· " in the site's body font), cut off at every line start by .ptkc's overflow
+ # waiver bid (KH only, brief PT-2f): own track between line 1 and the tile; line 1's font, --chalk, 600, tabular figures; the box
+ # stops (8px - the last digit's right bearing) before the tile: the column gap is 12px, so margin-right = -4px - --ptrb (site CSS
+ # gives --ptrb per last digit, data-d, from its font's outlines), and every bid's last digit ink ends 8px before the tile
+ '.pte.ptk-w .pta{text-wrap:balance}'   # the W row's tracks (... max-content tile) are in the site CSS, with --ptkw
+ '.ptkf{grid-column:4;align-self:center;position:relative;font:600 var(--ptf1,14px)/1.25 var(--body);color:var(--chalk);font-variant-numeric:tabular-nums;white-space:nowrap;margin-right:calc(-4px - var(--ptrb,0em))}.ptkf b{font-weight:600}'
+ '.ptkc{display:block;overflow:hidden}.ptkw{display:block;margin-left:calc(-1 * var(--ptsep,.56em));text-wrap:balance}'
+ '.ptkn{white-space:nowrap}.ptkn::before{content:"\\00b7";display:inline-block;width:var(--ptsep,.56em);text-align:left}'
  +yrs_css)
 if __name__=='__main__':
     open(P+'paper_section.html','w',encoding='utf-8').write(SEC)
