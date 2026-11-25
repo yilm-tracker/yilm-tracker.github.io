@@ -218,14 +218,15 @@ CSS="""
 .dfby{justify-self:stretch;align-self:stretch;justify-content:flex-start;gap:9px;padding:6px 10px 6px 12px;border-left:3px solid var(--pg,#0c1316);background:rgba(0,0,0,.13)}
 .dfby .pav{width:28px;height:28px}
 .dfby span{gap:4px;zoom:var(--dfz,1)}
-.dfvia{display:inline-flex;align-items:baseline;gap:4px;padding:3px 6px 2px;border-radius:4px;background:var(--via-bg);box-shadow:inset 0 0 0 1px var(--via-line);font:600 11px/1 var(--display)!important;letter-spacing:.04em;text-transform:uppercase;color:var(--chalk)!important}
-.dfvia i{font-style:normal;font-weight:700;font-size:9.5px;color:var(--via-ink)}
+.dfvia{display:inline-flex;align-items:baseline;gap:.25em;padding:0;border-radius:0;background:none;box-shadow:none;font:600 11px/1 var(--display)!important;letter-spacing:0;text-transform:none;color:var(--text-dim)!important}
+.dfvia i{font-style:normal;font-weight:600;color:inherit}
+.dfby .dfvia{margin-bottom:var(--dfvb,2px)}
 .dfcp{flex:none;display:inline-flex;align-items:baseline;gap:3px;padding:3px 6px 2px;border-radius:5px;background:var(--deck-2);box-shadow:inset 0 0 0 1px var(--line-strong),0 1px 0 rgba(0,0,0,.35);font-family:var(--display);line-height:1}
 .dfcp b{font:700 12.5px/1 var(--display)!important;color:var(--chalk)!important;font-variant-numeric:tabular-nums}
 .dfcp i{font-style:normal;font-weight:600;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--steel)}
 .dfcp.z b{color:var(--steel)!important}
 @media(max-width:420px){.dfp{--dfbw:124px}.dfby{padding:6px 8px 6px 10px;gap:7px}.dfby .pav{width:26px;height:26px}}
-@media(max-width:380px){.dfp{--dfbw:112px}.dfby{padding:6px 6px 6px 8px;gap:6px}.dfby .pav{width:22px;height:22px}.dfvia{font-size:10px!important;padding:2px 4px 1px}.dfcp b{font-size:11.5px!important}}
+@media(max-width:380px){.dfp{--dfbw:112px}.dfby{padding:6px 6px 6px 8px;gap:6px}.dfby .pav{width:22px;height:22px}.dfvia{font-size:11px!important}.dfcp b{font-size:11.5px!important}}
 /* 2026-11-03: desktop draft board (>=1100px); the list stays below 1100px */
 .dfg{display:none}
 @media(min-width:1100px){
