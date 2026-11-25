@@ -1,6 +1,7 @@
 # DESIGN.md: BBP + YILM tracker design system
 
-Single source of truth for how both trackers look and behave. Identical in both repos; site-specific items are labelled **BBP** or **YILM**.
+Single source of truth for YILM's look and for the structure and behaviour both trackers share. Identical in both repos; site-specific items are labelled **BBP** or **YILM**.
+**BBP's look** is the retro theme since 2026-11-24 (brief FR-1): its source of truth is `retro/RETRO.md` in the BBP repo; this file's look rules (colours, surfaces, type) describe Classic, which is YILM's published look and BBP's build intermediate (not published).
 **Builder:** read this before any UI change; update it in the same commit as the change (status tag + Decision log line).
 **Translator chat:** reads this at the start of every session; never edits code.
 Implementation notes (file names, fitting functions, data pipelines) stay in `CLAUDE.md`; where the two disagree about design, this file wins.
@@ -15,7 +16,7 @@ Last reconciled against the built pages: 2026-11-04, after the data bar / opacit
 
 - **Translator chat:** reads code and screenshots, measures real values, writes briefs. Never changes code.
 - **Builder (Claude Code):** applies briefs to `billsblockparty/dynasty-tracker` (BBP) and `yilm-tracker/yilm-tracker.github.io` (YILM), verifies the BUILT page, updates this file.
-- Every UI change goes to both trackers unless a section says otherwise. Only exceptions: MFL history (BBP), the Jaguars art/palette and rank-numeral art (BBP), logo ring + shadow (BBP; YILM has bare faces), draft-pick features (BBP; YILM is redraft).
+- Every structural UI change (markup, data, behaviour, fitters in `pipeline/`) goes to both trackers unless a section says otherwise; the look is per site: BBP = `retro/` (RETRO.md), YILM = `pipeline/` (this file). Only exceptions: MFL history (BBP), the Jaguars art/palette and rank-numeral art (BBP), logo ring + shadow (BBP; YILM has bare faces), draft-pick features (BBP; YILM is redraft).
 - One brief at a time. To change course mid-task: "Stop. Discard X. Do this instead."
 - Verify the built page, not the source (a build step once changed colours after the source).
 - Reverts restore exact values from a named commit; never recreate by eye.
@@ -401,6 +402,7 @@ Pattern B plus: header strip (28px, `--row-divider`; date left, "WEEK n ON" righ
 
 Newest first. One line per decision: date · what · why.
 
+- 2026-11-24 · BBP publishes the retro theme at the site root (`/dynasty-tracker/`; `/retro/tracker/` redirects there keeping the `#hash`; Classic's page is a build intermediate, `site-classic/`, not published; `DynastyStandings.html` no longer published; the theme step stops the deploy when it fails) · Nicklaus 2026-11-24: retro is BBP's only look (brief FR-1). This file now governs YILM's look and the shared structure; BBP's look = `retro/RETRO.md`.
 - 2026-11-24 · Retro (BBP) Team Hub game lists: one Score track 99px and one third-column track 77px on Could have, Close games, Season highs faced and Median splits (retro/theme.css only; brief FR-2) · Martian Mono's score pairs ran up to 6.81px past Classic's 92px column; Nicklaus approved the second pass 2026-11-24 19:49 ET.
 - 2026-11-24 · Past-week empty-starter guards: a completed week with an empty starter builds (dropped points count the bench player against the empty slot at 0 pts; position totals leave the slot out), warnings only · Nicklaus approved 14:19 ET; reverses "no guards" of 2026-11-22: a real empty slot in a past week stopped the weekly pull and the build.
 - 2026-11-24 · Paper Trail sheet trade step: no "Traded to / From" lines; the logo slot holds the Stats › Trades swap badge; one headed column per team (18px picture + name, 1px rule with 6px of ink each side, items = what that team got, no +/-); head short forms Chop Wood / Rev. Apache Master before any shrink; new token `--swap-fill` for the badge on Stats and Paper Trail; retro skin is BBP only · Nicklaus chose V2 and the recs (14:02 / 14:04 / 14:19 ET): the old step told one side twice and the badge failed 3:1 against the rows.
