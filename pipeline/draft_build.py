@@ -161,7 +161,7 @@ def year_panel(y,d):
         out.append(f'<div class="dfr" style="--dftw:{tw};--dftv:{tv}"><div class="dfrh" role="row"><span>R{rd}</span><span class="dfhp"><i>Player</i>{"<i class=dfhn>NFL</i>" if NFD else ""}{("<i class=dfhr>"+("Pts" if d.get("type")=="startup" else "RPts")+"</i>") if on else ""}</span><span class="dfhg">GM</span></div>'+''.join(
             f'<div class="dfp" style="--pc:{PC.get(pos or "", "var(--line)")}"><i class="dfn"><b>{rd}.{pk:02d}</b><span>{e(pos or "")}</span></i>'
             f'<div class="dfpl"><span class="dfpn"><b>{e(pl.replace("FootballTeam","Football Team"))}</b>{badge(nfl) if nfl else ""}</span>{nslot(pl,pos,y) if NFD else ""}{tile(pl,pos,y,d,on)}</div>'
-            f'<div class="dfby" title="{e(own(by))}{(" via "+e(own(orig))) if orig!=by else ""}"><i class="pav" data-avt="{e(by)}" aria-hidden="true"></i><span><b>{e(own(by))}</b>'+(f'<small class="dfvia"><i>via</i>{e(own(orig))}</small>' if orig!=by else '')+'</span></div></div>'
+            f'<div class="dfby" title="{e(own(by))}{(" via "+e(own(orig))) if orig!=by else ""}"><i class="pav" data-avt="{e(by)}" aria-hidden="true"></i><span><b>{e(own(by))}</b>'+(f'<small class="dfvia"><i>via</i> {e(own(orig))}</small>' if orig!=by else '')+'</span></div></div>'
             for rd_,pk,slot,orig,by,pl,pos,nfl in rr)+'</div>')
     return ''.join(out)+'</div>'
 def section(years=None,idp='df'):
@@ -218,7 +218,7 @@ CSS="""
 .dfby{justify-self:stretch;align-self:stretch;justify-content:flex-start;gap:9px;padding:6px 10px 6px 12px;border-left:3px solid var(--pg,#0c1316);background:rgba(0,0,0,.13)}
 .dfby .pav{width:28px;height:28px}
 .dfby span{gap:4px;zoom:var(--dfz,1)}
-.dfvia{display:inline-flex;align-items:baseline;gap:.25em;padding:0;border-radius:0;background:none;box-shadow:none;font:600 11px/1 var(--display)!important;letter-spacing:0;text-transform:none;color:var(--text-dim)!important}
+.dfvia{display:block;word-spacing:.5625px;padding:0;border-radius:0;background:none;box-shadow:none;font:600 11px/1 var(--display)!important;letter-spacing:0;text-transform:none;color:var(--text-dim)!important}
 .dfvia i{font-style:normal;font-weight:600;color:inherit}
 .dfby .dfvia{margin-bottom:var(--dfvb,2px)}
 .dfcp{flex:none;display:inline-flex;align-items:baseline;gap:3px;padding:3px 6px 2px;border-radius:5px;background:var(--deck-2);box-shadow:inset 0 0 0 1px var(--line-strong),0 1px 0 rgba(0,0,0,.35);font-family:var(--display);line-height:1}
@@ -226,7 +226,7 @@ CSS="""
 .dfcp i{font-style:normal;font-weight:600;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--steel)}
 .dfcp.z b{color:var(--steel)!important}
 @media(max-width:420px){.dfp{--dfbw:124px}.dfby{padding:6px 8px 6px 10px;gap:7px}.dfby .pav{width:26px;height:26px}}
-@media(max-width:380px){.dfp{--dfbw:112px}.dfby{padding:6px 6px 6px 8px;gap:6px}.dfby .pav{width:22px;height:22px}.dfvia{font-size:11px!important}.dfcp b{font-size:11.5px!important}}
+@media(max-width:380px){.dfp{--dfbw:112px}.dfby{padding:6px 6px 6px 8px;gap:6px}.dfby .pav{width:22px;height:22px}.dfcp b{font-size:11.5px!important}}
 /* 2026-11-03: desktop draft board (>=1100px); the list stays below 1100px */
 .dfg{display:none}
 @media(min-width:1100px){
