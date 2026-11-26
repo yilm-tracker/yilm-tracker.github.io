@@ -288,6 +288,7 @@ if PICKS:
                 yy,rr,o,own,lab,sid,pj=K[k];n=sum(1 for x in C[k] if x[2] in('T','M'))
                 # row (2026-11-06, bar pass): tile | holder (drafted: player on line 2) | TRADED count "n×" | VIA bar (flush
                 # top-right, traded picks only). .ptbl = zero-size marker on the name's baseline (NFL slot alignment).
+                hab=(' data-ab="'+e(PSN[T[own]])+'" title="'+e(T[own])+'"') if PSN.get(T[own]) else ''
                 if lab:
                     pl=PL.get(sid) or ['?','','',-1]
                     tile=f'<i class="ptn{"" if pl[1] in PC else " ptn0"}" style="--pc:{PC.get(pl[1],"var(--row-divider)")}"><b>{lab}</b><span>{e(pl[1])}</span></i>'
@@ -296,22 +297,27 @@ if PICKS:
                     elif ns:nsh,nsa=f'<span class="ptns" title="NFL draft {ns[0]}: round {ns[1]}, pick {ns[2]} overall"><i>RD {ns[1]}</i><i>PK {ns[2]}</i><i class="ptbl"></i></span>',f', NFL round {ns[1]}, pick {ns[2]}'
                     else:nsh,nsa='<span class="ptns"><i>–</i><i class="ptbl"></i></span>',''
                     nsa=f', drafted {e(pl[0])}'+nsa
-                    sub=f'<span class="ptl2"><span class="ptpn" title="{e(pl[0])}">{e(pl[0])}<i class="ptbl"></i></span>{badge(pl[2]) if pl[2] else ""}{nsh}</span>'
+                    # drafted row (2026-11-26, PS-3): the PLAYER is the headline (line 1, .ptt + his NFL logo), the team the meta line
+                    # (line 2, .ptpn + NFL slot). Classes are positional: .ptt = the line-1 name, .ptpn = the line-2 name.
+                    tnm=f'<span class="ptpn"{hab}>{e(T[own])}<i class="ptbl"></i></span>'
+                    hl=f'<b class="ptt" title="{e(pl[0])}">{e(pl[0])}<i class="ptbl"></i></b>{badge(pl[2]) if pl[2] else ""}'
+                    sub=f'<span class="ptl2">{tnm}{nsh}</span>'
                 else:
                     tile=f'<i class="ptn ptn0 ptpj"><b>{pj or "R"+str(rr)}</b></i>'
-                    sub='';nsa=''
+                    sub='';nsa='';hl=f'<b class="ptt"{hab}>{e(T[own])}<i class="ptbl"></i></b>'
                 via=own!=o
-                # VIA column (2026-11-07, 36px pass): the ORIGINAL team's 36px logo on line 1 with its coach (draft_build.own) under
-                # it, only when the holder differs from the original team; otherwise the cell is empty (Nicklaus 2026-11-07).
-                # TIMES TRADED: the count in a light tile for counts >= 1 (real count, incl. picks traded away and back); 0 = empty.
+                # via (2026-11-25, PS-2b): a quiet "via <coach>" (draft_build.own) under the tile, only when the holder is not the
+                # original team. TIMES TRADED: the count in a light tile for counts >= 1 (real count, incl. picks traded away and back).
                 coach=(DB.own(T[o]) if DB else T[o])
-                vc=(f'<span class="ptvl">{av(T[o])}<small class="ptvc">{e(coach)}</small></span>' if via else '')
+                vc=(f'<small class="ptvt"><i>via</i> {e(coach)}<i class="ptbl"></i></small>' if via else '')
                 num=(f'pick {lab}' if lab else f'projected pick {pj}' if pj else f'round {rr}')
                 ttl=(' title="via '+e(T[o])+'"') if via else ''
                 rows.append(f'<button type="button" class="ptk{"" if lab else " ptk1"}" data-k="{k}"{ttl} aria-label="{y} round {rr}, {num}, {e(T[own])}, traded {n} time{"" if n==1 else "s"}{(", via "+e(T[o])) if via else ""}{nsa}, history">{tile}'
-                            f'<span class="ptm"><span class="ptl1">{av(T[own])}<b class="ptt"{(' data-ab="'+e(PSN[T[own]])+'" title="'+e(T[own])+'"') if PSN.get(T[own]) else ''}>{e(T[own])}<i class="ptbl"></i></b></span>{sub}</span>'
+                            f'<span class="ptm"><span class="ptl1">{av(T[own])}{hl}</span>{sub}</span>'
                             f'{f"<i class=ptxn><b>{n}<i class=ptbl></i></b></i>" if n else ""}{vc}</button>')
-            out.append(f'<div class="ptp"><div class="pthd"><span>R{r}</span><span>Team</span><span class="pthx"><i>Times</i><i>Traded</i></span><span class="pthv">Via</span></div>{"".join(rows)}</div>')
+            mix={bool(K[k][4]) for k in rk};ytr=any(C[k] and sum(1 for x in C[k] if x[2] in('T','M')) for k in ks)   # any traded pick in this year view (none: no TIMES / TRADED label)
+            if len(mix)>1:print(f'WARNING paper: {y} R{r} mixes drafted and future picks',file=sys.stderr)
+            out.append(f'<div class="ptp"><div class="pthd"><span>R{r}</span>{'<span class="pthp">Player<i class="pthn" aria-hidden="true">NFL</i></span>' if all(K[k][4] for k in rk) else '<span>Team</span>'}<span class="pthx{'' if ytr else ' pthx0'}"{'' if ytr else ' aria-hidden="true"'}><i>Times</i><i>Traded</i></span></div>{"".join(rows)}</div>')
         out.append('</div>')
     out.append('</div>')
 out.append(f'<div class="ptv ptv-p"{" hidden" if PICKS else ""}><input class="wq ptq" type="search" placeholder="Search player…" aria-label="Search player" autocomplete="off">'
@@ -524,7 +530,7 @@ function fitN(){if(!X.offsetParent)return;L.querySelectorAll('.ptl2').forEach(b=
  ptxFit();nameFit();holdFit();slotFit();ptxFit();
  // the name size sets the TRADED tile, the tile the column, the column the room: re-check line 1 after ptxFit and step down
  {const Y=[...X.querySelectorAll('.ptv-k .ptyx')].find(y=>y.offsetParent);for(let i=0;Y&&i<12;i++){const s=parseFloat(Y.style.getPropertyValue('--ptnf'))||15;
-  if(s<=15||![...Y.querySelectorAll('.ptl1')].some(l=>l.scrollWidth>l.clientWidth+.5))break;Y.style.setProperty('--ptnf',(s-.25)+'px');holdFit();slotFit();ptxFit()}}
+  if(s<=15||![...Y.querySelectorAll('.ptl1')].some(l1Over))break;Y.style.setProperty('--ptnf',(s-.25)+'px');holdFit();slotFit();ptxFit()}}
  pjFit();
 }
 // Shared ink helpers: one canvas (_ic); text measured at 50x its size because canvas rounds bounding boxes to whole
@@ -537,56 +543,198 @@ function tInk(el){let t=el.textContent;if(!t)return null;const c=getComputedStyl
 function yInk(el,base,t){const c=getComputedStyle(el),k=(el.currentCSSZoom||1)/50;_ic.font=c.fontStyle+' '+c.fontWeight+' '+(parseFloat(c.fontSize)*50)+'px '+c.fontFamily;
  const m=_ic.measureText(t||el.textContent);return [base-m.actualBoundingBoxAscent*k,base+m.actualBoundingBoxDescent*k]}
 const _bl=el=>{const m=el.querySelector('.ptbl');return m?m.getBoundingClientRect().top:null};
-// nameFit (2026-11-06), Picks: one holder-name size per year view (--ptnf on .ptyx-YYYY, also the pick number and the
-// "–"): the largest size in 0.25px steps, 15-17px, at which every full holder name fits line 1 beside its 28px logo; under
-// 15 the size stays 15 and holdFit gives the row its approved short form. Widths scale linearly with the size.
+// nameFit (2026-11-06; PS-3 2026-11-26), Picks: one line-1 size per year view (--ptnf on .ptyx-YYYY, also the pick number and
+// the "–"): the largest size in 0.25px steps, 15-17px, at which every full line-1 name fits (drafted years: the PLAYER + his NFL
+// logo; future years: the team beside its 36px logo); under 15 the size stays 15 and holdFit gives the row its approved short
+// form. Widths scale linearly with the size.
 function nameFit(){const Y=[...X.querySelectorAll('.ptv-k .ptyx')].find(y=>y.offsetParent);if(!Y)return;Y.style.setProperty('--ptnf','15px');
  const N=[...Y.querySelectorAll('.ptt')];N.forEach(b=>{b.style.fontSize='';b.style.whiteSpace='';if(b.dataset.full){b.firstChild.nodeValue=b.dataset.full;delete b.dataset.full}});
- let s=17;N.forEach(b=>{const l=b.parentElement,a=l.querySelector('.pav'),cs=getComputedStyle(l),room=l.clientWidth-(a?a.getBoundingClientRect().width/(b.currentCSSZoom||1)+parseFloat(cs.columnGap||cs.gap||0):0),
-  r=document.createRange();r.selectNodeContents(b.firstChild);const w=r.getBoundingClientRect().width/(b.currentCSSZoom||1);if(w>0)s=Math.min(s,Math.floor(15*room/w*4)/4)});
+ // PS-3: the room is line 1's content box less its other in-flow items (future rows: the 36px logo; drafted rows: the NFL logo, the
+ // holder logo standing outside the flow) and their gaps, and less any column gap under 12px (the .ptgt lever), so line 1 keeps
+ // >= 12px before the right column
+ let s=17;N.forEach(b=>{const l=b.parentElement,z=b.currentCSSZoom||1,cs=getComputedStyle(l),g=parseFloat(cs.columnGap||cs.gap)||0,cg=parseFloat(getComputedStyle(l.closest('.ptk')).columnGap)||12,
+  it=[...l.children].filter(c=>c!==b&&!c.classList.contains('ptbl')&&getComputedStyle(c).position!=='absolute'),
+  room=l.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0)-it.reduce((v,c)=>v+c.getBoundingClientRect().width/z+g,0)-Math.max(0,12-cg),
+  r=document.createRange();r.selectNodeContents(b.firstChild);const w=r.getBoundingClientRect().width/z;if(w>0)s=Math.min(s,Math.floor(15*room/w*4)/4)});
  s=Math.max(15,s);Y.style.setProperty('--ptnf',s+'px');
  // linear scaling can be a pixel off (kerning, rounding): step down while any full name still overflows
- const ov=()=>N.some(b=>{const l=b.parentElement;return l.scrollWidth>l.clientWidth+.5});while(s>15&&ov()){s-=.25;Y.style.setProperty('--ptnf',s+'px')}}
-// holdFit, Picks line 1 (holder): full size; if it does not fit, the team's approved short form (data-ab, from PSN in
-// pos/build_pos.py: "Rev. Apache Master"); then, below 423 CSS px only, a shrink to 12px, then 11px (never below).
-function holdFit(){X.querySelectorAll('.ptv-k .ptt').forEach(b=>{if(!b.offsetParent)return;b.style.fontSize='';b.style.whiteSpace='';if(b.dataset.full){b.firstChild.nodeValue=b.dataset.full;delete b.dataset.full}
-  const w=b.parentElement,o=()=>w.scrollWidth>w.clientWidth+.5;if(o()&&b.dataset.ab){b.dataset.full=b.firstChild.nodeValue;b.firstChild.nodeValue=b.dataset.ab}
+ const ov=()=>N.some(b=>l1Over(b.parentElement));while(s>15&&ov()){s-=.25;Y.style.setProperty('--ptnf',s+'px')}}
+// line 1 overflows when its content (a Range) runs past its box, or (column gap under 12px) into the 12px before the right column
+function l1Over(l){const cg=parseFloat(getComputedStyle(l.closest('.ptk')).columnGap)||12,z=l.currentCSSZoom||1,r=document.createRange();r.selectNodeContents(l);   // by content (a Range), not scrollWidth (DESIGN.md 7)
+ return (r.getBoundingClientRect().right-(l.getBoundingClientRect().right-(parseFloat(getComputedStyle(l).paddingRight)||0)*z))/z>.05-Math.max(0,12-cg)}
+// holdFit, Picks line 1. Future rows (the team is the headline): full size; if it does not fit, the team's approved short form
+// (data-ab, from PSN in pos/build_pos.py: "Rev. Apache Master"); then, below 423 CSS px only, a shrink to 12px, then 11px.
+// Drafted rows (PS-3: the player is the headline), only where the name + NFL logo still overflow at 15px: generation suffix
+// dropped (Jr., Sr., II-V) -> approved LUA short form (new_tail.js) -> listed in window.__ptForm ("needs an unapproved form",
+// left at the best approved form; window.__ptOver = [name, px past the room]). Never shrunk, never hidden.
+function holdFit(){window.__ptForm=window.__ptForm||[];window.__ptOver=[];const A=typeof LUA!=='undefined'?LUA:{};
+ X.querySelectorAll('.ptv-k .ptt').forEach(b=>{if(!b.offsetParent)return;b.style.fontSize='';b.style.whiteSpace='';if(b.dataset.full){b.firstChild.nodeValue=b.dataset.full;delete b.dataset.full}
+  const w=b.parentElement,o=()=>l1Over(w);
+  if(!b.closest('.ptk1')){if(!o())return;const full=b.firstChild.nodeValue,set=t=>{b.dataset.full=full;b.firstChild.nodeValue=t;return !o()};let q=full.split(' ');
+   if(q.length>2&&/^(Jr\.?|Sr\.?|II|III|IV|V)$/.test(q[q.length-1])){q=q.slice(0,-1);if(set(q.join(' ')))return}
+   const j=q.findIndex(x=>A[x]);if(j>=0){q[j]=A[q[j]];if(set(q.join(' ')))return}
+   if(window.__ptForm.indexOf(full)<0)window.__ptForm.push(full);window.__ptOver.push([full,b.firstChild.nodeValue,+((w.scrollWidth-w.clientWidth)/1).toFixed(2)]);return}
+  if(o()&&b.dataset.ab){b.dataset.full=b.firstChild.nodeValue;b.firstChild.nodeValue=b.dataset.ab}
   if(innerWidth<423){let s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>12){s-=.5;b.style.fontSize=s+'px'}while(o()&&s>11){s-=.5;b.style.fontSize=s+'px'}}})}  // shrink only below 423 CSS px: to 12px, then to 11px (the text floor) only if 12px still overflows (Nicklaus 2026-11-07; was 13px)
-// slotFit (2026-11-06), NFL slot on a drafted row's line 2, per row: full size -> generation suffix dropped (Jr., Sr., II-V)
-// -> the approved abbreviation (LUA, the lineup list in new_tail.js: the matching surname word, on the suffix-less name) ->
-// slot hidden (the pick sheet and aria-label keep it; expected only below 423 CSS px).
-// Fits when >= 12px separate the NFL logo's box (its ink lies inside) from the slot's first glyph ink once the slot's
-// last glyph sits on the name column's right edge. Names that would need an unapproved form go to window.__ptForm.
-function slotFit(){const A=typeof LUA!=='undefined'?LUA:{};window.__ptForm=window.__ptForm||[];
- const N=[...X.querySelectorAll('.ptv-k .ptns')].filter(n=>n.closest('.ptp').offsetParent);
- N.forEach(n=>{n.classList.remove('pthide');const p=n.parentElement.querySelector('.ptpn');if(p.dataset.full){p.firstChild.nodeValue=p.dataset.full;delete p.dataset.full}});
- const gap=n=>{const L=n.parentElement,its=[...n.querySelectorAll('i:not(.ptbl)')],a=tInk(its[0]),b=tInk(its[its.length-1]),d=L.querySelector('.nfl')||L.querySelector('.ptpn'),z=n.currentCSSZoom||1;
-  return a&&b?((L.getBoundingClientRect().right-(b[1]-a[0]))-d.getBoundingClientRect().right)/z:99};
- const G=N.map(gap);
- N.forEach((n,i)=>{if(G[i]>=12)return;const p=n.parentElement.querySelector('.ptpn'),full=p.firstChild.nodeValue,set=t=>{p.dataset.full=full;p.firstChild.nodeValue=t;return gap(n)>=12};
-  let w=full.split(' ');const sx=w.length>2&&/^(Jr\.?|Sr\.?|II|III|IV|V)$/.test(w[w.length-1]);if(sx){w=w.slice(0,-1);if(set(w.join(' ')))return}  // generation suffix dropped
-  const j=w.findIndex(x=>A[x]);if(j>=0){w[j]=A[w[j]];if(set(w.join(' ')))return}                                         // approved abbreviation
-  if(p.dataset.full){p.firstChild.nodeValue=full;delete p.dataset.full}
-  if(innerWidth>=423&&window.__ptForm.indexOf(full)<0)window.__ptForm.push(full);
-  n.classList.add('pthide')})}
-// ptxFit (2026-11-07, VIA column): Picks right-hand columns; reads everything, then writes.
-// TIMES TRADED: tile width --ptcw = the widest count's digit ink in the shown year + 2 x 8px; column --ptca = max(tile,
-// TIMES / TRADED header ink); tiles centred in it; every count's digits ink-centred in its tile (x, and y on the baseline
-// from its .ptbl marker; proportional figures, so canvas ink = rendered ink); each header line ink-centred over the
-// column. VIA: column --ptva = max(36px logo ring ink 38px, widest coach-name ink, VIA header ink), so the widest ink ends
-// on the 16px inset; coach names and the VIA header ink-centred on the logo. NFL slot: last glyph's ink on the name
-// column's right edge, baseline on the player name's.
+// slotFit: resets the slot form, the tighter-gap lever and line 2's team forms, then slotForm (below) decides them again.
+function slotFit(){window.__ptForm=window.__ptForm||[];const V=X.querySelector('.ptv-k');
+ if(V){V.classList.remove('ptn1','ptn11','ptgt');V.style.removeProperty('--ptnw');V.style.removeProperty('--ptpk')}  // the normal gaps first
+ X.querySelectorAll('.ptv-k .ptns').forEach(n=>{const p=n.parentElement.querySelector('.ptpn');p.style.fontSize='';if(p.dataset.full){p.firstChild.nodeValue=p.dataset.full;delete p.dataset.full}});
+ rowFit(1);slotForm()}
+// Retro only (html.retro): engines that lay glyphs out on whole pixels (WebKitGTK) get each advance's rounding (probe, as
+// theme.js adv()) added, so the widest PK ink still ends on the edge.
+const SGX={b:{"R":[.054,.438],"D":[.054,.426],"P":[.053,.432],"K":[.054,.46],"U":[.05,.428],"F":[.054,.402],"A":[.01347,.442],"0":[.046,.429],"1":[.066,.343],"2":[.048,.437],"3":[.044,.418],"4":[.023,.453],"5":[.057,.431],"6":[.05598,.431],"7":[.046,.432],"8":[.052,.423],"9":[.039,.417],"–":[.027,.351]},
+ m:{"R":[.06195,.5072],"D":[.053,.49175],"P":[.07075,.49845],"K":[.0815,.49785],"U":[.04775,.47725],"F":[.097,.481],"A":[.0279,.4971],"0":[.03325,.49175],"1":[.07475,.48525],"2":[.05512,.46988],"3":[.05075,.47425],"4":[.03535,.50005],"5":[.0504,.4738],"6":[.04905,.47595],"7":[.06635,.45865],"8":[.04945,.47555],"9":[.04905,.47595],"–":[.03987,.48513]}},
+ SGA={"R":.461,"D":.472,"P":.457,"K":.477,"U":.478,"F":.415,"A":.456," ":.2,"–":.377},SGK={"UD":-.009,"DF":-.004,"FA":-.036},_rnd={};
+// text style of an element: outline table, size in viewport px, letter / word spacing, Martian?, per-advance rounding (retro)
+function sSt(e){const c=getComputedStyle(e),m=/Martian/.test(c.fontFamily),z=e.currentCSSZoom||1,fs=parseFloat(c.fontSize),f=fs*z;let d=0;
+ if(document.documentElement.classList.contains('retro')){const k=c.fontWeight+' '+fs+' '+m;if(_rnd[k]==null){const p=document.createElement('span');
+  p.style.cssText='position:absolute;left:-999px;top:0;visibility:hidden;white-space:nowrap;letter-spacing:0;word-spacing:0;font:'+c.fontWeight+' '+fs+'px/1 '+c.fontFamily;p.style.fontVariantNumeric='tabular-nums';p.style.setProperty('letter-spacing','0','important');p.style.setProperty('word-spacing','0','important');
+  p.textContent='0000000000';document.body.appendChild(p);const r=p.getBoundingClientRect().width/10-(m?.525:.475)*fs;p.remove();_rnd[k]=Math.abs(r)>=.02&&Math.abs(r)<1?r:0}d=_rnd[k]*z}
+ return {T:SGX[m?'m':'b'],m,f,ls:(parseFloat(c.letterSpacing)||0)*z,ws:(parseFloat(c.wordSpacing)||0)*z,d}}
+// [ink start, ink end, advance end] of a string from its origin, by the outline tables
+function sInk(s,S){let x=0,l=null,r=0;for(let i=0;i<s.length;i++){const c=s[i],g=S.T[c];if(c!==' '){if(l==null)l=x+(g?g[0]*S.f:0);r=x+(g?g[1]*S.f:.5*S.f)}
+  x+=(S.m?.525:/\d/.test(c)?.475:(SGA[c]||.5))*S.f+S.ls+S.d+(c===' '?S.ws:0)+(!S.m&&i+1<s.length?(SGK[c+s[i+1]]||0)*S.f:0)}return [l||0,r,x]}
+// canvas width of a text in an element's font (main's tInk): [advance of all but the last glyph + spacing, first glyph's left ink, last glyph's right ink]
+function cW(e,t){const c=getComputedStyle(e),k=(e.currentCSSZoom||1)/50,ls=(parseFloat(c.letterSpacing)||0)*(e.currentCSSZoom||1);if(c.textTransform==='uppercase')t=t.toUpperCase();
+ _ic.font=c.fontStyle+' '+c.fontWeight+' '+(parseFloat(c.fontSize)*50)+'px '+c.fontFamily;return [_ic.measureText(t.slice(0,-1)).width*k+ls*(t.length-1),_ic.measureText(t[0]).actualBoundingBoxLeft*k,_ic.measureText(t.slice(-1)).actualBoundingBoxRight*k,_ic.measureText(t).width*k+ls*t.length+(parseFloat(c.wordSpacing)||0)*(e.currentCSSZoom||1)*(t.split(' ').length-1)]}   // [3] = laid-out advance (word spacing too); [0..2] = main's tInk, which has none
+const cInk=(e,t)=>{const w=cW(e,t);return w[0]+w[1]+w[2]};
+// SGMC: Martian Mono [xMin, xMax] em per glyph at wght 600 / 700 (wdth 75, x .875), from the font files
+const SGMC={"600":{"A":[0.0279,0.4971],"B":[0.07275,0.49175],"C":[0.05035,0.4905],"D":[0.053,0.49175],"E":[0.08375,0.46775],"F":[0.097,0.481],"G":[0.0437,0.48555],"H":[0.053,0.472],"I":[0.053,0.472],"J":[0.04425,0.46325],"K":[0.0815,0.49785],"L":[0.11875,0.481],"M":[0.03975,0.48525],"N":[0.0503,0.4747],"O":[0.03325,0.49175],"P":[0.07075,0.49845],"Q":[0.03325,0.49175],"R":[0.06195,0.5072],"S":[0.05385,0.4837],"T":[0.03185,0.49315],"U":[0.04775,0.47725],"V":[0.0279,0.4971],"W":[0.0141,0.5109],"X":[0.03047,0.49453],"Y":[0.02045,0.50455],"Z":[0.066,0.459],"0":[0.03325,0.49175],"1":[0.07475,0.48525],"2":[0.05512,0.46988],"3":[0.05075,0.47425],"4":[0.03535,0.50005],"5":[0.0504,0.4738],"6":[0.04905,0.47595],"7":[0.06635,0.45865],"8":[0.04945,0.47555],"9":[0.04905,0.47595]},"700":{"A":[0.02182,0.50318],"B":[0.06262,0.49963],"C":[0.0418,0.49725],"D":[0.044,0.49963],"E":[0.0725,0.4745],"F":[0.0835,0.4855],"G":[0.03672,0.49478],"H":[0.044,0.481],"I":[0.044,0.481],"J":[0.03525,0.47225],"K":[0.07137,0.50618],"L":[0.1075,0.4855],"M":[0.033,0.492],"N":[0.04265,0.48235],"O":[0.02537,0.49963],"P":[0.05725,0.50385],"Q":[0.02537,0.49963],"R":[0.04935,0.5126],"S":[0.0453,0.48685],"T":[0.02555,0.49945],"U":[0.03875,0.48625],"V":[0.02182,0.50318],"W":[0.0123,0.5127],"X":[0.0253,0.4997],"Y":[0.0146,0.5104],"Z":[0.05925,0.46575],"0":[0.02537,0.49963],"1":[0.068,0.492],"2":[0.04725,0.47775],"3":[0.04287,0.48213],"4":[0.02905,0.50815],"5":[0.04095,0.4819],"6":[0.04027,0.48473],"7":[0.06117,0.46383],"8":[0.04135,0.48365],"9":[0.04027,0.48473]}};
+// ink width of a text in e's font, viewport px: retro Martian Mono from its outlines (SGMC), else canvas (cInk)
+function inkC(e,t){const c=getComputedStyle(e);if(!(document.documentElement.classList.contains('retro')&&/Martian/.test(c.fontFamily)))return cInk(e,t);
+ const g=SGMC[+c.fontWeight>=650?700:600],S=sSt(e);t=t.trim().toUpperCase();const a=g[t[0]],b=g[t[t.length-1]];if(!a||!b)return cInk(e,t);
+ return (t.length-1)*(.525*S.f+S.ls+S.d)+b[1]*S.f-a[0]*S.f}
+// slotForm (2026-11-25 .. 26, briefs PS-1 .. PS-3c): ONE slot form and ONE slot geometry for the whole Picks view, the same in
+// every drafted year, all from text (outline tables SGX / SGA / SGK, canvas), never from the layout of hidden years; a slot is never
+// hidden. Line 2 = the TEAM name (12.5px) + the slot (one line, 11px: two left-aligned fields, "RD n" --ptpk wide, the box --ptnw
+// wide ending on the name column's right edge). Forms: 11px; at <= 430 CSS px also 11px + the tighter gaps (.ptgt). A form is taken
+// only if every drafted row of every year keeps >= 12px of ink from its team name, in FULL at 12.5px, to the slot's first glyph.
+// Then per row (from text, every year): full name -> data-ab short form at 12.5px -> shrink in 0.5px steps to 11px; rows still
+// short go to window.__ptShort (name, px short). Also places the strip's "NFL" label (--pthnr).
+// right bearing of glyph ch in e's font, CSS px (Martian Mono from its outlines SGMC, else canvas)
+function rBear(e,ch){const c=getComputedStyle(e),f=parseFloat(c.fontSize);if(/Martian/.test(c.fontFamily)){const g=SGMC[+c.fontWeight>=650?700:600][ch];return g?(.525-g[1])*f:0}
+ _ic.font=c.fontStyle+' '+c.fontWeight+' '+(f*50)+'px '+c.fontFamily;const m=_ic.measureText(ch);return (m.width-m.actualBoundingBoxRight)/50}
+function teInk(e,t){const c=getComputedStyle(e),z=e.currentCSSZoom||1,k=z/50,w=cW(e,t),ls=(parseFloat(c.letterSpacing)||0)*z,l=t.slice(-1);
+ _ic.font=c.fontStyle+' '+c.fontWeight+' '+(parseFloat(c.fontSize)*50)+'px '+c.fontFamily;const m=_ic.measureText(l);return w[3]-ls-(m.width-m.actualBoundingBoxRight)*k}  // ink end from the origin, viewport px, at the element's size
+function slotForm(){const V=X.querySelector('.ptv-k');if(!V||!V.offsetParent)return;V.dataset.ptn='main';window.__ptShort=[];window.__ptTeam=[];
+ const Yv=[...V.querySelectorAll('.ptyx')].find(y=>y.offsetParent);let L0=Yv&&[...Yv.querySelectorAll('.ptl2')].find(l=>l.querySelector('.ptns')&&l.offsetParent);if(!L0)return;
+ const A=[...V.querySelectorAll('.ptyx')].filter(y=>y.querySelector('.ptns'));if(!A.length)return;const z=L0.currentCSSZoom||1,vs=V.style,NS=L0.querySelector('.ptns'),PN=L0.querySelector('.ptpn'),f0=parseFloat(getComputedStyle(PN).fontSize);
+ // every drafted row: team name (full, short form) and its ink end at 12.5px (viewport px from line 2's origin)
+ const R=[];A.forEach(y=>y.querySelectorAll('.ptns').forEach(n=>{const l=n.parentElement,pn=l.querySelector('.ptpn'),I=[...n.querySelectorAll('i:not(.ptbl)')].map(i=>i.textContent),
+  full=pn.firstChild.nodeValue,ab=pn.dataset.ab||null;R.push({I,r:n.closest('.ptk'),pn,full,ab,ef:teInk(PN,full),ea:ab?teInk(PN,ab):null})}));
+ const DB=window.__ptSlot={rows:R.length,tries:[]},q=location.search;
+ let tries=[[11,0]];if(innerWidth<=430)tries.push([11,1]);let last=null;   // the slot is 11px (the via's size)
+ for(const [f,g] of tries){V.classList.add('ptn1');V.classList.toggle('ptn11',f==11);V.classList.toggle('ptgt',!!g);if(g){rowFit(1);L0=[...Yv.querySelectorAll('.ptl2')].find(l=>l.querySelector('.ptns')&&l.offsetParent)}
+  const S=sSt(NS),Lw=L0.getBoundingClientRect().width,x0=lxOf(L0.closest('.ptk'));
+  let rd=0,pk=0,pl=null,wu=0;const off=R.map(q=>{const a=sInk(q.I[0],S);if(q.I.length==2){const b=sInk(q.I[1],S);rd=Math.max(rd,a[1]);pk=Math.max(pk,b[1]);pl=b[0]}else wu=Math.max(wu,a[1]);return a[0]});
+  const pkx=pl==null?0:rd+6*z-pl,W=Math.max(pl==null?0:pkx+pk,wu),room=R.map((q,i)=>Lw-W+off[i]-(lxOf(q.r)-x0)*z),gp=R.map((q,i)=>(room[i]-q.ef)/z);   // room = the slot's first ink from line 2's origin
+  {let k=0;gp.forEach((v,i)=>{if(v<gp[k])k=i});DB.tries.push([f,g,+gp[k].toFixed(3),R[k].full])}
+  last=[f,g,W,pkx,room,Math.min(...off)];if(gp.every(v=>v>=12-.01))break}
+ const [f,g,W,pkx,room,o0]=last;
+ // the strip's "NFL" label, ink centred over the slot's ink span (first RD glyph .. widest PK ink end = the column's right edge)
+ {const lb=V.querySelector('.ptyx .pthn');if(lb){const c=getComputedStyle(lb),ls=parseFloat(c.letterSpacing)||0,rb=rBear(lb,'L'),iw=inkC(lb,'NFL')/z;
+  vs.setProperty('--pthnr',((W-o0)/z/2-ls-rb-iw/2).toFixed(3)+'px')}}vs.setProperty('--ptnw',(W/z).toFixed(3)+'px');vs.setProperty('--ptpk',(pkx/z).toFixed(3)+'px');V.dataset.ptn=f+(g?'t':'');
+ // team names: full -> short form -> shrink to 11px (text widths scale with the size)
+ const SET=R.map((q,i)=>{const m=room[i]-12*z;if(q.ef<=m+.01)return null;if(q.ab&&q.ea<=m+.01)return [q,q.ab,0];const t=q.ab||q.full,e=q.ab?q.ea:q.ef;let s=f0;
+  while(s>11&&e*s/f0>m+.01)s-=.5;s=Math.max(11,s);if(e*s/f0>m+.01)window.__ptShort.push([t,+((e*s/f0-m)/z).toFixed(3)]);return [q,t,s]});
+ SET.forEach(x=>{if(!x)return;const [q,t,s]=x;if(t!==q.full){q.pn.dataset.full=q.full;q.pn.firstChild.nodeValue=t}if(s&&s<f0)q.pn.style.fontSize=s+'px';window.__ptTeam.push([q.full,t,s||f0])})}
+// Drafted-row layout (2026-11-25 .. 26, briefs PS-2 .. PS-3c): the holder's 36px picture stands beside both lines (absolute,
+// centred on the text block from line 1's cap top to line 2's baseline); line 1 = the player (--ptnf) + NFL logo, line 2 = the team
+// (12.5px) + NFL slot, starting at --ptlx per row = 44px + line 1's first-glyph left bearing - line 2's (SLT: [xMin, xMax, advance,
+// yMin, yMax] em per glyph, IBM Plex Sans 400 / 600, Barlow Condensed 600, Martian Mono 400 / 600 at wdth 75 x .875, read from the
+// font files), so both first glyphs' ink share one x. Line gap: line 1's baseline -> line 2's cap top = --ptg1 (10px, both looks).
+// One right column (--ptvw = max(widest tile, widest via ink, TIMES / TRADED head ink) over every year): the TIMES TRADED tile and
+// a quiet "via Nate" (.ptvt, the Drafts list's .dfvia declarations repeated), both right-aligned to the 16px inset; the via on line
+// 2's baseline, lowered only as far as needed for 4px + one page unit of ink under the tile's hard shadow (future rows: tile over
+// via, centred as a pair on the row).
+const SLT={"P400":[{"!":[0.081,0.203,0.284,-0.012,0.698],"\"":[0.085,0.334,0.419,0.46,0.74],"#":[0.06,0.647,0.713,0.0,0.698],"$":[0.052,0.539,0.598,-0.082,0.78],"%":[0.065,0.862,0.927,-0.012,0.71],"&":[0.072,0.668,0.694,-0.012,0.71],"'":[0.085,0.157,0.242,0.46,0.74],"(":[0.083,0.34,0.335,-0.137,0.76],")":[-0.005,0.252,0.335,-0.137,0.76],"*":[0.036,0.414,0.45,0.388,0.747],"+":[0.067,0.533,0.6,0.062,0.548],",":[0.039,0.197,0.272,-0.133,0.117],"-":[0.069,0.33,0.399,0.261,0.347],".":[0.075,0.197,0.272,-0.012,0.117],"/":[0.009,0.342,0.383,-0.151,0.74],"0":[0.06,0.54,0.6,-0.012,0.71],"1":[0.051,0.547,0.6,0.0,0.698],"2":[0.069,0.533,0.6,0.0,0.71],"3":[0.042,0.505,0.6,-0.012,0.71],"4":[0.038,0.556,0.6,0.0,0.698],"5":[0.077,0.53,0.6,-0.012,0.698],"6":[0.067,0.533,0.6,-0.012,0.698],"7":[0.069,0.527,0.6,0.0,0.698],"8":[0.058,0.542,0.6,-0.012,0.71],"9":[0.067,0.533,0.6,0.0,0.71],":":[0.085,0.207,0.292,-0.012,0.528],";":[0.049,0.207,0.292,-0.133,0.528],"<":[0.09,0.51,0.6,-0.012,0.566],"=":[0.067,0.533,0.6,0.172,0.44],">":[0.09,0.51,0.6,-0.012,0.566],"?":[0.023,0.44,0.477,-0.012,0.71],"@":[0.065,0.826,0.891,-0.121,0.708],"A":[0.023,0.618,0.641,0.0,0.698],"B":[0.093,0.59,0.653,0.0,0.698],"C":[0.058,0.584,0.621,-0.012,0.71],"D":[0.093,0.613,0.671,0.0,0.698],"E":[0.093,0.519,0.583,0.0,0.698],"F":[0.093,0.509,0.559,0.0,0.698],"G":[0.058,0.623,0.695,-0.012,0.71],"H":[0.093,0.614,0.707,0.0,0.698],"I":[0.06,0.34,0.4,0.0,0.698],"J":[0.028,0.422,0.51,-0.012,0.698],"K":[0.093,0.612,0.634,0.0,0.698],"L":[0.093,0.474,0.501,0.0,0.698],"M":[0.093,0.719,0.812,0.0,0.698],"N":[0.093,0.614,0.707,0.0,0.698],"O":[0.058,0.65,0.708,-0.012,0.71],"P":[0.093,0.566,0.606,0.0,0.698],"Q":[0.058,0.65,0.708,-0.164,0.71],"R":[0.093,0.586,0.64,0.0,0.698],"S":[0.042,0.529,0.581,-0.012,0.71],"T":[0.022,0.55,0.572,0.0,0.698],"U":[0.088,0.59,0.678,-0.012,0.698],"V":[0.02,0.589,0.609,0.0,0.698],"W":[0.02,0.871,0.891,0.0,0.698],"X":[0.024,0.589,0.613,0.0,0.698],"Y":[0.013,0.58,0.593,0.0,0.698],"Z":[0.036,0.544,0.58,0.0,0.698],"[":[0.093,0.257,0.317,-0.138,0.76],"\\":[0.04,0.371,0.383,-0.151,0.74],"]":[0.06,0.224,0.317,-0.138,0.76],"^":[0.05,0.55,0.6,0.296,0.698],"_":[0.03,0.535,0.565,-0.165,-0.095],"`":[0.187,0.345,0.6,0.585,0.779],"a":[0.044,0.505,0.534,-0.012,0.528],"b":[0.085,0.53,0.58,-0.012,0.74],"c":[0.047,0.475,0.503,-0.012,0.528],"d":[0.05,0.495,0.58,-0.012,0.74],"e":[0.047,0.502,0.549,-0.012,0.528],"f":[0.029,0.304,0.324,0.0,0.74],"g":[0.043,0.52,0.528,-0.212,0.586],"h":[0.085,0.488,0.568,0.0,0.74],"i":[0.076,0.174,0.25,0.0,0.74],"j":[0.001,0.174,0.25,-0.2,0.74],"k":[0.085,0.51,0.527,0.0,0.74],"l":[0.085,0.241,0.272,0.0,0.74],"m":[0.085,0.793,0.873,0.0,0.528],"n":[0.085,0.488,0.568,0.0,0.528],"o":[0.047,0.513,0.56,-0.012,0.528],"p":[0.085,0.53,0.58,-0.2,0.528],"q":[0.05,0.495,0.58,-0.2,0.528],"r":[0.085,0.35,0.367,0.0,0.516],"s":[0.036,0.431,0.487,-0.012,0.528],"t":[0.029,0.307,0.351,0.0,0.659],"u":[0.08,0.483,0.568,-0.012,0.516],"v":[0.018,0.474,0.492,0.0,0.516],"w":[0.031,0.737,0.768,0.0,0.516],"x":[0.021,0.486,0.507,0.0,0.516],"y":[0.017,0.482,0.499,-0.2,0.516],"z":[0.033,0.431,0.464,0.0,0.516],"{":[0.022,0.283,0.343,-0.138,0.76],"|":[0.123,0.191,0.314,-0.138,0.76],"}":[0.06,0.321,0.343,-0.138,0.76],"~":[0.061,0.539,0.6,0.236,0.374],"\u2019":[0.044,0.202,0.273,0.5,0.75],"\u2013":[0.036,0.552,0.588,0.266,0.342]," ":[0,0,0.236,0,0]},0.698],"P600":[{"!":[0.074,0.235,0.309,-0.012,0.698],"\"":[0.073,0.398,0.471,0.428,0.74],"#":[0.025,0.629,0.656,0.0,0.698],"$":[0.038,0.553,0.6,-0.082,0.78],"%":[0.054,0.906,0.96,-0.012,0.71],"&":[0.056,0.703,0.713,-0.012,0.71],"'":[0.073,0.187,0.26,0.428,0.74],"(":[0.051,0.348,0.337,-0.138,0.76],")":[-0.011,0.287,0.337,-0.138,0.76],"*":[0.033,0.523,0.556,0.282,0.747],"+":[0.067,0.533,0.6,0.063,0.549],",":[0.037,0.229,0.299,-0.143,0.154],"-":[0.058,0.344,0.402,0.241,0.368],".":[0.069,0.229,0.299,-0.011,0.154],"/":[0.005,0.399,0.437,-0.151,0.74],"0":[0.04,0.56,0.6,-0.012,0.71],"1":[0.04,0.57,0.6,0.0,0.698],"2":[0.05,0.546,0.6,0.0,0.71],"3":[0.024,0.529,0.6,-0.012,0.71],"4":[0.032,0.564,0.6,0.0,0.698],"5":[0.055,0.553,0.6,-0.012,0.698],"6":[0.049,0.556,0.6,-0.012,0.698],"7":[0.059,0.543,0.6,0.0,0.698],"8":[0.045,0.555,0.6,-0.012,0.71],"9":[0.044,0.551,0.6,0.0,0.71],":":[0.079,0.239,0.319,-0.011,0.534],";":[0.047,0.239,0.319,-0.143,0.534],"<":[0.099,0.501,0.6,-0.005,0.593],"=":[0.067,0.533,0.6,0.142,0.468],">":[0.099,0.501,0.6,-0.005,0.593],"?":[0.017,0.463,0.493,-0.012,0.71],"@":[0.062,0.84,0.899,-0.121,0.709],"A":[0.021,0.651,0.672,0.0,0.698],"B":[0.082,0.616,0.663,0.0,0.698],"C":[0.052,0.611,0.642,-0.012,0.71],"D":[0.082,0.637,0.689,0.0,0.698],"E":[0.082,0.542,0.6,0.0,0.698],"F":[0.082,0.531,0.577,0.0,0.698],"G":[0.052,0.641,0.712,-0.012,0.71],"H":[0.082,0.637,0.719,0.0,0.698],"I":[0.053,0.37,0.423,0.0,0.698],"J":[0.026,0.467,0.545,-0.011,0.698],"K":[0.082,0.663,0.678,0.0,0.698],"L":[0.082,0.489,0.521,0.0,0.698],"M":[0.082,0.735,0.817,0.0,0.698],"N":[0.082,0.637,0.719,0.0,0.698],"O":[0.052,0.66,0.712,-0.012,0.71],"P":[0.082,0.603,0.641,0.0,0.698],"Q":[0.052,0.66,0.712,-0.178,0.71],"R":[0.082,0.616,0.664,0.0,0.698],"S":[0.039,0.561,0.611,-0.012,0.71],"T":[0.026,0.555,0.58,0.0,0.698],"U":[0.077,0.612,0.689,-0.012,0.698],"V":[0.016,0.622,0.638,0.0,0.698],"W":[0.026,0.922,0.949,0.0,0.698],"X":[0.018,0.637,0.655,0.0,0.698],"Y":[0.01,0.622,0.632,0.0,0.698],"Z":[0.038,0.561,0.599,0.0,0.698],"[":[0.082,0.276,0.329,-0.138,0.76],"\\":[0.037,0.431,0.437,-0.151,0.74],"]":[0.053,0.247,0.329,-0.138,0.76],"^":[0.044,0.556,0.6,0.283,0.698],"_":[0.03,0.529,0.559,-0.183,-0.075],"`":[0.161,0.364,0.6,0.581,0.805],"a":[0.037,0.529,0.559,-0.012,0.534],"b":[0.074,0.555,0.6,-0.012,0.74],"c":[0.039,0.488,0.513,-0.012,0.534],"d":[0.045,0.526,0.6,-0.012,0.74],"e":[0.039,0.519,0.558,-0.012,0.534],"f":[0.023,0.335,0.35,0.0,0.74],"g":[0.028,0.545,0.545,-0.212,0.614],"h":[0.074,0.52,0.588,0.0,0.74],"i":[0.063,0.213,0.275,0.0,0.746],"j":[-0.006,0.213,0.275,-0.2,0.746],"k":[0.074,0.557,0.562,0.0,0.74],"l":[0.074,0.271,0.294,0.0,0.74],"m":[0.074,0.82,0.888,0.0,0.534],"n":[0.074,0.52,0.588,0.0,0.534],"o":[0.039,0.524,0.563,-0.012,0.534],"p":[0.074,0.555,0.6,-0.2,0.534],"q":[0.045,0.526,0.6,-0.2,0.534],"r":[0.074,0.373,0.393,0.0,0.522],"s":[0.029,0.46,0.499,-0.012,0.534],"t":[0.025,0.337,0.374,0.0,0.665],"u":[0.068,0.514,0.588,-0.012,0.522],"v":[0.012,0.513,0.524,0.0,0.522],"w":[0.023,0.797,0.819,0.0,0.522],"x":[0.019,0.525,0.544,0.0,0.522],"y":[0.009,0.514,0.524,-0.2,0.522],"z":[0.037,0.465,0.502,0.0,0.522],"{":[0.02,0.31,0.363,-0.138,0.76],"|":[0.134,0.242,0.376,-0.138,0.76],"}":[0.053,0.344,0.363,-0.138,0.76],"~":[0.055,0.545,0.6,0.219,0.392],"\u2019":[0.038,0.227,0.292,0.465,0.75],"\u2013":[0.036,0.552,0.588,0.25,0.358]," ":[0,0,0.236,0,0]},0.698],"B600":[{"!":[0.064,0.205,0.269,0.002,0.7],"\"":[0.018,0.287,0.306,0.477,0.697],"#":[0.042,0.565,0.606,0.023,0.674],"$":[0.032,0.404,0.434,-0.081,0.788],"%":[0.054,0.717,0.772,-0.009,0.709],"&":[0.032,0.542,0.581,-0.009,0.708],"'":[0.018,0.133,0.152,0.48,0.699],"(":[0.0,0.218,0.279,-0.096,0.76],")":[0.062,0.28,0.279,-0.096,0.76],"*":[0.021,0.3407,0.361,0.395,0.746],"+":[0.027,0.413,0.439,0.121,0.507],",":[0.0328,0.1616,0.199,-0.091,0.157],"-":[0.027,0.298,0.325,0.251,0.351],".":[0.035,0.176,0.211,-0.002,0.14],"/":[0.0202,0.3418,0.386,0.0,0.7],"0":[0.038,0.412,0.45,-0.011,0.711],"1":[0.01,0.23,0.274,0.0,0.7],"2":[0.029,0.404,0.425,0.0,0.708],"3":[0.028,0.387,0.426,-0.008,0.7],"4":[0.017,0.443,0.459,0.0,0.7],"5":[0.039,0.4,0.428,-0.008,0.7],"6":[0.039,0.401,0.429,-0.008,0.708],"7":[0.016,0.38,0.392,0.0,0.7],"8":[0.038,0.396,0.434,-0.008,0.712],"9":[0.022,0.384,0.423,-0.008,0.708],":":[0.057,0.198,0.252,0.002,0.475],";":[0.035,0.183,0.218,-0.089,0.479],"<":[0.027,0.413,0.439,0.0574,0.511],"=":[0.027,0.413,0.439,0.181,0.46],">":[0.027,0.413,0.439,0.057,0.5106],"?":[0.021,0.391,0.413,-0.001,0.71],"@":[0.038,0.722,0.759,-0.078,0.641],"A":[0.0135,0.442,0.456,0.0,0.7],"B":[0.054,0.435,0.462,0.0,0.7],"C":[0.042,0.42,0.457,-0.008,0.708],"D":[0.054,0.426,0.472,0.0,0.7],"E":[0.054,0.403,0.435,0.0,0.7],"F":[0.054,0.402,0.415,0.0,0.7],"G":[0.042,0.42,0.462,-0.008,0.708],"H":[0.054,0.423,0.477,0.0,0.7],"I":[0.054,0.17,0.224,0.0,0.7],"J":[0.017,0.388,0.443,-0.008,0.7],"K":[0.054,0.46,0.477,0.0,0.7],"L":[0.054,0.403,0.415,0.0,0.7],"M":[0.051,0.487,0.538,0.0,0.7],"N":[0.054,0.453,0.507,0.0,0.7],"O":[0.042,0.425,0.467,-0.008,0.708],"P":[0.053,0.432,0.457,0.0,0.701],"Q":[0.042,0.413,0.455,-0.104,0.708],"R":[0.054,0.438,0.461,0.0,0.7],"S":[0.032,0.404,0.434,-0.008,0.708],"T":[0.028,0.425,0.452,0.0,0.7],"U":[0.05,0.428,0.478,-0.008,0.7],"V":[0.027,0.4436,0.471,0.0,0.7],"W":[0.023,0.6423,0.665,0.0,0.7],"X":[0.03,0.43,0.46,0.0,0.7],"Y":[0.029,0.4268,0.456,0.001,0.7],"Z":[0.025,0.377,0.406,0.0,0.7],"[":[0.027,0.237,0.33,-0.138,0.791],"\\":[0.045,0.367,0.386,0.0,0.7],"]":[0.093,0.302,0.33,-0.138,0.791],"^":[0.0302,0.383,0.413,0.301,0.7],"_":[0.017,0.388,0.405,0.0,0.089],"`":[0.024,0.183,0.206,0.575,0.7],"a":[0.029,0.397,0.434,-0.008,0.519],"b":[0.046,0.399,0.437,-0.008,0.7],"c":[0.038,0.393,0.422,-0.008,0.519],"d":[0.038,0.391,0.437,-0.008,0.7],"e":[0.038,0.392,0.426,-0.008,0.519],"f":[0.022,0.265,0.291,0.0,0.704],"g":[0.038,0.391,0.431,-0.206,0.519],"h":[0.046,0.397,0.439,0.0,0.7],"i":[0.036,0.177,0.215,0.0,0.723],"j":[-0.047,0.174,0.211,-0.205,0.723],"k":[0.046,0.41,0.433,0.0,0.7],"l":[0.042,0.158,0.199,0.0,0.7],"m":[0.046,0.623,0.665,0.0,0.519],"n":[0.046,0.397,0.439,0.0,0.519],"o":[0.038,0.395,0.432,-0.008,0.519],"p":[0.05,0.403,0.441,-0.189,0.519],"q":[0.038,0.391,0.441,-0.189,0.519],"r":[0.046,0.3034,0.313,0.001,0.517],"s":[0.03,0.377,0.398,-0.006,0.517],"t":[0.017,0.26,0.282,0.0,0.638],"u":[0.042,0.393,0.438,-0.007,0.511],"v":[0.019,0.3965,0.415,0.0,0.512],"w":[0.019,0.5736,0.592,0.0,0.512],"x":[0.018,0.399,0.417,0.0,0.511],"y":[0.016,0.3875,0.403,-0.199,0.512],"z":[0.024,0.346,0.368,0.0,0.511],"{":[0.027,0.291,0.319,-0.138,0.791],"|":[0.027,0.143,0.171,-0.08,0.76],"}":[0.027,0.291,0.319,-0.138,0.791],"~":[0.0293,0.4497,0.48,0.213,0.372],"\u2019":[0.0024,0.1609,0.165,0.482,0.7],"\u2013":[0.027,0.351,0.377,0.234,0.334]," ":[0,0,0.2,0,0]},0.7],"M400":[{"!":[0.1934,0.3316,0.525,-0.0061,0.7],"\"":[0.1216,0.4034,0.525,0.4007,0.742],"#":[0.0368,0.4883,0.525,0.0,0.7],"$":[0.07,0.4778,0.525,-0.0875,0.7875],"%":[0.0306,0.4944,0.525,-0.014,0.714],"&":[0.056,0.497,0.525,-0.014,0.714],"'":[0.21,0.315,0.525,0.4007,0.742],"(":[0.175,0.4025,0.525,-0.14,0.805],")":[0.1225,0.35,0.525,-0.14,0.805],"*":[0.0499,0.4751,0.525,0.1032,0.5084],"+":[0.0525,0.4725,0.525,0.0963,0.5162],",":[0.1864,0.3404,0.525,-0.1575,0.1663],"-":[0.0525,0.4725,0.525,0.2625,0.35],".":[0.1934,0.3316,0.525,-0.007,0.1663],"/":[0.0919,0.4331,0.525,-0.1488,0.742],"0":[0.0481,0.4769,0.525,-0.014,0.714],"1":[0.0875,0.4725,0.525,0.0,0.7],"2":[0.07,0.455,0.525,0.0,0.714],"3":[0.0656,0.4594,0.525,-0.014,0.714],"4":[0.0473,0.4848,0.525,0.0,0.7],"5":[0.0683,0.4585,0.525,-0.014,0.7],"6":[0.0656,0.4594,0.525,-0.014,0.7],"7":[0.0761,0.4489,0.525,0.0,0.7],"8":[0.0648,0.4603,0.525,-0.014,0.714],"9":[0.0656,0.4594,0.525,0.0,0.714],":":[0.1934,0.3316,0.525,-0.007,0.532],";":[0.1864,0.3404,0.525,-0.1575,0.532],"<":[0.0875,0.4375,0.525,0.0604,0.5521],"=":[0.0788,0.4463,0.525,0.1488,0.4637],">":[0.0875,0.4375,0.525,0.0604,0.5521],"?":[0.077,0.4445,0.525,-0.0061,0.714],"@":[0.0385,0.483,0.525,-0.189,0.714],"A":[0.0394,0.4856,0.525,0.0,0.7],"B":[0.0919,0.4769,0.525,0.0,0.7],"C":[0.0665,0.4778,0.525,-0.014,0.714],"D":[0.07,0.4769,0.525,0.0,0.7],"E":[0.105,0.455,0.525,0.0,0.7],"F":[0.1225,0.4725,0.525,0.0,0.7],"G":[0.0569,0.4681,0.525,-0.0105,0.714],"H":[0.07,0.455,0.525,0.0,0.7],"I":[0.07,0.455,0.525,0.0,0.7],"J":[0.0613,0.4463,0.525,-0.014,0.7],"K":[0.1006,0.4821,0.525,0.0,0.7],"L":[0.14,0.4725,0.525,0.0,0.7],"M":[0.0525,0.4725,0.525,0.0,0.7],"N":[0.0648,0.4603,0.525,0.0,0.7],"O":[0.0481,0.4769,0.525,-0.014,0.714],"P":[0.0963,0.4883,0.525,0.0,0.7],"Q":[0.0481,0.4769,0.525,-0.189,0.714],"R":[0.0858,0.497,0.525,0.0,0.7],"S":[0.07,0.4778,0.525,-0.014,0.714],"T":[0.0438,0.4813,0.525,0.0,0.7],"U":[0.0648,0.4603,0.525,-0.014,0.7],"V":[0.0394,0.4856,0.525,0.0,0.7],"W":[0.0175,0.5075,0.525,0.0,0.7],"X":[0.0403,0.4848,0.525,0.0,0.7],"Y":[0.0315,0.4935,0.525,0.0,0.7],"Z":[0.0788,0.4463,0.525,0.0,0.7],"[":[0.21,0.4025,0.525,-0.1225,0.7875],"\\":[0.0919,0.4331,0.525,-0.1488,0.742],"]":[0.1225,0.315,0.525,-0.1225,0.7875],"^":[0.0823,0.4427,0.525,0.4725,0.714],"_":[0.0525,0.4725,0.525,-0.1313,-0.0438],"`":[0.1208,0.4042,0.525,0.5005,0.742],"a":[0.0613,0.4323,0.525,-0.0123,0.539],"b":[0.0805,0.4708,0.525,-0.014,0.742],"c":[0.0796,0.4655,0.525,-0.014,0.539],"d":[0.0542,0.4445,0.525,-0.014,0.742],"e":[0.077,0.4603,0.525,-0.014,0.539],"f":[0.0998,0.511,0.525,0.0,0.756],"g":[0.056,0.4393,0.525,-0.189,0.539],"h":[0.0875,0.4463,0.525,0.0,0.742],"i":[0.1094,0.4594,0.525,0.0,0.749],"j":[0.0656,0.399,0.525,-0.189,0.749],"k":[0.119,0.4848,0.525,0.0,0.742],"l":[0.0963,0.4463,0.525,0.0,0.742],"m":[0.0586,0.4699,0.525,0.0,0.539],"n":[0.0875,0.4463,0.525,0.0,0.539],"o":[0.0648,0.4603,0.525,-0.014,0.539],"p":[0.0805,0.4708,0.525,-0.175,0.539],"q":[0.0542,0.4445,0.525,-0.175,0.539],"r":[0.0735,0.476,0.525,0.0,0.539],"s":[0.084,0.4515,0.525,-0.014,0.539],"t":[0.0665,0.4585,0.525,-0.014,0.6615],"u":[0.0788,0.4375,0.525,-0.014,0.525],"v":[0.0525,0.4725,0.525,0.0,0.525],"w":[0.021,0.504,0.525,0.0,0.525],"x":[0.0525,0.4725,0.525,0.0,0.525],"y":[0.0525,0.4725,0.525,-0.189,0.525],"z":[0.0945,0.4305,0.525,0.0,0.525],"{":[0.1488,0.4287,0.525,-0.133,0.798],"|":[0.2214,0.3036,0.525,-0.0525,0.7525],"}":[0.0963,0.3762,0.525,-0.133,0.798],"~":[0.07,0.455,0.525,0.2144,0.3981],"\u2019":[0.1864,0.3404,0.525,0.4323,0.756],"\u2013":[0.0569,0.4681,0.525,0.2625,0.35]," ":[0,0,0.525,0,0]},0.7],"M600":[{"!":[0.1776,0.3474,0.525,-0.0074,0.7],"\"":[0.0927,0.4323,0.525,0.3837,0.742],"#":[0.0282,0.4968,0.525,0.0,0.7],"$":[0.0538,0.4837,0.525,-0.0875,0.7875],"%":[0.0242,0.5008,0.525,-0.0157,0.7157],"&":[0.0424,0.5072,0.525,-0.014,0.7157],"'":[0.1938,0.3312,0.525,0.3837,0.742],"(":[0.158,0.4195,0.525,-0.1655,0.8305],")":[0.1055,0.367,0.525,-0.1655,0.8305],"*":[0.0337,0.4913,0.525,0.0858,0.5216],"+":[0.0355,0.4895,0.525,0.0792,0.5333],",":[0.1677,0.3612,0.525,-0.1618,0.2028],"-":[0.0355,0.4895,0.525,0.2497,0.3628],".":[0.1742,0.3508,0.525,-0.0087,0.2028],"/":[0.0804,0.4446,0.525,-0.1488,0.742],"0":[0.0332,0.4918,0.525,-0.0157,0.7157],"1":[0.0747,0.4853,0.525,0.0,0.7],"2":[0.0551,0.4699,0.525,0.0,0.7157],"3":[0.0507,0.4743,0.525,-0.0157,0.7157],"4":[0.0353,0.5001,0.525,0.0,0.7],"5":[0.0504,0.4738,0.525,-0.0157,0.7],"6":[0.049,0.476,0.525,-0.0157,0.7],"7":[0.0663,0.4587,0.525,0.0,0.7],"8":[0.0494,0.4756,0.525,-0.0157,0.7157],"9":[0.049,0.476,0.525,0.0,0.7157],":":[0.1742,0.3508,0.525,-0.0087,0.5422],";":[0.1677,0.3612,0.525,-0.1618,0.5422],"<":[0.0705,0.4545,0.525,0.0459,0.5666],"=":[0.0788,0.4463,0.525,0.136,0.4765],">":[0.0705,0.4545,0.525,0.0459,0.5666],"?":[0.0685,0.4573,0.525,-0.0074,0.7157],"@":[0.0308,0.4873,0.525,-0.1822,0.7157],"A":[0.0279,0.4971,0.525,0.0,0.7],"B":[0.0727,0.4918,0.525,0.0,0.7],"C":[0.0503,0.4905,0.525,-0.0157,0.7157],"D":[0.053,0.4918,0.525,0.0,0.7],"E":[0.0837,0.4678,0.525,0.0,0.7],"F":[0.097,0.481,0.525,0.0,0.7],"G":[0.0437,0.4856,0.525,-0.0122,0.7157],"H":[0.053,0.472,0.525,0.0,0.7],"I":[0.053,0.472,0.525,0.0,0.7],"J":[0.0442,0.4633,0.525,-0.0157,0.7],"K":[0.0815,0.4979,0.525,0.0,0.7],"L":[0.1187,0.481,0.525,0.0,0.7],"M":[0.0397,0.4853,0.525,0.0,0.7],"N":[0.0503,0.4747,0.525,0.0,0.7],"O":[0.0332,0.4918,0.525,-0.0157,0.7157],"P":[0.0707,0.4985,0.525,0.0,0.7],"Q":[0.0332,0.4918,0.525,-0.1907,0.7157],"R":[0.0619,0.5072,0.525,0.0,0.7],"S":[0.0538,0.4837,0.525,-0.0157,0.7157],"T":[0.0318,0.4932,0.525,0.0,0.7],"U":[0.0477,0.4773,0.525,-0.0157,0.7],"V":[0.0279,0.4971,0.525,0.0,0.7],"W":[0.0141,0.5109,0.525,0.0,0.7],"X":[0.0305,0.4945,0.525,0.0,0.7],"Y":[0.0204,0.5046,0.525,0.0,0.7],"Z":[0.066,0.459,0.525,0.0,0.7],"[":[0.193,0.4195,0.525,-0.1412,0.8062],"\\":[0.0804,0.4446,0.525,-0.1488,0.742],"]":[0.1055,0.332,0.525,-0.1412,0.8062],"^":[0.061,0.464,0.525,0.4657,0.7157],"_":[0.0355,0.4895,0.525,-0.1568,-0.0438],"`":[0.1025,0.4217,0.525,0.4716,0.742],"a":[0.0451,0.4501,0.525,-0.0123,0.5492],"b":[0.066,0.4844,0.525,-0.014,0.742],"c":[0.0656,0.4766,0.525,-0.0157,0.5492],"d":[0.0406,0.459,0.525,-0.014,0.742],"e":[0.0625,0.4717,0.525,-0.0157,0.5492],"f":[0.081,0.5263,0.525,0.0,0.7577],"g":[0.0458,0.4563,0.525,-0.1907,0.5475],"h":[0.0705,0.4616,0.525,0.0,0.742],"i":[0.0945,0.4785,0.525,0.0,0.7686],"j":[0.0499,0.4101,0.525,-0.1907,0.7686],"k":[0.0952,0.4975,0.525,0.0,0.742],"l":[0.0814,0.4654,0.525,0.0,0.742],"m":[0.042,0.4865,0.525,0.0,0.5492],"n":[0.0705,0.4616,0.525,0.0,0.5492],"o":[0.052,0.473,0.525,-0.0157,0.5492],"p":[0.066,0.4844,0.525,-0.175,0.5475],"q":[0.0406,0.459,0.525,-0.175,0.5475],"r":[0.0624,0.4888,0.525,0.0,0.5475],"s":[0.0712,0.4651,0.525,-0.0157,0.5492],"t":[0.0554,0.4738,0.525,-0.0157,0.6717],"u":[0.0634,0.4545,0.525,-0.0157,0.5335],"v":[0.0397,0.4853,0.525,0.0,0.5335],"w":[0.0176,0.5074,0.525,0.0,0.5335],"x":[0.0355,0.4895,0.525,0.0,0.5335],"y":[0.0402,0.4857,0.525,-0.1907,0.5335],"z":[0.0792,0.4458,0.525,0.0,0.5335],"{":[0.1317,0.4458,0.525,-0.1577,0.8227],"|":[0.2099,0.3151,0.525,-0.0525,0.7525],"}":[0.0792,0.3933,0.525,-0.1577,0.8227],"~":[0.07,0.455,0.525,0.2033,0.4092],"\u2019":[0.1677,0.3612,0.525,0.3931,0.7577],"\u2013":[0.0399,0.4851,0.525,0.2523,0.3602]," ":[0,0,0.525,0,0]},0.7]};
+const sltK=e=>{const c=getComputedStyle(e),w=+c.fontWeight>=500?600:400;return /Martian/.test(c.fontFamily)?'M'+w:/Barlow/.test(c.fontFamily)?'B600':'P'+w};
+const sltG=(e,ch)=>{const t=SLT[sltK(e)];return t&&t[0][ch]?t[0][ch]:[0,.5,.55,0,.7]};const sltC=e=>{const t=SLT[sltK(e)];return t?t[1]:.7};
+const PN0f=l=>parseFloat(getComputedStyle(l.querySelector('.ptpn')).fontSize);
+function lxOf(r,fp){const t=r.querySelector('.ptt'),p=r.querySelector('.ptpn');if(!t||!p)return 44;const ct=t.textContent.trim()[0],cp=p.textContent.trim()[0];
+ return (parseFloat(getComputedStyle(r.querySelector('.ptl1')).paddingLeft)||44)+sltG(t,ct)[0]*parseFloat(getComputedStyle(t).fontSize)-sltG(p,cp)[0]*(fp||parseFloat(getComputedStyle(p).fontSize))}
+// ink width of a via text: canvas advance (kerning included) + spacing, less the first glyph's left and the last glyph's right bearing
+function viaInk(e){const t=e.textContent,c=getComputedStyle(e),f=parseFloat(c.fontSize),ls=parseFloat(c.letterSpacing)||0,ws=parseFloat(c.wordSpacing)||0;
+ _ic.font=c.fontStyle+' '+c.fontWeight+' '+(f*50)+'px '+c.fontFamily;const a=_ic.measureText(t).width/50+ls*(t.length-1)+ws*(t.split(' ').length-1),g0=sltG(e,t[0]),g1=sltG(e,t[t.length-1]);
+ return a-g0[0]*f-(g1[2]-g1[1])*f}
+// box-shadow ink above / below an element's box: hard shadows only (blur 0), [top, bottom] px
+function shExt(e){let t=0,b=0;(getComputedStyle(e).boxShadow||'').split(/,(?![^(]*\))/).forEach(x=>{if(/inset/.test(x))return;const n=(x.replace(/rgba?\([^)]*\)|oklch\([^)]*\)|#[0-9a-f]+|[a-z]+\([^)]*\)/gi,'').match(/-?[\d.]+px/g)||[]).map(parseFloat);
+ if(n.length<2||(n[2]||0)>0)return;const oy=n[1],sp=n[3]||0;t=Math.max(t,sp-oy);b=Math.max(b,oy+sp)});return [t,b]}
+// [lowest yMin, highest yMax] (em) over the glyphs of every text matched by sel in V, by e's font
+function yExt(V,sel,e){const T=SLT[sltK(e)];let lo=0,hi=0;if(!T)return [-.25,.75];V.querySelectorAll(sel).forEach(x=>{for(const c of x.textContent){const g=T[0][c];if(g){lo=Math.min(lo,g[3]);hi=Math.max(hi,g[4])}}});return [lo,hi]}
+function rowFit(early){const V=X.querySelector('.ptv-k');if(!V||!V.offsetParent)return;const Y=[...V.querySelectorAll('.ptyx')].find(y=>y.offsetParent);if(!Y)return;
+ const K=[...Y.querySelectorAll('.ptk')].filter(r=>r.offsetParent),D=K.filter(r=>!r.classList.contains('ptk1')&&r.querySelector('.ptl2')),z=(K[0]&&K[0].currentCSSZoom)||1,up=v=>Math.ceil(v*100)/100,
+  u=1/((window.visualViewport&&visualViewport.scale)||1),setv=(e,k,v)=>{if(e.style.getPropertyValue(k)!==v)e.style.setProperty(k,v)};
+ // the one right column: max(widest tile, widest via, TIMES / TRADED head ink), every year
+ {let tw=0;const b0=[...V.querySelectorAll('.ptxn b')].find(b=>b.offsetParent)||V.querySelector('.ptxn b'),f0=b0?parseFloat(getComputedStyle(b0).fontSize):15,rt=b0&&document.documentElement.classList.contains('retro')&&/Martian/.test(getComputedStyle(b0).fontFamily);
+  V.querySelectorAll('.ptxn b').forEach(b=>{const t=b.firstChild?b.firstChild.nodeValue.trim():'';if(rt){tw=Math.max(tw,inkC(b0,t));return}let x=0,L=null,R=0;for(const c of t){const m=BC7[c];if(!m)return;if(L==null)L=m[0]*f0;R=x+m[1]*f0;x+=m[4]*f0}if(L!=null)tw=Math.max(tw,R-L)});
+  const tile=tw?Math.round((tw+16)/u)*u:0,vw=Math.max(tile,...[...V.querySelectorAll('.ptvt')].map(viaInk),...[...V.querySelectorAll('.pthx i')].slice(0,2).map(h=>inkC(h,h.textContent)));setv(V,'--ptvw',up(vw)+'px')}
+ // 1. one text left edge (writes only)
+ D.forEach(r=>setv(r.querySelector('.ptl2'),'--ptlx',lxOf(r).toFixed(3)+'px'));
+ if(early)return;
+ // 2. the row model, from a shown drafted row, or (future-only view) a hidden probe cloned from any drafted year
+ let ref=D.find(r=>!r.querySelector('.ptt').style.fontSize)||D[0],probe=null;
+ if(!ref){const src=[...V.querySelectorAll('.ptk:not(.ptk1)')].find(r=>r.querySelector('.nfl'))||V.querySelector('.ptk:not(.ptk1)'),P0=[...Y.querySelectorAll('.ptp')].find(p=>p.offsetParent);
+  if(src&&P0){probe=src.cloneNode(true);probe.setAttribute('aria-hidden','true');probe.style.visibility='hidden';probe.querySelectorAll('[style]').forEach(e=>e.removeAttribute('style'));P0.appendChild(probe);ref=probe;setv(probe.querySelector('.ptl2'),'--ptlx',lxOf(probe).toFixed(3)+'px')}}
+ let M=null;
+ if(ref){const t=ref.querySelector('.ptt'),p=ref.querySelector('.ptpn'),l1=ref.querySelector('.ptl1'),l2=ref.querySelector('.ptl2'),ft=parseFloat(getComputedStyle(t).fontSize),fp=parseFloat(getComputedStyle(p).fontSize),capT=sltC(t)*ft,capP=sltC(p)*fp;
+  // line gap: line 1's baseline -> line 2's cap top = --ptg1 (one value, every row and width; PS-2b rule 1)
+  const G=parseFloat(getComputedStyle(V).getPropertyValue('--ptg1'))||13;
+  {const tb=_bl(t),pb=_bl(p),g=(pb-capP*z-tb)/z,m=parseFloat(getComputedStyle(l2).marginTop)||0;if(Math.abs(g-G)>.005)V.style.setProperty('--ptlg',(m+G-g).toFixed(3)+'px')}
+  const y0=l1.getBoundingClientRect().top,tb=(_bl(t)-y0)/z,pb=(_bl(p)-y0)/z,bb=(l2.getBoundingClientRect().bottom-y0)/z,a=l1.querySelector(':scope>.pav'),ah=a?a.getBoundingClientRect().height/z:36,ar=a?shExt(a):[0,0],
+   nf=V.querySelector('.ptk:not(.ptk1) .nfl')?ref.querySelector('.nfl'):null,nb=nf?(nf.getBoundingClientRect().bottom-y0)/z:-1e9,nt=nf?(nf.getBoundingClientRect().top-y0)/z:1e9,   // the NFL logo hangs from line 1
+   T0=V.querySelector('.ptxn'),th=parseFloat(V.style.getPropertyValue('--ptch'))||(()=>{const f0=ft*z,c=Math.max(1,Math.round(.7*f0/u))*u,Hn=f0*1.15,cd=Math.round(c/u);let hd=Math.round(Hn/u);if((hd-cd)%2)hd+=(Hn/u>hd?1:-1);return hd*u/z})(),/* a view without tiles: tileSnap's own height rule */ts=T0?shExt(T0):[0,0],tc=tb-capT/2,
+   v0=V.querySelector('.ptvt'),fv=v0?parseFloat(getComputedStyle(v0).fontSize):11,vy=v0?yExt(V,'.ptvt',v0):[0,0],
+   te=yExt(V,'.ptk:not(.ptk1) .ptt',t),pe=yExt(V,'.ptpn',p),c=(tb-capT+pb)/2,
+   // the via on the player's baseline, lowered only as far as needed for 4px of ink under the tile's hard shadow (rule 4)
+   vo=v0&&T0?Math.max(0,(tc+th/2+ts[1]+4+u)-(pb-vy[1]*fv)):0;   // + one page unit, so the painted gap stays >= 4px after snapping
+  // tileSnap puts each tile's baseline on the page's point grid: with every row a whole number of points tall, every tile of a view
+  // sits the same distance dl from the model (team cap centre); read it from the tiles on show (any row), else half a point up
+  const dl=(()=>{const v=K.map(r=>{const x=r.querySelector('.ptxn'),q=r.querySelector('.ptt');if(!x||!q)return null;const f=parseFloat(getComputedStyle(q).fontSize)*z;
+   return (x.getBoundingClientRect().top-(_bl(q)-sltC(q)*f/2))/z+th/2}).filter(v=>v!=null);return v.length?Math.min(...v):-u/2})(),
+   tt=tc-th/2+dl,
+   rb=(parseFloat(getComputedStyle(ref).borderTopWidth)||0)+(parseFloat(getComputedStyle(ref).borderBottomWidth)||0),
+   top=Math.min(c-ah/2-ar[0],tb-te[1]*ft,nt,T0?tt:1e9),bot=Math.max(c+ah/2+ar[1],pb-pe[0]*fp,nb,T0?tc+th/2+ts[1]:-1e9,v0?pb+vo-vy[0]*fv:-1e9);
+  let kt=12-top,kb=12+bot-bb;{const T=kt+bb+kb+rb,e=Math.ceil(T/u-1e-6)*u-T;kt+=e/2;kb+=e/2}   // a whole number of points, the extra split top / bottom
+  M={vo,d:pb+vo-(tc-th/2),ds:-vy[0]*fv,kh:kt+bb+kb+rb};
+  setv(V,'--ptfo',((ar[0]-ar[1])/2).toFixed(3)+'px');setv(V,'--ptkt',kt.toFixed(3)+'px');setv(V,'--ptkb',kb.toFixed(3)+'px');setv(V,'--ptkh',M.kh.toFixed(3)+'px');window.__ptRow={G,kt:+kt.toFixed(3),kb:+kb.toFixed(3),h:+M.kh.toFixed(3),vo:+vo.toFixed(3),top:+top.toFixed(3),bot:+bot.toFixed(3),bb:+bb.toFixed(3)}}
+ if(probe)probe.remove();
+ // 3. holder logo centred on the text block (team cap top .. player baseline); reads, then writes
+ const LG=D.map(r=>{const t=r.querySelector('.ptt'),p=r.querySelector('.ptpn'),l1=r.querySelector('.ptl1'),a=l1.querySelector(':scope>.pav');if(!a)return null;
+  const ft=parseFloat(getComputedStyle(t).fontSize)*z;return [a,((_bl(t)-sltC(t)*ft+_bl(p))/2-l1.getBoundingClientRect().top)/z-a.getBoundingClientRect().height/z/2]});
+ LG.forEach(x=>{if(x)x[0].style.top=x[1].toFixed(3)+'px'});
+ // 4. future rows: the team name's cap centre on the logo's centre
+ const F=K.filter(r=>r.classList.contains('ptk1'));F.forEach(r=>{const t=r.querySelector('.ptt');if(t)t.style.top=''});
+ const FT=F.map(r=>{const t=r.querySelector('.ptt'),a=r.querySelector('.ptl1>.pav');if(!t||!a)return null;const q=a.getBoundingClientRect(),ft=parseFloat(getComputedStyle(t).fontSize)*z;return [t,((q.top+q.bottom)/2-(_bl(t)-sltC(t)*ft/2))/z]});
+ FT.forEach(x=>{if(x)x[0].style.top=x[1].toFixed(3)+'px'});
+ // 5. via: last glyph's ink on the inset; drafted rows on line 2's baseline (+ the rule-4 offset); future rows: tile over via as
+ // the drafted rows' pair (tile top -> via baseline = M.d), centred on the row
+ const VT=K.map(r=>[r,r.querySelector('.ptvt')]).filter(x=>x[1]);VT.forEach(([r,v])=>{v.style.top='';const c=getComputedStyle(v),f=parseFloat(c.fontSize),t=v.textContent,g=sltG(v,t[t.length-1]);
+  v.style.marginRight=(-((g[2]-g[1])*f+(parseFloat(c.letterSpacing)||0))).toFixed(3)+'px'});
+ const vo=M?M.vo:0,dd=M?M.d:20,ds=M?M.ds:2,VY=VT.map(([r,v])=>{const p=r.querySelector('.ptpn');if(p)return [v,(_bl(p)-_bl(v))/z+vo];
+  const T=r.querySelector('.ptxn'),R=r.getBoundingClientRect(),fv=parseFloat(getComputedStyle(v).fontSize)*z,cv=sltC(v)*fv,mid=(R.top+R.bottom)/2,vb=_bl(v);
+  if(!T)return [v,(mid+cv/2-vb)/z];const Tr=T.getBoundingClientRect(),top=mid-(dd+ds)*z/2,dt=Math.round((top-Tr.top)/z/u)*u;   // pair = tile top .. the vias' lowest descender, centred on the row
+  return [v,(Tr.top+dt*z+dd*z-vb)/z,T,dt]});
+ VY.forEach(([v,dy,T,dt])=>{v.style.top=dy.toFixed(3)+'px';if(T)T.style.top=((parseFloat(T.style.top)||0)+dt).toFixed(4)+'px'})}
+// ptxFit (2026-11-07; 2026-11-26, PS-3c): Picks right-hand column and strip; reads everything, then writes.
+// TIMES TRADED: tile width --ptcw = the widest count's digit ink in the shown year + 2 x 8px (tileSnap then sets the final
+// width, height, figure size and placement). Strip: TIMES and TRADED right-aligned so each line's last glyph's ink (not the retro
+// 1px shadow; as the via text) sits on the 16px inset (margin-right = -(letter-spacing + right bearing)). NFL slot: baseline on
+// the team name's, by layout (position:relative; top).
 function ptxFit(){const V=X.querySelector('.ptv-k');if(!V||!V.offsetParent)return;const P=[...V.querySelectorAll('.ptp')].filter(p=>p.offsetParent);if(!P.length)return;
- const q=s=>P.flatMap(p=>[...p.querySelectorAll(s)]),cnt=q('.ptxn'),hx=q('.pthx i'),vh=q('.pthv'),cv=q('.ptvc'),slots=q('.ptns');
- [...hx,...vh,...cv,...slots].forEach(e=>e.style.transform='');cnt.forEach(t=>{t.style.top=t.style.left='';const b=t.querySelector('b');b.style.left=b.style.top=''});V.style.removeProperty('--ptch');V.style.removeProperty('--ptcf');
+ const q=s=>P.flatMap(p=>[...p.querySelectorAll(s)]),cnt=q('.ptxn'),hx=q('.pthx i'),slots=q('.ptns');
+ [...hx,...slots].forEach(e=>e.style.transform='');hx.forEach(h=>h.style.marginRight='');slots.forEach(e=>e.style.top='');cnt.forEach(t=>{t.style.top=t.style.left='';const b=t.querySelector('b');b.style.left=b.style.top=''});V.style.removeProperty('--ptch');V.style.removeProperty('--ptcf');
  const z=(P[0].querySelector('.ptt')||P[0]).currentCSSZoom||1,iw=e=>{const i=tInk(e);return i?(i[1]-i[0])/z:0},up=v=>(Math.ceil(v*100)/100)+'px';
- const tw=Math.max(0,...cnt.map(t=>{const b=t.querySelector('b'),k=dInk(b);return k?(k[1]-k[0])/z:iw(b)}))+16,ca=Math.max(tw,...hx.map(iw)),va=Math.max(38,...cv.map(iw),...vh.map(iw));
- V.style.setProperty('--ptcw',up(tw));V.style.setProperty('--ptca',up(ca));V.style.setProperty('--ptva',up(va));
- const W=[],cx=r=>(r.left+r.right)/2,cy=r=>(r.top+r.bottom)/2,tx=(e,C)=>{const i=tInk(e);if(i)W.push([e,'translateX('+((cx(C)-(i[0]+i[1])/2)/z).toFixed(3)+'px)'])};
- hx.forEach(h=>tx(h,h.parentElement.getBoundingClientRect()));vh.forEach(h=>tx(h,h.getBoundingClientRect()));cv.forEach(c=>tx(c,c.parentElement.getBoundingClientRect()));
- slots.forEach(n=>{const L=n.parentElement,C=L.getBoundingClientRect(),pb=_bl(L.querySelector('.ptpn')),sb=_bl(n),its=[...n.querySelectorAll('i:not(.ptbl)')],x=tInk(its[its.length-1]);
-  if(pb==null||sb==null||!x)return;W.push([n,'translate('+((C.right-x[1])/z).toFixed(3)+'px,'+((pb-sb)/z).toFixed(3)+'px)'])});
- W.forEach(([el,v])=>el.style.transform=v);tileSnap(V,cnt,z)}
+ const tw=Math.max(0,...cnt.map(t=>{const b=t.querySelector('b'),k=dInk(b);return k?(k[1]-k[0])/z:iw(b)}))+16;
+ V.style.setProperty('--ptcw',up(tw));
+ const W=[];
+ hx.forEach(h=>{const c=getComputedStyle(h),t=h.textContent.trim().toUpperCase();h.style.marginRight=(-((parseFloat(c.letterSpacing)||0)+rBear(h,t.slice(-1)))).toFixed(3)+'px'});
+ slots.forEach(n=>{const L=n.parentElement,pb=_bl(L.querySelector('.ptpn')),sb=_bl(n);if(pb==null||sb==null)return;
+  // the baseline offset by layout (position:relative; top), not a transform: WebKit paints a transformed slot's glyphs on its own
+  // device-pixel rounding, one pixel off the name's when the two baselines' fractions differ
+  W.push([n,'',((pb-sb)/z).toFixed(3)+'px'])});
+ W.forEach(([el,v,t])=>{if(t!=null){el.style.transform=v;el.style.top=t}else el.style.transform=v});tileSnap(V,cnt,z);rowFit()}
 // BC7: Barlow Condensed 700 digit outlines from the font file (fontTools, 2026-11-07): [xMin, xMax, yMax, -yMin, advance]
 // in em. WebKit's canvas measureText gives no glyph ink (actualBoundingBoxLeft/Right = 0 / advance, seen in WebKitGTK
 // 2.52) and canvas has no tabular figures, so the TIMES TRADED tiles use these fixed outlines, not canvas, for the ink.
@@ -670,35 +818,47 @@ CSS=('#tab-pt:checked~.tnav .tsub label[for="tab-pt"]{background:var(--chalk);co
  '.ptt{font:600 15px/1.15 var(--body);color:var(--chalk);min-width:0}'
  '.ptl2{display:flex;align-items:center;gap:6px;min-width:0;font:400 12.5px/1.25 var(--body);color:var(--chalk)}.ptl2.ptd,.ptd{color:var(--text-dim)}'
  '@media(max-width:380px){.ptx{--ptg:40px}.pthd,.ptk{grid-template-columns:44px minmax(0,1fr) var(--ptxa,64px);column-gap:8px}.ptpl .pthd,.ptkp{grid-template-columns:44px minmax(0,1fr) 40px var(--ptg)}.ptpl .pthd>span:first-child{font-size:11px;letter-spacing:.06em}}'
- # Picks view (2026-11-07, VIA column): tile | holder | TIMES TRADED tile | VIA logo + coach; 12px gaps, 16px right inset
- # (the VIA column's widest ink ends on it). Column widths per year view from ptxFit (--ptca, --ptva, tile --ptcw).
- '.ptv-k .pthd,.ptv-k .ptk{grid-template-columns:52px minmax(0,1fr) var(--ptca,40px) var(--ptva,48px);padding-right:16px}.ptv-k .pthd>span:nth-child(2){text-align:left}.ptv-k .pthd{padding-top:8.72px;padding-bottom:10.28px}'  # 46px header, cap ink 11.28px from top and bottom
- '.ptv-k .pthd>.pthx{display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap}.ptv-k .pthx i{display:block;font-style:normal}'  # TIMES over TRADED: header row 46px on every panel
- '.ptv-k .pthd>.pthv{text-align:center;white-space:nowrap}.ptv-k .ptl2>*{flex:none}'
- '@media(max-width:380px){.ptv-k .pthd,.ptv-k .ptk{grid-template-columns:44px minmax(0,1fr) var(--ptca,40px) var(--ptva,48px)}}'
- # rows: flexible top/bottom tracks around line 1 (36px logos, and line 2). Drafted rows: tracks >= 13px (88px rows). Future
- # rows (.ptk1, one line, centred): tracks >= 23px so the coach name under the VIA logo keeps >= 10px to the row edge (83px)
- '.ptv-k .ptk{grid-template-rows:minmax(13px,1fr) auto auto minmax(13px,1fr);row-gap:0;min-height:57px}.ptv-k .ptl2{min-height:20px}'
- '.ptv-k .ptk1{grid-template-rows:minmax(23px,1fr) auto auto minmax(23px,1fr)}'
+ # Picks view (2026-11-26, briefs PS-2 .. PS-3c): pick tile | name column | one right column (--ptvw: TIMES TRADED tile over the quiet
+ # via, both right-aligned to the 16px inset); 12px gaps. Strip: R · PLAYER (drafted years; "NFL" over the slot) or R · TEAM (future
+ # years), TIMES over TRADED right-aligned by glyph ink (ptxFit), hidden in a year view without a traded pick (.pthx0, build time).
+ '.ptv-k .pthd,.ptv-k .ptk{grid-template-columns:52px minmax(0,1fr) var(--ptvw,40px);padding-right:16px}.ptv-k .pthd>span:nth-child(2){text-align:left}.ptv-k .pthd{padding-top:8.72px;padding-bottom:10.28px}'  # 46px header, cap ink 11.28px from top and bottom
+ '@media(max-width:380px){.ptv-k .pthd,.ptv-k .ptk{grid-template-columns:44px minmax(0,1fr) var(--ptvw,40px)}}'
+ '.ptv-k .pthd>.pthx{display:flex;flex-direction:column;align-items:flex-end;gap:3px;white-space:nowrap}.ptv-k .pthx i{display:block;font-style:normal}.ptv-k .pthx0{visibility:hidden}'
+ # "NFL" over the slot (the Drafts .dfhn habit, declarations repeated): the strip's own font, absolute on the PLAYER label's line, so on
+ # its baseline; ink centred over the slot's ink span by --pthnr (slotForm)
+ '.ptv-k .pthd>.pthp{position:relative;white-space:nowrap}.ptv-k .pthn{position:absolute;top:0;right:var(--pthnr,0px);font-style:normal;text-indent:0}'
+ '.ptv-k .ptl2>*{flex:none}.ptv-k .ptk{row-gap:0}.ptv-k .ptl2{min-height:20px}'
  '.ptv-k .ptn{grid-column:1;grid-row:1/-1}.ptv-k .ptm{display:contents}'
  '.ptv-k .ptl1{grid-column:2;grid-row:2}.ptv-k .ptl2{grid-column:2;grid-row:3;margin-top:5px}'
  # TIMES TRADED (2026-11-07, light tile): the FAAB tile's colours (--faab fill, --faab-ink figures, --sh-hard: a light element,
- # DESIGN.md 2.12), 4px radius, Barlow 700, on line 1: as tall as the holder name's line box (1.15 x --ptnf), figure at the
- # name's size (Barlow digit cap = Plex cap, .70em); one width per year view (--ptcw = widest digit ink + 2 x 8px), digits
- # ink-centred by ptxFit. Proportional figures, not tabular: ptxFit measures ink with canvas, which has no tabular-nums, so
- # tabular digits put the "1" up to 1.6px off centre (seen in Safari and Chromium, 2026-11-07); one number per tile needs none.
- '.ptv-k .ptxn{grid-column:3;grid-row:2;align-self:center;justify-self:center;display:block;box-sizing:border-box;width:var(--ptcw,24px);height:var(--ptch,calc(var(--ptnf,15px) * 1.15));padding:0;position:relative;display:flex;align-items:center;justify-content:center;border-radius:4px;background:var(--faab);box-shadow:var(--sh-hard);'
+ # DESIGN.md 2.12), 4px radius, Barlow 700, on line 1: as tall as line 1's line box (1.15 x --ptnf), figure at line 1's size
+ # (Barlow digit cap = Plex cap, .70em); one width per year view (--ptcw = widest digit ink + 2 x 8px), placed by tileSnap.
+ # Proportional figures, not tabular: canvas has no tabular-nums, so tabular digits put the "1" up to 1.6px off centre.
+ '.ptv-k .ptxn{grid-column:3;grid-row:2;align-self:center;justify-self:end;display:block;box-sizing:border-box;width:var(--ptcw,24px);height:var(--ptch,calc(var(--ptnf,15px) * 1.15));padding:0;position:relative;display:flex;align-items:center;justify-content:center;border-radius:4px;background:var(--faab);box-shadow:var(--sh-hard);'
  'font:700 var(--ptnf,15px)/1 var(--display);line-height:calc(var(--ptnf,15px) * 1.15);font-size:var(--ptcf,var(--ptnf,15px));letter-spacing:0;font-variant-numeric:normal;font-feature-settings:normal;color:var(--faab-ink);font-style:normal;text-align:center;white-space:nowrap}'
  '.ptv-k .ptxn b{display:block;position:relative;font-weight:700;line-height:1;text-box:trim-both cap alphabetic}'
- # VIA (2026-11-07): original team's 36px logo on line 1 (holder logo treatment), coach under it (Barlow 600 11px caps
- # .04em --text-dim, cap top 5px under the logo box), ink-centred on the column by ptxFit; empty when the holder is the original team
- '.ptv-k .ptvl{grid-column:4;grid-row:2;align-self:center;position:relative;display:flex;align-items:center;justify-content:center;height:36px}'
- '.ptv-k .ptvl .pav{width:36px;height:36px}'
  # 36px Picks logos: the halved Paper Trail ring + shadow, blur scaled 3 -> 4px (offsets stay 1px)
- +('.ptv-k .ptl1 .pav.av,.ptv-k .ptvl .pav.av{box-shadow:0 0 0 1px var(--line-strong),1px 1px 0 .5px rgba(0,0,0,.4),1px 1px 4px .5px rgba(0,0,0,.25)!important}' if PICKS else '')+
- '.ptv-k .ptvc{position:absolute;left:-24px;right:-24px;top:calc(100% + 5px);display:block;text-align:center;font:600 11px/1 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim);white-space:nowrap;text-box:trim-both cap alphabetic}'
- # NFL draft slot (2026-11-06): Drafts' slot type on one line, right edge of the name column (ink-aligned by ptxFit), >= 12px clear of the logo
- '.ptns.pthide{display:none}.ptns{margin-left:auto;padding-left:6px;display:block;font:600 11px/1 var(--display);letter-spacing:.04em;text-transform:uppercase;font-variant-numeric:tabular-nums;color:var(--text-dim);white-space:nowrap}.ptns i{font-style:normal}.ptns i+i:not(.ptbl){margin-left:6px}'  # inline, not flex: the .ptbl marker must sit on the baseline
+ +('.ptv-k .ptl1 .pav.av{box-shadow:0 0 0 1px var(--line-strong),1px 1px 0 .5px rgba(0,0,0,.4),1px 1px 4px .5px rgba(0,0,0,.25)!important}' if PICKS else '')+
+ # NFL slot: the Drafts list's slot type; one line, 11px (slotForm gives the view .ptn1.ptn11): two LEFT-aligned fields, "RD n"
+ # inline-block --ptpk wide (widest RD ink + 6px of ink - P's left bearing), "PK n" after it; the box --ptnw wide (widest PK ink end)
+ # on the name column's right edge; "UDFA" / "–" start on the RD x; baseline on the team name's (ptxFit, by layout)
+ '.ptns{margin-left:auto;padding-left:6px;display:block;font:600 11px/1 var(--display);letter-spacing:.04em;text-transform:uppercase;font-variant-numeric:tabular-nums;color:var(--text-dim);white-space:nowrap}.ptns i{font-style:normal}.ptns i+i:not(.ptbl){margin-left:6px}'  # inline, not flex: the .ptbl marker must sit on the baseline
+ '.ptv-k .ptns{position:relative}.ptv-k.ptn1 .ptns{width:var(--ptnw);padding-left:0;text-align:left;margin-right:0;font-size:11px}'
+ # drafted rows: the 36px picture beside both lines, line 2 on line 1's first-glyph x (rowFit: --ptlx per row, --ptlg, the logo's top);
+ # line 1 = player + NFL logo (6px, line 2's gap); nothing shrinks (nameFit / holdFit read the overflow)
+ '.ptv-k .ptk:not(.ptk1) .ptl1{position:relative;padding-left:44px;gap:6px}.ptv-k .ptk:not(.ptk1) .ptl1>.pav{position:absolute;left:0;top:0}.ptv-k .ptk:not(.ptk1) .ptl1>*{flex:none}'
+ '.ptv-k .ptk:not(.ptk1) .ptl2{margin-left:var(--ptlx,44px);margin-top:var(--ptlg,5px)}'
+ # equal rows: line 1's track as tall as the tile (--ptch) or the 20px NFL logo line; drafted rows' top / bottom tracks --ptkt / --ptkb
+ # and every row's height --ptkh from rowFit's row model (nearest ink 12px from both edges, whole points); line 1 baseline -> line 2
+ # cap top --ptg1 (10px, both looks: the smallest whole px >= 8 with >= 3px of ink between the lines)
+ '.ptv-k{--ptg1:10px}.ptv-k .ptk{position:relative}.ptv-k .ptk:not(.ptk1) .ptl1{min-height:max(var(--ptch,0px),20px)}'
+ '.ptv-k .ptk:not(.ptk1){grid-template-rows:var(--ptkt,13px) auto auto var(--ptkb,13px);min-height:0}.ptv-k[style*="--ptkh"] .ptk:not(.ptk1){height:var(--ptkh)}'
+ '.ptv-k .ptk1{grid-template-rows:1fr auto auto 1fr;height:var(--ptkh,83px);min-height:0}.ptv-k .ptk1 .ptt{position:relative}.ptv-k .ptk1 .ptl1{position:relative;top:var(--ptfo,0px)}'   # --ptfo: the logo's ring / shadow ink centred, not its box
+ # the <= 430 CSS px lever (slotForm's last form): logo-to-name 7px, column gaps 8px
+ '.ptv-k.ptgt .pthd,.ptv-k.ptgt .ptk{column-gap:8px}.ptv-k.ptgt .ptk:not(.ptk1) .ptl1{padding-left:43px}.ptv-k.ptgt .ptk1 .ptl1{gap:7px}'
+ '.ptv-k .ptvt{display:block;grid-column:3;grid-row:3;justify-self:end;align-self:start;white-space:nowrap;margin-top:0;word-spacing:.5625px;padding:0;border-radius:0;background:none;box-shadow:none;font:600 11px/1 var(--display)!important;letter-spacing:0;text-transform:none;color:var(--text-dim)!important}'
+ '.ptv-k .ptvt{position:relative}.ptv-k .ptvt i{font-style:normal;font-weight:600;color:inherit}.ptv-k .ptk1 .ptvt{position:absolute;right:16px;top:0;margin:0}'
+ '.ptv-k.ptn1 .ptns i+i:not(.ptbl){margin-left:0}.ptv-k.ptn1 .ptns i:nth-last-child(3){display:inline-block;width:var(--ptpk)}'
  '.ptbl{display:inline-block;width:0;height:0;vertical-align:baseline}'
  '.ptpn{min-width:0}.ptl2{white-space:nowrap}.ptl2 .pav{width:18px;height:18px}.ptl2.ptlo .ptln{display:none}'
  '.ptc{margin-left:auto;flex:none;font:700 12px/1 var(--display);letter-spacing:.04em;color:var(--text-dim);font-style:normal;padding-right:2px}'
