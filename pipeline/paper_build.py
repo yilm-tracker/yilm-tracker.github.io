@@ -300,8 +300,9 @@ if PICKS:
                     # drafted row (2026-11-26, PS-3): the PLAYER is the headline (line 1, .ptt + his NFL logo), the team the meta line
                     # (line 2, .ptpn + NFL slot). Classes are positional: .ptt = the line-1 name, .ptpn = the line-2 name.
                     tnm=f'<span class="ptpn"{hab}>{e(T[own])}<i class="ptbl"></i></span>'
-                    hl=f'<b class="ptt" title="{e(pl[0])}">{e(pl[0])}<i class="ptbl"></i></b>{badge(pl[2]) if pl[2] else ""}'
-                    sub=f'<span class="ptl2">{tnm}{nsh}</span>'
+                    # PS-3d (mock, 2026-11-26): the NFL slot on line 1, on the player's baseline after the name + NFL logo; line 2 = the team alone
+                    hl=f'<b class="ptt" title="{e(pl[0])}">{e(pl[0])}<i class="ptbl"></i></b>{badge(pl[2]) if pl[2] else ""}{nsh}'
+                    sub=f'<span class="ptl2">{tnm}</span>'
                 else:
                     tile=f'<i class="ptn ptn0 ptpj"><b>{pj or "R"+str(rr)}</b></i>'
                     sub='';nsa='';hl=f'<b class="ptt"{hab}>{e(T[own])}<i class="ptbl"></i></b>'
@@ -527,10 +528,13 @@ function draw(){const q=(Q.value||'').trim().toLowerCase();const ids=q?ORD.filte
  MORE.textContent=ids.length>50?'Showing 50 of '+ids.length+(q?' matches':' players')+' · search to find any player':'';fitN()}
 function fitN(){if(!X.offsetParent)return;L.querySelectorAll('.ptl2').forEach(b=>{b.style.fontSize='';b.classList.remove('ptlo');let s=parseFloat(getComputedStyle(b).fontSize);while(b.scrollWidth>b.clientWidth+.5&&s>11.5){s-=.25;b.style.fontSize=s+'px'}if(b.scrollWidth>b.clientWidth+.5){b.style.fontSize='';b.classList.add('ptlo')}});L.querySelectorAll('.ptt').forEach(b=>{b.style.fontSize='';const w=b.parentElement;
   const o=()=>w.scrollWidth>w.clientWidth+.5||b.scrollWidth>b.clientWidth+.5;let s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>13){s-=.5;b.style.fontSize=s+'px'}});
- ptxFit();nameFit();holdFit();slotFit();ptxFit();
+ ptxFit();slotPick();if(ptForm()=='D'){slotFit();nameFit();ptD17();holdFit();slotFit();ptxFit();
+  const Y=[...X.querySelectorAll('.ptv-k .ptyx')].find(y=>y.offsetParent),bad=Y?[...Y.querySelectorAll('.ptk:not(.ptk1) .ptl1')].filter(l1Over):[];
+  if(bad.length){ptToS();window.__ptSlot={form:'S',why:bad.map(l=>[Y.className.match(/ptyx-(\d+)/)[1],l.querySelector('.ptt').title,+(12-l1Gap(l)).toFixed(3)])}}}
+ if(ptForm()=='S'){nameFit();holdFit();slotFit();ptxFit()}
  // the name size sets the TRADED tile, the tile the column, the column the room: re-check line 1 after ptxFit and step down
  {const Y=[...X.querySelectorAll('.ptv-k .ptyx')].find(y=>y.offsetParent);for(let i=0;Y&&i<12;i++){const s=parseFloat(Y.style.getPropertyValue('--ptnf'))||15;
-  if(s<=15||![...Y.querySelectorAll('.ptl1')].some(l1Over))break;Y.style.setProperty('--ptnf',(s-.25)+'px');holdFit();slotFit();ptxFit()}}
+  if(s<=15||ptForm()=='D'||![...Y.querySelectorAll('.ptl1')].some(l1Over))break;Y.style.setProperty('--ptnf',(s-.25)+'px');holdFit();slotFit();ptxFit()}}
  pjFit();
 }
 // Shared ink helpers: one canvas (_ic); text measured at 50x its size because canvas rounds bounding boxes to whole
@@ -543,6 +547,41 @@ function tInk(el){let t=el.textContent;if(!t)return null;const c=getComputedStyl
 function yInk(el,base,t){const c=getComputedStyle(el),k=(el.currentCSSZoom||1)/50;_ic.font=c.fontStyle+' '+c.fontWeight+' '+(parseFloat(c.fontSize)*50)+'px '+c.fontFamily;
  const m=_ic.measureText(t||el.textContent);return [base-m.actualBoundingBoxAscent*k,base+m.actualBoundingBoxDescent*k]}
 const _bl=el=>{const m=el.querySelector('.ptbl');return m?m.getBoundingClientRect().top:null};
+// slotPick (2026-11-27, briefs PS-3d .. PS-3f; rule B): ONE slot form for the whole Picks view at this width, from every
+// drafted year view (hidden ones included). D = the slot on line 1 after the player + NFL logo (slotFormD); S = the slot on line 2
+// after the team (slotFormS = the 2026-11-26 build, unchanged). D is taken only if every drafted row of every year keeps >= 12px of
+// ink from the NFL logo's box (the name's ink end without a logo) to the slot's first glyph at 17px with its full name, else the
+// generation suffix dropped (Jr., Sr., II-V), else the approved LUA form; no size steps. By layout, in three stages (full, suffix,
+// LUA), each = write the stage's forms to every row still short, then read them all (never per element); the view's own style,
+// classes and names are put back after the test. window.__ptSlot = {form, why: [[year, full, px short at 17]]}.
+const SUFX=/^(Jr\.?|Sr\.?|II|III|IV|V)$/;
+function ptForms(full){const A=typeof LUA!=='undefined'?LUA:{},o=[full];let q=full.split(' ');
+ if(q.length>2&&SUFX.test(q[q.length-1])){q=q.slice(0,-1);o.push(q.join(' '))}const j=q.findIndex(x=>A[x]);if(j>=0){q=q.slice();q[j]=A[q[j]];o.push(q.join(' '))}return o}
+function slotPick(){const V=X.querySelector('.ptv-k');if(!V||!V.offsetParent)return;const slots=[...V.querySelectorAll('.ptns')];if(!slots.length)return;
+ {const Y0=[...V.querySelectorAll('.ptyx')].find(y=>y.offsetParent);if(!Y0||!Y0.querySelector('.ptns'))return}   // a future year on show: no slot on screen; the year press (change -> fitN) decides
+ // the decision depends on the width, the zoom and the fonts only: a year press at the same width reuses it (no test layout)
+ const key=[V.clientWidth,devicePixelRatio,(window.visualViewport&&visualViewport.scale)||1,document.fonts?document.fonts.status:''].join('|'),P=window.__ptSlot;
+ if(P&&P.key===key){if(P.form=='S')ptToS();else slots.forEach(n=>{const l1=n.closest('.ptk').querySelector('.ptl1');if(n.parentElement!==l1)l1.appendChild(n)});return}
+ const vst=V.getAttribute('style'),vcl=V.className,vdn=V.dataset.ptn;   // the view's state, put back after the test (form S then starts exactly as the 2026-11-26 build)
+ slots.forEach(n=>{const l1=n.closest('.ptk').querySelector('.ptl1');if(n.parentElement!==l1)l1.appendChild(n)});
+ V.classList.remove('ptgt');slotFormD();
+ const Ys=[...V.querySelectorAll('.ptyx')].filter(y=>y.querySelector('.ptns')),Yv=[...V.querySelectorAll('.ptyx')].find(y=>y.offsetParent),disp=Yv?getComputedStyle(Yv).display:'block',
+  hid=Ys.map(y=>!y.offsetParent),f0=Ys.map(y=>y.style.getPropertyValue('--ptnf')),T=[...V.querySelectorAll('.ptk:not(.ptk1) .ptt')],keep=T.map(b=>b.firstChild.nodeValue),full=T.map(b=>b.dataset.full||b.firstChild.nodeValue),fs=T.map(b=>b.style.fontSize);
+ // writes: every drafted year laid out at 17px with full names; the TIMES TRADED tiles at 17px too (no --ptcf), the right column from them
+ Ys.forEach((y,i)=>{if(hid[i])y.style.display=disp;y.style.setProperty('--ptnf','17px')});T.forEach((b,i)=>{b.style.fontSize='';b.firstChild.nodeValue=full[i]});V.style.removeProperty('--ptcf');V.style.removeProperty('--ptch');rowFit(1);
+ // reads, then writes, by stage (full -> suffix dropped -> LUA), never per element: each stage writes its forms to every row still
+ // short, then reads them all
+ let G=T.map(b=>l1Gap(b.parentElement)),left=T.map((b,i)=>i).filter(i=>G[i]!=null&&G[i]<12-.05);const F=T.map((b,i)=>ptForms(full[i])),best=G.slice();
+ for(let k=1;k<=2&&left.length;k++){const w=left.filter(i=>F[i][k]);w.forEach(i=>{T[i].firstChild.nodeValue=F[i][k]});const g=w.map(i=>l1Gap(T[i].parentElement));
+  w.forEach((i,j)=>{best[i]=Math.max(best[i],g[j])});left=left.filter(i=>best[i]<12-.05)}
+ const why=left.map(i=>[T[i].closest('.ptyx').className.match(/ptyx-(\d+)/)[1],full[i],+(12-best[i]).toFixed(3)]);
+ // writes: restore; form S puts every slot back on line 2
+ T.forEach((b,i)=>{b.firstChild.nodeValue=keep[i];b.style.fontSize=fs[i]});Ys.forEach((y,i)=>{if(f0[i])y.style.setProperty('--ptnf',f0[i]);else y.style.removeProperty('--ptnf');if(hid[i])y.style.display=''});
+ if(vst==null)V.removeAttribute('style');else V.setAttribute('style',vst);V.className=vcl;if(vdn==null)delete V.dataset.ptn;else V.dataset.ptn=vdn;
+ const form=why.length?'S':'D';if(form=='S')ptToS();window.__ptSlot={form,why};Object.defineProperty(window.__ptSlot,'key',{value:key})}
+function ptToS(){X.querySelectorAll('.ptv-k .ptns').forEach(n=>{const l2=n.closest('.ptk').querySelector('.ptl2');if(n.parentElement!==l2)l2.appendChild(n)})}
+// form D: every drafted year view at 17px (rule B: names take their approved forms in holdFit, never a smaller size)
+function ptD17(){const Y=[...X.querySelectorAll('.ptv-k .ptyx')].find(y=>y.offsetParent);if(Y&&Y.querySelector('.ptk:not(.ptk1)'))Y.style.setProperty('--ptnf','17px')}
 // nameFit (2026-11-06; PS-3 2026-11-26), Picks: one line-1 size per year view (--ptnf on .ptyx-YYYY, also the pick number and
 // the "–"): the largest size in 0.25px steps, 15-17px, at which every full line-1 name fits (drafted years: the PLAYER + his NFL
 // logo; future years: the team beside its 36px logo); under 15 the size stays 15 and holdFit gives the row its approved short
@@ -560,26 +599,31 @@ function nameFit(){const Y=[...X.querySelectorAll('.ptv-k .ptyx')].find(y=>y.off
  // linear scaling can be a pixel off (kerning, rounding): step down while any full name still overflows
  const ov=()=>N.some(b=>l1Over(b.parentElement));while(s>15&&ov()){s-=.25;Y.style.setProperty('--ptnf',s+'px')}}
 // line 1 overflows when its content (a Range) runs past its box, or (column gap under 12px) into the 12px before the right column
-function l1Over(l){const cg=parseFloat(getComputedStyle(l.closest('.ptk')).columnGap)||12,z=l.currentCSSZoom||1,r=document.createRange();r.selectNodeContents(l);   // by content (a Range), not scrollWidth (DESIGN.md 7)
+// PS-3d: a drafted line 1 that holds the slot is over when the slot's first glyph ink is < 12px from the NFL logo's box (the
+// name's ink end without a logo); l1Gap = that gap, CSS px
+function l1Gap(l){const n=l.querySelector(':scope>.ptns'),b=l.querySelector(':scope>.ptt');if(!n||!b)return null;const z=l.currentCSSZoom||1,f=n.querySelector('i:not(.ptbl)'),
+ g=l.querySelector(':scope>.nfl');
+ const e=g?g.getBoundingClientRect().right:tInk(b)[1];return (tInk(f)[0]-e)/z}
+function l1Over(l){{const v=l1Gap(l);if(v!=null)return v<12-.05}const cg=parseFloat(getComputedStyle(l.closest('.ptk')).columnGap)||12,z=l.currentCSSZoom||1,r=document.createRange();r.selectNodeContents(l);   // by content (a Range), not scrollWidth (DESIGN.md 7)
  return (r.getBoundingClientRect().right-(l.getBoundingClientRect().right-(parseFloat(getComputedStyle(l).paddingRight)||0)*z))/z>.05-Math.max(0,12-cg)}
 // holdFit, Picks line 1. Future rows (the team is the headline): full size; if it does not fit, the team's approved short form
 // (data-ab, from PSN in pos/build_pos.py: "Rev. Apache Master"); then, below 423 CSS px only, a shrink to 12px, then 11px.
 // Drafted rows (PS-3: the player is the headline), only where the name + NFL logo still overflow at 15px: generation suffix
 // dropped (Jr., Sr., II-V) -> approved LUA short form (new_tail.js) -> listed in window.__ptForm ("needs an unapproved form",
 // left at the best approved form; window.__ptOver = [name, px past the room]). Never shrunk, never hidden.
-function holdFit(){window.__ptForm=window.__ptForm||[];window.__ptOver=[];const A=typeof LUA!=='undefined'?LUA:{};
+function holdFit(){window.__ptForm=window.__ptForm||[];window.__ptOver=[];window.__ptShort=[];const A=typeof LUA!=='undefined'?LUA:{};
  X.querySelectorAll('.ptv-k .ptt').forEach(b=>{if(!b.offsetParent)return;b.style.fontSize='';b.style.whiteSpace='';if(b.dataset.full){b.firstChild.nodeValue=b.dataset.full;delete b.dataset.full}
   const w=b.parentElement,o=()=>l1Over(w);
   if(!b.closest('.ptk1')){if(!o())return;const full=b.firstChild.nodeValue,set=t=>{b.dataset.full=full;b.firstChild.nodeValue=t;return !o()};let q=full.split(' ');
    if(q.length>2&&/^(Jr\.?|Sr\.?|II|III|IV|V)$/.test(q[q.length-1])){q=q.slice(0,-1);if(set(q.join(' ')))return}
    const j=q.findIndex(x=>A[x]);if(j>=0){q[j]=A[q[j]];if(set(q.join(' ')))return}
-   if(window.__ptForm.indexOf(full)<0)window.__ptForm.push(full);window.__ptOver.push([full,b.firstChild.nodeValue,+((w.scrollWidth-w.clientWidth)/1).toFixed(2)]);return}
+   if(window.__ptForm.indexOf(full)<0)window.__ptForm.push(full);window.__ptOver.push([full,b.firstChild.nodeValue,+((w.scrollWidth-w.clientWidth)/1).toFixed(2)]);{const v=l1Gap(w);if(v!=null)window.__ptShort.push([full,b.firstChild.nodeValue,+(12-v).toFixed(3)])}return}
   if(o()&&b.dataset.ab){b.dataset.full=b.firstChild.nodeValue;b.firstChild.nodeValue=b.dataset.ab}
   if(innerWidth<423){let s=parseFloat(getComputedStyle(b).fontSize);while(o()&&s>12){s-=.5;b.style.fontSize=s+'px'}while(o()&&s>11){s-=.5;b.style.fontSize=s+'px'}}})}  // shrink only below 423 CSS px: to 12px, then to 11px (the text floor) only if 12px still overflows (Nicklaus 2026-11-07; was 13px)
 // slotFit: resets the slot form, the tighter-gap lever and line 2's team forms, then slotForm (below) decides them again.
 function slotFit(){window.__ptForm=window.__ptForm||[];const V=X.querySelector('.ptv-k');
  if(V){V.classList.remove('ptn1','ptn11','ptgt');V.style.removeProperty('--ptnw');V.style.removeProperty('--ptpk')}  // the normal gaps first
- X.querySelectorAll('.ptv-k .ptns').forEach(n=>{const p=n.parentElement.querySelector('.ptpn');p.style.fontSize='';if(p.dataset.full){p.firstChild.nodeValue=p.dataset.full;delete p.dataset.full}});
+ X.querySelectorAll('.ptv-k .ptns').forEach(n=>{const p=n.closest('.ptk').querySelector('.ptpn');p.style.fontSize='';if(p.dataset.full){p.firstChild.nodeValue=p.dataset.full;delete p.dataset.full}});
  rowFit(1);slotForm()}
 // Retro only (html.retro): engines that lay glyphs out on whole pixels (WebKitGTK) get each advance's rounding (probe, as
 // theme.js adv()) added, so the widest PK ink still ends on the edge.
@@ -617,13 +661,34 @@ function rBear(e,ch){const c=getComputedStyle(e),f=parseFloat(c.fontSize);if(/Ma
  _ic.font=c.fontStyle+' '+c.fontWeight+' '+(f*50)+'px '+c.fontFamily;const m=_ic.measureText(ch);return (m.width-m.actualBoundingBoxRight)/50}
 function teInk(e,t){const c=getComputedStyle(e),z=e.currentCSSZoom||1,k=z/50,w=cW(e,t),ls=(parseFloat(c.letterSpacing)||0)*z,l=t.slice(-1);
  _ic.font=c.fontStyle+' '+c.fontWeight+' '+(parseFloat(c.fontSize)*50)+'px '+c.fontFamily;const m=_ic.measureText(l);return w[3]-ls-(m.width-m.actualBoundingBoxRight)*k}  // ink end from the origin, viewport px, at the element's size
-function slotForm(){const V=X.querySelector('.ptv-k');if(!V||!V.offsetParent)return;V.dataset.ptn='main';window.__ptShort=[];window.__ptTeam=[];
+function slotFormD(){const V=X.querySelector('.ptv-k');if(!V||!V.offsetParent)return;V.dataset.ptn='main';window.__ptTeam=[];
+ const Yv=[...V.querySelectorAll('.ptyx')].find(y=>y.offsetParent);const L0=Yv&&[...Yv.querySelectorAll('.ptk:not(.ptk1) .ptl2')].find(l=>l.offsetParent&&l.closest('.ptk').querySelector('.ptns'));if(!L0)return;
+ const A=[...V.querySelectorAll('.ptyx')].filter(y=>y.querySelector('.ptns'));if(!A.length)return;const z=L0.currentCSSZoom||1,vs=V.style,NS=L0.closest('.ptk').querySelector('.ptns'),PN=L0.querySelector('.ptpn'),f0=parseFloat(getComputedStyle(PN).fontSize);
+ // every drafted row: team name (full, short form) and its ink end at 12.5px (viewport px from line 2's origin)
+ const R=[];A.forEach(y=>y.querySelectorAll('.ptns').forEach(n=>{const pn=n.closest('.ptk').querySelector('.ptpn'),I=[...n.querySelectorAll('i:not(.ptbl)')].map(i=>i.textContent),
+  full=pn.firstChild.nodeValue,ab=pn.dataset.ab||null;R.push({I,r:n.closest('.ptk'),pn,full,ab,ef:teInk(PN,full),ea:ab?teInk(PN,ab):null})}));
+ const DB=window.__ptSlotT={rows:R.length,tries:[]},q=location.search;
+ // PS-3d: the slot is on line 1 (nameFit / holdFit keep >= 12px of ink before it); one form, 11px, normal gaps (no .ptgt lever)
+ const f=11,g=0;V.classList.add('ptn1','ptn11');V.classList.remove('ptgt');
+ const S=sSt(NS),Lw=L0.getBoundingClientRect().width,x0=lxOf(L0.closest('.ptk'));
+ let rd=0,pk=0,pl=null,wu=0;const off=R.map(q=>{const a=sInk(q.I[0],S);if(q.I.length==2){const b=sInk(q.I[1],S);rd=Math.max(rd,a[1]);pk=Math.max(pk,b[1]);pl=b[0]}else wu=Math.max(wu,a[1]);return a[0]});
+ const pkx=pl==null?0:rd+6*z-pl,W=Math.max(pl==null?0:pkx+pk,wu),o0=Math.min(...off),room=R.map(q=>Lw-(lxOf(q.r)-x0)*z);   // room = line 2's width from its origin: the team has the whole name column
+ DB.tries.push([f,g,+Math.min(...R.map((q,i)=>(room[i]-q.ef)/z)).toFixed(3)]);
+ // the strip's "NFL" label, ink centred over the slot's ink span (first RD glyph .. widest PK ink end = the column's right edge)
+ {const lb=V.querySelector('.ptyx .pthn');if(lb){const c=getComputedStyle(lb),ls=parseFloat(c.letterSpacing)||0,rb=rBear(lb,'L'),iw=inkC(lb,'NFL')/z;
+  vs.setProperty('--pthnr',((W-o0)/z/2-ls-rb-iw/2).toFixed(3)+'px')}}vs.setProperty('--ptnw',(W/z).toFixed(3)+'px');vs.setProperty('--ptpk',(pkx/z).toFixed(3)+'px');V.dataset.ptn=f+(g?'t':'');
+ // team names (line 2, alone): full -> short form -> shrink to 11px (text widths scale with the size); rows still short -> __ptTeamShort
+ window.__ptTeamShort=[];
+ const SET=R.map((q,i)=>{const m=room[i];if(q.ef<=m+.01)return null;if(q.ab&&q.ea<=m+.01)return [q,q.ab,0];const t=q.ab||q.full,e=q.ab?q.ea:q.ef;let s=f0;
+  while(s>11&&e*s/f0>m+.01)s-=.5;s=Math.max(11,s);if(e*s/f0>m+.01)window.__ptTeamShort.push([t,+((e*s/f0-m)/z).toFixed(3)]);return [q,t,s]});
+ SET.forEach(x=>{if(!x)return;const [q,t,s]=x;if(t!==q.full){q.pn.dataset.full=q.full;q.pn.firstChild.nodeValue=t}if(s&&s<f0)q.pn.style.fontSize=s+'px';window.__ptTeam.push([q.full,t,s||f0])})}
+function slotFormS(){const V=X.querySelector('.ptv-k');if(!V||!V.offsetParent)return;V.dataset.ptn='main';window.__ptShort=[];window.__ptTeam=[];
  const Yv=[...V.querySelectorAll('.ptyx')].find(y=>y.offsetParent);let L0=Yv&&[...Yv.querySelectorAll('.ptl2')].find(l=>l.querySelector('.ptns')&&l.offsetParent);if(!L0)return;
  const A=[...V.querySelectorAll('.ptyx')].filter(y=>y.querySelector('.ptns'));if(!A.length)return;const z=L0.currentCSSZoom||1,vs=V.style,NS=L0.querySelector('.ptns'),PN=L0.querySelector('.ptpn'),f0=parseFloat(getComputedStyle(PN).fontSize);
  // every drafted row: team name (full, short form) and its ink end at 12.5px (viewport px from line 2's origin)
  const R=[];A.forEach(y=>y.querySelectorAll('.ptns').forEach(n=>{const l=n.parentElement,pn=l.querySelector('.ptpn'),I=[...n.querySelectorAll('i:not(.ptbl)')].map(i=>i.textContent),
   full=pn.firstChild.nodeValue,ab=pn.dataset.ab||null;R.push({I,r:n.closest('.ptk'),pn,full,ab,ef:teInk(PN,full),ea:ab?teInk(PN,ab):null})}));
- const DB=window.__ptSlot={rows:R.length,tries:[]},q=location.search;
+ const DB=window.__ptSlotT={rows:R.length,tries:[]},q=location.search;
  let tries=[[11,0]];if(innerWidth<=430)tries.push([11,1]);let last=null;   // the slot is 11px (the via's size)
  for(const [f,g] of tries){V.classList.add('ptn1');V.classList.toggle('ptn11',f==11);V.classList.toggle('ptgt',!!g);if(g){rowFit(1);L0=[...Yv.querySelectorAll('.ptl2')].find(l=>l.querySelector('.ptns')&&l.offsetParent)}
   const S=sSt(NS),Lw=L0.getBoundingClientRect().width,x0=lxOf(L0.closest('.ptk'));
@@ -639,6 +704,11 @@ function slotForm(){const V=X.querySelector('.ptv-k');if(!V||!V.offsetParent)ret
  const SET=R.map((q,i)=>{const m=room[i]-12*z;if(q.ef<=m+.01)return null;if(q.ab&&q.ea<=m+.01)return [q,q.ab,0];const t=q.ab||q.full,e=q.ab?q.ea:q.ef;let s=f0;
   while(s>11&&e*s/f0>m+.01)s-=.5;s=Math.max(11,s);if(e*s/f0>m+.01)window.__ptShort.push([t,+((e*s/f0-m)/z).toFixed(3)]);return [q,t,s]});
  SET.forEach(x=>{if(!x)return;const [q,t,s]=x;if(t!==q.full){q.pn.dataset.full=q.full;q.pn.firstChild.nodeValue=t}if(s&&s<f0)q.pn.style.fontSize=s+'px';window.__ptTeam.push([q.full,t,s||f0])})}
+// PS-3e (mock, 2026-11-27): two slot forms, ONE per Picks view (every year together), chosen by the data in slotPick():
+// D = the slot on line 1 after the player + NFL logo (slotFormD); S = the live build, slot on line 2 after the team (slotFormS,
+// main's code verbatim). ptForm() = the current form, read from where the slot nodes are.
+const ptForm=()=>{const n=X.querySelector('.ptv-k .ptns');return n&&n.parentElement.classList.contains('ptl1')?'D':'S'};
+function slotForm(){return ptForm()=='D'?slotFormD():slotFormS()}
 // Drafted-row layout (2026-11-25 .. 26, briefs PS-2 .. PS-3c): the holder's 36px picture stands beside both lines (absolute,
 // centred on the text block from line 1's cap top to line 2's baseline); line 1 = the player (--ptnf) + NFL logo, line 2 = the team
 // (12.5px) + NFL slot, starting at --ptlx per row = 44px + line 1's first-glyph left bearing - line 2's (SLT: [xMin, xMax, advance,
@@ -730,7 +800,7 @@ function ptxFit(){const V=X.querySelector('.ptv-k');if(!V||!V.offsetParent)retur
  V.style.setProperty('--ptcw',up(tw));
  const W=[];
  hx.forEach(h=>{const c=getComputedStyle(h),t=h.textContent.trim().toUpperCase();h.style.marginRight=(-((parseFloat(c.letterSpacing)||0)+rBear(h,t.slice(-1)))).toFixed(3)+'px'});
- slots.forEach(n=>{const L=n.parentElement,pb=_bl(L.querySelector('.ptpn')),sb=_bl(n);if(pb==null||sb==null)return;
+ slots.forEach(n=>{const L=n.parentElement,pb=_bl(L.querySelector('.ptt')||L.querySelector('.ptpn')),sb=_bl(n);if(pb==null||sb==null)return;
   // the baseline offset by layout (position:relative; top), not a transform: WebKit paints a transformed slot's glyphs on its own
   // device-pixel rounding, one pixel off the name's when the two baselines' fractions differ
   W.push([n,'',((pb-sb)/z).toFixed(3)+'px'])});
